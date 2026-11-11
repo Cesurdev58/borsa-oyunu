@@ -1,0 +1,6 @@
+{
+  "name": "Borsa & Holding Simülatörü — Aşamalı Piyasa ve Şirket Yönetimi",
+  "description": "Tek kişilik aşamalı borsa, girişim sermayesi, halka arz (IPO) ve holding devralma simülatörü. GBM fiyat motoru, haber duyarlılığı ve FAVÖK değerleme modelleri içerir.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

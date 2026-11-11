@@ -24,6 +24,7 @@ import {
   IsometricBuildingNode,
 } from './cityVisualTypes';
 import { CityVisualEventPulse } from './questAndHudLogic';
+import { CORE_BUILDING_SPRITES, getSpriteHeightPx } from './buildingSprites';
 
 interface IsometricBuildingProps {
   building: IsometricBuildingNode;
@@ -286,6 +287,9 @@ export const IsometricBuilding: React.FC<IsometricBuildingProps> = React.memo(
     reducedShadows = false,
   }) => {
     const palette = getStructurePalette(building.id, building.isUnlocked);
+    const sprite = CORE_BUILDING_SPRITES[building.id];
+    const [spriteFailed, setSpriteFailed] = React.useState(false);
+    const useSprite = Boolean(sprite) && !spriteFailed;
     const isEmptyCompanyPlot =
       building.id === 'SIRKET_MERKEZI' && !building.visualMeta.hasPlayerCompany;
 
@@ -328,8 +332,16 @@ export const IsometricBuilding: React.FC<IsometricBuildingProps> = React.memo(
         style={{
           left: `${building.x}px`,
           top: `${building.y}px`,
-          width: `${building.width}px`,
-          height: `${building.height}px`,
+          width: `${
+            useSprite && sprite
+              ? Math.max(building.width, sprite.widthPx + 16)
+              : building.width
+          }px`,
+          height: `${
+            useSprite && sprite
+              ? Math.max(building.height, getSpriteHeightPx(sprite) + 44)
+              : building.height
+          }px`,
           zIndex: isSelected ? 60 : building.zIndex,
         }}
         className={`group absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-end p-2 rounded-3xl focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-500 transition-transform duration-200 cursor-pointer select-none ${
@@ -338,8 +350,8 @@ export const IsometricBuilding: React.FC<IsometricBuildingProps> = React.memo(
             : 'hover:scale-[1.03] active:scale-95'
         } ${!building.isUnlocked ? 'saturate-[0.45]' : ''}`}
       >
-        {/* 1. ZEMİNE OTURAN YUMUŞAK GÖLGE */}
-        <div
+        {/* 1. ZEMİNE OTURAN YUMUŞAK GÖLGE (PNG sprite kendi zemin parseliyle gelir) */}
+        {!useSprite && <div
           aria-hidden="true"
           data-part="ground-shadow"
           style={{
@@ -349,7 +361,7 @@ export const IsometricBuilding: React.FC<IsometricBuildingProps> = React.memo(
               : atmosphere.shadowOpacity,
           }}
           className="absolute bottom-5 w-40 h-13 rounded-full bg-slate-950 pointer-events-none"
-        />
+        />}
 
         {/* PİYASA AÇILIŞI VEYA EMİR GERÇEKLEŞME HALKASI (BORSA) */}
         {building.id === 'BORSA' &&
@@ -433,6 +445,47 @@ export const IsometricBuilding: React.FC<IsometricBuildingProps> = React.memo(
                 <span className="w-2 h-full bg-slate-900 -skew-x-12" />
               </div>
             </div>
+          </div>
+        ) : useSprite && sprite ? (
+          /* HAZIR PNG BİNA GÖRSELİ: bu bina için CSS gövde çizilmez */
+          <div
+            aria-hidden="true"
+            data-testid={`building-sprite-${building.id}`}
+            className={`relative flex flex-col items-center justify-end mb-1 pointer-events-none ${
+              hasHoldingUnlockPulse ? 'motion-safe:animate-bounce' : ''
+            }`}
+          >
+            <img
+              src={sprite.src}
+              alt=""
+              draggable={false}
+              decoding="async"
+              onError={() => setSpriteFailed(true)}
+              style={{
+                width: `${sprite.widthPx}px`,
+                height: `${getSpriteHeightPx(sprite)}px`,
+              }}
+              className={`block max-w-none object-contain drop-shadow-[0_10px_10px_rgba(2,6,23,0.35)] ${
+                building.isUnlocked ? '' : 'opacity-60'
+              }`}
+            />
+            {building.id === 'BORSA' && (
+              <span
+                data-testid="borsa-entrance-light"
+                data-light-color={building.visualMeta.borsaLightColor}
+                className={`hidden ${getBorsaEntranceLightClass(
+                  building.visualMeta.borsaLightColor
+                )}`}
+              />
+            )}
+            {!building.isUnlocked && (
+              <span
+                data-testid={`locked-construction-cover-${building.id}`}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/85 border-2 border-amber-400 flex items-center justify-center"
+              >
+                <Lock className="w-4 h-4 text-amber-300" />
+              </span>
+            )}
           </div>
         ) : (
           /* GERÇEK 2.5D BİNA YAPISI (Seviye 1 / Seviye 2 Yan Kanat / Seviye 3+ Prestij Kule) */

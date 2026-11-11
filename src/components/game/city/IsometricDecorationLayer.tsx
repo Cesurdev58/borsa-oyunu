@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { SimulationStage } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
 import { STATIC_CITY_DECORATIONS } from './cityLayout';
+import { URBAN_BLOCK_SPRITES, getSpriteHeightPx } from './buildingSprites';
 import {
   CityAtmosphereTheme,
   CityDecorationNode,
@@ -191,6 +192,10 @@ export const IsometricDecorationLayer: React.FC<IsometricDecorationLayerProps> =
         );
       };
 
+      const [failedSprites, setFailedSprites] = useState<
+        Record<string, boolean>
+      >({});
+
       const renderUrbanBlock = (block: CityUrbanBlockNode) => {
         const blockLevel = block.level ?? 1;
         const facadeHeight = 26 + block.floors * 11 + Math.max(0, blockLevel - 1) * 5;
@@ -205,6 +210,91 @@ export const IsometricDecorationLayer: React.FC<IsometricDecorationLayerProps> =
           block.category === 'INDUSTRIAL_WAREHOUSE';
         const isLogisticsYard = block.category === 'LOGISTICS_YARD';
         const isTradeCenter = block.category === 'TRADE_CENTER';
+        const sprite = failedSprites[block.id]
+          ? undefined
+          : URBAN_BLOCK_SPRITES[block.id];
+
+        if (sprite) {
+          const spriteHeight = getSpriteHeightPx(sprite);
+          return (
+            <button
+              key={block.id}
+              type="button"
+              data-testid={`city-urban-block-${block.id}`}
+              data-district={block.districtId}
+              data-category={block.category}
+              data-unlocked={block.isUnlocked ? 'true' : 'false'}
+              data-status-classification={block.statusClassification || 'ACTIVE'}
+              data-visual-level={blockLevel}
+              data-shop-type={block.activeShopType || 'NONE'}
+              data-sprite="true"
+              title={block.statusSummaryTR || `${block.nameTR} (${block.shortTagTR})`}
+              aria-label={`${block.nameTR} (${block.shortTagTR})`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onSelectUrbanBlock) {
+                  onSelectUrbanBlock(block);
+                }
+              }}
+              style={{
+                left: `${block.x}px`,
+                top: `${block.y}px`,
+                width: `${sprite.widthPx + 8}px`,
+                height: `${spriteHeight + 22}px`,
+                zIndex: block.zIndex,
+              }}
+              className={`group absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-end rounded-2xl pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105 ${
+                !block.isUnlocked ? 'opacity-70 saturate-50' : ''
+              }`}
+            >
+              {block.isUnlocked && (block.pendingDeliveryCount ?? 0) > 0 && (
+                <div
+                  data-testid={`block-delivery-badge-${block.id}`}
+                  className="absolute top-0 px-1.5 py-0.2 rounded-full bg-sky-600 text-white text-[7px] font-mono font-bold border border-white shadow-2xs z-20"
+                >
+                  Sevkiyat ({block.pendingDeliveryCount})
+                </div>
+              )}
+              {block.isUnlocked &&
+                (block.pendingDeliveryCount ?? 0) === 0 &&
+                block.stockWarning && (
+                  <div
+                    data-testid={`block-stock-warning-${block.id}`}
+                    className="absolute top-0 px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 text-[7px] font-mono font-bold border border-white shadow-2xs z-20"
+                  >
+                    Stok Kritik
+                  </div>
+                )}
+              <img
+                src={sprite.src}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                decoding="async"
+                onError={() =>
+                  setFailedSprites((prev) => ({ ...prev, [block.id]: true }))
+                }
+                style={{
+                  width: `${sprite.widthPx}px`,
+                  height: `${spriteHeight}px`,
+                }}
+                className="block max-w-none object-contain pointer-events-none drop-shadow-[0_6px_6px_rgba(2,6,23,0.3)]"
+              />
+              <span className="-mt-1 px-1.5 py-0.2 rounded-md bg-white/95 border border-slate-200/90 text-[8px] font-bold text-slate-800 truncate max-w-[112px] shadow-2xs flex items-center gap-1 relative z-10">
+                {!block.isUnlocked && <Lock className="w-2.5 h-2.5 text-amber-600" />}
+                {block.activeShopId && block.hasStockToSell && (
+                  <span
+                    data-testid={`shop-active-sales-indicator-${block.id}`}
+                    className="text-[7px] font-mono font-extrabold text-emerald-700 shrink-0"
+                  >
+                    +₺
+                  </span>
+                )}
+                <span className="truncate">{block.shortTagTR}</span>
+              </span>
+            </button>
+          );
+        }
 
         return (
           <button

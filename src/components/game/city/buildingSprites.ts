@@ -56,6 +56,39 @@ export const URBAN_BLOCK_SPRITES: Record<string, BuildingSpriteSpec> = {
   },
 };
 
+/**
+ * Dükkân türüne göre görseller. Anahtar: `ShopType` değeri.
+ * Burada olmayan tür (BUFE, MANAV, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI,
+ * OTOMOBIL_GALERISI) eski CSS kutu çizimiyle gösterilir. Yeni tür görseli eklemek için buraya satır ekle.
+ */
+export const SHOP_TYPE_SPRITES: Record<string, BuildingSpriteSpec> = {
+  MARKET: URBAN_BLOCK_SPRITES['urban-ticaret-magaza-1'],
+  KAFE: URBAN_BLOCK_SPRITES['urban-ticaret-kafe-2'],
+};
+
+/** Dükkânların oturduğu şehir blokları (sırayla 1., 2. ve 3. dükkân). */
+const SHOP_SLOT_BLOCK_IDS = new Set([
+  'urban-ticaret-magaza-1',
+  'urban-ticaret-kafe-2',
+  'urban-ticaret-otel-5',
+]);
+
+/**
+ * Bir şehir bloğunun görselini seçer.
+ * - Blokta açık bir dükkân varsa görsel dükkânın TÜRÜNDEN gelir (sıradan değil).
+ *   Türün görseli yoksa `undefined` döner ve eski çizim kullanılır.
+ * - Blokta dükkân yoksa (boş arsa) bloğun kendi varsayılan görseli kullanılır.
+ */
+export function getUrbanBlockSprite(
+  blockId: string,
+  activeShopType?: string
+): BuildingSpriteSpec | undefined {
+  if (SHOP_SLOT_BLOCK_IDS.has(blockId) && activeShopType) {
+    return SHOP_TYPE_SPRITES[activeShopType];
+  }
+  return URBAN_BLOCK_SPRITES[blockId];
+}
+
 export function getSpriteHeightPx(spec: BuildingSpriteSpec): number {
   return Math.round(spec.widthPx / spec.aspect);
 }

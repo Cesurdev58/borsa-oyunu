@@ -68,16 +68,29 @@ Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` alt
 - Görseller kodla çizilmez. Bina çizimi istenirse CSS/SVG ile bina üretme; sahibinden PNG iste.
 - Stil: yarı gerçekçi, stilize izometrik 3D; ışık sol üstten; her bina kendi zemin parseliyle gelir.
 
-Şu an PNG kullanan binalar: `BORSA`, `BANKA`, `urban-ticaret-magaza-1` (market), `urban-ticaret-kafe-2` (kafe).
+Şu an PNG kullanan ana binalar: `BORSA`, `BANKA`.
+
+**Dükkân görselleri türe göre seçilir** (`buildingSprites.ts` içinde `SHOP_TYPE_SPRITES` ve `getUrbanBlockSprite`):
+
+| Dükkân türü | Görsel |
+|---|---|
+| `MARKET` | `market.png` |
+| `KAFE` | `cafe.png` |
+| `BUFE`, `MANAV`, `GIYIM_MAGAZASI`, `ELEKTRONIK_MAGAZASI`, `MOBILYA_MAGAZASI`, `OTOMOBIL_GALERISI` | Görseli yok; eski CSS kutu çizimi |
+
+- Dükkânlar sırayla 3 bloğa yerleşir: `urban-ticaret-magaza-1`, `urban-ticaret-kafe-2`, `urban-ticaret-otel-5`.
+  Hangi bloğun hangi görseli göstereceği artık bloğun adından değil, içindeki dükkânın türünden gelir.
+- Blokta dükkân yoksa (boş arsa) bloğun eski varsayılanı görünür: 1. blok market, 2. blok kafe, 3. blok eski çizim.
+- Yeni tür görseli eklemek: PNG'yi `public/buildings/` içine koy, `SHOP_TYPE_SPRITES` içine tür adıyla bir satır ekle.
 
 ## Bilinen eksikler
 
-- Dükkân blokları türe değil sıraya bağlı: `cityLayout.ts` içinde `urban-ticaret-magaza-1` her zaman `shops[0]`,
-  `urban-ticaret-kafe-2` her zaman `shops[1]`. İlk dükkân manav olsa bile market görseli görünür.
-  Görsel, dükkânın `shopType` değerine göre seçilmeli.
 - Parseller eski küçük kutu binalara göre ölçülü; PNG binalar komşularına çok yakın duruyor.
+  Özellikle 3. dükkân bloğuna (`urban-ticaret-otel-5`) bir market görseli konunca yandaki panel ve binalarla çakışıyor.
 - Koyu şehir zemini yeni bina stiliyle uyumsuz.
-- Kalan 6 ana bina ve 20 şehir bloğu hâlâ CSS kutu çizimi kullanıyor.
+- Görseli olmayan 6 dükkân türü (büfe, manav, giyim, elektronik, mobilya, galeri) eski kutu çizimiyle duruyor.
+- Kalan 6 ana bina ve dükkân olmayan 19 şehir bloğu hâlâ CSS kutu çizimi kullanıyor.
+- Bir dükkân görseli yüklenemezse o blok, tür değişse bile oturum boyunca eski çizimde kalır (sayfa yenilenince düzelir).
 
 ## Çalışma kuralları
 

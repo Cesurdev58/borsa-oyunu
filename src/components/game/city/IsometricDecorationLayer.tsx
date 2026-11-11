@@ -8,7 +8,7 @@ import { Lock } from 'lucide-react';
 import { SimulationStage } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
 import { STATIC_CITY_DECORATIONS } from './cityLayout';
-import { URBAN_BLOCK_SPRITES, getSpriteHeightPx } from './buildingSprites';
+import { getUrbanBlockSprite, getSpriteHeightPx } from './buildingSprites';
 import {
   CityAtmosphereTheme,
   CityDecorationNode,
@@ -212,7 +212,7 @@ export const IsometricDecorationLayer: React.FC<IsometricDecorationLayerProps> =
         const isTradeCenter = block.category === 'TRADE_CENTER';
         const sprite = failedSprites[block.id]
           ? undefined
-          : URBAN_BLOCK_SPRITES[block.id];
+          : getUrbanBlockSprite(block.id, block.activeShopType);
 
         if (sprite) {
           const spriteHeight = getSpriteHeightPx(sprite);

@@ -92,7 +92,10 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             initialSection="SHOPS"
             initialShopId={managing.shopId}
             startWithOpenBranch={managing.shopId === null}
-            onOpenShop={onOpenShop}
+            onOpenShop={(params) => {
+              onOpenShop(params);
+              setManaging(null);
+            }}
             onUpgradeShopLevel={onUpgradeShopLevel}
             onTransferShopCash={onTransferShopCash}
             onConfigureShop={onConfigureShop}

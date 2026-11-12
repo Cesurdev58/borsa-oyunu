@@ -34,6 +34,8 @@ import {
 } from '../../engine/TradeAndShopEngine';
 import { SectorId } from '../../models/market';
 import { SimulationState } from '../../models/simulation';
+import { HelpTip } from './ui/HelpTip';
+import { SHOP_EMOJI } from './buildings/ShopDashboard';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
 import {
@@ -189,6 +191,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       : 'ORDER_PRODUCT'
   );
   const [tradeTab, setTradeTab] = useState<TradeCenterTab>('TEDARIK');
+  const [showAdvancedOrder, setShowAdvancedOrder] = useState(false);
 
   // Yeni şube açılış formu
   const [newShopType, setNewShopType] = useState<ShopType>('BUFE');
@@ -275,6 +278,21 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
         : { orders: [], totalCost: 0 },
     [state, activeShop, spendableCash]
   );
+  const inboundShipments = trade.shipments.filter(
+    (sh) =>
+      activeShop &&
+      sh.destinationId === activeShop.shopId &&
+      !['DELIVERED', 'CANCELLED', 'DAMAGED'].includes(sh.status)
+  );
+  const recentDeliveredShipments = trade.shipments
+    .filter(
+      (sh) =>
+        activeShop &&
+        sh.destinationId === activeShop.shopId &&
+        sh.status === 'DELIVERED' &&
+        (sh.actualArrivalDay ?? 0) >= state.day - 1
+    )
+    .slice(0, 3);
   const activeShopTotalCap = activeShop
     ? activeShop.shelfCapacity + activeShop.backroomCapacity
     : 1;
@@ -285,8 +303,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       className="space-y-4 text-slate-900"
     >
       {/* 1. KARİYER İLERLEME BARI & ANA MOD SEÇİCİ */}
-      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-sky-50 border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2">
-        <div>
+      <div className="rounded-2xl flex flex-wrap items-center justify-between gap-2">
+        <div className="hidden">
           <div className="text-[13px] font-bold uppercase tracking-wider text-amber-800">
             🚀 Kariyerin
           </div>
@@ -304,12 +322,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-2 gap-1.5 w-full bg-slate-100 p-1 rounded-2xl border border-slate-200">
           <button
             type="button"
             data-testid="mode-esnaf-shops-btn"
             onClick={() => setMainMode('SHOPS')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
+            className={`min-h-[44px] px-3 py-1.5 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
               mainMode === 'SHOPS'
                 ? 'bg-slate-900 text-white shadow-2xs'
                 : 'text-slate-700 hover:bg-white'
@@ -322,14 +340,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             type="button"
             data-testid="mode-trade-center-btn"
             onClick={() => setMainMode('TRADE_CENTER')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
+            className={`min-h-[44px] px-3 py-1.5 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
               mainMode === 'TRADE_CENTER'
                 ? 'bg-slate-900 text-white shadow-2xs'
                 : 'text-slate-700 hover:bg-white'
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
-            <span>📦 Depo & Sipariş</span>
+            <span>🏭 Toptan & Üretim</span>
           </button>
         </div>
       </div>
@@ -337,7 +355,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       {mainMode === 'SHOPS' ? (
         <div className="space-y-4">
           {/* ŞUBE SEÇİCİ + YENİ ŞUBE KISA YOLU */}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div
+            className={`items-center justify-between gap-2 flex-wrap ${
+              trade.shops.length > 1 ? 'flex' : 'hidden'
+            }`}
+          >
             <div className="flex items-center gap-1.5 flex-wrap">
               {trade.shops.map((sh) => (
                 <button
@@ -409,199 +431,259 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             </div>
           )}
 
-          {/* SEÇİLİ DÜKKÂN 8 ÖZET METRİK KARTI (Bölüm 7: Temiz Dükkân Arayüzü) */}
+          {/* SEÇİLİ DÜKKÂN: Ticarium mantığı — Mal al → raf → satış → kasa */}
           {activeShop ? (
             <div
               data-testid="active-shop-summary-card"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3"
+              className="rounded-3xl bg-white border border-slate-200 shadow-md overflow-hidden"
             >
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <span className="text-[13px] font-bold uppercase tracking-wider text-amber-700">
-                    {activeShopTemplate?.nameTR || activeShop.shopType} ·{' '}
-                    {activeShop.isCompanyBranch
-                      ? 'Şirket Şubesi'
-                      : 'Bağımsız Esnaf İşletmesi'}
-                  </span>
-                  <h4 className="text-base font-extrabold text-slate-900">
-                    {activeShop.nameTR} (Seviye {activeShop.level}/5)
+              <div className="p-3 bg-gradient-to-r from-orange-400 to-rose-400 text-white flex items-center gap-3">
+                <span className="text-4xl">{SHOP_EMOJI[activeShop.shopType] ?? '🏪'}</span>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-base font-extrabold truncate">
+                    {activeShop.nameTR}
                   </h4>
-                </div>
-                <div className="text-right">
-                  <div className="text-[13px] font-semibold text-slate-500">
-                    Stok Doluluğu
-                  </div>
-                  <div className="text-xs tabular-nums font-bold text-slate-900">
-                    {activeShopUsedUnits.toFixed(0)} / {activeShopTotalCap} br
+                  <div className="text-sm opacity-95">
+                    {activeShopTemplate?.nameTR || activeShop.shopType} · Seviye{' '}
+                    {activeShop.level}/5
+                    {activeShop.isCompanyBranch ? ' · Şirket şubesi' : ''}
                   </div>
                 </div>
               </div>
 
-              {/* 8 Temiz Özet Metriği */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    1. Bugünkü Satış
+              <div className="p-3 space-y-3">
+                {/* 3 büyük sayı: Kasa / Raf / Yolda */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-2xl bg-sky-50 p-2.5">
+                    <div className="text-[13px] text-sky-800 font-semibold">💰 Kasa</div>
+                    <div
+                      data-testid="shop-metric-cash"
+                      className="text-sm tabular-nums font-extrabold text-slate-900"
+                    >
+                      {formatCurrency(activeShop.cashAccountBalance)}
+                    </div>
                   </div>
                   <div
-                    data-testid="shop-metric-daily-revenue"
-                    className="text-xs tabular-nums font-bold text-slate-900 mt-0.5"
-                  >
-                    {formatCurrency(activeShop.todaySalesRevenue)} (
-                    {activeShop.todayUnitsSold} br)
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    2. Bugünkü Kâr/Zarar
-                  </div>
-                  <div
-                    data-testid="shop-metric-daily-profit"
-                    className={`text-xs tabular-nums font-bold mt-0.5 ${
-                      activeShop.todayNetProfit >= 0
-                        ? 'text-emerald-700'
-                        : 'text-rose-700'
-                    }`}
-                  >
-                    {activeShop.todayNetProfit >= 0 ? '+' : ''}
-                    {formatCurrency(activeShop.todayNetProfit)}
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    3. Dükkân Kasası
-                  </div>
-                  <div
-                    data-testid="shop-metric-cash"
-                    className="text-xs tabular-nums font-bold text-sky-900 mt-0.5"
-                  >
-                    {formatCurrency(activeShop.cashAccountBalance)}
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    4. Kritik Stok
-                  </div>
-                  <div
-                    data-testid="shop-metric-critical-stock"
-                    className={`text-xs font-bold mt-0.5 truncate ${
+                    className={`rounded-2xl p-2.5 ${
                       activeShopUsedUnits <= 0
-                        ? 'text-rose-700'
+                        ? 'bg-rose-50'
                         : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
-                        ? 'text-amber-700'
-                        : 'text-emerald-700'
+                        ? 'bg-amber-50'
+                        : 'bg-emerald-50'
                     }`}
                   >
-                    {activeShopUsedUnits <= 0
-                      ? 'Raflar Boş!'
-                      : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
-                      ? `Azaldı (${activeShopUsedUnits} br)`
-                      : `Yeterli (${activeShopUsedUnits} br)`}
+                    <div className="text-[13px] text-slate-700 font-semibold">📦 Raf</div>
+                    <div
+                      data-testid="shop-metric-critical-stock"
+                      className={`text-sm tabular-nums font-extrabold ${
+                        activeShopUsedUnits <= 0
+                          ? 'text-rose-700'
+                          : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
+                          ? 'text-amber-700'
+                          : 'text-emerald-700'
+                      }`}
+                    >
+                      {activeShopUsedUnits.toFixed(0)}/{activeShopTotalCap}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-indigo-50 p-2.5">
+                    <div className="text-[13px] text-indigo-800 font-semibold">🚚 Yolda</div>
+                    <div
+                      data-testid="shop-metric-pending-deliveries"
+                      className="text-sm tabular-nums font-extrabold text-slate-900"
+                    >
+                      {activeShop.pendingDeliveriesCount} sipariş
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    5. Müşteri Memnuniyeti
+                {/* Kasaya para koy / kâr al — her zaman görünür */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="shop-cash-deposit-btn"
+                    onClick={() =>
+                      onTransferShopCash({
+                        shopId: activeShop.shopId,
+                        direction: 'TO_SHOP',
+                        amount: shopTransferAmount,
+                      })
+                    }
+                    className="flex-1 min-h-[48px] rounded-2xl bg-sky-100 text-sky-900 text-sm font-extrabold active:scale-95"
+                  >
+                    ⬇️ Kasaya {formatCurrency(shopTransferAmount)} koy
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="shop-cash-withdraw-btn"
+                    onClick={() =>
+                      onTransferShopCash({
+                        shopId: activeShop.shopId,
+                        direction: 'FROM_SHOP',
+                        amount: shopTransferAmount,
+                      })
+                    }
+                    className="flex-1 min-h-[48px] rounded-2xl bg-amber-100 text-amber-900 text-sm font-extrabold active:scale-95"
+                  >
+                    ⬆️ Kâr al
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-[13px] text-slate-500">
+                  <span>
+                    Aktarma tutarı
+                    <HelpTip text="Kişisel paranla dükkân kasası ayrıdır. Mal almak için dükkân kasasında para olmalı; kazandığın kârı da kasadan kendi cebine çekebilirsin." />
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {[5_000, 25_000, 100_000].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setShopTransferAmount(amt)}
+                        className={`min-h-[36px] px-2.5 rounded-xl text-[13px] font-bold ${
+                          shopTransferAmount === amt
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {amt >= 1000 ? `${amt / 1000}B` : amt}
+                      </button>
+                    ))}
                   </div>
-                  <div
+                </div>
+
+                {/* Yoldaki siparişler: kuytuda kalmasın */}
+                <div
+                  data-testid="shop-inbound-strip"
+                  className="rounded-2xl bg-indigo-50 border border-indigo-100 p-2.5 space-y-1.5"
+                >
+                  <div className="text-sm font-extrabold text-indigo-900">
+                    🚚 Yoldaki siparişler
+                    <HelpTip text="Sipariş verdiğin mallar toptancıdan dükkâna yola çıkar. Vardığında otomatik olarak rafa dizilir ve satışa başlar." />
+                  </div>
+                  {inboundShipments.length === 0 ? (
+                    <div className="text-[13px] text-indigo-800">
+                      Şu an yolda sipariş yok.
+                    </div>
+                  ) : (
+                    inboundShipments.slice(0, 4).map((sh) => (
+                      <div
+                        key={sh.shipmentId}
+                        className="flex items-center justify-between gap-2 text-[13px]"
+                      >
+                        <span className="font-bold text-slate-900 truncate">
+                          {sh.resourceNameTR} · {sh.quantity} adet
+                        </span>
+                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-white text-indigo-800 font-bold">
+                          {sh.estimatedArrivalDay <= state.day
+                            ? 'Bugün gelir'
+                            : `${sh.estimatedArrivalDay - state.day} gün sonra`}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                  {recentDeliveredShipments.length > 0 && (
+                    <div className="pt-1 text-[13px] text-emerald-800 font-semibold">
+                      ✅ Son gelen:{' '}
+                      {recentDeliveredShipments
+                        .map((sh) => `${sh.resourceNameTR} (${sh.quantity})`)
+                        .join(', ')}
+                    </div>
+                  )}
+                </div>
+
+                {/* Bugünün özeti */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-slate-50 p-2.5">
+                    <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                    <div
+                      data-testid="shop-metric-daily-revenue"
+                      className="text-sm tabular-nums font-extrabold text-slate-900"
+                    >
+                      {formatCurrency(activeShop.todaySalesRevenue)}
+                      <span className="text-[13px] font-semibold text-slate-500">
+                        {' '}
+                        ({activeShop.todayUnitsSold} adet)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-2.5">
+                    <div className="text-[13px] text-slate-500">
+                      Bugünkü kâr
+                      <HelpTip text="Satıştan elde edilen para eksi malın maliyeti, personel ve kira giderleri." />
+                    </div>
+                    <div
+                      data-testid="shop-metric-daily-profit"
+                      className={`text-sm tabular-nums font-extrabold ${
+                        activeShop.todayNetProfit >= 0
+                          ? 'text-emerald-700'
+                          : 'text-rose-700'
+                      }`}
+                    >
+                      {activeShop.todayNetProfit >= 0 ? '+' : ''}
+                      {formatCurrency(activeShop.todayNetProfit)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold text-slate-700">
+                    😊 Müşteri memnuniyeti
+                    <HelpTip text="Müşteriler raflar doluysa, fiyatlar makulse ve dükkân gelişmişse memnun olur. Memnuniyet yüksekse daha çok müşteri gelir." />
+                  </span>
+                  <strong
                     data-testid="shop-metric-satisfaction"
-                    className="text-xs tabular-nums font-bold text-slate-900 mt-0.5"
+                    className="tabular-nums text-slate-900"
                   >
-                    %{activeShop.customerSatisfaction.toFixed(0)} · İtibar{' '}
-                    {activeShop.reputationScore.toFixed(0)}
-                  </div>
+                    %{activeShop.customerSatisfaction.toFixed(0)}
+                    <span className="hidden"> · İtibar {activeShop.reputationScore.toFixed(0)}</span>
+                  </strong>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[13px] text-slate-500 font-medium">
-                    6. Bekleyen Teslimat
-                  </div>
-                  <div
-                    data-testid="shop-metric-pending-deliveries"
-                    className="text-xs tabular-nums font-bold text-indigo-800 mt-0.5"
-                  >
-                    {activeShop.pendingDeliveriesCount} Sevkiyat Yolda
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
-                  <div className="text-[13px] text-amber-800 font-bold">
-                    7. Ana Sorun
-                  </div>
+                {/* İpucu: ana sorun + önerilen işlem tek kutuda */}
+                <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 space-y-1">
+                  <div className="text-sm font-extrabold text-amber-900">💡 İpucu</div>
                   <div
                     data-testid="shop-metric-main-issue"
-                    className="text-[13px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
+                    className="text-[13px] font-semibold text-slate-800"
                   >
                     {activeShop.mainIssueTR}
                   </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
-                  <div className="text-[13px] text-emerald-800 font-bold">
-                    8. Önerilen İşlem
-                  </div>
                   <div
                     data-testid="shop-metric-recommended-action"
-                    className="text-[13px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
+                    className="text-[13px] text-slate-700"
                   >
                     {activeShop.recommendedActionTR}
                   </div>
                 </div>
-              </div>
 
-              {/* 5 Net İşlem Düğmesi (Bölüm 7) */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
-                {(
-                  [
-                    {
-                      id: 'ORDER_PRODUCT',
-                      label: '1. Ürün Sipariş Et',
-                      icon: ShoppingBag,
-                    },
-                    {
-                      id: 'EDIT_PRICES',
-                      label: '2. Fiyatları Düzenle',
-                      icon: TrendingUp,
-                    },
-                    {
-                      id: 'MANAGE_STAFF',
-                      label: '3. Çalışan Yönet',
-                      icon: Users,
-                    },
-                    {
-                      id: 'UPGRADE_SHOP',
-                      label: '4. Dükkânı Geliştir',
-                      icon: Sparkles,
-                    },
-                    {
-                      id: 'OPEN_BRANCH',
-                      label: '5. Yeni Şube Aç',
-                      icon: Plus,
-                    },
-                  ] as const
-                ).map((btn) => {
-                  const Icon = btn.icon;
-                  return (
+                {/* 5 net işlem düğmesi: numarasız, kesilmeyen yazılarla */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { id: 'ORDER_PRODUCT', label: '🛒 Mal al' },
+                      { id: 'EDIT_PRICES', label: '🏷️ Fiyatlar' },
+                      { id: 'MANAGE_STAFF', label: '👥 Çalışanlar' },
+                      { id: 'UPGRADE_SHOP', label: '⬆️ Geliştir' },
+                      { id: 'OPEN_BRANCH', label: '➕ Yeni şube' },
+                    ] as const
+                  ).map((btn) => (
                     <button
                       key={btn.id}
                       type="button"
                       data-testid={`shop-action-tab-${btn.id}`}
                       onClick={() => setShopActionTab(btn.id)}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+                      className={`min-h-[48px] px-2.5 rounded-2xl text-sm font-extrabold border-2 active:scale-95 ${
+                        btn.id === 'ORDER_PRODUCT' ? 'col-span-2' : ''
+                      } ${
                         shopActionTab === btn.id
                           ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          : 'bg-white text-slate-800 border-slate-200'
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{btn.label}</span>
+                      {btn.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
@@ -643,14 +725,108 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Dükkân İçin Toptancıdan Ürün Sipariş Et ({activeShop.nameTR})
+                  🛒 Mal al — {activeShop.nameTR}
                 </h5>
-                <span className="text-xs tabular-nums text-slate-600">
-                  Dükkân Kasası: {formatCurrency(activeShop.cashAccountBalance)}{' '}
-                  · Kişisel Nakit: {formatCurrency(spendableCash)}
+                <span className="text-[13px] tabular-nums text-slate-600">
+                  Kasa: {formatCurrency(activeShop.cashAccountBalance)} · Cebin:{' '}
+                  {formatCurrency(spendableCash)}
                 </span>
               </div>
 
+              {/* Hızlı "Mal al": her ürün için en ucuz toptancıdan tek dokunuşla sipariş */}
+              <div className="space-y-2" data-testid="shop-quick-order-list">
+                {(activeShopTemplate?.allowedResourceIds ?? []).map((prodId) => {
+                  const resDef = RESOURCE_CATALOG[prodId];
+                  const batch = activeShop.inventoryBatches.find(
+                    (b) => b.resourceId === prodId
+                  );
+                  const qty = batch ? batch.quantity : 0;
+                  const best = TradeAndShopEngine.getSupplierOffers(state, prodId)
+                    .filter((o) => o.maxAvailableQuantity >= o.minOrderQuantity)
+                    .sort(
+                      (x, y) =>
+                        x.unitPrice + x.shippingCostPerUnit -
+                        (y.unitPrice + y.shippingCostPerUnit)
+                    )[0];
+                  const unit = best ? best.unitPrice + best.shippingCostPerUnit : 0;
+                  return (
+                    <div
+                      key={prodId}
+                      className="rounded-2xl bg-slate-50 border border-slate-200 p-3 space-y-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-extrabold text-slate-900 truncate">
+                          {resDef?.nameTR || prodId}
+                        </div>
+                        <div className="text-[13px] text-slate-600">
+                          Rafta:{' '}
+                          <strong
+                            className={qty <= 5 ? 'text-rose-600' : 'text-emerald-700'}
+                          >
+                            {qty.toFixed(0)} adet
+                          </strong>
+                          {best && (
+                            <>
+                              {' '}
+                              · {formatCurrency(unit)}/adet · {best.deliveryDays} günde gelir
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {best ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {[10, 50, 100].map((n) => {
+                            const q = Math.min(
+                              best.maxAvailableQuantity,
+                              Math.max(best.minOrderQuantity, n)
+                            );
+                            return (
+                              <button
+                                key={n}
+                                type="button"
+                                data-testid={`shop-quick-order-${prodId}-${n}`}
+                                onClick={() =>
+                                  onPlaceProcurementOrder({
+                                    supplierId: best.supplierId,
+                                    resourceId: prodId,
+                                    quantity: q,
+                                    destinationType: 'SHOP',
+                                    destinationId: activeShop.shopId,
+                                    paymentTermType: 'CASH',
+                                  })
+                                }
+                                className="min-h-[52px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold text-sm shadow active:scale-95 leading-tight"
+                              >
+                                +{q}
+                                <span className="block text-[13px] font-semibold opacity-95">
+                                  {formatCurrency(q * unit)}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-[13px] text-rose-700 font-semibold">
+                          Şu an bu ürünü satan toptancı yok.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                data-testid="shop-advanced-order-toggle"
+                onClick={() => setShowAdvancedOrder((v) => !v)}
+                className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 text-sm font-bold"
+              >
+                {showAdvancedOrder
+                  ? '▲ Gelişmiş siparişi gizle'
+                  : '▼ Gelişmiş sipariş (tedarikçi ve ödeme seç)'}
+              </button>
+
+              <div className={showAdvancedOrder ? 'space-y-3' : 'hidden'}>
               {/* Mevcut Raf Stokları */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(activeShopTemplate?.allowedResourceIds ?? []).map(
@@ -761,6 +937,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
               </div>
 
+
               {activeOffer && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div>
@@ -796,6 +973,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   </button>
                 </div>
               )}
+              </div>
             </div>
           )}
 
@@ -928,54 +1106,6 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
               </div>
 
-              {/* Kişisel Nakit <-> Dükkân Kasası Transferi */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4 text-slate-600" />
-                  <input
-                    type="number"
-                    min={1000}
-                    step={5000}
-                    value={shopTransferAmount}
-                    onChange={(e) =>
-                      setShopTransferAmount(
-                        Math.max(1000, Number(e.target.value) || 5000)
-                      )
-                    }
-                    className="w-28 px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs tabular-nums font-bold"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    data-testid="shop-cash-deposit-btn"
-                    onClick={() =>
-                      onTransferShopCash({
-                        shopId: activeShop.shopId,
-                        direction: 'TO_SHOP',
-                        amount: shopTransferAmount,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold cursor-pointer"
-                  >
-                    Dükkân Kasasına Yatır
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="shop-cash-withdraw-btn"
-                    onClick={() =>
-                      onTransferShopCash({
-                        shopId: activeShop.shopId,
-                        direction: 'FROM_SHOP',
-                        amount: shopTransferAmount,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold cursor-pointer"
-                  >
-                    Kârı Kişisel Hesaba Çek
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
@@ -1279,23 +1409,32 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       ) : (
         /* TİCARET MERKEZİ & TEDARİK ZİNCİRİ (4 TEMİZ SEKME: TEDARİK / TESLİMATLAR / SATIŞ KANALLARI / SÖZLEŞMELER) */
         <div className="space-y-4">
+          <div
+            data-testid="trade-center-intro"
+            className="rounded-2xl bg-sky-50 border border-sky-200 p-3 text-[13px] text-sky-900"
+          >
+            <strong>Burası ileri seviye.</strong> Tek dükkân işletiyorsan buraya
+            girmen gerekmez; mal almak için "Dükkânlarım" ekranındaki{' '}
+            <strong>🛒 Mal al</strong> düğmesi yeter. Toptan ticaret, depo ve
+            fabrika işleri şirket kurunca işine yarar.
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
             {(
               [
-                { id: 'TEDARIK', label: '1. Tedarik & Depolar', icon: Package },
+                { id: 'TEDARIK', label: 'Toptan Alım & Depo', icon: Package },
                 {
                   id: 'TESLIMATLAR',
-                  label: '2. Teslimatlar & Filo',
+                  label: 'Kargolar & Araçlar',
                   icon: Truck,
                 },
                 {
                   id: 'SATIS_KANALLARI',
-                  label: '3. Üretim & Satış Kanalları',
+                  label: 'Üretim (Fabrika)',
                   icon: Factory,
                 },
                 {
                   id: 'SOZLESMELER',
-                  label: '4. Sözleşmeler & Faturalar',
+                  label: 'Toptan Anlaşmalar',
                   icon: FileText,
                 },
               ] as const
@@ -1307,14 +1446,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   type="button"
                   data-testid={`trade-center-tab-${tb.id}`}
                   onClick={() => setTradeTab(tb.id)}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+                  className={`min-h-[48px] py-2 px-2.5 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
                     tradeTab === tb.id
                       ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{tb.label}</span>
+                  <span className="leading-tight text-center">{tb.label}</span>
                 </button>
               );
             })}
@@ -1322,6 +1461,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'TEDARIK' && (
             <div className="space-y-3">
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
+                💡 Depo: Malları toptan sakladığın yer. Dükkânlara buradan mal dağıtabilir, fabrikaya buradan hammadde verebilirsin.
+              </div>
               {/* 3 Depo Stok Özeti (Hammadde / Mamul / Dağıtım) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {trade.warehouses.map((wh) => (
@@ -1498,6 +1640,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'TESLIMATLAR' && (
             <div className="space-y-3">
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
+                💡 Verdiğin siparişlerin kargo durumu. Araç (filo) sahibi olursan malı kendi araçlarınla, daha ucuza taşırsın.
+              </div>
               {/* Lojistik Filo & Araç Satın Alma */}
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -1639,10 +1784,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'SATIS_KANALLARI' && (
             <div className="space-y-3">
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
+                💡 Üretim: Hammaddeyi işleyip daha pahalı ürüne çevirmek. Örneğin un ve şekerden bisküvi yapmak. Reçete, hangi malzemeden ne üretileceğini söyler.
+              </div>
               {/* Reçeteli Üretim Zinciri */}
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Reçeteli Üretim Zinciri (Hammadde → Ara Ürün → Mamul)
+                  🏭 Üretim: hammaddeden ürüne
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <select
@@ -1716,6 +1864,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'SOZLESMELER' && (
             <div className="space-y-3">
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
+                💡 Toptan anlaşma: Bir müşteri firmayla belli miktarda mal satmak için önceden yaptığın anlaşma. Fiyat baştan bellidir, teslimat geciktirirsen ceza ödersin.
+              </div>
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2.5">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                   Kurumsal ve Kamu Tedarik Sözleşmeleri (

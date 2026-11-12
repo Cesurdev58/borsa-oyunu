@@ -446,3 +446,22 @@ export function makeLampPool(): THREE.Mesh {
   m.name = 'lampPool';
   return m;
 }
+
+/** Basit düşük poligonlu yaya. Bacaklar "legL"/"legR" adıyla yürüme animasyonu için bulunabilir. */
+export function makePerson(shirt: string, skin = '#e8b894'): THREE.Group {
+  const g = new THREE.Group();
+  const pants = stdMat('#2f3a4a');
+  const legL = new THREE.Group();
+  legL.name = 'legL';
+  legL.position.set(0, 0.95, -0.2);
+  legL.add(box(0.28, 0.95, 0.28, pants, 0, -0.47, 0));
+  const legR = new THREE.Group();
+  legR.name = 'legR';
+  legR.position.set(0, 0.95, 0.2);
+  legR.add(box(0.28, 0.95, 0.28, pants, 0, -0.47, 0));
+  g.add(legL, legR);
+  g.add(box(0.4, 0.8, 0.8, stdMat(shirt), 0, 1.35, 0));
+  g.add(box(0.36, 0.38, 0.38, stdMat(skin), 0, 2.0, 0));
+  g.add(box(0.4, 0.14, 0.4, stdMat('#3b2b20'), -0.02, 2.22, 0));
+  return g;
+}

@@ -200,6 +200,115 @@ const LOT_LABEL: Record<string, string> = {
   HOLDING_MERKEZI: 'HOLDİNG ARSASI',
 };
 
+
+/** Ana binalara ayrıntı: giriş basamakları, çalılar, çatı donanımı, bayrak direği, helikopter pisti, güneş paneli, yükleme rampası. */
+function addCoreDetails(g: THREE.Group, node: IsometricBuildingNode, w: number, d: number, lvl: number, rng: Rng): void {
+  const front = d * 0.4 + 1.2;
+  const stone = stdMat('#cfcabb');
+  const metal = stdMat('#9aa1a8', { metalness: 0.4, roughness: 0.5 });
+  const acUnit = (x: number, y: number, z: number): void => {
+    g.add(box(1.8, 0.9, 1.2, metal, x, y + 0.45, z));
+    g.add(cyl(0.45, 0.45, 0.12, stdMat('#4b5258'), x, y + 0.96, z, 8));
+  };
+  const flag = (x: number, z: number, color: string): void => {
+    g.add(cyl(0.1, 0.1, 7, stdMat('#d8d8d8', { metalness: 0.5 }), x, 3.5, z, 6));
+    g.add(box(2, 1.2, 0.08, stdMat(color), x + 1.05, 6.3, z));
+  };
+  const steps = (width: number): void => {
+    g.add(box(width, 0.35, 1.8, stone, 0, 0.18, front));
+    g.add(box(width - 0.8, 0.35, 1.2, stone, 0, 0.5, front - 0.2));
+  };
+  const bushes = (spread: number): void => {
+    for (const sx of [-1, 1]) {
+      const b = makeBush(0.9 + rng() * 0.3);
+      b.position.set(sx * spread, 0.5, front + 0.4);
+      g.add(b);
+    }
+  };
+
+  switch (node.id) {
+    case 'BORSA':
+      steps(w * 0.5);
+      bushes(w * 0.38);
+      flag(-w * 0.43, front - 0.4, '#c4422f');
+      flag(w * 0.43, front - 0.4, '#c4422f');
+      break;
+    case 'BANKA':
+      steps(w * 0.45);
+      bushes(w * 0.36);
+      flag(w * 0.43, front - 0.4, '#1f4f8f');
+      break;
+    case 'HABER_MERKEZI': {
+      const top = 14 + lvl * 2;
+      g.add(cyl(0.12, 0.2, 9, metal, -w * 0.22, top + 4.5, -d * 0.1, 6));
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), stdMat('#ff3b30', { emissive: '#ff3b30', emissiveIntensity: 1.2 })).translateX(-w * 0.22).translateY(top + 9.2).translateZ(-d * 0.1));
+      acUnit(w * 0.1, top, -d * 0.2);
+      acUnit(-w * 0.05, top, d * 0.1);
+      steps(w * 0.4);
+      bushes(w * 0.3);
+      break;
+    }
+    case 'OYUNCU_OFISI': {
+      const top = 8 + lvl * 1.6;
+      acUnit(w * 0.2, top, -d * 0.1);
+      acUnit(-w * 0.2, top, d * 0.05);
+      steps(w * 0.45);
+      bushes(w * 0.32);
+      break;
+    }
+    case 'SIRKET_MERKEZI': {
+      const top = 16 + lvl * 3;
+      acUnit(w * 0.15, top, -d * 0.15);
+      acUnit(-w * 0.15, top, d * 0.1);
+      g.add(cyl(0.1, 0.1, 5, metal, 0, top + 2.5, 0, 6));
+      steps(w * 0.4);
+      bushes(w * 0.3);
+      break;
+    }
+    case 'FABRIKA': {
+      const h = 7 + lvl * 0.8;
+      const dockZ = d * 0.4 + 1.4;
+      g.add(box(w * 0.5, 0.9, 2.4, stdMat('#8c8f93'), -w * 0.22, 0.45, dockZ));
+      for (let i = 0; i < 5; i++) {
+        g.add(box(1.1, 0.9, 1.1, stdMat(i % 2 ? '#b98a4e' : '#a6763d'), -w * 0.35 + i * 1.4, 1.35, dockZ));
+      }
+      g.add(box(w * 0.5, 0.18, 2.6, stdMat('#6e6b63'), -w * 0.22, 0.95, dockZ));
+      acUnit(w * 0.1, h, -d * 0.2);
+      break;
+    }
+    case 'ARGE_MERKEZI': {
+      const h = 9 + lvl * 1.5;
+      const panel = stdMat('#1d3a63', { metalness: 0.5, roughness: 0.25 });
+      for (let i = 0; i < 4; i++) {
+        const p = box(1.8, 0.12, 1.2, panel, w * 0.02 + i * 2.1, h + 0.7, -d * 0.18);
+        p.rotation.x = -0.35;
+        g.add(p);
+      }
+      steps(w * 0.4);
+      bushes(w * 0.3);
+      break;
+    }
+    case 'HOLDING_MERKEZI': {
+      const top = 28 + lvl * 4;
+      g.add(cyl(3.2, 3.2, 0.3, stdMat('#4a4f55'), 0, top + 0.15, 0, 18));
+      const h = sign('H', '#4a4f55', '#ffd23f', 3.6, 3.6, 128);
+      h.rotation.x = -Math.PI / 2;
+      h.position.set(0, top + 0.34, 0);
+      g.add(h);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        g.add(new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 4), stdMat('#ffb020', { emissive: '#ffb020', emissiveIntensity: 1.2 })).translateX(Math.cos(a) * 3.1).translateY(top + 0.4).translateZ(Math.sin(a) * 3.1));
+      }
+      steps(w * 0.38);
+      bushes(w * 0.28);
+      flag(-w * 0.4, front - 0.4, '#7c3aed');
+      break;
+    }
+    default:
+      break;
+  }
+}
+
 export function buildCore(node: IsometricBuildingNode): THREE.Group {
   const rng = createRng(`core-${node.id}`);
   const w = node.width * FOOT;
@@ -295,6 +404,8 @@ export function buildCore(node: IsometricBuildingNode): THREE.Group {
     default:
       g.add(makeBody({ w, h: 10, d, wall: '#cccccc' }, rng));
   }
+
+  addCoreDetails(g, node, w, d, lvl, rng);
 
   if (node.constructionInfo) {
     const lot = makeLot(w * 0.45, d * 0.45, 'GENİŞLETME', rng);

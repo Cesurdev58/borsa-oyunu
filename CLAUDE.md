@@ -90,6 +90,8 @@ Kurallar ve notlar:
   Boş dükkân arsası "DÜKKÂN AÇ" çimenlik arsa olarak görünür; boş `urban-ticaret-otel-5` Butik Otel olur.
 - Etiketler kalabalık olmasın diye yakınlaşınca (kamera mesafesi < `LABEL_NEAR`) blok etiketleri görünür; ana binalar, dükkânlar, seçili ve üzerine gelinen her zaman gösterilir.
 - Kilitli binalar çitli inşaat arsası + vinç olarak görünür.
+- Ekrandaki düğmelerin (sağ alt hız düğmeleri, üst bar, sol alt geçiş düğmesi) altına düşen etiketler otomatik gizlenir (`ThreeCityScene.ts`, `labelCovered`). Düğmelerin yeri değişirse oradaki sayıları güncelle.
+- Ana binalara ayrıntılar `models.ts` içindeki `addCoreDetails` ile eklenir (giriş basamağı, çalı, bayrak, çatı klimaları, helikopter pisti, güneş paneli, yükleme rampası).
 - Test sayfası `3d-deneme.html` ve `src/deneme3d/` silindi; yerine bu gerçek 3D şehir geldi.
 
 ## Bina görselleri (yalnızca eski izometrik görünüm için)
@@ -119,9 +121,8 @@ Kurallar ve notlar:
 
 ## Bilinen eksikler
 
-- 3D şehirde yaya yok; yalnızca araçlar hareket eder. Eski görünümdeki olay/nabız efektleri 3D'de yok.
+- 3D şehirde yayalar yalnızca üç kaldırım rotasında yürür (`WALK_PATHS`); binalara girip çıkmazlar. Eski görünümdeki olay/nabız efektleri 3D'de yok.
 - 3D modeller basit ve düşük poligonlu; ana binaların ayrıntısı artırılabilir ya da sahibinin vereceği hazır 3D model dosyalarıyla (.glb) değiştirilebilir.
-- En yakın yakınlaştırmada sağ alttaki hız düğmeleri bazı etiketlerin üstüne gelebilir.
 - Yazı tipi ve simge dosyaları ağ kısıtı olan ortamlarda yüklenemeyebilir (oyunu etkilemez).
 - Eski izometrik görünümde (klasik mod): Haber Merkezi, Merkez Bankası ve Holding tabanı yola yakın; 6 dükkân türü
   (büfe, manav, giyim, elektronik, mobilya, galeri) ve kalan ana binalar/şehir blokları PNG yerine eski kutu çizimiyle duruyor;

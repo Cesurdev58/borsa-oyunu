@@ -33,6 +33,7 @@ import {
   disposeObject,
   makeBush,
   makeCar,
+  makePerson,
   makeLamp,
   makeLampPool,
   makePine,
@@ -80,6 +81,7 @@ interface Entity {
   root: THREE.Group;
   model: THREE.Group | null;
   label: CSS2DObject;
+  labelCovered?: boolean;
   labelEl: HTMLDivElement;
   orb: THREE.Mesh | null;
   radius: number;
@@ -118,6 +120,19 @@ const ROUTES: Record<CityTrafficRouteId, RouteKey[]> = {
     { t: 1, x: 380, y: 380 },
   ],
 };
+
+/** Yaya yolları (dünya birimi): halka yolun dış ve iç kaldırımı, güney cadde kaldırımı. Kapalı halkalar başa döner. */
+const WALK_PATHS: [number, number][][] = [
+  [[-32.6, -25.6], [32.6, -25.6], [32.6, 21.6], [-32.6, 21.6], [-32.6, -25.6]],
+  [[-25.4, -18.6], [25.4, -18.6], [25.4, 14.6], [-25.4, 14.6], [-25.4, -18.6]],
+  [[-64, 26.4], [64, 26.4], [64, 32.7], [-64, 32.7], [-64, 26.4]],
+];
+
+function pathLength(path: [number, number][]): number {
+  let t = 0;
+  for (let i = 0; i < path.length - 1; i++) t += Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+  return t;
+}
 
 interface Roadway {
   x1: number;
@@ -202,6 +217,7 @@ export class ThreeCityScene {
   private handlers: CitySceneHandlers;
   private renderer: THREE.WebGLRenderer;
   private labelRenderer: CSS2DRenderer;
+  private labelPos = new THREE.Vector3();
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
   private controls: OrbitControls;
@@ -212,6 +228,8 @@ export class ThreeCityScene {
   private decoGroup = new THREE.Group();
   private decoStage = -1;
   private vehicleGroup = new THREE.Group();
+  private walkerGroup = new THREE.Group();
+  private walkers: { obj: THREE.Group; path: number; offset: number; speed: number; legL?: THREE.Object3D; legR?: THREE.Object3D }[] = [];
   private vehicles: { obj: THREE.Group; route: CityTrafficRouteId; duration: number; delay: number }[] = [];
   private trafficKey = '';
   private selRing: THREE.Mesh;
@@ -291,6 +309,8 @@ export class ThreeCityScene {
     this.buildForestBelt();
     this.scene.add(this.decoGroup);
     this.scene.add(this.vehicleGroup);
+    this.scene.add(this.walkerGroup);
+    this.buildWalkers();
 
     const ringMat = (color: string, opacity: number) =>
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false });
@@ -792,6 +812,57 @@ export class ThreeCityScene {
     }
   }
 
+  // ---------- Yayalar ----------
+
+  private buildWalkers(): void {
+    const shirts = ['#d94a3a', '#3a79c9', '#f0c63a', '#2f9e6b', '#8a6bd6', '#e8e6df', '#e07a3a', '#47b0c9'];
+    const rng = createRng('yayalar');
+    WALK_PATHS.forEach((path, pi) => {
+      const count = pi === 0 ? 7 : pi === 1 ? 6 : 5;
+      for (let i = 0; i < count; i++) {
+        const obj = mark(makePerson(shirts[Math.floor(rng() * shirts.length)]));
+        obj.scale.setScalar(0.95);
+        this.walkerGroup.add(obj);
+        this.walkers.push({
+          obj,
+          path: pi,
+          offset: rng() * pathLength(path),
+          speed: (1.3 + rng() * 0.7) * (rng() < 0.5 ? 1 : -1),
+          legL: obj.getObjectByName('legL') ?? undefined,
+          legR: obj.getObjectByName('legR') ?? undefined,
+        });
+      }
+    });
+  }
+
+  private moveWalkers(dt: number): void {
+    for (const w of this.walkers) {
+      const path = WALK_PATHS[w.path];
+      const total = pathLength(path);
+      w.offset = (((w.offset + w.speed * dt) % total) + total) % total;
+      let d = w.offset;
+      let i = 0;
+      while (i < path.length - 1) {
+        const segLen = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+        if (d <= segLen || i === path.length - 2) break;
+        d -= segLen;
+        i++;
+      }
+      const a = path[i];
+      const b = path[i + 1];
+      const segLen = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const f = Math.min(1, d / segLen);
+      const dirx = (b[0] - a[0]) / segLen;
+      const dirz = (b[1] - a[1]) / segLen;
+      const sign = w.speed < 0 ? -1 : 1;
+      const swing = Math.sin(this.elapsed * 6 + w.offset) * 0.6;
+      w.obj.position.set(a[0] + (b[0] - a[0]) * f, 0.2 + Math.abs(swing) * 0.06, a[1] + (b[1] - a[1]) * f);
+      w.obj.rotation.y = Math.atan2(-dirz * sign, dirx * sign);
+      if (w.legL) w.legL.rotation.z = swing;
+      if (w.legR) w.legR.rotation.z = -swing;
+    }
+  }
+
   // ---------- Kamera ----------
 
   setZoomPreset(preset: CityZoomPreset): void {
@@ -914,7 +985,10 @@ export class ThreeCityScene {
     this.controls.update();
 
     this.moveVehicles();
+    this.moveWalkers(this.paused ? 0 : dt);
     const near = this.camera.position.distanceTo(this.controls.target) < LABEL_NEAR;
+    const vw = this.container.clientWidth;
+    const vh = this.container.clientHeight;
     for (const [key, e] of this.entities) {
       if (e.kind === 'block') {
         const show = near || SHOP_SLOT_IDS.has(e.id) || key === this.selectedKey || key === this.hoverKey;
@@ -922,6 +996,15 @@ export class ThreeCityScene {
           e.labelShown = show;
           e.label.visible = show;
         }
+      }
+      // Etiket, ekrandaki düğmelerin (sağ alt hız düğmeleri, üst bar) altına düşerse gizlenir.
+      this.labelPos.setFromMatrixPosition(e.label.matrixWorld).project(this.camera);
+      const sx = (this.labelPos.x * 0.5 + 0.5) * vw;
+      const sy = (-this.labelPos.y * 0.5 + 0.5) * vh;
+      const covered = (sy > vh - 78 && sx > vw - 300) || (sy < 62 && sx > vw - 330) || (sy < 52 && sx < 330) || (sy > vh - 56 && sx < 190);
+      if (covered !== e.labelCovered) {
+        e.labelCovered = covered;
+        e.label.element.style.visibility = covered ? 'hidden' : 'visible';
       }
       if (e.orb) e.orb.position.y = e.top + 3.2 + Math.sin(time * 2 + e.root.position.x) * 0.35;
       const smoke = e.model?.getObjectByName('smoke');

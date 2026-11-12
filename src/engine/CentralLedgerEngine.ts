@@ -24,6 +24,7 @@ import {
   TransactionCategory,
 } from '../models/finance';
 import { SimulationState } from '../models/simulation';
+import { WalletEngine } from './WalletEngine';
 
 export const ACCOUNT_IDS = {
   PLAYER_PERSONAL: 'ACC-PLAYER-PERSONAL',
@@ -452,9 +453,7 @@ export class CentralLedgerEngine {
     state.personalCash = personalAcc ? personalAcc.balance : 0;
     state.investmentCash = investAcc ? investAcc.balance : state.cash;
     state.holdingCash = holdingAcc ? holdingAcc.balance : 0;
-    state.cash = Number(
-      (state.personalCash + state.investmentCash).toFixed(2)
-    );
+    WalletEngine.setBalance(state, state.personalCash + state.investmentCash);
 
     if (state.playerCompany) {
       const pc = state.playerCompany;
@@ -872,9 +871,7 @@ export class CentralLedgerEngine {
     state.personalCash = personalAcc ? personalAcc.balance : 0;
     state.investmentCash = investAcc ? investAcc.balance : 0;
     state.holdingCash = holdingAcc ? holdingAcc.balance : 0;
-    state.cash = Number(
-      (state.personalCash + state.investmentCash).toFixed(2)
-    );
+    WalletEngine.setBalance(state, state.personalCash + state.investmentCash);
 
     if (state.playerCompany) {
       const pc = state.playerCompany;

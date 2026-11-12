@@ -43,6 +43,7 @@ import {
 } from '../models/trade';
 import { AccountingEngine } from './AccountingEngine';
 import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
+import { WalletEngine } from './WalletEngine';
 import { CompanyEngine } from './CompanyEngine';
 import { RandomEngine } from './RandomEngine';
 import { ValuationEngine } from './ValuationEngine';
@@ -1688,7 +1689,7 @@ export class TradeAndShopEngine {
           totalCapitalSpent: 0,
         };
       }
-      state.cash = Number((state.cash - totalNeeded).toFixed(2));
+      WalletEngine.spend(state, totalNeeded);
       CentralLedgerEngine.recordPostedAccountingEntry(state, {
         idempotencyKey: `SHOP-OPEN-PLAYER-D${state.day}-S${ts.shopSeq + 1}`,
         sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
@@ -1862,7 +1863,7 @@ export class TradeAndShopEngine {
         (shop.cashAccountBalance - fromShop).toFixed(2)
       );
       if (fromPlayer > 0) {
-        state.cash = Number((state.cash - fromPlayer).toFixed(2));
+        WalletEngine.spend(state, fromPlayer);
       }
     }
 
@@ -1952,7 +1953,7 @@ export class TradeAndShopEngine {
           message: `Kişisel kullanılabilir nakit (₺${spendable.toLocaleString('tr-TR')}) yetersiz.`,
         };
       }
-      state.cash = Number((state.cash - cleanAmount).toFixed(2));
+      WalletEngine.spend(state, cleanAmount);
       shop.cashAccountBalance = Number(
         (shop.cashAccountBalance + cleanAmount).toFixed(2)
       );
@@ -1970,7 +1971,7 @@ export class TradeAndShopEngine {
       shop.cashAccountBalance = Number(
         (shop.cashAccountBalance - cleanAmount).toFixed(2)
       );
-      state.cash = Number((state.cash + cleanAmount).toFixed(2));
+      WalletEngine.earn(state, cleanAmount);
       return {
         success: true,
         message: `${shop.nameTR} kasasından kişisel hesaba ₺${cleanAmount.toLocaleString('tr-TR')} kâr/nakit çekildi.`,
@@ -2363,7 +2364,7 @@ export class TradeAndShopEngine {
           (targetShop.cashAccountBalance - paidFromShop).toFixed(2)
         );
         if (paidFromPersonal > 0) {
-          state.cash = Number((state.cash - paidFromPersonal).toFixed(2));
+          WalletEngine.spend(state, paidFromPersonal);
           targetShop.totalInvestedCapital = Number(
             (targetShop.totalInvestedCapital + paidFromPersonal).toFixed(2)
           );
@@ -2381,7 +2382,7 @@ export class TradeAndShopEngine {
             shipment: null,
           };
         }
-        state.cash = Number((state.cash - totalCost).toFixed(2));
+        WalletEngine.spend(state, totalCost);
       }
       paidAmount = totalCost;
     } else {
@@ -2590,7 +2591,7 @@ export class TradeAndShopEngine {
           (targetShop.cashAccountBalance + refundedAmount).toFixed(2)
         );
       } else {
-        state.cash = Number((state.cash + refundedAmount).toFixed(2));
+        WalletEngine.earn(state, refundedAmount);
       }
       order.paidAmount = 0;
     } else if (order.paymentMethod === 'CREDIT' && order.payableAmount > 0) {
@@ -3206,7 +3207,7 @@ export class TradeAndShopEngine {
       );
     } else {
       const cashPaid = Math.min(state.cash, operatingCashCost);
-      state.cash = Number((state.cash - cashPaid).toFixed(2));
+      WalletEngine.spend(state, cashPaid);
     }
 
     const totalProductionCost = Number(
@@ -3331,7 +3332,7 @@ export class TradeAndShopEngine {
           vehicle: null,
         };
       }
-      state.cash = Number((state.cash - spec.purchaseCost).toFixed(2));
+      WalletEngine.spend(state, spec.purchaseCost);
     }
 
     ts.vehicleSeq += 1;
@@ -3664,7 +3665,7 @@ export class TradeAndShopEngine {
           ).toFixed(2)
         );
       } else {
-        state.cash = Number((state.cash + grossRevenue).toFixed(2));
+        WalletEngine.earn(state, grossRevenue);
       }
     }
 
@@ -3892,7 +3893,7 @@ export class TradeAndShopEngine {
     }
 
     if (additionalCash > 0) {
-      state.cash = Number((state.cash - additionalCash).toFixed(2));
+      WalletEngine.spend(state, additionalCash);
     }
 
     // Tüm dükkânları kurumsal şubeye dönüştür (hiçbir dükkân, stok veya geçmiş silinmez!)
@@ -4509,7 +4510,7 @@ export class TradeAndShopEngine {
           shop.cashAccountBalance = 0;
           const spendable = Math.max(0, state.cash - reservedOrderCash);
           if (spendable >= shortfall) {
-            state.cash = Number((state.cash - shortfall).toFixed(2));
+            WalletEngine.spend(state, shortfall);
             shop.totalInvestedCapital = Number(
               Math.max(5_000, shop.totalInvestedCapital - shortfall).toFixed(2)
             );
@@ -4613,7 +4614,7 @@ export class TradeAndShopEngine {
             ).toFixed(2)
           );
         } else {
-          state.cash = Number((state.cash + collected).toFixed(2));
+          WalletEngine.earn(state, collected);
         }
 
         ts.todaySummary.receivablesCollected = Number(
@@ -4667,7 +4668,7 @@ export class TradeAndShopEngine {
         } else {
           const spendable = Math.max(0, state.cash - reservedOrderCash);
           if (spendable >= toPay) {
-            state.cash = Number((state.cash - toPay).toFixed(2));
+            WalletEngine.spend(state, toPay);
             inv.paidAmount = inv.totalAmount;
             inv.remainingAmount = 0;
             inv.status = 'PAID';

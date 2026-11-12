@@ -123,6 +123,7 @@ import {
   TradeAndShopEngine,
   VEHICLE_CATALOG,
 } from './TradeAndShopEngine';
+import { WalletEngine } from './WalletEngine';
 import { ValuationEngine } from './ValuationEngine';
 
 export {
@@ -1178,7 +1179,7 @@ export class SimulationEngine {
     // Önceki günden tahakkuk etmiş temettü alacağı varsa nakde tahsil et
     if (this.state.accruedDividendsReceivable > 0) {
       const collected = this.state.accruedDividendsReceivable;
-      this.state.cash = Number((this.state.cash + collected).toFixed(2));
+      WalletEngine.earn(this.state, collected);
       this.state.accruedDividendsReceivable = 0;
       dividendsReceivedToday = Number(
         (dividendsReceivedToday + collected).toFixed(2)
@@ -1435,9 +1436,7 @@ export class SimulationEngine {
         ).toFixed(2)
       );
       if (this.state.cash >= dailyDebtInterest) {
-        this.state.cash = Number(
-          (this.state.cash - dailyDebtInterest).toFixed(2)
-        );
+        WalletEngine.spend(this.state, dailyDebtInterest);
       } else {
         this.state.shortTermDebt = Number(
           (this.state.shortTermDebt + dailyDebtInterest).toFixed(2)
@@ -1537,9 +1536,7 @@ export class SimulationEngine {
               ).toFixed(2)
             );
 
-            this.state.cash = Number(
-              (this.state.cash + playerPayout).toFixed(2)
-            );
+            WalletEngine.earn(this.state, playerPayout);
             pos.totalDividendCollected = Number(
               (pos.totalDividendCollected + playerPayout).toFixed(2)
             );
@@ -1610,9 +1607,7 @@ export class SimulationEngine {
             ).toFixed(2)
           );
 
-          this.state.cash = Number(
-            (this.state.cash + synergyPayout).toFixed(2)
-          );
+          WalletEngine.earn(this.state, synergyPayout);
           holdingSynergyReceivedToday = Number(
             (holdingSynergyReceivedToday + synergyPayout).toFixed(2)
           );
@@ -2033,9 +2028,7 @@ export class SimulationEngine {
         });
 
         if (result.success) {
-          this.state.cash = Number(
-            (newCash + otherReservedCash).toFixed(2)
-          );
+          WalletEngine.setBalance(this.state, newCash + otherReservedCash);
           order.executedShares += result.sharesExecuted;
           order.remainingShares = 0;
           order.averageExecutionPrice = result.executionPrice;
@@ -2093,7 +2086,7 @@ export class SimulationEngine {
         });
 
         if (result.success) {
-          this.state.cash = newCash;
+          WalletEngine.setBalance(this.state, newCash);
           order.executedShares += result.sharesExecuted;
           order.remainingShares = 0;
           order.averageExecutionPrice = result.executionPrice;
@@ -2315,7 +2308,7 @@ export class SimulationEngine {
 
   private syncPlayerCashBuckets(): void {
     const cleanTotalCash = Number(Math.max(0, this.state.cash).toFixed(2));
-    this.state.cash = cleanTotalCash;
+    WalletEngine.setBalance(this.state, cleanTotalCash);
     const personal = Number(
       Math.max(0, this.state.personalCash || 0).toFixed(2)
     );
@@ -2570,7 +2563,7 @@ export class SimulationEngine {
       };
     }
 
-    this.state.cash = Number((newCash + reservedCash).toFixed(2));
+    WalletEngine.setBalance(this.state, newCash + reservedCash);
     if (
       this.state.playerCompany &&
       this.state.playerCompany.ticker === ticker
@@ -2677,7 +2670,7 @@ export class SimulationEngine {
       };
     }
 
-    this.state.cash = newCash;
+    WalletEngine.setBalance(this.state, newCash);
     if (
       this.state.playerCompany &&
       this.state.playerCompany.ticker === ticker
@@ -2768,7 +2761,7 @@ export class SimulationEngine {
       return { success: false, message: res.message };
     }
 
-    this.state.cash = Number((res.newPlayerCash + reservedCash).toFixed(2));
+    WalletEngine.setBalance(this.state, res.newPlayerCash + reservedCash);
     this.state.playerCompany = res.company;
     this.recalculateFinancialsAndStages();
     this.pendingDailyActions.push(res.message);
@@ -2837,7 +2830,7 @@ export class SimulationEngine {
       return { success: false, message: res.message };
     }
 
-    this.state.cash = Number((res.newPlayerCash + reservedCash).toFixed(2));
+    WalletEngine.setBalance(this.state, res.newPlayerCash + reservedCash);
     this.recalculateFinancialsAndStages();
     this.pendingDailyActions.push(res.message);
 
@@ -3389,7 +3382,7 @@ export class SimulationEngine {
       return result;
     }
 
-    this.state.cash = newPlayerCash;
+    WalletEngine.setBalance(this.state, newPlayerCash);
     this.recalculateFinancialsAndStages();
     this.pendingDailyActions.push(result.message);
 
@@ -3463,7 +3456,7 @@ export class SimulationEngine {
       return result;
     }
 
-    this.state.cash = Number((newPlayerCash + reservedCash).toFixed(2));
+    WalletEngine.setBalance(this.state, newPlayerCash + reservedCash);
     this.state.longTermDebt = newPlayerLongTermDebt;
     this.recalculateFinancialsAndStages();
     this.pendingDailyActions.push(result.message);

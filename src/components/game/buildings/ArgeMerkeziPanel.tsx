@@ -52,22 +52,19 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-ARGE_MERKEZI-active"
     >
-      <div className="grid grid-cols-2 gap-2.5 tabular-nums tabular-nums">
-        <div className="p-3 rounded-2xl bg-violet-50/70 border border-violet-200">
-          <div className="text-violet-800 text-[13px]">
-            🔬 Günlük Ar-Ge parası
-          </div>
-          <div className="text-base font-bold text-violet-950 mt-0.5">
-            {formatCurrency(pc.dailyRdBudget)}/gün
-          </div>
+      <div className="rounded-3xl bg-gradient-to-br from-violet-100 to-fuchsia-100 p-5 text-center space-y-2">
+        <div className="text-sm font-bold text-violet-800">⭐ Ürün kalitesi</div>
+        <div className="text-5xl font-extrabold text-violet-900 tabular-nums">
+          x{pc.techQualityMultiplier.toFixed(2)}
         </div>
-        <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-emerald-800 text-[13px]">
-            ⭐ Ürün kalitesi
-          </div>
-          <div className="text-base font-bold text-emerald-950 mt-0.5">
-            x{pc.techQualityMultiplier.toFixed(4)}
-          </div>
+        <div className="h-4 rounded-full bg-white/70 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500"
+            style={{ width: `${qualityProgressPct}%` }}
+          />
+        </div>
+        <div className="text-sm font-bold text-violet-800 tabular-nums">
+          🔬 Her gün {formatCurrency(pc.dailyRdBudget)}
         </div>
       </div>
 
@@ -80,19 +77,6 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         <HelpTip text="Ar-Ge parası şirket kasandan her gün düşer. Kalite yükselince ürün fiyatın artar ama ilk günlerde kasan biraz azalır." />
       </div>
 
-      <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
-        <div className="flex justify-between font-semibold text-slate-800">
-          <span>🚀 Kalite seviyesi</span>
-          <span className="tabular-nums">%{qualityProgressPct}</span>
-        </div>
-        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-violet-600 rounded-full transition-all"
-            style={{ width: `${qualityProgressPct}%` }}
-          />
-        </div>
-      </div>
-
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -101,7 +85,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               dailyRdBudget: pc.dailyRdBudget + 10_000,
             })
           }
-          className="min-h-[44px] px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold"
+          className="min-h-[52px] px-3 py-2 rounded-2xl bg-gradient-to-b from-violet-400 to-violet-600 text-white font-extrabold shadow active:scale-95"
         >
           ➕ Ar-Ge parasını artır (+₺10.000)
         </button>
@@ -112,7 +96,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               dailyRdBudget: Math.max(0, pc.dailyRdBudget - 5_000),
             })
           }
-          className="min-h-[44px] px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold"
+          className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
         >
           ➖ Azalt (−₺5.000)
         </button>

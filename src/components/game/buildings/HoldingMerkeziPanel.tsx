@@ -42,34 +42,23 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start gap-2.5">
           <Lock className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
           <div>
-            <div className="font-bold text-amber-950">
-              Holding Merkezi Kilit Koşulu (Aşama 4)
+            <div className="font-extrabold text-amber-950 text-base">
+              🔒 Holding kilitli
             </div>
             <p className="text-amber-900 text-[13px] mt-0.5">
-              Bir NPC şirketinde en az %5 stratejik pay topladığınızda veya
-              şirketinizi halka arz ettiğinizde Holding Aşaması aktifleşir.
-              Aşağıdan öncü pay alabilir veya devralma hedeflerini inceleyebilirsiniz.
+              Bir şirketin %5'ini al ya da şirketini halka arz et.
             </p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2.5 tabular-nums tabular-nums">
-        <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-200">
-          <div className="text-[13px] text-rose-800">
-            Kontrol Edilen Bağlı Ortaklıklar
-          </div>
-          <div className="text-base font-bold text-rose-950 mt-0.5">
-            {state.controlledSubsidiaries.length} Şirket
-          </div>
+      <div className="rounded-3xl bg-gradient-to-br from-rose-100 to-orange-100 p-5 text-center space-y-2 tabular-nums">
+        <div className="text-sm font-bold text-rose-800">🏛️ Bağlı şirketlerin</div>
+        <div className="text-5xl font-extrabold text-rose-900">
+          {state.controlledSubsidiaries.length}
         </div>
-        <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-[13px] text-emerald-800">
-            Toplam Holding Sinerji Geliri
-          </div>
-          <div className="text-base font-bold text-emerald-950 mt-0.5">
-            {formatCurrency(state.totalSynergyEarned)}
-          </div>
+        <div className="text-sm font-bold text-emerald-700">
+          💰 Holding geliri: {formatCurrency(state.totalSynergyEarned)}
         </div>
       </div>
 
@@ -79,7 +68,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div>
               <label className="block text-[13px] font-semibold text-slate-600 mb-1">
-                Hedef Rakip Şirket Seçin
+                Hangi şirket?
               </label>
               <select
                 value={selectedTarget.ticker}
@@ -96,11 +85,10 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
             <div className="text-right tabular-nums">
               <div className="text-xs font-bold text-slate-900">
-                Piyasa Değeri: {formatCurrency(selectedTarget.equityValue)}
+                💎 {formatCurrency(selectedTarget.equityValue)}
               </div>
               <div className="text-[13px] text-slate-500">
-                Mevcut Pay: %{selectedTarget.playerOwnershipPct.toFixed(2)} (
-                {selectedTarget.controlLevel})
+                Payın: %{selectedTarget.playerOwnershipPct.toFixed(1)}
               </div>
             </div>
           </div>
@@ -113,7 +101,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               className="w-4 h-4 rounded"
             />
             <span>
-              Kaldıraçlı Satın Alma (LBO Borç Finansmanı Kullan - %60’a kadar)
+              Borç alarak satın al (%60'a kadar)
             </span>
           </label>
 
@@ -126,9 +114,9 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   Math.max(10, Math.ceil(selectedTarget.totalShares * 0.05))
                 )
               }
-              className="min-h-[44px] px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold"
+              className="min-h-[56px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-900 font-extrabold active:scale-95"
             >
-              %5 Stratejik Öncü Pay Satın Al ({selectedTarget.ticker})
+              📈 %5 pay al ({selectedTarget.ticker})
             </button>
             <button
               type="button"
@@ -139,11 +127,11 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   useDebtFinancing: useDebtForTakeover,
                 })
               }
-              className="min-h-[44px] px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold"
+              className="min-h-[56px] px-3 py-2 rounded-2xl bg-gradient-to-b from-rose-400 to-rose-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
             >
               {selectedTarget.isControlledByPlayer
-                ? 'Çoğunluk Kontrolü Sizde (%51+)'
-                : `%51+ Düşmanca Devralma Başlat (${selectedTarget.ticker})`}
+                ? '✅ Şirket senin'
+                : `🏛️ Şirketi devral (${selectedTarget.ticker})`}
             </button>
           </div>
         </div>
@@ -152,7 +140,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       {/* İştirakler ve Sahiplik Tablosu */}
       <div className="space-y-1.5">
         <h3 className="font-bold text-slate-900">
-          Borsa Şirketleri Ortaklık & Kontrol Durumu
+          📋 Paylarım
         </h3>
         <div className="space-y-1.5 max-h-52 overflow-y-auto">
           {npcStocks.map((s) => (

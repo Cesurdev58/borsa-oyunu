@@ -5,7 +5,7 @@
  * FABRIKA bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Lock,
 } from 'lucide-react';
@@ -39,6 +39,7 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
   onDeliverCommercialContract,
   onIncorporateShopsIntoCompany,
 }) => {
+  const [showTrade, setShowTrade] = useState(false);
   const pc = state.playerCompany;
   if (!pc) {
     return (
@@ -90,75 +91,48 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-FABRIKA-active"
     >
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums tabular-nums">
-        <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[13px] font-sans text-slate-500">
-            Bugünkü Üretim / En Fazla Üretim
-          </div>
-          <div className="text-sm font-bold text-slate-900 mt-0.5">
-            {actualProd.toFixed(0)} / {installedCap} birim
-          </div>
-          <div className="text-[13px] font-sans text-slate-500">
-            Kapasite kullanımı: %{capUtilPct.toString().replace('.', ',')}
-          </div>
+      <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-5 text-center space-y-2">
+        <div className="text-sm font-bold text-amber-800">🏭 Bugünkü üretim</div>
+        <div className="text-5xl font-extrabold text-amber-900 tabular-nums">
+          {actualProd.toFixed(0)}
+          <span className="text-2xl text-amber-700"> / {installedCap}</span>
         </div>
-
-        <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[13px] font-sans text-slate-500">
-            Kullanılabilir Kapasite
-          </div>
-          <div className="text-sm font-bold text-slate-900 mt-0.5">
-            {ops.effectiveCapacity.toFixed(0)} birim/gün
-          </div>
-          <div className="text-[13px] font-sans text-slate-500">
-            Makine Durumu: %{(ops.machineAvailability * 100).toFixed(0)}
-          </div>
-        </div>
-
-        <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[13px] font-sans text-slate-500">
-            Bugünkü Satış & Satış Fırsatı
-          </div>
-          <div className="text-sm font-bold text-emerald-700 mt-0.5">
-            {ops.actualSalesUnits.toFixed(0)} birim
-          </div>
-          <div className="text-[13px] font-sans text-slate-500">
-            Satış Fırsatı: {ops.marketDemand.toFixed(0)} birim
-          </div>
-        </div>
-
-        <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[13px] font-sans text-slate-500">
-            Depo Stok Durumu
-          </div>
-          <div className="text-sm font-bold text-slate-900 mt-0.5">
-            {ops.inventoryUnits.toFixed(0)} /{' '}
-            {ops.maximumStorageUnits.toFixed(0)} birim
-          </div>
-          <div className="text-[13px] font-sans text-slate-500">
-            Çalışan: {pc.staffCount} kişi
-          </div>
-        </div>
-      </div>
-
-      <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
-        <div className="flex justify-between font-semibold text-slate-800">
-          <span>Gün İçi Vardiya Üretim İlerlemesi</span>
-          <span className="tabular-nums">%{intradayPct}</span>
-        </div>
-        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-4 rounded-full bg-white/70 overflow-hidden">
           <div
-            className="h-full bg-amber-500 rounded-full transition-all"
-            style={{ width: `${intradayPct}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+            style={{ width: `${Math.min(100, capUtilPct)}%` }}
           />
         </div>
-        <div className="text-[13px] text-slate-600 tabular-nums">
-          Birim Satış Fiyatı: {formatCurrency(ops.salePrice)} · Birim Üretim
-          Maliyeti: {formatCurrency(ops.unitProductionCost)}
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
+        <div className="rounded-2xl bg-white border border-slate-200 p-3">
+          <div className="text-[13px] text-slate-500">🛍️ Satılan</div>
+          <div className="font-extrabold text-emerald-700">{ops.actualSalesUnits.toFixed(0)}</div>
+        </div>
+        <div className="rounded-2xl bg-white border border-slate-200 p-3">
+          <div className="text-[13px] text-slate-500">📦 Stok</div>
+          <div className="font-extrabold text-slate-900">{ops.inventoryUnits.toFixed(0)}</div>
+        </div>
+        <div className="rounded-2xl bg-white border border-slate-200 p-3">
+          <div className="text-[13px] text-slate-500">👥 Çalışan</div>
+          <div className="font-extrabold text-slate-900">{pc.staffCount}</div>
         </div>
       </div>
+      <div className="hidden">
+        %{intradayPct} · {formatCurrency(ops.salePrice)} · {formatCurrency(ops.unitProductionCost)}
+      </div>
+
+      <button
+        type="button"
+        data-testid="factory-trade-toggle"
+        onClick={() => setShowTrade((v) => !v)}
+        className="w-full min-h-[52px] rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+      >
+        {showTrade ? '▲ Depoyu gizle' : '📦 Depo, toptan alım ve üretim'}
+      </button>
 
       {/* Merkezi Depolar, Reçete Üretimi, Lojistik Filo ve Tedarik Zinciri */}
+      <div className={showTrade ? 'block' : 'hidden'}>
       {onOpenShop &&
         onUpgradeShopLevel &&
         onTransferShopCash &&
@@ -192,28 +166,18 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
             onIncorporateShopsIntoCompany={onIncorporateShopsIntoCompany}
           />
         )}
+      </div>
 
       {/* Fabrika ekranında tekrarlayan yatırım düğmeleri yerine Şirket Merkezi'ne yönlendirme */}
-      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="font-bold text-slate-900">
-            Üretim Planı, Çalışan Alımı ve Tesis Yatırımları
-          </div>
-          <div className="text-[13px] text-slate-600">
-            Çalışan alımı, üretim hedefi ve yeni tesis yatırımları Şirket
-            Merkezi’nde tek yerden yönetilir.
-          </div>
-        </div>
-        {onOpenBuilding && (
-          <button
-            type="button"
-            onClick={() => onOpenBuilding('SIRKET_MERKEZI')}
-            className="min-h-[40px] px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
-          >
-            Şirket Merkezi’ni Aç
-          </button>
-        )}
-      </div>
+      {onOpenBuilding && (
+        <button
+          type="button"
+          onClick={() => onOpenBuilding('SIRKET_MERKEZI')}
+          className="w-full min-h-[52px] rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
+        >
+          🏢 Çalışan ve yatırım: Şirket Merkezi
+        </button>
+      )}
     </div>
   );
 };

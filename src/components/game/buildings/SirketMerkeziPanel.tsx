@@ -570,22 +570,30 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       data-testid="sheet-content-SIRKET_MERKEZI-active"
     >
       {/* Şirket Başlık Özeti */}
-      <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="text-sm font-bold text-slate-900">
-            {pc.name} ({pc.ticker})
+      <div className="p-4 rounded-3xl bg-gradient-to-br from-violet-500 via-indigo-500 to-sky-500 text-white shadow-lg space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/25 flex items-center justify-center text-2xl shrink-0">
+            🏢
           </div>
-          <div className="text-[13px] text-slate-600">
-            Sektör: {pc.sector} · Gün: {pc.operatingDays} · Kredi Notu:{' '}
-            <strong className="text-slate-900">{pc.creditScore ?? 680}</strong>
+          <div className="min-w-0">
+            <div className="text-base font-extrabold truncate">{pc.name}</div>
+            <div className="text-sm opacity-95">
+              {pc.ticker} · {pc.operatingDays}. gün
+            </div>
           </div>
         </div>
-        <div className="text-right tabular-nums tabular-nums">
-          <div className="text-xs font-bold text-slate-900">
-            Şirket Değeri: {formatCurrency(pc.equityValue)}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-white/20 p-2.5">
+            <div className="text-[13px] opacity-90">Şirket değeri</div>
+            <div className="font-extrabold tabular-nums">
+              {formatCurrency(pc.equityValue)}
+            </div>
           </div>
-          <div className="text-[13px] text-slate-600">
-            Şirket Kasası: {formatCurrency(pc.financials.cash)}
+          <div className="rounded-2xl bg-white/20 p-2.5">
+            <div className="text-[13px] opacity-90">Şirket kasası</div>
+            <div className="font-extrabold tabular-nums">
+              {formatCurrency(pc.financials.cash)}
+            </div>
           </div>
         </div>
       </div>
@@ -595,15 +603,15 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         role="tablist"
         aria-label="Şirket Yönetimi Bölümleri"
         data-testid="company-5-section-nav"
-        className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200"
+        className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-white border border-slate-200 shadow-sm"
       >
         {(
           [
-            { id: 'OZET', label: 'Özet' },
-            { id: 'URETIM', label: 'Üretim' },
-            { id: 'CALISANLAR', label: 'Çalışanlar' },
-            { id: 'FINANS', label: 'Finans' },
-            { id: 'GELISIM', label: 'Gelişim' },
+            { id: 'OZET', label: '🏠 Özet' },
+            { id: 'URETIM', label: '🏭 Üretim' },
+            { id: 'CALISANLAR', label: '👥 Ekip' },
+            { id: 'FINANS', label: '💰 Para' },
+            { id: 'GELISIM', label: '🚀 Gelişim' },
           ] as const
         ).map((tab) => (
           <button
@@ -613,13 +621,16 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             aria-selected={companySubTab === tab.id}
             data-testid={`company-subtab-${tab.id}`}
             onClick={() => setCompanySubTab(tab.id)}
-            className={`min-h-[38px] px-1.5 py-1 rounded-xl text-[13px] font-bold text-center transition-colors ${
+            className={`min-h-[52px] px-0.5 py-1 rounded-xl text-[12px] leading-tight font-bold text-center transition-colors ${
               companySubTab === tab.id
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-gradient-to-b from-violet-500 to-indigo-600 text-white shadow-md'
                 : 'text-slate-700 hover:bg-white'
             }`}
           >
-            {tab.label}
+            <span className="block text-lg leading-none">
+              {tab.label.split(' ')[0]}
+            </span>
+            <span className="block mt-0.5">{tab.label.split(' ')[1]}</span>
           </button>
         ))}
       </div>
@@ -629,26 +640,19 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'OZET' && (
         <div className="space-y-3" data-testid="company-section-OZET">
-          {/* En fazla 5 ana bilgi kartı */}
+          {/* 4 renkli ana kart (şirket kasası üstteki başlıkta zaten var) */}
           <div
-            className="grid grid-cols-2 sm:grid-cols-5 gap-2 tabular-nums tabular-nums"
+            className="grid grid-cols-2 gap-2 tabular-nums"
             data-testid="company-summary-5-cards"
           >
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                1. Şirket Kasası
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
-                {formatCurrency(pc.financials.cash)}
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                2. Bugünkü Kâr / Zarar
-              </div>
+            <div
+              className={`p-3 rounded-2xl ${
+                dailyNetProfit >= 0 ? 'bg-emerald-50' : 'bg-rose-50'
+              }`}
+            >
+              <div className="text-[13px] text-slate-600">💵 Bugünkü kâr</div>
               <div
-                className={`text-xs font-bold mt-0.5 ${
+                className={`text-base font-extrabold ${
                   dailyNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'
                 }`}
               >
@@ -656,31 +660,30 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 {formatCurrency(dailyNetProfit)}
               </div>
             </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                3. Bugünkü Üretim
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
+            <div className="p-3 rounded-2xl bg-sky-50">
+              <div className="text-[13px] text-slate-600">🏭 Bugünkü üretim</div>
+              <div className="text-base font-extrabold text-slate-900">
                 {actualProd.toFixed(0)} birim
               </div>
             </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                4. Bugünkü Satış
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
+            <div className="p-3 rounded-2xl bg-amber-50">
+              <div className="text-[13px] text-slate-600">🛍️ Bugünkü satış</div>
+              <div className="text-base font-extrabold text-slate-900">
                 {ops.actualSalesUnits.toFixed(0)} birim
               </div>
             </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 col-span-2 sm:col-span-1">
-              <div className="text-[13px] font-sans text-slate-500">
-                5. Şirket Durumu
-              </div>
+            <div
+              className={`p-3 rounded-2xl ${
+                companyHealthLabel.startsWith('Kritik')
+                  ? 'bg-rose-50'
+                  : companyHealthLabel === 'Sağlıklı'
+                  ? 'bg-emerald-50'
+                  : 'bg-amber-50'
+              }`}
+            >
+              <div className="text-[13px] text-slate-600">❤️ Şirket durumu</div>
               <div
-                className={`text-xs font-sans font-bold mt-0.5 ${
+                className={`text-base font-extrabold ${
                   companyHealthLabel.startsWith('Kritik')
                     ? 'text-rose-700'
                     : companyHealthLabel === 'Sağlıklı'

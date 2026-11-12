@@ -125,6 +125,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   formattedTime,
   formatCurrency,
 }) => {
+  const [showFactoryDetails, setShowFactoryDetails] = useState(false);
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
   const [selectedBuildingId, setSelectedBuildingId] =
@@ -406,25 +407,37 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 />
                 {state.playerCompany && (
                   <>
-                    <div className="pt-3 border-t border-slate-200">
-                      <h3 className="text-xs font-bold text-slate-900 mb-2">
-                        Fabrika Üretim Durumu
-                      </h3>
-                      <BuildingDetailContent
-                        {...sharedActions}
-                        buildingId="FABRIKA"
-                        state={state}
-                      />
-                    </div>
-                    <div className="pt-3 border-t border-slate-200">
-                      <h3 className="text-xs font-bold text-slate-900 mb-2">
-                        Ar-Ge & Teknoloji Kalitesi
-                      </h3>
-                      <BuildingDetailContent
-                        {...sharedActions}
-                        buildingId="ARGE_MERKEZI"
-                        state={state}
-                      />
+                    <button
+                      type="button"
+                      data-testid="company-factory-toggle"
+                      onClick={() => setShowFactoryDetails((v) => !v)}
+                      className="w-full min-h-[52px] rounded-2xl bg-gradient-to-r from-slate-700 to-slate-600 text-white font-extrabold text-sm shadow-md active:scale-95"
+                    >
+                      {showFactoryDetails
+                        ? '▲ Fabrika ve Ar-Ge ayrıntılarını gizle'
+                        : '🏭 Fabrika, Depo ve Ar-Ge ayrıntıları'}
+                    </button>
+                    <div className={showFactoryDetails ? 'space-y-4' : 'hidden'}>
+                      <div className="pt-3 border-t border-slate-200">
+                        <h3 className="text-base font-extrabold text-slate-900 mb-2">
+                          🏭 Fabrika Üretim Durumu
+                        </h3>
+                        <BuildingDetailContent
+                          {...sharedActions}
+                          buildingId="FABRIKA"
+                          state={state}
+                        />
+                      </div>
+                      <div className="pt-3 border-t border-slate-200">
+                        <h3 className="text-base font-extrabold text-slate-900 mb-2">
+                          🔬 Ar-Ge & Teknoloji Kalitesi
+                        </h3>
+                        <BuildingDetailContent
+                          {...sharedActions}
+                          buildingId="ARGE_MERKEZI"
+                          state={state}
+                        />
+                      </div>
                     </div>
                   </>
                 )}

@@ -775,65 +775,49 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'URETIM' && (
         <div className="space-y-3" data-testid="company-section-URETIM">
-          {/* İlk bakışta yalnızca 4 anlamlı kutu (6 renkli kart yerine!) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1">
-              <div className="text-[13px] text-slate-500">
-                Bugünkü Üretim & Kapasite
-              </div>
-              <div className="text-sm font-bold tabular-nums text-slate-900">
-                Üretim: {actualProd.toFixed(0)} / {installedCap} birim
-              </div>
-              <div className="text-[13px] text-slate-600 tabular-nums">
-                Kapasite kullanımı: %
-                {capacityUtilizationPct.toString().replace('.', ',')} ·
-                Kullanılabilir Kapasite: {effectiveCap.toFixed(0)} birim
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 p-5 space-y-3">
+            <div className="text-center">
+              <div className="text-sm font-bold text-teal-800">🏭 Bugünkü üretim</div>
+              <div className="text-5xl font-extrabold text-teal-900 tabular-nums">
+                {actualProd.toFixed(0)}
+                <span className="text-2xl text-teal-700"> / {installedCap}</span>
               </div>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1">
-              <div className="text-[13px] text-slate-500">
-                Ana Darboğaz Durumu
-              </div>
+            <div className="h-4 rounded-full bg-white/70 overflow-hidden">
               <div
-                data-testid="production-main-bottleneck"
-                className={`text-sm font-bold ${
-                  mainBottleneckTR.startsWith('Darboğaz yok')
-                    ? 'text-emerald-700'
-                    : 'text-amber-700'
-                }`}
-              >
-                {mainBottleneckTR}
-              </div>
-              <div className="text-[13px] text-slate-600">
-                Çalışan Verimi: x{ops.workforceEfficiency.toFixed(2)} · Makine
-                Durumu: %{(ops.machineAvailability * 100).toFixed(0)} · Vardiya
-                Düzeni: {wf.shifts} vardiya
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                style={{ width: `${Math.min(100, Number(capacityUtilizationPct) || 0)}%` }}
+              />
+            </div>
+            <div
+              data-testid="production-main-bottleneck"
+              className={`text-center text-sm font-extrabold ${
+                mainBottleneckTR.startsWith('Darboğaz yok')
+                  ? 'text-emerald-700'
+                  : 'text-amber-700'
+              }`}
+            >
+              {mainBottleneckTR.startsWith('Darboğaz yok') ? '✅ Her şey yolunda' : `⚠️ ${mainBottleneckTR}`}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">🛍️ Satılan</div>
+              <div className="font-extrabold text-emerald-700 tabular-nums">
+                {ops.actualSalesUnits.toFixed(0)}
               </div>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1">
-              <div className="text-[13px] text-slate-500">
-                Bugünkü Satış & Satış Fırsatı
-              </div>
-              <div className="text-sm font-bold tabular-nums text-emerald-700">
-                {ops.actualSalesUnits.toFixed(0)} birim satıldı
-              </div>
-              <div className="text-[13px] text-slate-600 tabular-nums">
-                Satış Fırsatı: {ops.marketDemand.toFixed(0)} birim/gün · Birim
-                Fiyat: {formatCurrency(ops.salePrice)}
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">📦 Stok</div>
+              <div className="font-extrabold text-slate-900 tabular-nums">
+                {ops.inventoryUnits.toFixed(0)}
               </div>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1">
-              <div className="text-[13px] text-slate-500">Stok Durumu</div>
-              <div className="text-sm font-bold tabular-nums text-slate-900">
-                {ops.inventoryUnits.toFixed(0)} /{' '}
-                {ops.maximumStorageUnits.toFixed(0)} birim
-              </div>
-              <div className="text-[13px] text-slate-600 tabular-nums">
-                Depo doluluğu: %{storageFillPct} · Birim maliyet:{' '}
-                {formatCurrency(ops.unitProductionCost)}
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">💰 Birim fiyat</div>
+              <div className="font-extrabold text-slate-900 tabular-nums">
+                {formatCurrency(ops.salePrice)}
               </div>
             </div>
           </div>
@@ -842,21 +826,17 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="font-bold text-slate-900">
-                  Üretim Hedefi ve Kapasite Kullanımı
-                </div>
-                <div className="text-[13px] text-slate-600">
-                  Üretimi artırmak için hedef miktar seçin ve gereken kaynakları
-                  görün.
+                <div className="text-lg font-extrabold text-slate-900">
+                  🚀 Daha çok üret
                 </div>
               </div>
               <button
                 type="button"
                 data-testid="toggle-increase-production-btn"
                 onClick={() => setShowProductionGuide((prev) => !prev)}
-                className="min-h-[40px] px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold shrink-0"
+                className="min-h-[48px] px-5 rounded-2xl bg-gradient-to-b from-teal-400 to-teal-600 text-white font-extrabold shadow shrink-0 active:scale-95"
               >
-                Üretimi Artır
+                Başla
               </button>
             </div>
 
@@ -1044,95 +1024,36 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'CALISANLAR' && (
         <div className="space-y-3" data-testid="company-section-CALISANLAR">
-          {/* 7 Temel Çalışan Metriği */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums tabular-nums">
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Toplam Çalışan
-              </div>
-              <div
-                data-testid="company-total-staff-count"
-                className="text-sm font-bold text-slate-900 mt-0.5"
-              >
-                {pc.staffCount} kişi
-              </div>
+          <div className="rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 p-5 text-center">
+            <div
+              data-testid="company-total-staff-count"
+              className="text-5xl font-extrabold text-indigo-900 tabular-nums"
+            >
+              {pc.staffCount}
             </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Üretimde Çalışan
-              </div>
-              <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {wf.departments.production} kişi
-              </div>
+            <div className="text-sm font-bold text-indigo-800 mt-1">
+              çalışan {workersShortfall > 0 ? `· ${workersShortfall} kişi eksik ⚠️` : '· yeterli ✅'}
             </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Yönetim Çalışanı
+            <div className="grid grid-cols-2 gap-2 mt-3 text-sm font-bold">
+              <div className="rounded-2xl bg-white/70 p-2">
+                <div className="text-[13px] text-slate-500">💸 Günlük maaş</div>
+                <div className="text-rose-700 tabular-nums">{formatCurrency(dailyTotalPayroll)}</div>
               </div>
-              <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {wf.departments.management} kişi{' '}
-                <span className="text-[13px] text-slate-500 font-normal">
-                  (Ar-Ge: {wf.departments.rd}, Satış: {wf.departments.sales})
-                </span>
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Gerekli Çalışan (Tam Kapasite)
-              </div>
-              <div
-                className={`text-sm font-bold mt-0.5 ${
-                  workersShortfall > 0 ? 'text-amber-700' : 'text-emerald-700'
-                }`}
-              >
-                {requiredWorkersForFullCap} kişi
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Ortalama Maaş
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
-                {formatCurrency(dailyWagePerWorker)}/gün
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Günlük Personel Gideri
-              </div>
-              <div className="text-xs font-bold text-rose-700 mt-0.5">
-                {formatCurrency(dailyTotalPayroll)}/gün
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 col-span-2">
-              <div className="text-[13px] font-sans text-slate-500">
-                Çalışan Memnuniyeti & Verim
-              </div>
-              <div className="text-xs font-bold text-emerald-700 mt-0.5">
-                %{workerSatisfactionPct} Memnuniyet · Çalışan Verimi: x
-                {ops.workforceEfficiency.toFixed(2)}
+              <div className="rounded-2xl bg-white/70 p-2">
+                <div className="text-[13px] text-slate-500">😊 Memnuniyet</div>
+                <div className="text-emerald-700 tabular-nums">%{workerSatisfactionPct}</div>
               </div>
             </div>
           </div>
 
           {/* ÇALIŞAN AL (İŞÇİ ALIMI) PANELİ */}
           <div
-            className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3"
+            className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
             data-testid="worker-hire-panel"
           >
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h4 className="font-bold text-slate-900">Çalışan Al</h4>
-                <p className="text-[13px] text-slate-600">
-                  İşe alım yalnızca çalışan kaynaklı üretim darboğazını azaltır;
-                  En Fazla Üretim kapasitesini artırmaz.
-                </p>
+                <h4 className="text-lg font-extrabold text-slate-900">👥 Çalışan al</h4>
               </div>
               <span className="tabular-nums text-[13px] text-slate-700">
                 Kasa: <strong>{formatCurrency(pc.financials.cash)}</strong>
@@ -1140,7 +1061,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             {/* Hızlı İşe Alım Seçenekleri: +10, +100, +500, +1.000, İhtiyaç kadar, Özel sayı */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { label: '+10', count: 10, testId: 'hire-preset-10' },
                 { label: '+100', count: 100, testId: 'hire-preset-100' },
@@ -1155,7 +1076,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     setHireCountInput(preset.count);
                     setHireFeedback(null);
                   }}
-                  className={`min-h-[36px] px-3 py-1 rounded-xl tabular-nums font-bold text-xs ${
+                  className={`min-h-[52px] px-3 py-1 rounded-2xl tabular-nums font-extrabold text-base active:scale-95 ${
                     hireCountInput === preset.count
                       ? 'bg-slate-900 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
@@ -1172,12 +1093,12 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   setHireCountInput(Math.max(1, workersShortfall || 5));
                   setHireFeedback(null);
                 }}
-                className="min-h-[36px] px-3 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 font-bold text-xs"
+                className="min-h-[52px] px-2 py-1 rounded-2xl bg-teal-50 border border-teal-200 text-teal-900 font-extrabold text-sm active:scale-95"
               >
-                İhtiyaç kadar (+{Math.max(1, workersShortfall || 5)})
+                ✨ Yeter kadar (+{Math.max(1, workersShortfall || 5)})
               </button>
 
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="hidden">
                 <label
                   htmlFor="hire-custom-count-input"
                   className="text-[13px] font-semibold text-slate-600"
@@ -1203,54 +1124,19 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
             </div>
 
-            {/* İşe Alım Onay Öncesi Önizleme (5 Zorunlu Alan) */}
             <div
-              className="p-3 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-5 gap-2 tabular-nums text-[13px]"
+              className="rounded-3xl bg-slate-50 p-4 text-center space-y-1 tabular-nums"
               data-testid="hire-preview-box"
             >
-              <div>
-                <div className="font-sans text-slate-500">
-                  İşe alınacak çalışan
-                </div>
-                <div className="font-bold text-slate-900">
-                  +{cleanHireCount} kişi
-                </div>
+              <div className="text-3xl font-extrabold text-slate-900">+{cleanHireCount} kişi</div>
+              <div className="text-sm font-bold text-rose-700">
+                Şimdi {formatCurrency(hireOnboardingCost)} · her gün +{formatCurrency(hireDailyExtraWage)}
               </div>
-              <div>
-                <div className="font-sans text-slate-500">
-                  Tek seferlik işe alım gideri
-                </div>
-                <div className="font-bold text-rose-700">
-                  {formatCurrency(hireOnboardingCost)}
-                </div>
+              <div className="text-sm font-bold text-emerald-700">
+                Üretim +{estimatedProdGainFromHire.toFixed(0)} birim/gün
               </div>
-              <div>
-                <div className="font-sans text-slate-500">
-                  Günlük ek maaş gideri
-                </div>
-                <div className="font-bold text-rose-700">
-                  +{formatCurrency(hireDailyExtraWage)}/gün
-                </div>
-              </div>
-              <div>
-                <div className="font-sans text-slate-500">
-                  Tahmini üretim artışı
-                </div>
-                <div className="font-bold text-emerald-700">
-                  +{estimatedProdGainFromHire.toFixed(0)} birim/gün
-                </div>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <div className="font-sans text-slate-500">
-                  İşlem sonrası şirket kasası
-                </div>
-                <div
-                  className={`font-bold ${
-                    cashAfterHire >= 0 ? 'text-slate-900' : 'text-rose-700'
-                  }`}
-                >
-                  {formatCurrency(cashAfterHire)}
-                </div>
+              <div className={`text-[13px] font-semibold ${cashAfterHire >= 0 ? 'text-slate-500' : 'text-rose-700'}`}>
+                Sonra kasada: {formatCurrency(cashAfterHire)}
               </div>
             </div>
 
@@ -1259,11 +1145,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 data-testid="hire-insufficient-cash-warning"
                 className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px] font-semibold"
               >
-                Şirket kasası bu işe alım için yetersiz (Gereken:{' '}
-                {formatCurrency(hireOnboardingCost)}, Mevcut Şirket Kasası:{' '}
-                {formatCurrency(pc.financials.cash)}). Kişisel nakitten otomatik
-                çekim yapılmaz; önce Finans bölümünden şirkete para
-                aktarabilirsiniz.
+                💸 Şirket kasası yetmiyor. Önce "Para" sekmesinden şirkete para aktar.
               </div>
             )}
 
@@ -1306,88 +1188,68 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   text: `+${cleanHireCount} yeni çalışan işe alındı. Toplam çalışan: ${targetTotal} kişi.`,
                 });
               }}
-              className="w-full min-h-[44px] rounded-xl bg-teal-600 hover:bg-teal-500 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs"
+              className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
             >
-              Çalışan Al (+{cleanHireCount} Kişi ·{' '}
-              {formatCurrency(hireOnboardingCost)})
+              ✅ Çalışan al
             </button>
           </div>
 
           {/* Vardiya Düzeni ve Maaş Politikası */}
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
-            <div className="font-bold text-slate-900">
-              Vardiya Düzeni ve Maaş Seviyesi
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+            <div className="text-lg font-extrabold text-slate-900">🕒 Çalışma düzeni</div>
+            <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  {
-                    sh: 1 as const,
-                    title: 'Tek vardiya',
-                    desc: 'Standart maaş · Düşük makine yıpranması · x1,00 kapasite',
-                  },
-                  {
-                    sh: 2 as const,
-                    title: 'İki vardiya',
-                    desc: '+%18 vardiya maaş farkı · Orta bakım · x1,65 kapasite',
-                  },
-                  {
-                    sh: 3 as const,
-                    title: 'Üç vardiya',
-                    desc: '+%38 vardiya maaş farkı · Yüksek bakım · x2,25 kapasite',
-                  },
+                  { sh: 1 as const, emoji: '☀️', title: 'Tek vardiya', desc: 'Normal' },
+                  { sh: 2 as const, emoji: '🌤️', title: 'İki vardiya', desc: '%65 daha çok üretim' },
+                  { sh: 3 as const, emoji: '🌙', title: 'Üç vardiya', desc: '2 kattan fazla üretim' },
                 ] as const
               ).map((item) => (
                 <button
                   key={item.sh}
                   type="button"
                   data-testid={`shift-select-${item.sh}`}
-                  onClick={() =>
-                    onConfigureOperations({ shiftCount: item.sh })
-                  }
-                  className={`p-2.5 rounded-xl border text-left transition-colors ${
+                  onClick={() => onConfigureOperations({ shiftCount: item.sh })}
+                  className={`p-3 rounded-3xl text-center active:scale-95 ${
                     wf.shifts === item.sh
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white shadow'
+                      : 'bg-slate-50 text-slate-800'
                   }`}
                 >
-                  <div className="font-bold text-xs">{item.title}</div>
-                  <div
-                    className={`text-[13px] mt-0.5 ${
-                      wf.shifts === item.sh
-                        ? 'text-slate-300'
-                        : 'text-slate-500'
-                    }`}
-                  >
+                  <div className="text-3xl">{item.emoji}</div>
+                  <div className="font-extrabold text-sm mt-1">{item.title}</div>
+                  <div className={`text-[13px] mt-0.5 ${wf.shifts === item.sh ? 'text-slate-300' : 'text-slate-500'}`}>
                     {item.desc}
                   </div>
                 </button>
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="text-sm font-bold text-slate-700">💵 Maaş</div>
+            <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  { id: 'ECONOMY' as SalaryTier, label: 'Ekonomik Maaş' },
-                  { id: 'STANDARD' as SalaryTier, label: 'Standart Maaş' },
-                  { id: 'COMPETITIVE' as SalaryTier, label: 'Rekabetçi Maaş' },
+                  { id: 'ECONOMY' as SalaryTier, label: '💵 Düşük' },
+                  { id: 'STANDARD' as SalaryTier, label: '⚖️ Normal' },
+                  { id: 'COMPETITIVE' as SalaryTier, label: '💎 Yüksek' },
                 ] as const
               ).map((tier) => (
                 <button
                   key={tier.id}
                   type="button"
-                  onClick={() =>
-                    onConfigureOperations({ salaryTier: tier.id })
-                  }
-                  className={`min-h-[36px] px-3 rounded-xl font-bold text-[13px] ${
+                  onClick={() => onConfigureOperations({ salaryTier: tier.id })}
+                  className={`min-h-[52px] rounded-2xl font-extrabold text-sm active:scale-95 ${
                     wf.salaryTier === tier.id
-                      ? 'bg-teal-700 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-teal-700 text-white shadow'
+                      : 'bg-slate-100 text-slate-700'
                   }`}
                 >
                   {tier.label}
                 </button>
               ))}
+            </div>
+            <div className="text-[13px] text-slate-500 text-center">
+              Yüksek maaş = mutlu çalışan, daha çok üretim.
             </div>
           </div>
         </div>
@@ -1398,65 +1260,41 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'FINANS' && (
         <div className="space-y-3" data-testid="company-section-FINANS">
-          {/* İlk bakışta yalnızca 5 finansal gösterge */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 tabular-nums tabular-nums">
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Şirket Kasası
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
-                {formatCurrency(pc.financials.cash)}
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Bugünkü Gelir
-              </div>
-              <div className="text-xs font-bold text-emerald-700 mt-0.5">
-                {formatCurrency(dailyRevenue)}
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Bugünkü Gider
-              </div>
-              <div className="text-xs font-bold text-rose-700 mt-0.5">
-                {formatCurrency(dailyExpenses)}
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200">
-              <div className="text-[13px] font-sans text-slate-500">
-                Toplam Borç
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-0.5">
-                {formatCurrency(pc.financials.totalLiabilities)}
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 col-span-2 sm:col-span-1">
-              <div className="text-[13px] font-sans text-slate-500">
-                Sıradaki Ödeme
-              </div>
-              <div className="text-xs font-bold text-amber-800 mt-0.5">
-                {nextCompanyLoan
-                  ? `${formatCurrency(nextCompanyLoan.installmentAmount)} (Gün ${nextCompanyLoan.nextPaymentGameDay})`
-                  : 'Yok'}
-              </div>
+          <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-yellow-100 p-5 text-center">
+            <div className="text-sm font-bold text-amber-800">💰 Şirket kasası</div>
+            <div className="text-4xl font-extrabold text-amber-900 tabular-nums">
+              {formatCurrency(pc.financials.cash)}
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">📈 Gelir</div>
+              <div className="font-extrabold text-emerald-700">{formatCurrency(dailyRevenue)}</div>
+            </div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">📉 Gider</div>
+              <div className="font-extrabold text-rose-700">{formatCurrency(dailyExpenses)}</div>
+            </div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <div className="text-[13px] text-slate-500">💳 Borç</div>
+              <div className="font-extrabold text-slate-900">{formatCurrency(pc.financials.totalLiabilities)}</div>
+            </div>
+          </div>
+          {nextCompanyLoan && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 px-3 py-2 text-sm font-bold text-amber-900 text-center">
+              ⏰ Sıradaki ödeme: {formatCurrency(nextCompanyLoan.installmentAmount)} (Gün {nextCompanyLoan.nextPaymentGameDay})
+            </div>
+          )}
 
           {/* 4 Ana Finans İşlemi: Para Aktar, Kredi Çek, Borçları Gör, Ayrıntılı Rapor */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               data-testid="finance-action-transfer-btn"
               onClick={() => setShowInlineTransferPanel((prev) => !prev)}
-              className="min-h-[42px] px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold"
+              className="min-h-[52px] px-3 py-2 rounded-2xl bg-gradient-to-b from-teal-400 to-teal-600 text-white font-extrabold shadow active:scale-95"
             >
-              Para Aktar
+              💸 Para aktar
             </button>
 
             <button
@@ -1469,18 +1307,18 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   setShowCompanyLoansPanel(true);
                 }
               }}
-              className="min-h-[42px] px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+              className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
             >
-              Kredi Çek
+              🏦 Kredi çek
             </button>
 
             <button
               type="button"
               data-testid="finance-action-debts-btn"
               onClick={() => setShowCompanyLoansPanel((prev) => !prev)}
-              className="min-h-[42px] px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold"
+              className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
             >
-              Borçları Gör ({companyLoans.length})
+              📒 Borçlar ({companyLoans.length})
             </button>
 
             <button
@@ -1488,13 +1326,13 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               data-testid="toggle-detailed-finance-report-btn"
               aria-expanded={showDetailedFinanceReport}
               onClick={() => setShowDetailedFinanceReport((prev) => !prev)}
-              className={`min-h-[42px] px-3 py-2 rounded-xl font-bold border ${
+              className={`min-h-[52px] px-3 py-2 rounded-2xl font-extrabold border active:scale-95 ${
                 showDetailedFinanceReport
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300'
               }`}
             >
-              Ayrıntılı Rapor
+              📊 Rapor
             </button>
           </div>
 
@@ -1503,7 +1341,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="font-bold text-slate-900">
-                  Şirket Kasasına Sermaye Aktarımı
+                  💸 Şirkete para aktar
                 </div>
                 {onOpenBuilding && (
                   <button
@@ -1511,7 +1349,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     onClick={() => onOpenBuilding('BANKA')}
                     className="text-[13px] font-bold text-teal-700 hover:underline"
                   >
-                    Tüm Hesap Transferleri (Banka) →
+                    Banka →
                   </button>
                 )}
               </div>
@@ -1766,10 +1604,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               data-testid="low-capacity-utilization-warning"
               className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-[13px] font-medium leading-relaxed"
             >
-              Mevcut kapasitenin yalnızca %
-              {capacityUtilizationPct.toString().replace('.', ',')}’i
-              kullanılıyor. Yeni tesis yerine çalışan ve üretim planını
-              iyileştirmek daha mantıklı olabilir.
+              ⚠️ Fabrikanın yalnızca %
+              {capacityUtilizationPct.toString().replace('.', ',')}’i dolu.
+              Yeni tesisten önce çalışan ekle.
             </div>
           )}
 
@@ -1777,20 +1614,16 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-bold text-slate-900">
-                  Yeni Yatırım & Üretim Tesisi Yatırımı
+                <h4 className="text-lg font-extrabold text-slate-900">
+                  🏗️ Büyüme yatırımı
                 </h4>
-                <p className="text-[13px] text-slate-600">
-                  Kapasite, yeni üretim hattı, yeni fabrika, depo, otomasyon ve
-                  lojistik yatırımlarını buradan başlatın.
-                </p>
               </div>
-              <span className="tabular-nums text-[13px] text-teal-800">
-                Güvenli Bütçe: {formatCurrency(invQuote.safeAvailableBudget)}
+              <span className="tabular-nums text-sm font-bold text-teal-800">
+                💰 {formatCurrency(invQuote.safeAvailableBudget)}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="hidden">
               <div>
                 <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                   Yatırım Türü Seçin
@@ -1839,23 +1672,23 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             {/* Yatırım Seçenekleri (Sadece Gelişim Sekmesinde Tek Yerde!) */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  { label: '+%5 Tesis', pkg: 'SMALL_EXPANSION' as const },
-                  { label: '+%15 Tesis', pkg: 'MEDIUM_EXPANSION' as const },
-                  { label: '+%35 Tesis', pkg: 'LARGE_EXPANSION' as const },
+                  { label: '🔧 Küçük büyüme', pkg: 'SMALL_EXPANSION' as const },
+                  { label: '🏗️ Orta büyüme', pkg: 'MEDIUM_EXPANSION' as const },
+                  { label: '🏢 Büyük büyüme', pkg: 'LARGE_EXPANSION' as const },
                   {
-                    label: 'Yeni Üretim Hattı',
+                    label: '⚙️ Yeni üretim hattı',
                     pkg: 'NEW_PRODUCTION_LINE' as const,
                   },
-                  { label: 'Yeni Fabrika', pkg: 'NEW_FACTORY' as const },
+                  { label: '🏭 Yeni fabrika', pkg: 'NEW_FACTORY' as const },
                   {
-                    label: 'Depo & Lojistik (Özel)',
+                    label: '🚚 Depo & lojistik',
                     pkg: 'CUSTOM_TARGET' as const,
                   },
                   {
-                    label: 'Otomasyon (Maks Bütçe)',
+                    label: '🤖 Otomasyon',
                     pkg: 'BUDGET_MAX' as const,
                   },
                 ] as const
@@ -1864,7 +1697,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   key={b.label}
                   type="button"
                   onClick={() => setSelectedInvPkg(b.pkg)}
-                  className={`min-h-[32px] px-2.5 py-1 rounded-lg text-[13px] font-semibold ${
+                  className={`min-h-[52px] px-2 py-1 rounded-2xl text-sm font-extrabold active:scale-95 ${
                     selectedInvPkg === b.pkg
                       ? 'bg-slate-900 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
@@ -1999,20 +1832,16 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-slate-900">
-                  Ar-Ge ve Ürün Kalitesi Geliştirme
+                  🔬 Ürün kalitesi (Ar-Ge)
                 </h4>
-                <p className="text-[13px] text-slate-600">
-                  Günlük Ar-Ge bütçesi ürün kalitesini ve satış fırsatını
-                  artırır.
-                </p>
               </div>
               <span className="tabular-nums font-bold text-slate-900">
-                Kalite Çarpanı: x{pc.techQualityMultiplier.toFixed(3)}
+                ⭐ x{pc.techQualityMultiplier.toFixed(2)}
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="tabular-nums text-slate-700">
-                Günlük Ar-Ge Bütçesi:{' '}
+                Her gün:{' '}
                 <strong>{formatCurrency(pc.dailyRdBudget)}/gün</strong>
               </span>
               <div className="flex items-center gap-2">
@@ -2023,9 +1852,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       dailyRdBudget: Math.max(0, pc.dailyRdBudget - 5_000),
                     })
                   }
-                  className="min-h-[36px] px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold"
+                  className="min-h-[48px] px-4 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
                 >
-                  -₺5.000
+                  ➖ ₺5.000
                 </button>
                 <button
                   type="button"
@@ -2034,9 +1863,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       dailyRdBudget: pc.dailyRdBudget + 10_000,
                     })
                   }
-                  className="min-h-[36px] px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                  className="min-h-[48px] px-4 rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
                 >
-                  +₺10.000 Artır
+                  ➕ ₺10.000
                 </button>
               </div>
             </div>

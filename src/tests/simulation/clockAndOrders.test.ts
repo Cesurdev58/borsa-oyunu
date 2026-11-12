@@ -240,10 +240,10 @@ test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negati
   assert.equal(negSummary.gameDaysAdvanced, 0);
   assert.equal(engine.getState().day, 1);
 
-  // 16. 10 oyun gününe karşılık gelen süre (10 * 15 dk = 150 gerçek dk) verildiğinde maksimum 3 oyun günü (4320 dk) ilerler
+  // 16. 20 oyun gününe karşılık gelen süre (20 * 15 dk = 300 gerçek dk) verildiğinde maksimum 8 oyun günü (11520 dk) ilerler
   const startISO = '2026-01-02T00:00:00.000Z';
   const tenGameDaysLaterISO = new Date(
-    Date.parse(startISO) + 10 * 15 * 60 * 1000
+    Date.parse(startISO) + 20 * 15 * 60 * 1000
   ).toISOString();
 
   const cappedSummary = engine.processOfflineProgress(
@@ -254,8 +254,8 @@ test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negati
     cappedSummary.gameMinutesAdvanced,
     GameClockEngine.MAX_OFFLINE_GAME_MINUTES
   );
-  assert.equal(cappedSummary.gameDaysAdvanced, 3);
-  assert.equal(engine.getState().day, 4);
+  assert.equal(cappedSummary.gameDaysAdvanced, 8);
+  assert.equal(engine.getState().day, 9);
 
   // 18. Aynı çevrimdışı süre iki kez işlenmez
   const dayAfterFirstOffline = engine.getState().day;

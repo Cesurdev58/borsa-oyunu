@@ -37,6 +37,8 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Borsa ekranı** (`buildings/BorsaPanel.tsx`): üstte nakit/hisse değeri kartı, seçili hisse için büyük AL / SAT kartı (− / + ile lot, 10/50/100/Hepsi), altta hisse kartları. Borsa kapalıyken AL/SAT piyasa emri olarak sıraya girer. Limit emri formu ve emir defteri `tycoon-advanced-toggle` düğmesinin arkasındadır; eski `data-testid`ler orada durur.
 - **Dükkân ekranı** (`EsnafAndTradePanel.tsx`): dükkân yokken "İlk dükkânına ne kadar kaldı?" ilerleme çubuğu (`FIRST_SHOP_MIN_NET_WORTH`).
 - **Şirket ekranı kilitliyken** (`SirketMerkeziPanel.tsx`) eşik `PROGRESSION_RULES.entrepreneurNetWorth`'tan okunur.
+- **Rafları doldur** düğmesi (`shop-restock-all-btn`, dükkân ekranı): planı `engine/ShopRestockPlanner.ts` üretir (en ucuz toptancı, yoldaki siparişler sayılır, bütçeyi aşmaz). Test ölçüm robotu (`restockBot.ts`) aynı planı kullanır.
+- **Çevrimdışı ilerleme** en fazla 8 oyun günüdür (`MAX_OFFLINE_GAME_DAYS`, 15 dk/gün ile ~2 gerçek saat).
 - Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkânım (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
 
 ## Klasörler

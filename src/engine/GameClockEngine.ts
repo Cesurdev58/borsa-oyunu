@@ -40,10 +40,10 @@ export class GameClockEngine {
     (GameClockEngine.MARKET_OPEN_END_MINUTE -
       GameClockEngine.MARKET_OPEN_START_MINUTE) /
     GameClockEngine.INTRADAY_SUBSTEP_MINUTES; // 96
-  public static readonly MAX_OFFLINE_GAME_DAYS = 3;
+  public static readonly MAX_OFFLINE_GAME_DAYS = 8; // 15 dk/gün ile yaklaşık 2 gerçek saat çevrimdışı ilerleme
   public static readonly MAX_OFFLINE_GAME_MINUTES =
     GameClockEngine.MAX_OFFLINE_GAME_DAYS *
-    GameClockEngine.MINUTES_PER_GAME_DAY; // 4320
+    GameClockEngine.MINUTES_PER_GAME_DAY; // 11520
   public static readonly MAX_REAL_SECONDS_SANITY_LIMIT = 365 * 24 * 3600; // 1 gerçek yıl üstü geçersiz kabul edilir
 
   public static readonly ALLOWED_REAL_MINUTES_OPTIONS: readonly RealMinutesPerGameDayOption[] =

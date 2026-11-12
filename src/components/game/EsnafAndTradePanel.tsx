@@ -34,6 +34,7 @@ import {
 } from '../../engine/TradeAndShopEngine';
 import { SectorId } from '../../models/market';
 import { SimulationState } from '../../models/simulation';
+import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
 import {
   LogisticsVehicleType,
@@ -255,6 +256,17 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const activeShopUsedUnits = activeShop
     ? activeShop.inventoryBatches.reduce((sum, b) => sum + b.quantity, 0)
     : 0;
+  const restockPlan = useMemo(
+    () =>
+      activeShop
+        ? planShopRestock(
+            state,
+            activeShop.shopId,
+            spendableCash + activeShop.cashAccountBalance
+          )
+        : { orders: [], totalCost: 0 },
+    [state, activeShop, spendableCash]
+  );
   const activeShopTotalCap = activeShop
     ? activeShop.shelfCapacity + activeShop.backroomCapacity
     : 1;
@@ -355,6 +367,39 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               <span>Yeni Şube / İlk Dükkân Aç</span>
             </button>
           </div>
+
+          {activeShop && (
+            <div className="p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-extrabold text-sm">🛒 Rafları doldur</div>
+                <div className="text-[11px] opacity-95">
+                  {restockPlan.orders.length === 0
+                    ? 'Raflar zaten dolu ya da paran yetmiyor.'
+                    : `En ucuz toptancıdan ${restockPlan.orders.length} ürün · yaklaşık ${formatCurrency(restockPlan.totalCost)}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                data-testid="shop-restock-all-btn"
+                disabled={restockPlan.orders.length === 0}
+                onClick={() => {
+                  for (const o of restockPlan.orders) {
+                    onPlaceProcurementOrder({
+                      supplierId: o.supplierId,
+                      resourceId: o.resourceId,
+                      quantity: o.quantity,
+                      destinationType: 'SHOP',
+                      destinationId: activeShop.shopId,
+                      paymentTermType: 'CASH',
+                    });
+                  }
+                }}
+                className="min-h-[44px] px-4 rounded-2xl bg-white text-emerald-700 font-extrabold text-sm shadow disabled:opacity-50 active:scale-95 shrink-0"
+              >
+                Doldur
+              </button>
+            </div>
+          )}
 
           {/* SEÇİLİ DÜKKÂN 8 ÖZET METRİK KARTI (Bölüm 7: Temiz Dükkân Arayüzü) */}
           {activeShop ? (

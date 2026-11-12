@@ -47,12 +47,23 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
       'up' | 'down' | null
     >(null);
 
+    const [floatDelta, setFloatDelta] = useState<{ id: number; amount: number } | null>(null);
+
     useEffect(() => {
-      if (Math.abs(cash - prevCashRef.current) >= 1) {
-        setCashDeltaDirection(cash > prevCashRef.current ? 'up' : 'down');
+      const diff = cash - prevCashRef.current;
+      if (Math.abs(diff) >= 1) {
+        setCashDeltaDirection(diff > 0 ? 'up' : 'down');
         prevCashRef.current = cash;
+        // Çok küçük hareketlerde (günlük faiz kırıntıları gibi) yazı çıkarma
+        if (Math.abs(diff) >= 100) {
+          setFloatDelta({ id: Date.now(), amount: diff });
+        }
         const t = window.setTimeout(() => setCashDeltaDirection(null), 650);
-        return () => window.clearTimeout(t);
+        const t2 = window.setTimeout(() => setFloatDelta(null), 1400);
+        return () => {
+          window.clearTimeout(t);
+          window.clearTimeout(t2);
+        };
       }
     }, [cash]);
 
@@ -127,6 +138,22 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               {infoOpen ? 'Kapat ▲' : 'Detay ▼'}
             </div>
           </button>
+
+          {floatDelta && (
+            <span
+              key={floatDelta.id}
+              aria-hidden="true"
+              data-testid="cash-float-delta"
+              className={`pointer-events-none absolute left-1/2 top-12 -translate-x-1/2 px-3 py-1 rounded-full text-sm font-extrabold shadow-lg float-up ${
+                floatDelta.amount > 0
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-rose-500 text-white'
+              }`}
+            >
+              {floatDelta.amount > 0 ? '+' : '−'}
+              {formatHudCurrencyTR(Math.abs(floatDelta.amount), 'Nakit').abbreviated}
+            </span>
+          )}
 
           {/* Sağ: seviye, bildirim, ayarlar */}
           <div className="flex items-center gap-1.5 shrink-0">

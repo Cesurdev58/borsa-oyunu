@@ -40,7 +40,7 @@ interface CityCameraControlsProps {
 /**
  * Harita köşesinde yer alan kompakt kamera (Merkeze Dön, Şirkete Odaklan, Yakın/Normal/Genel),
  * tek satırlık sonraki olay kapsülü (dokunulunca Detaylı Zaman Paneli açılır)
- * ve sağ alt kompakt hız kapsülü (Duraklat, 1x, 2x, 4x).
+ * ve sağ alt kompakt hız kapsülü (Duraklat, 1x, 2x).
  */
 export const CityCameraControls: React.FC<CityCameraControlsProps> = React.memo(
   ({
@@ -239,7 +239,7 @@ export const CityCameraControls: React.FC<CityCameraControlsProps> = React.memo(
           </button>
         </div>
 
-        {/* Sağ Alt Harita Köşesi: Kompakt Hız Kapsülü (Duraklat, 1x, 2x, 4x) */}
+        {/* Sağ Alt Harita Köşesi: Kompakt Hız Kapsülü (Duraklat, 1x, 2x) */}
         <div
           role="region"
           aria-label="Oyun Zaman ve Hız Kontrolleri"
@@ -266,7 +266,7 @@ export const CityCameraControls: React.FC<CityCameraControlsProps> = React.memo(
               <span>Duraklat</span>
             </button>
 
-            {([1, 2, 4] as TimeScaleOption[]).map((sc) => {
+            {([1, 2] as TimeScaleOption[]).map((sc) => {
               const active = !isPaused && timeScale === sc;
               return (
                 <button

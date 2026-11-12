@@ -1414,7 +1414,7 @@ export default function App() {
                 <Pause className="w-3 h-3" />
                 Duraklat
               </button>
-              {([1, 2, 4] as TimeScaleOption[]).map((sc) => (
+              {([1, 2] as TimeScaleOption[]).map((sc) => (
                 <button
                   key={sc}
                   type="button"
@@ -1439,6 +1439,7 @@ export default function App() {
                 }
                 className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-xs text-slate-200 font-mono"
               >
+                <option value={15}>1 Gün = 15 dk</option>
                 <option value={30}>1 Gün = 30 dk</option>
                 <option value={45}>1 Gün = 45 dk</option>
                 <option value={60}>1 Gün = 60 dk</option>

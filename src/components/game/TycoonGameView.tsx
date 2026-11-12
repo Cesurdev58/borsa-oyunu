@@ -677,7 +677,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 1 Oyun Günü Gerçek Süre Karşılığı
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {([30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
+                {([15, 30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
                   <button
                     key={`day-duration-${mins}m`}
                     type="button"

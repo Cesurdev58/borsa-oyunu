@@ -88,7 +88,7 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
           </div>
         </div>
 
-        {/* Alt Satır: Hız Seçenekleri (Duraklat, 1x, 2x, 4x) ve Hızlı Zaman Adımları */}
+        {/* Alt Satır: Hız Seçenekleri (Duraklat, 1x, 2x) ve Hızlı Zaman Adımları */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div
             role="group"
@@ -110,7 +110,7 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
               <span>Duraklat</span>
             </button>
 
-            {([1, 2, 4] as TimeScaleOption[]).map((sc) => {
+            {([1, 2] as TimeScaleOption[]).map((sc) => {
               const active = !isPaused && timeScale === sc;
               return (
                 <button

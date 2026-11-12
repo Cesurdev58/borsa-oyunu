@@ -94,8 +94,59 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     );
   }
 
+  // Bugünün görevleri: kayıt tutmadan, dükkânların anlık durumundan türetilir.
+  const fills = trade.shops.map((sh) => {
+    const used = sh.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
+    return used / Math.max(1, sh.shelfCapacity);
+  });
+  const shelvesOk = fills.every((f) => f >= 0.5);
+  const lowCount = fills.filter((f) => f < 0.5).length;
+  const profitOk = trade.shops.some((sh) => sh.todayNetProfit > 0);
+  const dailyTasks = [
+    {
+      id: 'shelves',
+      done: shelvesOk,
+      text: shelvesOk
+        ? 'Raflar yarıdan fazla dolu'
+        : `${lowCount} dükkânın rafı yarıdan az dolu — mal al`,
+      emoji: '📦',
+    },
+    {
+      id: 'profit',
+      done: profitOk,
+      text: profitOk ? 'Bugün kâr ettin' : 'Bugün ilk kârını yap — raflar dolu olsun, satış gelsin',
+      emoji: '💰',
+    },
+  ];
+  const doneCount = dailyTasks.filter((t) => t.done).length;
+
   return (
     <div className="space-y-3" data-testid="shop-dashboard">
+      <div
+        data-testid="daily-tasks-card"
+        className="rounded-3xl bg-gradient-to-r from-violet-100 to-sky-100 border border-violet-200 p-3 space-y-2"
+      >
+        <div className="flex items-center justify-between font-extrabold text-slate-900">
+          <span>📅 Bugünün görevleri</span>
+          <span className="text-sm tabular-nums text-violet-700">
+            {doneCount}/{dailyTasks.length}
+          </span>
+        </div>
+        {dailyTasks.map((t) => (
+          <div
+            key={t.id}
+            data-testid={`daily-task-${t.id}`}
+            data-done={t.done ? 'true' : 'false'}
+            className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold ${
+              t.done ? 'bg-emerald-100 text-emerald-900' : 'bg-white text-slate-800'
+            }`}
+          >
+            <span className="text-lg">{t.done ? '✅' : t.emoji}</span>
+            <span>{t.text}</span>
+          </div>
+        ))}
+      </div>
+
       {trade.shops.map((shop, i) => {
         const tpl = SHOP_TEMPLATES[shop.shopType];
         const used = shop.inventoryBatches.reduce((s, b) => s + b.quantity, 0);

@@ -14,7 +14,7 @@ import { FinancialStatement, QuarterlyFinancialReport } from '../models/company'
 import { MacroEconomyState } from '../models/economy';
 import { SectorId } from '../models/market';
 import { AccountingAuditResult, SimulationState } from '../models/simulation';
-import { TradeAndShopEngine } from './TradeAndShopEngine';
+import { ShopEquity } from './ShopEquity';
 import { ValuationEngine } from './ValuationEngine';
 
 export class AccountingEngine {
@@ -375,7 +375,7 @@ export class AccountingEngine {
     const errors: string[] = [];
 
     const nonIncorporatedShopEquity =
-      TradeAndShopEngine.computeNonIncorporatedShopsEquity(state);
+      ShopEquity.compute(state);
     const expectedPrivateCompanyEquity = Number(
       (
         (state.playerCompany && !state.playerCompany.isPubliclyListed

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SectorId } from './market';
+import type { SectorId } from './market';
 import {
   CompanyOperationsState,
   DetailedIncomeBreakdown,

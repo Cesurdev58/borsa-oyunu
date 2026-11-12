@@ -4,14 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Award,
-  Bell,
-  Clock,
-  Settings,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
+import { Bell, Settings, Star } from 'lucide-react';
 import { MarketSession, SimulationStage } from '../../models/simulation';
 import { formatHudCurrencyTR } from './city/questAndHudLogic';
 import { formatDateTR, getMarketSessionBadgeMeta } from './gameTypes';
@@ -53,8 +46,6 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     const [netWorthDeltaDirection, setNetWorthDeltaDirection] = useState<
       'up' | 'down' | null
     >(null);
-    const [showExactCash, setShowExactCash] = useState(false);
-    const [showExactNetWorth, setShowExactNetWorth] = useState(false);
 
     useEffect(() => {
       if (Math.abs(cash - prevCashRef.current) >= 1) {
@@ -82,127 +73,83 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     const cashMeta = formatHudCurrencyTR(cash, 'Nakit');
     const netWorthMeta = formatHudCurrencyTR(netWorth, 'Net Varlık');
 
+    const [infoOpen, setInfoOpen] = useState(false);
+
     return (
       <header
         aria-label="Oyun Üst Bilgi Çubuğu"
-        className="sticky top-0 z-30 bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 px-2 sm:px-4 pt-[max(0.35rem,env(safe-area-inset-top))] pb-2 shadow-md rounded-b-3xl"
+        className="sticky top-0 z-30 bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2.5 shadow-md rounded-b-3xl"
       >
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-1 sm:gap-3">
-          {/* Sol: Gün, Saat, Aşama ve Piyasa Durumu Rozeti */}
-          <div className="flex flex-col min-w-0 shrink-0">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-white font-mono tabular-nums">
-              <span data-testid="tycoon-top-day">Gün {day}</span>
-              <span className="text-slate-300 hidden md:inline" aria-hidden="true">
-                ·
-              </span>
-              <span className="text-slate-500 hidden md:inline">
-                {formatDateTR(dateISO)}
-              </span>
-              <span className="text-slate-300" aria-hidden="true">
-                ·
-              </span>
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
+          {/* Sol: Gün ve saat */}
+          <div className="flex flex-col shrink-0 text-white leading-tight">
+            <span
+              data-testid="tycoon-top-day"
+              className="text-base font-extrabold"
+            >
+              Gün {day}
+            </span>
+            <span
+              data-testid="tycoon-game-clock"
+              className="inline-flex items-center gap-1 text-[13px] font-semibold tabular-nums"
+            >
               <span
-                data-testid="tycoon-game-clock"
-                className="inline-flex items-center gap-0.5 text-white font-bold"
-              >
-                <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white shrink-0" />
-                {formattedTime}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1 mt-0.5">
-              <span
-                data-testid="tycoon-top-stage"
-                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-indigo-50 text-indigo-800 border border-indigo-200 text-[9px] sm:text-[10px] font-bold"
-              >
-                <Award className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
-                <span>Aşama {stage}</span>
-              </span>
-
-              <span
-                data-testid="tycoon-market-session-badge"
-                className={`inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold border ${sessionMeta.bgClass} ${sessionMeta.textClass} ${sessionMeta.borderClass}`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`w-1.5 h-1.5 rounded-full ${sessionMeta.dotClass}`}
-                />
-                <span>{sessionMeta.shortLabel}</span>
-              </span>
-            </div>
+                aria-hidden="true"
+                className={`w-2 h-2 rounded-full ${sessionMeta.dotClass}`}
+              />
+              {formattedTime}
+            </span>
           </div>
 
-          {/* Orta: Oyuncu Nakdi ve Toplam Net Varlık (Kısaltılmış + Dokununca Tam Tutar) */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 justify-center">
-            <button
-              type="button"
-              onClick={() => setShowExactCash((prev) => !prev)}
-              aria-label={cashMeta.ariaLabel}
-              title={`Tam tutar: ${cashMeta.full}`}
-              className={`px-1.5 sm:px-3 py-1 rounded-xl border text-left transition-all duration-200 shrink-0 cursor-pointer ${
-                cashDeltaDirection === 'up'
-                  ? 'bg-emerald-50 border-emerald-300 motion-safe:scale-[1.02]'
-                  : cashDeltaDirection === 'down'
-                  ? 'bg-amber-50 border-amber-300 motion-safe:scale-[1.02]'
-                  : 'bg-white border-white shadow-md'
-              }`}
+          {/* Orta: tek büyük para kutusu; dokununca ayrıntı kartı açılır */}
+          <button
+            type="button"
+            onClick={() => setInfoOpen((v) => !v)}
+            aria-label={cashMeta.ariaLabel}
+            aria-expanded={infoOpen}
+            className={`flex-1 min-w-0 max-w-[190px] min-h-[48px] px-3 rounded-2xl text-center shadow-md transition-all duration-200 cursor-pointer active:scale-95 ${
+              cashDeltaDirection === 'up'
+                ? 'bg-emerald-100 motion-safe:scale-[1.03]'
+                : cashDeltaDirection === 'down'
+                ? 'bg-amber-100 motion-safe:scale-[1.03]'
+                : 'bg-white'
+            }`}
+          >
+            <div
+              data-testid="tycoon-top-cash"
+              data-full-value={cashMeta.full}
+              data-abbreviated-value={cashMeta.abbreviated}
+              className="text-lg font-extrabold tabular-nums text-slate-900 whitespace-nowrap leading-tight"
             >
-              <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-slate-500">
-                <Wallet className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600 shrink-0" />
-                <span>Nakit</span>
-              </div>
-              <div
-                data-testid="tycoon-top-cash"
-                data-full-value={cashMeta.full}
-                data-abbreviated-value={cashMeta.abbreviated}
-                className="text-xs sm:text-sm font-extrabold font-mono tabular-nums tracking-tight text-slate-900 whitespace-nowrap"
-              >
-                {showExactCash ? cashMeta.full : cashMeta.abbreviated}
-              </div>
-            </button>
+              💰 {cashMeta.abbreviated}
+            </div>
+            <div className="text-[13px] text-slate-500 leading-tight">
+              {infoOpen ? 'Kapat ▲' : 'Detay ▼'}
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setShowExactNetWorth((prev) => !prev)}
-              aria-label={netWorthMeta.ariaLabel}
-              title={`Tam tutar: ${netWorthMeta.full}`}
-              className={`px-1.5 sm:px-3 py-1 rounded-xl border text-left transition-all duration-200 shrink-0 cursor-pointer ${
-                netWorthDeltaDirection === 'up'
-                  ? 'bg-emerald-50 border-emerald-300 motion-safe:scale-[1.02]'
-                  : netWorthDeltaDirection === 'down'
-                  ? 'bg-rose-50 border-rose-300 motion-safe:scale-[1.02]'
-                  : 'bg-amber-50 border-amber-200 shadow-md'
-              }`}
+          {/* Sağ: seviye, bildirim, ayarlar */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span
+              data-testid="tycoon-top-stage"
+              className="min-w-[44px] min-h-[44px] rounded-2xl bg-amber-300 text-amber-950 font-extrabold text-sm flex flex-col items-center justify-center leading-none shadow"
+              title={`Aşama ${stage}`}
             >
-              <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-amber-800">
-                <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600 shrink-0" />
-                <span>Net Varlık</span>
-              </div>
-              <div
-                data-testid="tycoon-top-networth"
-                data-full-value={netWorthMeta.full}
-                data-abbreviated-value={netWorthMeta.abbreviated}
-                className="text-xs sm:text-sm font-extrabold font-mono tabular-nums tracking-tight text-amber-900 whitespace-nowrap"
-              >
-                {showExactNetWorth ? netWorthMeta.full : netWorthMeta.abbreviated}
-              </div>
-            </button>
-          </div>
-
-          {/* Sağ: Bildirim Simgesi ve Ayarlar */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <Star className="w-4 h-4 fill-amber-600 text-amber-700" aria-hidden="true" />
+              <span>{stage}</span>
+            </span>
             <button
               type="button"
               data-testid="top-notifications-btn"
               onClick={onOpenNotifications}
               aria-label={`Bildirimler (${unreadNotificationsCount} yeni)`}
-              className="relative min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-white/40 bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center transition-colors"
+              className="relative min-w-[44px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
                 <span
                   data-testid="notification-badge-count"
-                  className="absolute top-0.5 right-0.5 min-w-[15px] h-3.5 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold font-mono flex items-center justify-center"
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[13px] font-bold flex items-center justify-center"
                 >
                   {unreadNotificationsCount > 99
                     ? '99+'
@@ -210,18 +157,55 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 </span>
               )}
             </button>
-
             <button
               type="button"
               data-testid="top-settings-btn"
               onClick={onOpenSettings}
               aria-label="Oyun Ayarları ve Geliştirici Araçları"
-              className="min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-white/40 bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center transition-colors"
+              className="min-w-[44px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-5 h-5" />
             </button>
           </div>
         </div>
+
+        {infoOpen && (
+          <div className="max-w-5xl mx-auto mt-2 rounded-2xl bg-white p-3 shadow-lg grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-xl bg-amber-50 p-2.5">
+              <div className="text-[13px] text-amber-800">📈 Toplam varlığın</div>
+              <div
+                data-testid="tycoon-top-networth"
+                data-full-value={netWorthMeta.full}
+                data-abbreviated-value={netWorthMeta.abbreviated}
+                className="font-extrabold text-slate-900 tabular-nums"
+              >
+                {netWorthMeta.full}
+              </div>
+            </div>
+            <div className="rounded-xl bg-emerald-50 p-2.5">
+              <div className="text-[13px] text-emerald-800">💰 Tam nakit</div>
+              <div className="font-extrabold text-slate-900 tabular-nums">
+                {cashMeta.full}
+              </div>
+            </div>
+            <div className="rounded-xl bg-indigo-50 p-2.5">
+              <div className="text-[13px] text-indigo-800">⭐ Aşama</div>
+              <div className="font-extrabold text-slate-900">Aşama {stage}</div>
+            </div>
+            <div
+              data-testid="tycoon-market-session-badge"
+              className="rounded-xl bg-slate-50 p-2.5"
+            >
+              <div className="text-[13px] text-slate-600">🏛️ Borsa</div>
+              <div className="font-extrabold text-slate-900">
+                {sessionMeta.shortLabel}
+              </div>
+            </div>
+            <div className="col-span-2 text-[13px] text-slate-500 text-center">
+              {formatDateTR(dateISO)}
+            </div>
+          </div>
+        )}
       </header>
     );
   }

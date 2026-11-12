@@ -39,7 +39,10 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Şirket ekranı kilitliyken** (`SirketMerkeziPanel.tsx`) eşik `PROGRESSION_RULES.entrepreneurNetWorth`'tan okunur.
 - **Rafları doldur** düğmesi (`shop-restock-all-btn`, dükkân ekranı): planı `engine/ShopRestockPlanner.ts` üretir (en ucuz toptancı, yoldaki siparişler sayılır, bütçeyi aşmaz). Test ölçüm robotu (`restockBot.ts`) aynı planı kullanır.
 - **Çevrimdışı ilerleme** en fazla 8 oyun günüdür (`MAX_OFFLINE_GAME_DAYS`, 15 dk/gün ile ~2 gerçek saat).
-- Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkânım (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
+- **Üst çubuk** (`GameTopBar.tsx`): yalnızca gün/saat, büyük para kutusu, aşama yıldızı, zil, ayar. Net varlık, aşama ve borsa durumu para kutusuna dokununca açılan kartta.
+- **Yazı boyutu:** en küçük yazı 13 punto (`index.css` içinde `--text-xs` ve `src/components/game` altında `text-[13px]`). Rakamlar daktilo (mono) yazısıyla çizilmez; `font-mono` yalnızca kod/teknik yerlerde kalır.
+- **Dükkân ekranı** (`buildings/OyuncuOfisiPanel.tsx` + `buildings/ShopDashboard.tsx`): her dükkân için bir kart (satış, kâr, raf doluluğu, "Rafları doldur", "Yönet"). "Yönet" eski ayrıntılı paneli (`EsnafAndTradePanel`) açar; varlık/aşama/portföy/işlem geçmişi "Varlıklarım" düğmesinin arkasındadır (DOM'da gizli durur, testler okur).
+- Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkân (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
 
 ## Klasörler
 

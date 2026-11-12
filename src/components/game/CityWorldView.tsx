@@ -105,7 +105,7 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
               <Sparkles className="w-4 h-4" />
               Yeni İş Günü Başladı: Gün {day} ({dateISO})
             </span>
-            <span className="font-mono text-[11px]">Saat 00:00</span>
+            <span className="tabular-nums text-[13px]">Saat 00:00</span>
           </div>
         )}
 
@@ -119,13 +119,13 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
               <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
                 Finans & Holding Şehri
               </h1>
-              <p className="text-[11px] text-slate-600 truncate">
+              <p className="text-[13px] text-slate-600 truncate">
                 Binalara dokunarak borsa, şirket, üretim ve devralma işlemlerini yönetin
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-700 bg-white/85 border border-slate-200/90 px-2.5 py-1 rounded-xl shrink-0">
+          <div className="flex items-center gap-2 text-[13px] font-medium text-slate-700 bg-white/85 border border-slate-200/90 px-2.5 py-1 rounded-xl shrink-0">
             <SkyIcon className={`w-3.5 h-3.5 ${sky.iconColor}`} />
             <span>{sky.label}</span>
             <span className="text-slate-300" aria-hidden="true">
@@ -138,7 +138,7 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
         </div>
 
         {/* 1. Bölge: Finans Meydanı (Başlangıçta Açık 4 Ana Bina) */}
-        <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-semibold text-slate-600">
+        <div className="mb-2 flex items-center justify-between px-1 text-[13px] font-semibold text-slate-600">
           <span>Finans Meydanı & Merkez Binalar</span>
           <span className="text-emerald-700">4/4 Bina Aktif</span>
         </div>
@@ -162,7 +162,7 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
           <div className="w-full border-t-2 border-dashed border-slate-400/60" />
 
           {/* Şehir Bulvarı Etiketi */}
-          <span className="absolute left-3 px-2 py-0.5 rounded bg-white/90 text-[9px] font-semibold text-slate-600 border border-slate-200">
+          <span className="absolute left-3 px-2 py-0.5 rounded bg-white/90 text-[13px] font-semibold text-slate-600 border border-slate-200">
             Borsa Bulvarı
           </span>
 
@@ -179,13 +179,13 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
             </div>
           )}
 
-          <span className="absolute right-3 px-2 py-0.5 rounded bg-white/90 text-[9px] font-mono text-slate-600 border border-slate-200">
+          <span className="absolute right-3 px-2 py-0.5 rounded bg-white/90 text-[13px] tabular-nums text-slate-600 border border-slate-200">
             Sanayi & Holding Bulvarı
           </span>
         </div>
 
         {/* 2. Bölge: Sanayi, Ar-Ge ve Holding Kampüsü (Aşama 2-4 Binaları) */}
-        <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-semibold text-slate-600">
+        <div className="mb-2 flex items-center justify-between px-1 text-[13px] font-semibold text-slate-600">
           <span className="inline-flex items-center gap-1">
             <Building2 className="w-3.5 h-3.5 text-teal-600" />
             Girişim, Sanayi, Ar-Ge & Holding Kampüsü
@@ -208,7 +208,7 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
         {/* Şehir Alt Bilgi / Günün Haber Manşeti Şeridi */}
         <div className="mt-3 px-3 py-2 rounded-2xl bg-white/90 border border-slate-200/90 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold text-[10px] shrink-0">
+            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold text-[13px] shrink-0">
               GÜNÜN MANŞETİ
             </span>
             <span className="text-slate-700 font-medium truncate">
@@ -218,7 +218,7 @@ export const CityWorldView: React.FC<CityWorldViewProps> = React.memo(
           <button
             type="button"
             onClick={() => onSelectBuilding('HABER_MERKEZI')}
-            className="text-[11px] font-semibold text-sky-700 hover:underline shrink-0 min-h-[32px] px-1"
+            className="text-[13px] font-semibold text-sky-700 hover:underline shrink-0 min-h-[32px] px-1"
           >
             Tümü →
           </button>

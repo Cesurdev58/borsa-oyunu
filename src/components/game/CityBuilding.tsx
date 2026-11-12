@@ -215,7 +215,7 @@ export const CityBuilding: React.FC<CityBuildingProps> = React.memo(
             building.isActiveWorking && (
               <div
                 aria-hidden="true"
-                className="mb-1.5 px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-mono text-[9px] flex items-center justify-between overflow-hidden"
+                className="mb-1.5 px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 tabular-nums text-[13px] flex items-center justify-between overflow-hidden"
               >
                 <span>CANLI SEANS</span>
                 <span className="font-bold text-emerald-400 motion-safe:animate-pulse">
@@ -251,13 +251,13 @@ export const CityBuilding: React.FC<CityBuildingProps> = React.memo(
                 <div className="text-xs font-bold leading-tight truncate">
                   {building.title}
                 </div>
-                <div className="text-[10px] opacity-80 truncate">
+                <div className="text-[13px] opacity-80 truncate">
                   {building.districtLabel} · {building.shortTag}
                 </div>
               </div>
             </div>
 
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700 shrink-0">
+            <span className="text-[13px] tabular-nums font-bold px-1.5 py-0.5 rounded bg-white/80 text-slate-700 shrink-0">
               {building.isUnlocked ? `Sv.${building.level}` : 'Kilitli'}
             </span>
           </div>
@@ -291,11 +291,11 @@ export const CityBuilding: React.FC<CityBuildingProps> = React.memo(
 
         {/* Alt Bilgi: Metrikler, Çalışma Durumu veya Kilit İlerlemesi */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between gap-1 text-[11px]">
-            <span className="font-bold font-mono tabular-nums text-slate-900 truncate">
+          <div className="flex items-center justify-between gap-1 text-[13px]">
+            <span className="font-bold tabular-nums tabular-nums text-slate-900 truncate">
               {building.metricPrimary}
             </span>
-            <span className="text-[10px] font-mono tabular-nums text-slate-500 truncate">
+            <span className="text-[13px] tabular-nums tabular-nums text-slate-500 truncate">
               {building.metricSecondary}
             </span>
           </div>
@@ -308,18 +308,18 @@ export const CityBuilding: React.FC<CityBuildingProps> = React.memo(
                   style={{ width: `${building.unlockProgressPct}%` }}
                 />
               </div>
-              <div className="text-[10px] font-medium text-slate-600 truncate">
+              <div className="text-[13px] font-medium text-slate-600 truncate">
                 {building.statusText}
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-1 pt-0.5">
               <span
-                className={`text-[10px] font-semibold truncate ${palette.statusColor}`}
+                className={`text-[13px] font-semibold truncate ${palette.statusColor}`}
               >
                 {building.statusText}
               </span>
-              <span className="text-[10px] font-semibold text-sky-700 group-hover:underline shrink-0">
+              <span className="text-[13px] font-semibold text-sky-700 group-hover:underline shrink-0">
                 Aç →
               </span>
             </div>
@@ -327,7 +327,7 @@ export const CityBuilding: React.FC<CityBuildingProps> = React.memo(
         </div>
 
         {typeof building.badgeCount === 'number' && building.badgeCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold font-mono flex items-center justify-center shadow-xs">
+          <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-600 text-white text-[13px] font-bold tabular-nums flex items-center justify-center shadow-xs">
             {building.badgeCount}
           </span>
         )}

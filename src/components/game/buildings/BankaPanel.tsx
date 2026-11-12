@@ -101,45 +101,45 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
   return (
     <div className="space-y-4 text-xs" data-testid="sheet-content-BANKA">
       {/* Hesap Bakiyeleri Üst Özeti */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono tabular-nums">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums tabular-nums">
         <div className="p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-[10px] text-emerald-800 font-sans font-semibold">
+          <div className="text-[13px] text-emerald-800 font-sans font-semibold">
             Yatırım Hesabı (Serbest)
           </div>
           <div className="text-sm font-bold text-emerald-950 mt-0.5">
             {formatCurrency(spendableCash)}
           </div>
-          <div className="text-[10px] text-amber-700 mt-0.5">
+          <div className="text-[13px] text-amber-700 mt-0.5">
             Bloke: {formatCurrency(reservedCash)}
           </div>
         </div>
 
         <div className="p-2.5 rounded-2xl bg-sky-50/70 border border-sky-200">
-          <div className="text-[10px] text-sky-800 font-sans font-semibold">
+          <div className="text-[13px] text-sky-800 font-sans font-semibold">
             Kişisel Nakit Hesabı
           </div>
           <div className="text-sm font-bold text-sky-950 mt-0.5">
             {formatCurrency(state.personalCash || 0)}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">
+          <div className="text-[13px] text-slate-500 mt-0.5">
             Holding: {formatCurrency(state.holdingCash || 0)}
           </div>
         </div>
 
         <div className="p-2.5 rounded-2xl bg-teal-50/70 border border-teal-200">
-          <div className="text-[10px] text-teal-800 font-sans font-semibold">
+          <div className="text-[13px] text-teal-800 font-sans font-semibold">
             Şirket Banka + Kasa
           </div>
           <div className="text-sm font-bold text-teal-950 mt-0.5">
             {formatCurrency(pc ? pc.financials.cash : 0)}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">
+          <div className="text-[13px] text-slate-500 mt-0.5">
             {pc ? pc.ticker : 'Şirket Yok'}
           </div>
         </div>
 
         <div className="p-2.5 rounded-2xl bg-rose-50/70 border border-rose-200">
-          <div className="text-[10px] text-rose-800 font-sans font-semibold">
+          <div className="text-[13px] text-rose-800 font-sans font-semibold">
             Toplam Borç & Kredi Notu
           </div>
           <div className="text-sm font-bold text-rose-950 mt-0.5">
@@ -147,7 +147,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               state.totalDebt + (pc ? pc.financials.totalLiabilities : 0)
             )}
           </div>
-          <div className="text-[10px] text-slate-700 mt-0.5">
+          <div className="text-[13px] text-slate-700 mt-0.5">
             Kredi Notu: <strong>{loanQuote.creditScore}</strong> / 900
           </div>
         </div>
@@ -170,7 +170,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             data-testid={`bank-tab-${t.id}`}
             onClick={() => setBankTab(t.id)}
-            className={`flex-1 min-h-[38px] px-2.5 py-1 rounded-xl text-[11px] font-bold transition-colors ${
+            className={`flex-1 min-h-[38px] px-2.5 py-1 rounded-xl text-[13px] font-bold transition-colors ${
               bankTab === t.id
                 ? 'bg-slate-900 text-white'
                 : 'text-slate-700 hover:bg-white'
@@ -188,14 +188,14 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             <h3 className="font-bold text-slate-900">
               Çift Kayıtlı Para Transfer Merkezi
             </h3>
-            <span className="text-[11px] font-mono text-emerald-700">
+            <span className="text-[13px] tabular-nums text-emerald-700">
               Güvenli Maks: {formatCurrency(safeMaxInfo.maxSafeTransferable)}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                 Kaynak Hesap
               </label>
               <select
@@ -213,7 +213,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                 Hedef Hesap
               </label>
               <select
@@ -231,7 +231,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                 İşlem Kategorisi (Hukuki & Muhasebe Nedeni)
               </label>
               <select
@@ -255,7 +255,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                 Transfer Tutarı (TL)
               </label>
               <input
@@ -267,14 +267,14 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 onChange={(e) =>
                   setXferAmount(Math.max(0, Number(e.target.value) || 0))
                 }
-                className="w-full min-h-[42px] px-3 rounded-xl bg-slate-50 border border-slate-300 font-mono text-slate-900"
+                className="w-full min-h-[42px] px-3 rounded-xl bg-slate-50 border border-slate-300 tabular-nums text-slate-900"
               />
             </div>
           </div>
 
           {/* Hızlı Tutar Yüzde Butonları (%10, %25, %50, %75, Maksimum) */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-slate-500 mr-1">
+            <span className="text-[13px] text-slate-500 mr-1">
               Güvenli Oran:
             </span>
             {[
@@ -295,7 +295,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                     )
                   )
                 }
-                className="min-h-[32px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-mono text-[11px] font-semibold"
+                className="min-h-[32px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 tabular-nums text-[13px] font-semibold"
               >
                 {btn.label}
               </button>
@@ -303,7 +303,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           {/* Vergi, Tampon ve İşlem Sonrası Bakiye Önizlemesi */}
-          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
             <div>
               <div className="text-slate-500">Kaynak Ham Bakiye</div>
               <div className="font-bold text-slate-900">
@@ -369,7 +369,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 Kurumsal & Yatırım Kredisi Başvurusu
               </h3>
               <span
-                className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
+                className={`px-2 py-0.5 rounded tabular-nums font-bold text-[13px] ${
                   loanQuote.approved
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-rose-100 text-rose-800'
@@ -381,7 +381,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                   Kredi Türü (6 Ürün)
                 </label>
                 <select
@@ -403,7 +403,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                   Talep Edilen Anapara (Maks:{' '}
                   {formatCurrency(loanQuote.maxEligibleAmount)})
                 </label>
@@ -418,12 +418,12 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                       Math.max(10_000, Number(e.target.value) || 10_000)
                     )
                   }
-                  className="w-full min-h-[42px] px-3 rounded-xl bg-slate-50 border border-slate-300 font-mono text-slate-900"
+                  className="w-full min-h-[42px] px-3 rounded-xl bg-slate-50 border border-slate-300 tabular-nums text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                   Vade (Oyun Günü)
                 </label>
                 <select
@@ -431,7 +431,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                   onChange={(e) =>
                     setLoanTermDaysInput(Number(e.target.value))
                   }
-                  className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 font-mono text-slate-900"
+                  className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 tabular-nums text-slate-900"
                 >
                   {[60, 90, 120, 180, 360].map((d) => (
                     <option key={d} value={d}>
@@ -442,7 +442,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
               <div>
                 <div className="text-slate-500">Yıllık / Efektif Faiz</div>
                 <div className="font-bold text-slate-900">
@@ -478,7 +478,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             {!loanQuote.approved && loanQuote.rejectionReason && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px]">
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px]">
                 {loanQuote.rejectionReason}
               </div>
             )}
@@ -521,7 +521,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="font-mono font-bold text-slate-900">
+                      <span className="tabular-nums font-bold text-slate-900">
                         {loan.loanId}
                       </span>{' '}
                       <span className="text-slate-600">
@@ -529,7 +529,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
+                      className={`px-2 py-0.5 rounded tabular-nums font-bold text-[13px] ${
                         loan.status === 'ACTIVE'
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-rose-100 text-rose-800'
@@ -539,7 +539,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
                     <div>
                       <span className="text-slate-500">Kalan Anapara:</span>{' '}
                       <strong>{formatCurrency(loan.remainingPrincipal)}</strong>
@@ -567,7 +567,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                         onPayLoanInstallment &&
                         onPayLoanInstallment(loan.loanId)
                       }
-                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px]"
+                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[13px]"
                     >
                       Taksit Öde ({formatCurrency(loan.installmentAmount)})
                     </button>
@@ -576,7 +576,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                       onClick={() =>
                         onPayOffLoanEarly && onPayOffLoanEarly(loan.loanId)
                       }
-                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px]"
+                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[13px]"
                     >
                       Erken Kapat (Teminatı Çöz)
                     </button>
@@ -595,9 +595,9 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             <h3 className="font-bold text-slate-900">
               Makroekonomik Gösterge Paneli
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums">
               <div>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-slate-500 text-[13px]">
                   Politika Faizi
                 </span>
                 <div className="font-bold text-slate-900">
@@ -605,7 +605,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-slate-500 text-[13px]">
                   Yıllık Enflasyon
                 </span>
                 <div className="font-bold text-slate-900">
@@ -613,13 +613,13 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px]">GSYH Büyüme</span>
+                <span className="text-slate-500 text-[13px]">GSYH Büyüme</span>
                 <div className="font-bold text-emerald-700">
                   %{(state.macro.gdpGrowthRate * 100).toFixed(2)}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px]">Konjonktür</span>
+                <span className="text-slate-500 text-[13px]">Konjonktür</span>
                 <div className="font-bold text-indigo-700">
                   {state.macro.cyclePhase}
                 </div>
@@ -634,13 +634,13 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             {ledgerAccounts.map((acc) => (
               <div
                 key={acc.id}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between font-mono text-[11px]"
+                className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between tabular-nums text-[13px]"
               >
                 <div>
                   <div className="font-bold text-slate-900 font-sans">
                     {acc.name}
                   </div>
-                  <div className="text-[10px] text-slate-500">
+                  <div className="text-[13px] text-slate-500">
                     {acc.id} · {acc.ownerType}
                   </div>
                 </div>
@@ -649,7 +649,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                     {formatCurrency(acc.balance)}
                   </div>
                   {acc.reservedBalance > 0 && (
-                    <div className="text-[10px] text-amber-700">
+                    <div className="text-[13px] text-amber-700">
                       Bloke: {formatCurrency(acc.reservedBalance)}
                     </div>
                   )}

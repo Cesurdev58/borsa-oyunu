@@ -524,7 +524,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   <Gauge className="w-3.5 h-3.5 text-sky-600" />
                   <span>Grafik Kalitesi (Performans Modu)</span>
                 </label>
-                <span className="text-[10px] font-mono text-slate-500">
+                <span className="text-[13px] tabular-nums text-slate-500">
                   Varsayılan: Orta
                 </span>
               </div>
@@ -552,7 +552,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                     >
                       <div className="font-bold">{item.label}</div>
                       <div
-                        className={`text-[9px] font-mono ${
+                        className={`text-[13px] tabular-nums ${
                           active ? 'text-sky-100' : 'text-slate-500'
                         }`}
                       >
@@ -584,7 +584,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                       isMuted: !uiSettings.audio.isMuted,
                     })
                   }
-                  className={`min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold border ${
+                  className={`min-h-[32px] px-2.5 rounded-lg text-[13px] font-bold border ${
                     uiSettings.audio.isMuted
                       ? 'bg-rose-600 text-white border-rose-700'
                       : 'bg-slate-100 text-slate-700 border-slate-300'
@@ -598,7 +598,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 <div className="flex items-center justify-between gap-2">
                   <label
                     htmlFor="audio-master-volume"
-                    className="text-[11px] text-slate-700 font-medium w-24"
+                    className="text-[13px] text-slate-700 font-medium w-24"
                   >
                     Ana Ses (%{uiSettings.audio.masterVolume})
                   </label>
@@ -620,7 +620,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 <div className="flex items-center justify-between gap-2">
                   <label
                     htmlFor="audio-effects-volume"
-                    className="text-[11px] text-slate-700 font-medium w-24"
+                    className="text-[13px] text-slate-700 font-medium w-24"
                   >
                     Efekt Sesi (%{uiSettings.audio.effectsVolume})
                   </label>
@@ -642,7 +642,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 <div className="flex items-center justify-between gap-2">
                   <label
                     htmlFor="audio-music-volume"
-                    className="text-[11px] text-slate-700 font-medium w-24"
+                    className="text-[13px] text-slate-700 font-medium w-24"
                   >
                     Müzik Sesi (%{uiSettings.audio.musicVolume})
                   </label>
@@ -663,7 +663,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 </div>
                 <div
                   data-testid="audio-asset-status-note"
-                  className="text-[10px] text-slate-500 pt-1 border-t border-slate-200/70"
+                  className="text-[13px] text-slate-500 pt-1 border-t border-slate-200/70"
                 >
                   Durum: Ses yöneticisi altyapısı aktif — ses dosyaları daha sonra
                   eklenecek.
@@ -682,7 +682,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                     key={`day-duration-${mins}m`}
                     type="button"
                     onClick={() => onSetRealMinutesPerDay(mins)}
-                    className={`min-h-[40px] rounded-xl font-mono font-bold border ${
+                    className={`min-h-[40px] rounded-xl tabular-nums font-bold border ${
                       state.realMinutesPerGameDay === mins
                         ? 'bg-emerald-600 text-white border-emerald-700'
                         : 'bg-slate-50 text-slate-800 border-slate-200'
@@ -700,7 +700,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 <div className="font-semibold text-slate-800">
                   Panel Açıkken Otomatik Duraklat
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[13px] text-slate-500">
                   Bina yönetim penceresi açıldığında oyun saatini duraklatır
                 </div>
               </div>

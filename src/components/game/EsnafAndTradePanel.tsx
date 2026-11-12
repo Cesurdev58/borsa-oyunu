@@ -111,6 +111,10 @@ interface EsnafAndTradePanelProps extends EsnafAndTradeActionsProps {
   spendableCash: number;
   formatCurrency: (v: number) => string;
   initialSection?: 'SHOPS' | 'TRADE_CENTER';
+  /** Açılışta seçili dükkân; boş bırakılırsa ilk dükkân. */
+  initialShopId?: string | null;
+  /** true ise açılışta "yeni dükkân aç" sekmesi görünür. */
+  startWithOpenBranch?: boolean;
 }
 
 type ShopActionTab =
@@ -161,6 +165,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   onAcceptCommercialContract,
   onDeliverCommercialContract,
   onIncorporateShopsIntoCompany,
+  initialShopId,
+  startWithOpenBranch,
 }) => {
   const trade = useMemo(
     () => TradeAndShopEngine.ensureTradeUniverseState(state),
@@ -175,10 +181,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
     initialSection
   );
   const [selectedShopId, setSelectedShopId] = useState<string>(
-    () => trade.shops[0]?.shopId ?? ''
+    () => initialShopId ?? trade.shops[0]?.shopId ?? ''
   );
   const [shopActionTab, setShopActionTab] = useState<ShopActionTab>(() =>
-    trade.shops.length === 0 ? 'OPEN_BRANCH' : 'ORDER_PRODUCT'
+    trade.shops.length === 0 || startWithOpenBranch
+      ? 'OPEN_BRANCH'
+      : 'ORDER_PRODUCT'
   );
   const [tradeTab, setTradeTab] = useState<TradeCenterTab>('TEDARIK');
 
@@ -279,7 +287,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       {/* 1. KARİYER İLERLEME BARI & ANA MOD SEÇİCİ */}
       <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-sky-50 border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+          <div className="text-[13px] font-bold uppercase tracking-wider text-amber-800">
             🚀 Kariyerin
           </div>
           <div
@@ -290,7 +298,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             <span>
               {CAREER_STAGE_LABELS[trade.careerStage] || trade.careerStage}
             </span>
-            <span className="text-xs font-mono font-semibold text-slate-600">
+            <span className="text-xs tabular-nums font-semibold text-slate-600">
               · Ticari İtibar: {trade.tradeReputationScore.toFixed(0)}/100
             </span>
           </div>
@@ -350,7 +358,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 >
                   <Store className="w-3.5 h-3.5" />
                   <span>{sh.nameTR}</span>
-                  <span className="px-1.5 py-0.2 rounded bg-black/15 text-[10px] font-mono">
+                  <span className="px-1.5 py-0.2 rounded bg-black/15 text-[13px] tabular-nums">
                     Sv.{sh.level}
                   </span>
                 </button>
@@ -372,7 +380,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             <div className="p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-extrabold text-sm">🛒 Rafları doldur</div>
-                <div className="text-[11px] opacity-95">
+                <div className="text-[13px] opacity-95">
                   {restockPlan.orders.length === 0
                     ? 'Raflar zaten dolu ya da paran yetmiyor.'
                     : `En ucuz toptancıdan ${restockPlan.orders.length} ürün · yaklaşık ${formatCurrency(restockPlan.totalCost)}`}
@@ -409,7 +417,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  <span className="text-[13px] font-bold uppercase tracking-wider text-amber-700">
                     {activeShopTemplate?.nameTR || activeShop.shopType} ·{' '}
                     {activeShop.isCompanyBranch
                       ? 'Şirket Şubesi'
@@ -420,10 +428,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   </h4>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-semibold text-slate-500">
+                  <div className="text-[13px] font-semibold text-slate-500">
                     Stok Doluluğu
                   </div>
-                  <div className="text-xs font-mono font-bold text-slate-900">
+                  <div className="text-xs tabular-nums font-bold text-slate-900">
                     {activeShopUsedUnits.toFixed(0)} / {activeShopTotalCap} br
                   </div>
                 </div>
@@ -432,12 +440,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* 8 Temiz Özet Metriği */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     1. Bugünkü Satış
                   </div>
                   <div
                     data-testid="shop-metric-daily-revenue"
-                    className="text-xs font-mono font-bold text-slate-900 mt-0.5"
+                    className="text-xs tabular-nums font-bold text-slate-900 mt-0.5"
                   >
                     {formatCurrency(activeShop.todaySalesRevenue)} (
                     {activeShop.todayUnitsSold} br)
@@ -445,12 +453,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     2. Bugünkü Kâr/Zarar
                   </div>
                   <div
                     data-testid="shop-metric-daily-profit"
-                    className={`text-xs font-mono font-bold mt-0.5 ${
+                    className={`text-xs tabular-nums font-bold mt-0.5 ${
                       activeShop.todayNetProfit >= 0
                         ? 'text-emerald-700'
                         : 'text-rose-700'
@@ -462,19 +470,19 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     3. Dükkân Kasası
                   </div>
                   <div
                     data-testid="shop-metric-cash"
-                    className="text-xs font-mono font-bold text-sky-900 mt-0.5"
+                    className="text-xs tabular-nums font-bold text-sky-900 mt-0.5"
                   >
                     {formatCurrency(activeShop.cashAccountBalance)}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     4. Kritik Stok
                   </div>
                   <div
@@ -496,12 +504,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     5. Müşteri Memnuniyeti
                   </div>
                   <div
                     data-testid="shop-metric-satisfaction"
-                    className="text-xs font-mono font-bold text-slate-900 mt-0.5"
+                    className="text-xs tabular-nums font-bold text-slate-900 mt-0.5"
                   >
                     %{activeShop.customerSatisfaction.toFixed(0)} · İtibar{' '}
                     {activeShop.reputationScore.toFixed(0)}
@@ -509,36 +517,36 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-slate-500 font-medium">
                     6. Bekleyen Teslimat
                   </div>
                   <div
                     data-testid="shop-metric-pending-deliveries"
-                    className="text-xs font-mono font-bold text-indigo-800 mt-0.5"
+                    className="text-xs tabular-nums font-bold text-indigo-800 mt-0.5"
                   >
                     {activeShop.pendingDeliveriesCount} Sevkiyat Yolda
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
-                  <div className="text-[10px] text-amber-800 font-bold">
+                  <div className="text-[13px] text-amber-800 font-bold">
                     7. Ana Sorun
                   </div>
                   <div
                     data-testid="shop-metric-main-issue"
-                    className="text-[11px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
+                    className="text-[13px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
                   >
                     {activeShop.mainIssueTR}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
-                  <div className="text-[10px] text-emerald-800 font-bold">
+                  <div className="text-[13px] text-emerald-800 font-bold">
                     8. Önerilen İşlem
                   </div>
                   <div
                     data-testid="shop-metric-recommended-action"
-                    className="text-[11px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
+                    className="text-[13px] font-semibold text-slate-800 mt-0.5 line-clamp-2"
                   >
                     {activeShop.recommendedActionTR}
                   </div>
@@ -615,12 +623,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   }}
                 />
               </div>
-              <div className="flex justify-between text-[11px] font-bold font-mono">
+              <div className="flex justify-between text-[13px] font-bold tabular-nums">
                 <span>{formatCurrency(state.netWorth)}</span>
                 <span>🎯 {formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
               </div>
               {state.netWorth < FIRST_SHOP_MIN_NET_WORTH && (
-                <p className="text-[11px] font-semibold">
+                <p className="text-[13px] font-semibold">
                   Borsada hisse al-sat, parayı büyüt. Hedefe ulaşınca dükkân kurabilirsin!
                 </p>
               )}
@@ -637,7 +645,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                   Dükkân İçin Toptancıdan Ürün Sipariş Et ({activeShop.nameTR})
                 </h5>
-                <span className="text-xs font-mono text-slate-600">
+                <span className="text-xs tabular-nums text-slate-600">
                   Dükkân Kasası: {formatCurrency(activeShop.cashAccountBalance)}{' '}
                   · Kişisel Nakit: {formatCurrency(spendableCash)}
                 </span>
@@ -674,7 +682,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         <div className="text-xs font-bold text-slate-900">
                           {resDef?.nameTR || prodId}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-600 mt-0.5">
+                        <div className="text-[13px] tabular-nums text-slate-600 mt-0.5">
                           Raf Stoku:{' '}
                           <strong
                             className={
@@ -697,7 +705,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* Tedarikçi Teklifleri ve Sipariş Butonu */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
                     Tedarikçi Seçimi
                   </label>
                   <select
@@ -716,7 +724,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
                     Sipariş Miktarı (Birim)
                   </label>
                   <input
@@ -731,12 +739,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(1, Number(e.target.value) || 10)
                       )
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs tabular-nums font-bold text-slate-900"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
                     Ödeme Şekli
                   </label>
                   <select
@@ -757,7 +765,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div>
                     <span className="text-slate-600">Tahmini Toplam: </span>
-                    <strong className="font-mono text-slate-900">
+                    <strong className="tabular-nums text-slate-900">
                       {formatCurrency(
                         orderQuantity *
                           (activeOffer.unitPrice +
@@ -823,7 +831,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           <div className="text-xs font-bold text-slate-900">
                             {resDef?.nameTR || prodId}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-600">
+                          <div className="text-[13px] tabular-nums text-slate-600">
                             Etiket Fiyatı: {formatCurrency(currentSellPrice)}{' '}
                             (Çarpan: {currentMult.toFixed(2)}x)
                           </div>
@@ -843,7 +851,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                                   priceMultipliers: { [prodId]: preset.val },
                                 })
                               }
-                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-lg text-[13px] font-bold border cursor-pointer ${
                                 Math.abs(currentMult - preset.val) < 0.04
                                   ? 'bg-slate-900 text-white border-slate-900'
                                   : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
@@ -934,7 +942,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(1000, Number(e.target.value) || 5000)
                       )
                     }
-                    className="w-28 px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-mono font-bold"
+                    className="w-28 px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs tabular-nums font-bold"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1010,7 +1018,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                   8 Farklı Esnaf ve Mağaza Türünden Yeni İşletme Aç
                 </h5>
-                <span className="text-xs font-mono font-bold text-emerald-700">
+                <span className="text-xs tabular-nums font-bold text-emerald-700">
                   Kullanılabilir Nakit: {formatCurrency(spendableCash)}
                 </span>
               </div>
@@ -1035,15 +1043,15 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       <div className="text-xs font-extrabold text-slate-900">
                         {tpl.nameTR}
                       </div>
-                      <div className="text-[10px] font-mono text-amber-800 font-bold mt-0.5">
+                      <div className="text-[13px] tabular-nums text-amber-800 font-bold mt-0.5">
                         Kurulum:{' '}
                         {formatCurrency(tpl.openingCost + tpl.decorationCost)}
                       </div>
-                      <div className="text-[10px] text-slate-600 mt-0.5">
+                      <div className="text-[13px] text-slate-600 mt-0.5">
                         Kira: {formatCurrency(tpl.dailyRentBase)}/g · Marj %
                         {Math.round(tpl.defaultGrossMarginPct)}
                       </div>
-                      <div className="text-[9px] text-slate-500 mt-0.5 line-clamp-1">
+                      <div className="text-[13px] text-slate-500 mt-0.5 line-clamp-1">
                         {tpl.specificMechanicTitleTR} · Min.
                         {tpl.minStaffRequired} çalışan
                       </div>
@@ -1061,7 +1069,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       {selectedShopTemplateForNew.nameTR} —{' '}
                       {selectedShopTemplateForNew.specificMechanicDescriptionTR}
                     </div>
-                    <div className="text-[11px] text-slate-600 mt-0.5">
+                    <div className="text-[13px] text-slate-600 mt-0.5">
                       Başlangıç Sermayesi:{' '}
                       <strong>
                         {formatCurrency(selectedShopTemplateForNew.openingCost)}
@@ -1106,7 +1114,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(0, Number(e.target.value) || 0)
                       )
                     }
-                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-mono font-bold"
+                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
                   />
                   <button
                     type="button"
@@ -1135,7 +1143,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+                  <span className="text-[13px] font-bold uppercase tracking-wider text-teal-800">
                     Kariyer Dönüşümü · Esnaftan Kurumsal Şirkete Geçiş
                   </span>
                   <h5 className="text-sm font-extrabold text-slate-900">
@@ -1155,7 +1163,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[13px]">
                 {[
                   {
                     ok:
@@ -1231,7 +1239,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onChange={(e) =>
                     setIncorpTicker(e.target.value.toUpperCase())
                   }
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-mono font-bold"
+                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
                   placeholder="Borsa Kodu"
                 />
                 <input
@@ -1245,7 +1253,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       Math.max(0, Number(e.target.value) || 0)
                     )
                   }
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-mono font-bold"
+                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
                   placeholder="Ek Nakit Sermaye"
                 />
                 <button
@@ -1326,14 +1334,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       <span className="text-xs font-bold text-slate-900">
                         {wh.nameTR}
                       </span>
-                      <span className="text-[11px] font-mono font-bold text-sky-700">
+                      <span className="text-[13px] tabular-nums font-bold text-sky-700">
                         {wh.usedCapacityUnits.toFixed(0)}/{wh.maxCapacityUnits}{' '}
                         br
                       </span>
                     </div>
                     <div className="space-y-1 max-h-24 overflow-y-auto">
                       {wh.batches.length === 0 ? (
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[13px] text-slate-400">
                           Depo boş
                         </div>
                       ) : (
@@ -1342,12 +1350,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           return (
                             <div
                               key={b.batchId}
-                              className="flex items-center justify-between text-[11px] bg-slate-50 px-2 py-0.5 rounded"
+                              className="flex items-center justify-between text-[13px] bg-slate-50 px-2 py-0.5 rounded"
                             >
                               <span className="font-medium text-slate-700 truncate">
                                 {rDef?.nameTR || b.resourceNameTR}
                               </span>
-                              <span className="font-mono font-bold text-slate-900">
+                              <span className="tabular-nums font-bold text-slate-900">
                                 {b.quantity.toFixed(0)} br (K.{b.qualityScore})
                               </span>
                             </div>
@@ -1412,7 +1420,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(5, Number(e.target.value) || 20)
                       )
                     }
-                    className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold"
+                    className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs tabular-nums font-bold"
                   />
 
                   <select
@@ -1496,7 +1504,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                     Kendi Lojistik Araç Filosu ({trade.vehicles.length} Araç)
                   </h5>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[13px] text-slate-500">
                     Kendi filonuz dış lojistik maliyetini düşürür
                   </span>
                 </div>
@@ -1512,10 +1520,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       <div className="text-xs font-bold text-slate-900">
                         {spec.nameTR}
                       </div>
-                      <div className="text-[10px] font-mono text-amber-800 font-bold">
+                      <div className="text-[13px] tabular-nums text-amber-800 font-bold">
                         {formatCurrency(spec.purchaseCost)}
                       </div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-[13px] text-slate-500">
                         Kapasite: {spec.capacityUnits} br
                       </div>
                     </button>
@@ -1562,7 +1570,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           Math.max(1, Number(e.target.value) || 20)
                         )
                       }
-                      className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold"
+                      className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs tabular-nums font-bold"
                     />
                     <button
                       type="button"
@@ -1611,7 +1619,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           </span>
                         </div>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`px-2 py-0.5 rounded-full text-[13px] font-bold ${
                             sh.status === 'DELIVERED'
                               ? 'bg-emerald-100 text-emerald-800'
                               : 'bg-amber-100 text-amber-800'
@@ -1662,7 +1670,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           Math.max(1, Number(e.target.value) || 1)
                         )
                       }
-                      className="w-20 px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold"
+                      className="w-20 px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs tabular-nums font-bold"
                     />
                     <button
                       type="button"
@@ -1692,12 +1700,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       <div className="text-xs font-bold text-slate-900">
                         {ch.nameTR}
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[13px] text-slate-500">
                         Tahsilat Vadesi: {ch.paymentTermDays} gün · Marj Çarpanı{' '}
                         {ch.marginMultiplier}x
                       </div>
                     </div>
-                    <div className="text-right font-mono text-xs font-bold text-emerald-700">
+                    <div className="text-right tabular-nums text-xs font-bold text-emerald-700">
                       {formatCurrency(ch.todayRevenue)}
                     </div>
                   </div>
@@ -1724,7 +1732,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         <div className="text-xs font-extrabold text-slate-900">
                           {ct.buyerNameTR} — {ct.resourceNameTR}
                         </div>
-                        <div className="text-[11px] text-slate-600 font-mono">
+                        <div className="text-[13px] text-slate-600 tabular-nums">
                           Teslim: {ct.deliveredUnits}/{ct.totalRequiredUnits} br
                           · Birim Fiyat: {formatCurrency(ct.unitSalePrice)} ·
                           Vade: G.{ct.dueDay}
@@ -1761,7 +1769,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           </button>
                         )}
                         {ct.status === 'COMPLETED' && (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[13px] font-bold">
                             Tamamlandı
                           </span>
                         )}

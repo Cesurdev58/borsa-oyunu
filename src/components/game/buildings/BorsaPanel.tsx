@@ -120,7 +120,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             <span className="text-2xl">📈</span> Borsa
           </div>
           <span
-            className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+            className={`px-2.5 py-1 rounded-full text-[13px] font-bold ${
               state.marketSession === 'MARKET_OPEN'
                 ? 'bg-white text-emerald-700'
                 : 'bg-black/25 text-white'
@@ -133,19 +133,19 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[11px] opacity-90">Cebimdeki para</div>
-            <div className="text-base font-extrabold font-mono tabular-nums">
+            <div className="text-[13px] opacity-90">Cebimdeki para</div>
+            <div className="text-base font-extrabold tabular-nums tabular-nums">
               {formatCurrency(spendableCash)}
             </div>
           </div>
           <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[11px] opacity-90">Hisselerimin değeri</div>
-            <div className="text-base font-extrabold font-mono tabular-nums">
+            <div className="text-[13px] opacity-90">Hisselerimin değeri</div>
+            <div className="text-base font-extrabold tabular-nums tabular-nums">
               {formatCurrency(portfolioValue)}
             </div>
           </div>
         </div>
-        <div className="mt-2 text-[11px] opacity-90">
+        <div className="mt-2 text-[13px] opacity-90">
           Saat {formattedTime} · Ucuza al, pahalıya sat!
         </div>
       </div>
@@ -159,16 +159,16 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               <div className="font-extrabold text-slate-900 text-sm">
                 {selectedStock.ticker}
               </div>
-              <div className="text-[11px] text-slate-500 truncate">
+              <div className="text-[13px] text-slate-500 truncate">
                 {selectedStock.name}
               </div>
             </div>
           </div>
-          <div className="text-right font-mono tabular-nums">
+          <div className="text-right tabular-nums tabular-nums">
             <div className="text-lg font-extrabold text-slate-900">
-              {selectedStock.price.toFixed(2)} ₺
+              <span className="whitespace-nowrap">{selectedStock.price.toFixed(2)} ₺</span>
             </div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-[13px] text-slate-500">
               {ownedShares > 0 ? `Sende ${ownedShares} lot var` : 'Sende yok'}
             </div>
           </div>
@@ -184,8 +184,8 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             −
           </button>
           <div className="text-center">
-            <div className="text-2xl font-extrabold font-mono text-slate-900">{lotAmount}</div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-2xl font-extrabold tabular-nums text-slate-900">{lotAmount}</div>
+            <div className="text-[13px] text-slate-500">
               lot · yaklaşık {formatCurrency(lotAmount * selectedStock.askPrice)}
             </div>
           </div>
@@ -239,7 +239,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           </button>
         </div>
         {tradeNote && (
-          <div className="text-[11px] text-center text-slate-600">{tradeNote}</div>
+          <div className="text-[13px] text-center text-slate-600">{tradeNote}</div>
         )}
       </div>
 
@@ -259,7 +259,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <button
             type="button"
             onClick={() => setSectorFilter('ALL')}
-            className={`min-h-[36px] px-3 rounded-full text-[11px] font-bold shrink-0 ${
+            className={`min-h-[36px] px-3 rounded-full text-[13px] font-bold shrink-0 ${
               sectorFilter === 'ALL' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
             }`}
           >
@@ -270,7 +270,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               key={sec}
               type="button"
               onClick={() => setSectorFilter(sec)}
-              className={`min-h-[36px] px-3 rounded-full text-[11px] font-bold shrink-0 ${
+              className={`min-h-[36px] px-3 rounded-full text-[13px] font-bold shrink-0 ${
                 sectorFilter === sec ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
               }`}
             >
@@ -305,17 +305,17 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-slate-900 text-sm">{st.ticker}</span>
                     {myLots > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold">
+                      <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold">
                         {myLots} lot
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-500 truncate">{st.name}</div>
+                  <div className="text-[13px] text-slate-500 truncate">{st.name}</div>
                 </div>
-                <div className="text-right font-mono tabular-nums shrink-0">
+                <div className="text-right tabular-nums tabular-nums shrink-0">
                   <div className="text-sm font-extrabold text-slate-900">{st.price.toFixed(2)} ₺</div>
                   <div
-                    className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[13px] font-bold ${
                       up ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                     }`}
                   >
@@ -343,22 +343,22 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
         <div className="flex items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900 font-mono">
+              <span className="text-sm font-bold text-slate-900 tabular-nums">
                 {selectedStock.ticker}
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-semibold">
+              <span className="text-[13px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-semibold">
                 {selectedStock.sector}
               </span>
             </div>
-            <div className="text-[11px] text-slate-600 truncate">
+            <div className="text-[13px] text-slate-600 truncate">
               {selectedStock.name}
             </div>
           </div>
-          <div className="text-right font-mono tabular-nums">
+          <div className="text-right tabular-nums tabular-nums">
             <div className="text-sm font-bold text-slate-900">
               {selectedStock.price.toFixed(2)} TL
             </div>
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[13px] text-slate-500">
               Alış: {selectedStock.bidPrice.toFixed(2)} · Satış:{' '}
               {selectedStock.askPrice.toFixed(2)}
             </div>
@@ -397,7 +397,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <div>
             <label
               htmlFor="tycoon-lot-input"
-              className="block text-[11px] font-semibold text-slate-700 mb-1"
+              className="block text-[13px] font-semibold text-slate-700 mb-1"
             >
               Miktar (Lot) · Maks: {maxAffordableLots}
             </label>
@@ -411,7 +411,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               onChange={(e) =>
                 setLotAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
               }
-              className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 text-xs"
+              className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900 text-xs"
             />
             <div className="flex flex-wrap gap-1 mt-1.5">
               {[10, 50, 100, 250].map((preset) => (
@@ -419,7 +419,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   key={preset}
                   type="button"
                   onClick={() => setLotAmount(preset)}
-                  className="min-h-[32px] px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-mono text-slate-700 hover:bg-slate-100"
+                  className="min-h-[32px] px-2 py-1 rounded-lg bg-white border border-slate-200 text-[13px] tabular-nums text-slate-700 hover:bg-slate-100"
                 >
                   {preset} Lot
                 </button>
@@ -429,7 +429,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                 onClick={() =>
                   setLotAmount(Math.max(1, maxAffordableLots))
                 }
-                className="min-h-[32px] px-2 py-1 rounded-lg bg-emerald-100 text-emerald-900 text-[11px] font-semibold"
+                className="min-h-[32px] px-2 py-1 rounded-lg bg-emerald-100 text-emerald-900 text-[13px] font-semibold"
               >
                 Maks Al
               </button>
@@ -440,7 +440,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             <div>
               <label
                 htmlFor="tycoon-limit-price-input"
-                className="block text-[11px] font-semibold text-slate-700 mb-1"
+                className="block text-[13px] font-semibold text-slate-700 mb-1"
               >
                 Limit Fiyatı (TL)
               </label>
@@ -456,20 +456,20 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                     Math.max(0.1, Number(e.target.value) || 0.1)
                   )
                 }
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 text-xs"
+                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900 text-xs"
               />
-              <div className="text-[10px] text-slate-500 mt-1.5">
+              <div className="text-[13px] text-slate-500 mt-1.5">
                 Portföyde kullanılabilir: {availableSharesToSell} lot (Bloke:{' '}
                 {reservedShares})
               </div>
             </div>
           ) : (
-            <div className="flex flex-col justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-600">
+            <div className="flex flex-col justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-[13px] text-slate-600">
               <div>
                 Piyasa açıkken anında aktif fiyattan gerçekleşir; kapalıyken saat
                 10:00 açılışını bekler.
               </div>
-              <div className="mt-1 font-mono text-slate-800">
+              <div className="mt-1 tabular-nums text-slate-800">
                 Mevcut Lot: {availableSharesToSell} lot
               </div>
             </div>
@@ -522,14 +522,14 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
 
         {/* Hızlı Doğrudan Al / Sat Butonları */}
         <div className="pt-2 border-t border-emerald-200/70 flex items-center justify-between gap-2">
-          <span className="text-[11px] text-slate-600">
+          <span className="text-[13px] text-slate-600">
             Anında Doğrudan İşlem:
           </span>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => onBuyStock(selectedStock.ticker, lotAmount)}
-              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold text-[11px]"
+              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold text-[13px]"
             >
               Anında Al ({lotAmount} Lot)
             </button>
@@ -542,7 +542,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   Math.min(lotAmount, availableSharesToSell)
                 )
               }
-              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-rose-50 disabled:opacity-50 text-rose-800 border border-rose-300 font-semibold text-[11px]"
+              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-rose-50 disabled:opacity-50 text-rose-800 border border-rose-300 font-semibold text-[13px]"
             >
               Anında Sat
             </button>
@@ -556,7 +556,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <h3 className="text-xs font-bold text-slate-900">
             Emir Defteri ({state.pendingOrders.length})
           </h3>
-          <span className="text-[11px] font-mono text-slate-500">
+          <span className="text-[13px] tabular-nums text-slate-500">
             Bloke Nakit: {formatCurrency(reservedCash)}
           </span>
         </div>
@@ -575,15 +575,15 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-bold text-slate-900">
+                    <span className="tabular-nums font-bold text-slate-900">
                       {ord.ticker}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono">
+                    <span className="text-[13px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 tabular-nums">
                       {ord.orderType}
                     </span>
                     <span
                       data-testid={`tycoon-order-status-${ord.id}`}
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      className={`text-[13px] font-bold px-1.5 py-0.5 rounded ${
                         ord.status === 'FILLED'
                           ? 'bg-emerald-100 text-emerald-800'
                           : ord.status === 'PENDING' ||
@@ -595,7 +595,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                       {ord.status}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                  <div className="text-[13px] text-slate-600 tabular-nums mt-0.5">
                     {ord.requestedShares} lot
                     {ord.limitPrice
                       ? ` · Limit: ${ord.limitPrice.toFixed(2)} TL`
@@ -614,7 +614,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   <button
                     type="button"
                     onClick={() => onCancelOrder(ord.id)}
-                    className="min-h-[38px] px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px] shrink-0"
+                    className="min-h-[38px] px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[13px] shrink-0"
                   >
                     İptal Et
                   </button>

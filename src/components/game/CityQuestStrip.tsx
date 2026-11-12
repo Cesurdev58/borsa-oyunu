@@ -75,30 +75,26 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
               type="button"
               onClick={() => handleBuildingClick(activeQuest.targetBuildingId)}
               aria-label={`Hedef binaya odaklan: ${activeQuest.title}`}
-              className="w-7 h-7 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 hover:bg-emerald-100 transition-colors"
+              className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center shrink-0 hover:bg-emerald-100 transition-colors"
             >
               <Target className="w-3.5 h-3.5" />
             </button>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="font-bold text-slate-900 truncate">
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="font-extrabold text-slate-900 truncate">
                   Hedef {activeQuest.stepNumber}: {activeQuest.title}
                 </span>
                 <span
                   data-testid="active-quest-progress"
-                  className="font-mono font-bold text-[10px] text-emerald-700 shrink-0"
+                  className="tabular-nums font-bold text-[13px] text-emerald-700 shrink-0"
                 >
                   ({activeQuest.progressText})
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                <span className="truncate">Ödül: {activeQuest.rewardLabel}</span>
-                <span aria-hidden="true">·</span>
-                <span className="font-mono text-amber-700 font-semibold shrink-0">
-                  İtibar: {earnedReputationPoints}P
-                </span>
+              <div className="text-[13px] text-slate-600 truncate">
+                🎁 {activeQuest.rewardLabel}
               </div>
             </div>
           </div>
@@ -109,10 +105,10 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
             data-testid="open-quest-panel-btn"
             onClick={() => setIsPanelOpen(true)}
             aria-label="Görevler ve İtibar Panelini Aç"
-            className="min-h-[36px] px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold inline-flex items-center gap-1 shrink-0 transition-colors"
+            className="min-h-[36px] px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[13px] font-semibold inline-flex items-center gap-1 shrink-0 transition-colors"
           >
             <span>
-              Görevler ({completedCount}/{totalCount})
+              📋 {completedCount}/{totalCount}
             </span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
           </button>
@@ -139,9 +135,9 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
                     <h2 className="text-sm font-bold text-slate-900">
                       Şehir Hedefleri & İtibar Rozetleri
                     </h2>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[13px] text-slate-600">
                       Tamamlanan: {completedCount}/{totalCount} · Toplam İtibar:{' '}
-                      <strong className="font-mono text-emerald-800">
+                      <strong className="tabular-nums text-emerald-800">
                         {earnedReputationPoints} Puan
                       </strong>
                     </p>
@@ -187,13 +183,13 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
                             {q.stepNumber}. {q.title}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 pl-5">
+                        <div className="text-[13px] text-slate-500 mt-0.5 pl-5">
                           Ödül: {q.rewardLabel}
                         </div>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="font-mono font-bold text-[11px]">
+                        <span className="tabular-nums font-bold text-[13px]">
                           {q.completed ? 'TAMAM' : q.progressText}
                         </span>
                       </div>

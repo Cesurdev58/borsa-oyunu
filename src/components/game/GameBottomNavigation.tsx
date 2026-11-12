@@ -58,7 +58,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
         },
         {
           id: 'portfolio',
-          label: 'Dükkânım',
+          label: 'Dükkân',
           emoji: '🏪',
           color: 'from-rose-400 to-pink-600',
           badge:
@@ -97,12 +97,12 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                   >
                     {tab.emoji}
                   </span>
-                  <span className="text-[11px] leading-tight mt-0.5 truncate max-w-full">
+                  <span className="text-[13px] leading-tight mt-0.5 truncate max-w-full">
                     {tab.label}
                   </span>
 
                   {tab.badge !== undefined && (
-                    <span className="absolute top-0 right-2 px-1 min-w-[16px] h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold font-mono flex items-center justify-center">
+                    <span className="absolute top-0 right-2 px-1 min-w-[16px] h-4 rounded-full bg-rose-500 text-white text-[13px] font-bold tabular-nums flex items-center justify-center">
                       {tab.badge}
                     </span>
                   )}

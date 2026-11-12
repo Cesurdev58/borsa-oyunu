@@ -5,7 +5,7 @@
  * OYUNCU_OFISI bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SimulationStage,
 } from '../../../models/simulation';
@@ -19,6 +19,7 @@ import {
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
+import { ShopDashboard } from './ShopDashboard';
 
 export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -38,6 +39,10 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   onDeliverCommercialContract,
   onIncorporateShopsIntoCompany,
 }) => {
+  const [managing, setManaging] = useState<{ shopId: string | null } | null>(
+    null
+  );
+  const [showAssets, setShowAssets] = useState(false);
   const positions = Object.values(state.portfolio).filter(
     (p) => p.shares > 0
   );
@@ -56,6 +61,16 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-OYUNCU_OFISI"
     >
+      {managing ? (
+        <div className="space-y-3">
+          <button
+            type="button"
+            data-testid="shop-manage-back"
+            onClick={() => setManaging(null)}
+            className="min-h-[44px] px-4 rounded-2xl bg-slate-100 text-slate-800 font-extrabold text-sm active:scale-95"
+          >
+            ← Dükkânlarıma dön
+          </button>
       {/* Esnaf, Dükkânlar, Ticaret Merkezi ve Şirketleşme Paneli */}
       {onOpenShop &&
         onUpgradeShopLevel &&
@@ -75,6 +90,8 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             spendableCash={spendableCash}
             formatCurrency={formatCurrency}
             initialSection="SHOPS"
+            initialShopId={managing.shopId}
+            startWithOpenBranch={managing.shopId === null}
             onOpenShop={onOpenShop}
             onUpgradeShopLevel={onUpgradeShopLevel}
             onTransferShopCash={onTransferShopCash}
@@ -91,17 +108,38 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
           />
         )}
 
+        </div>
+      ) : (
+        <ShopDashboard
+          state={state}
+          spendableCash={spendableCash}
+          formatCurrency={formatCurrency}
+          onPlaceProcurementOrder={onPlaceProcurementOrder!}
+          onManage={(shopId) => setManaging({ shopId })}
+        />
+      )}
+
+      <button
+        type="button"
+        data-testid="assets-toggle"
+        onClick={() => setShowAssets((v) => !v)}
+        className="w-full min-h-[48px] rounded-2xl bg-sky-100 text-sky-900 font-extrabold text-sm active:scale-95"
+      >
+        {showAssets ? '▲ Varlıklarımı gizle' : '📊 Varlıklarım ve işlem geçmişi'}
+      </button>
+      {(
+        <div className={showAssets ? 'space-y-4' : 'hidden'}>
       {/* Net Varlık Denklemi Özeti */}
       <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
         <div className="flex items-center justify-between">
           <span className="font-bold text-sky-950">
             Toplam Net Varlık Bilançosu
           </span>
-          <span className="text-base font-bold font-mono tabular-nums text-emerald-700">
+          <span className="text-base font-bold tabular-nums tabular-nums text-emerald-700">
             {formatCurrency(state.netWorth)}
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px] font-mono tabular-nums">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[13px] tabular-nums tabular-nums">
           <div className="p-2 rounded-xl bg-white border border-slate-200">
             <div className="text-slate-500">Nakit</div>
             <div className="font-bold text-slate-900">
@@ -179,11 +217,11 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             >
               <div className="flex items-center justify-between font-bold">
                 <span>{item.title}</span>
-                <span className="text-[10px] font-mono">
+                <span className="text-[13px] tabular-nums">
                   {item.unlocked ? 'AÇIK' : 'KİLİTLİ'}
                 </span>
               </div>
-              <div className="text-[10px] mt-0.5 opacity-80">{item.req}</div>
+              <div className="text-[13px] mt-0.5 opacity-80">{item.req}</div>
             </div>
           ))}
         </div>
@@ -213,20 +251,20 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
                   className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-2"
                 >
                   <div>
-                    <div className="font-mono font-bold text-slate-900">
+                    <div className="tabular-nums font-bold text-slate-900">
                       {pos.ticker} · {pos.shares} Lot
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
+                    <div className="text-[13px] text-slate-500 tabular-nums">
                       Ort. Maliyet: {pos.averageCost.toFixed(2)} TL · Güncel:{' '}
                       {curPrice.toFixed(2)} TL
                     </div>
                   </div>
-                  <div className="text-right font-mono tabular-nums">
+                  <div className="text-right tabular-nums tabular-nums">
                     <div className="font-bold text-slate-900">
                       {formatCurrency(mktVal)}
                     </div>
                     <div
-                      className={`text-[11px] font-semibold ${
+                      className={`text-[13px] font-semibold ${
                         pnl >= 0 ? 'text-emerald-700' : 'text-rose-700'
                       }`}
                     >
@@ -261,12 +299,12 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
                   <div className="font-semibold text-slate-900 truncate">
                     {tx.description}
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500">
+                  <div className="text-[13px] tabular-nums text-slate-500">
                     Gün {tx.day} · {tx.type}
                   </div>
                 </div>
                 <span
-                  className={`font-mono font-bold shrink-0 ${
+                  className={`tabular-nums font-bold shrink-0 ${
                     tx.cashDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'
                   }`}
                 >
@@ -278,6 +316,8 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         )}
       </div>
+        </div>
+      )}
     </div>
   );
 };

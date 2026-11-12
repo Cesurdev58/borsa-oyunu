@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* Telefonda okunabilirlik: en küçük yazı 13 punto */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+}
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -6,8 +11,11 @@
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  code, pre, .font-mono, .tabular-nums {
+  code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }

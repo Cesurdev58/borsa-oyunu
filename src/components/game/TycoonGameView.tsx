@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CelebrationOverlay } from './CelebrationOverlay';
+import { FirstRunGuide } from './FirstRunGuide';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Clock,
@@ -318,6 +320,16 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       data-testid="tycoon-game-view"
       className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-50 text-slate-900 flex flex-col justify-between"
     >
+      <CelebrationOverlay
+        shopCount={state.tradeState?.shops.length ?? 0}
+        stage={state.stage}
+      />
+      <FirstRunGuide
+        day={state.day}
+        formatCurrency={formatCurrency}
+        onGoToMarket={() => setActiveBottomTab('market')}
+      />
+
       {/* 1. ÜST HUD (Aşama, Gün, Saat, Kısaltılmış Nakit & Net Varlık, Piyasa Durumu, Bildirim ve Ayarlar) */}
       <GameTopBar
         day={state.day}

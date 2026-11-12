@@ -10,6 +10,7 @@ import React from 'react';
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
+import { HelpTip } from '../ui/HelpTip';
 
 export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -28,8 +29,9 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             Haberler hisseleri oynatır. Eski haberlerin etkisi zamanla azalır.
           </div>
         </div>
-        <span className="tabular-nums font-bold text-amber-900 shrink-0">
+        <span className="tabular-nums font-bold text-amber-900 shrink-0 flex items-center gap-1">
           {state.newsFeed.length} haber
+          <HelpTip text="Yeşil haber o sektörün hisselerini yükseltir, kırmızı haber düşürür. Etki günler geçtikçe zayıflar." />
         </span>
       </div>
 
@@ -68,10 +70,9 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       : 'bg-rose-50 text-rose-700'
                   }`}
                 >
-                  Hisselere etkisi: {currentImpactPct >= 0 ? '+' : ''}
-                  {currentImpactPct.toFixed(2)}% (İlk:{' '}
-                  {initialImpactPct >= 0 ? '+' : ''}
-                  {initialImpactPct.toFixed(2)}%)
+                  {currentImpactPct >= 0 ? '🟢 Yükseltir' : '🔴 Düşürür'}{' '}
+                  {currentImpactPct >= 0 ? '+' : ''}
+                  {currentImpactPct.toFixed(1)}%
                 </span>
               </div>
 

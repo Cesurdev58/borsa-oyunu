@@ -13,6 +13,7 @@ import {
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
+import { HelpTip } from '../ui/HelpTip';
 
 export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -30,12 +31,11 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-violet-600" />
             <h3 className="text-sm font-bold text-slate-900">
-              Ar-Ge Merkezi Kilitli
+              🔒 Ar-Ge Merkezi kilitli
             </h3>
           </div>
           <p className="text-slate-600 leading-relaxed">
-            Teknoloji kalitesi ve patent çarpanı geliştirmek için önce Aşama
-            2’de kendi şirketinizi kurmanız gerekmektedir.
+            Ürünlerini daha kaliteli yapmak için önce kendi şirketini kurmalısın.
           </p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       <div className="grid grid-cols-2 gap-2.5 tabular-nums tabular-nums">
         <div className="p-3 rounded-2xl bg-violet-50/70 border border-violet-200">
           <div className="text-violet-800 text-[13px]">
-            Günlük Ar-Ge Bütçesi
+            🔬 Günlük Ar-Ge parası
           </div>
           <div className="text-base font-bold text-violet-950 mt-0.5">
             {formatCurrency(pc.dailyRdBudget)}/gün
@@ -63,7 +63,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
         <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200">
           <div className="text-emerald-800 text-[13px]">
-            Teknoloji Kalite Çarpanı
+            ⭐ Ürün kalitesi
           </div>
           <div className="text-base font-bold text-emerald-950 mt-0.5">
             x{pc.techQualityMultiplier.toFixed(4)}
@@ -71,9 +71,18 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
       </div>
 
+      <div className="flex items-start gap-2 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900">
+        <span>💡</span>
+        <span>
+          Ar-Ge'ye her gün para ayırırsan ürünlerin zamanla daha kaliteli olur
+          ve daha pahalıya satılır.
+        </span>
+        <HelpTip text="Ar-Ge parası şirket kasandan her gün düşer. Kalite yükselince ürün fiyatın artar ama ilk günlerde kasan biraz azalır." />
+      </div>
+
       <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
         <div className="flex justify-between font-semibold text-slate-800">
-          <span>İnovasyon & Ürün Kalite Seviyesi (Maks x2.50)</span>
+          <span>🚀 Kalite seviyesi</span>
           <span className="tabular-nums">%{qualityProgressPct}</span>
         </div>
         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
@@ -94,7 +103,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           }
           className="min-h-[44px] px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold"
         >
-          Ar-Ge Bütçesini +₺10.000 Artır
+          ➕ Ar-Ge parasını artır (+₺10.000)
         </button>
         <button
           type="button"
@@ -105,7 +114,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           }
           className="min-h-[44px] px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold"
         >
-          Ar-Ge Bütçesini -₺5.000 Azalt
+          ➖ Azalt (−₺5.000)
         </button>
       </div>
     </div>

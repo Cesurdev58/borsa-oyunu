@@ -5,6 +5,8 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // GitHub Pages gibi alt klasörlü adreslerde VITE_BASE=/depo-adi/ verilir; yerelde '/' kalır.
+    base: process.env.VITE_BASE ?? '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       dedupe: ['react', 'react-dom'],

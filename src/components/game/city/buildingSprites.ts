@@ -17,6 +17,9 @@ import { CityBuildingId } from '../gameTypes';
  *   2. Aşağıdaki haritalardan uygun olana bir satır ekle.
  *   3. `aspect` = PNG genişliği / PNG yüksekliği.
  */
+// Sitenin alt klasörde (ör. GitHub Pages) yayınlanması için taban yol.
+const BASE: string = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+
 export interface BuildingSpriteSpec {
   /** Kök yoldan servis edilen dosya yolu. */
   src: string;
@@ -31,12 +34,12 @@ export const CORE_BUILDING_SPRITES: Partial<
   Record<CityBuildingId, BuildingSpriteSpec>
 > = {
   BORSA: {
-    src: '/buildings/stock-exchange.png',
+    src: `${BASE}buildings/stock-exchange.png`,
     widthPx: 215,
     aspect: 485 / 514,
   },
   BANKA: {
-    src: '/buildings/bank.png',
+    src: `${BASE}buildings/bank.png`,
     widthPx: 200,
     aspect: 522 / 478,
   },
@@ -45,12 +48,12 @@ export const CORE_BUILDING_SPRITES: Partial<
 /** Şehir blokları (IsometricDecorationLayer) için sprite eşleştirmesi. Anahtar: blok kimliği. */
 export const URBAN_BLOCK_SPRITES: Record<string, BuildingSpriteSpec> = {
   'urban-ticaret-magaza-1': {
-    src: '/buildings/market.png',
+    src: `${BASE}buildings/market.png`,
     widthPx: 150,
     aspect: 552 / 452,
   },
   'urban-ticaret-kafe-2': {
-    src: '/buildings/cafe.png',
+    src: `${BASE}buildings/cafe.png`,
     widthPx: 120,
     aspect: 521 / 479,
   },

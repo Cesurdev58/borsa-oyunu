@@ -5,7 +5,7 @@
  * GERÇEK ZAMANLI OYUN SAATİ VE PİYASA SEANS MOTORU (GameClockEngine)
  * - 1 oyun günü = 1440 oyun dakikası (00:00 – 23:59)
  * - Varsayılan gerçek süre karşılığı: 45 gerçek dakika (ayarlanabilir: 30 / 45 / 60 dk)
- * - Hız çarpanları: Duraklat (0x), 1x, 2x, 4x
+ * - Hız çarpanları: Duraklat (0x), 1x, 2x
  * - Piyasa Seansları:
  *   00:00–08:59 -> MARKET_CLOSED
  *   09:00–09:59 -> PRE_OPEN
@@ -29,7 +29,7 @@ export interface SessionScheduleBoundary {
 
 export class GameClockEngine {
   public static readonly MINUTES_PER_GAME_DAY = 1440;
-  public static readonly DEFAULT_REAL_MINUTES_PER_GAME_DAY: RealMinutesPerGameDayOption = 45;
+  public static readonly DEFAULT_REAL_MINUTES_PER_GAME_DAY: RealMinutesPerGameDayOption = 15;
   public static readonly INTRADAY_SUBSTEP_MINUTES = 5;
   public static readonly SUBSTEPS_PER_DAY =
     GameClockEngine.MINUTES_PER_GAME_DAY /
@@ -40,16 +40,16 @@ export class GameClockEngine {
     (GameClockEngine.MARKET_OPEN_END_MINUTE -
       GameClockEngine.MARKET_OPEN_START_MINUTE) /
     GameClockEngine.INTRADAY_SUBSTEP_MINUTES; // 96
-  public static readonly MAX_OFFLINE_GAME_DAYS = 3;
+  public static readonly MAX_OFFLINE_GAME_DAYS = 8; // 15 dk/gün ile yaklaşık 2 gerçek saat çevrimdışı ilerleme
   public static readonly MAX_OFFLINE_GAME_MINUTES =
     GameClockEngine.MAX_OFFLINE_GAME_DAYS *
-    GameClockEngine.MINUTES_PER_GAME_DAY; // 4320
+    GameClockEngine.MINUTES_PER_GAME_DAY; // 11520
   public static readonly MAX_REAL_SECONDS_SANITY_LIMIT = 365 * 24 * 3600; // 1 gerçek yıl üstü geçersiz kabul edilir
 
   public static readonly ALLOWED_REAL_MINUTES_OPTIONS: readonly RealMinutesPerGameDayOption[] =
-    [30, 45, 60];
+    [15, 30, 45, 60];
   public static readonly ALLOWED_TIME_SCALES: readonly TimeScaleOption[] = [
-    0, 1, 2, 4,
+    0, 1, 2,
   ];
 
   private static readonly SESSION_TABLE: readonly SessionScheduleBoundary[] = [
@@ -157,16 +157,18 @@ export class GameClockEngine {
   public static sanitizeRealMinutesPerDay(
     value: number
   ): RealMinutesPerGameDayOption {
-    if (value === 30 || value === 45 || value === 60) {
+    if (value === 15 || value === 30 || value === 45 || value === 60) {
       return value;
     }
     return GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY;
   }
 
   public static sanitizeTimeScale(scale: number): TimeScaleOption {
-    if (scale === 0 || scale === 1 || scale === 2 || scale === 4) {
+    if (scale === 0 || scale === 1 || scale === 2) {
       return scale;
     }
+    // Eski kayıtlarda 4x vardı; artık en hızlı seçenek 2x.
+    if (scale === 4) return 2;
     return 1;
   }
 

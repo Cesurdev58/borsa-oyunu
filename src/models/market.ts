@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FinancialStatement, QuarterlyFinancialReport, ValuationBreakdown } from './company';
+import type { FinancialStatement, QuarterlyFinancialReport, ValuationBreakdown } from './company';
 
 export type SectorId =
   | 'TEKNOLOJI'

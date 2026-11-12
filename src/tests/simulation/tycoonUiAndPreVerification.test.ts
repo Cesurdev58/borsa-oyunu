@@ -69,10 +69,10 @@ test('ÖNCE DOĞRULAMA 2 & 3: tickDay() ve closeCurrentDay() aynı günü iki ke
   );
 });
 
-test('ÖNCE DOĞRULAMA 4: 45 gerçek dakika (2700 sn) tam olarak 1 oyun günü (1440 oyun dk) ilerletir', () => {
+test('ÖNCE DOĞRULAMA 4: 15 gerçek dakika (900 sn) tam olarak 1 oyun günü (1440 oyun dk) ilerletir', () => {
   const engine = new SimulationEngine(20261104, 100_000);
-  assert.equal(engine.getState().realMinutesPerGameDay, 45);
-  const res = engine.advanceRealSeconds(45 * 60);
+  assert.equal(engine.getState().realMinutesPerGameDay, 15);
+  const res = engine.advanceRealSeconds(15 * 60);
   assert.equal(res.gameMinutesAdvanced, 1440);
   assert.equal(res.daysClosed, 1);
   assert.equal(engine.getState().day, 2);
@@ -82,7 +82,7 @@ test('ÖNCE DOĞRULAMA 4: 45 gerçek dakika (2700 sn) tam olarak 1 oyun günü (
 test('ÖNCE DOĞRULAMA 5: Sayfa yenilendiğinde (serialize/deserialize) aynı çevrimdışı zaman aralığı yeniden işlenmez ve çevrimdışı özet yalnızca bir kez gösterilir', () => {
   const engine = new SimulationEngine(20261104, 100_000);
   const tStart = '2026-01-02T08:00:00.000Z';
-  const tEnd = '2026-01-02T08:45:00.000Z'; // 45 gerçek dk = 1 oyun günü
+  const tEnd = '2026-01-02T08:15:00.000Z'; // 15 gerçek dk = 1 oyun günü
 
   const firstSummary = engine.processOfflineProgress(tStart, tEnd);
   assert.equal(firstSummary.gameMinutesAdvanced, 1440);

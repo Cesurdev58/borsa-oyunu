@@ -30,9 +30,9 @@ export type MarketSession =
   | 'MARKET_OPEN'
   | 'AFTER_HOURS';
 
-export type RealMinutesPerGameDayOption = 30 | 45 | 60;
+export type RealMinutesPerGameDayOption = 15 | 30 | 45 | 60;
 
-export type TimeScaleOption = 0 | 1 | 2 | 4;
+export type TimeScaleOption = 0 | 1 | 2;
 
 export interface OfflineProgressSummary {
   realSecondsElapsed: number;

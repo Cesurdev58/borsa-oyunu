@@ -172,7 +172,7 @@ test('A.1 - A.8: Merkezi Muhasebe Defteri, Transfer Kuralları, Bloke Bakiye, Id
   );
 });
 
-test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=0, Depo Doluluğu, Fiyat Elastikiyeti ve 1x/2x/4x Hız Eşdeğerliği', () => {
+test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=0, Depo Doluluğu, Fiyat Elastikiyeti ve 1x/2x Hız Eşdeğerliği', () => {
   // B.3: Eski kayıttaki 7.48x teknoloji çarpanının güvenli [1.00, 2.50] aralığına deterministik migrasyonu
   const migrated = CompanyEngine.migrateLegacyTechMultiplier(7.48);
   assert.equal(migrated.wasMigrated, true);
@@ -359,7 +359,7 @@ test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=
     'Aynı oyun dakikası iki kez üretim oluşturmamalıdır'
   );
 
-  // B.8: 1x, 2x ve 4x hızlarda 1 tam oyun günü ilerletildiğinde ekonomik sonuçlar eşdeğerdir
+  // B.8: 1x ve 2x hızlarda 1 tam oyun günü ilerletildiğinde ekonomik sonuçlar eşdeğerdir
   const baseSpeedEngine = new SimulationEngine(20261109, 3_000_000);
   baseSpeedEngine.establishCompany('Hız Eşdeğerlik A.Ş.', 'HZES', 'LOJISTIK', 1_200_000, {
     initialStaffCount: 35,
@@ -369,33 +369,25 @@ test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=
 
   const engine1x = SimulationEngine.deserializeState(baseSpeedEngine.serializeState());
   const engine2x = SimulationEngine.deserializeState(baseSpeedEngine.serializeState());
-  const engine4x = SimulationEngine.deserializeState(baseSpeedEngine.serializeState());
 
   engine1x.setTimeScale(1);
   engine2x.setTimeScale(2);
-  engine4x.setTimeScale(4);
 
   const realSecondsFor1DayAt1x =
     engine1x.getState().realMinutesPerGameDay * 60;
   engine1x.advanceRealSeconds(realSecondsFor1DayAt1x);
   engine2x.advanceRealSeconds(realSecondsFor1DayAt1x / 2);
-  engine4x.advanceRealSeconds(realSecondsFor1DayAt1x / 4);
 
   assert.equal(engine1x.getState().day, 2);
   assert.equal(engine2x.getState().day, 2);
-  assert.equal(engine4x.getState().day, 2);
 
   assert.equal(
     engine1x.getState().playerCompany!.financials.revenue,
     engine2x.getState().playerCompany!.financials.revenue
   );
   assert.equal(
-    engine2x.getState().playerCompany!.financials.revenue,
-    engine4x.getState().playerCompany!.financials.revenue
-  );
-  assert.equal(
     engine1x.getState().playerCompany!.financials.EBITDA,
-    engine4x.getState().playerCompany!.financials.EBITDA
+    engine2x.getState().playerCompany!.financials.EBITDA
   );
 });
 

@@ -6,7 +6,7 @@ import {
 } from '../../engine/SimulationEngine';
 import { SimulationStore } from '../../state/simulationStore';
 
-test('1-6. Oyun Saati: 00:00 başlangıç, 45 dk varsayılan gün, 1x/2x hız dönüşümleri ve duraklatma', () => {
+test('1-6. Oyun Saati: 00:00 başlangıç, 15 dk varsayılan gün, 1x/2x hız dönüşümleri ve duraklatma', () => {
   const engine = new SimulationEngine(20261104);
   const st0 = engine.getState();
 
@@ -17,27 +17,27 @@ test('1-6. Oyun Saati: 00:00 başlangıç, 45 dk varsayılan gün, 1x/2x hız d�
   assert.equal(engine.getFormattedGameTime(), '00:00');
   assert.equal(st0.marketSession, 'MARKET_CLOSED');
 
-  // 2. Varsayılan oyun günü 45 gerçek dakika
-  assert.equal(st0.realMinutesPerGameDay, 45);
+  // 2. Varsayılan oyun günü 15 gerçek dakika
+  assert.equal(st0.realMinutesPerGameDay, 15);
 
-  // 3. 45 gerçek dakika (2700 sn) tam olarak 1 oyun günü (1440 oyun dk) ilerletiyor
-  const resFullDay = engine.advanceRealSeconds(45 * 60);
+  // 3. 15 gerçek dakika (900 sn) tam olarak 1 oyun günü (1440 oyun dk) ilerletiyor
+  const resFullDay = engine.advanceRealSeconds(15 * 60);
   assert.equal(resFullDay.gameMinutesAdvanced, 1440);
   assert.equal(resFullDay.daysClosed, 1);
   assert.equal(engine.getState().day, 2);
   assert.equal(engine.getFormattedGameTime(), '00:00');
 
-  // 4. 22,5 gerçek dakika (1350 sn) 1x hızda yarım oyun günü (720 oyun dk -> 12:00) ilerletiyor
-  const resHalfDay = engine.advanceRealSeconds(22.5 * 60);
+  // 4. 7,5 gerçek dakika (450 sn) 1x hızda yarım oyun günü (720 oyun dk -> 12:00) ilerletiyor
+  const resHalfDay = engine.advanceRealSeconds(7.5 * 60);
   assert.equal(resHalfDay.gameMinutesAdvanced, 720);
   assert.equal(resHalfDay.daysClosed, 0);
   assert.equal(engine.getState().minutesIntoCurrentDay, 720);
   assert.equal(engine.getFormattedGameTime(), '12:00');
   assert.equal(engine.getState().marketSession, 'MARKET_OPEN');
 
-  // 5. 2x hız doğru miktarda oyun zamanı ilerletiyor (11,25 gerçek dk @ 2x = 720 oyun dk -> gün sonu)
+  // 5. 2x hız doğru miktarda oyun zamanı ilerletiyor (3,75 gerçek dk @ 2x = 720 oyun dk -> gün sonu)
   engine.setTimeScale(2);
-  const res2x = engine.advanceRealSeconds(11.25 * 60);
+  const res2x = engine.advanceRealSeconds(3.75 * 60);
   assert.equal(res2x.gameMinutesAdvanced, 720);
   assert.equal(res2x.daysClosed, 1);
   assert.equal(engine.getState().day, 3);
@@ -240,10 +240,10 @@ test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negati
   assert.equal(negSummary.gameDaysAdvanced, 0);
   assert.equal(engine.getState().day, 1);
 
-  // 16. 10 oyun gününe karşılık gelen süre (10 * 45 dk = 450 gerçek dk) verildiğinde maksimum 3 oyun günü (4320 dk) ilerler
+  // 16. 20 oyun gününe karşılık gelen süre (20 * 15 dk = 300 gerçek dk) verildiğinde maksimum 8 oyun günü (11520 dk) ilerler
   const startISO = '2026-01-02T00:00:00.000Z';
   const tenGameDaysLaterISO = new Date(
-    Date.parse(startISO) + 10 * 45 * 60 * 1000
+    Date.parse(startISO) + 20 * 15 * 60 * 1000
   ).toISOString();
 
   const cappedSummary = engine.processOfflineProgress(
@@ -254,8 +254,8 @@ test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negati
     cappedSummary.gameMinutesAdvanced,
     GameClockEngine.MAX_OFFLINE_GAME_MINUTES
   );
-  assert.equal(cappedSummary.gameDaysAdvanced, 3);
-  assert.equal(engine.getState().day, 4);
+  assert.equal(cappedSummary.gameDaysAdvanced, 8);
+  assert.equal(engine.getState().day, 9);
 
   // 18. Aynı çevrimdışı süre iki kez işlenmez
   const dayAfterFirstOffline = engine.getState().day;
@@ -315,7 +315,7 @@ test('19-20. Eski v2 kayıt yeni v3 şemasına taşınır ve nakit/portföy/PRNG
   assert.equal(migrated.state.randomState, randomStateBefore);
   assert.equal(migrated.state.currentGameHour, 0);
   assert.equal(migrated.state.currentGameMinute, 0);
-  assert.equal(migrated.state.realMinutesPerGameDay, 45);
+  assert.equal(migrated.state.realMinutesPerGameDay, 15);
   assert.ok(Array.isArray(migrated.state.pendingOrders));
 });
 

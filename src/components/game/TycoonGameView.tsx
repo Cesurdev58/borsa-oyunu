@@ -315,7 +315,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   return (
     <div
       data-testid="tycoon-game-view"
-      className="min-h-screen w-full overflow-x-hidden bg-slate-100/90 text-slate-900 flex flex-col justify-between"
+      className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-50 text-slate-900 flex flex-col justify-between"
     >
       {/* 1. ÜST HUD (Aşama, Gün, Saat, Kısaltılmış Nakit & Net Varlık, Piyasa Durumu, Bildirim ve Ayarlar) */}
       <GameTopBar
@@ -369,12 +369,12 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           >
             <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
               <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                {activeBottomTab === 'market' && 'Borsa & Emir Terminali'}
+                {activeBottomTab === 'market' && '📈 Borsa'}
                 {activeBottomTab === 'company' &&
-                  'Şirket, Fabrika, Ar-Ge & Halka Arz'}
-                {activeBottomTab === 'news' && 'Canlı Haber Merkezi'}
+                  '🏢 Şirketim'}
+                {activeBottomTab === 'news' && '📰 Haberler'}
                 {activeBottomTab === 'portfolio' &&
-                  'Portföy, Açık Emirler & İşlem Geçmişi'}
+                  '🏪 Dükkânlarım & Varlıklarım'}
               </h2>
               <button
                 type="button"
@@ -382,7 +382,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 className="min-h-[38px] px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold inline-flex items-center gap-1.5"
               >
                 <Compass className="w-3.5 h-3.5 text-sky-600" />
-                <span>Mahalleye Dön</span>
+                <span>Şehre dön</span>
               </button>
             </div>
 
@@ -677,7 +677,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 1 Oyun Günü Gerçek Süre Karşılığı
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {([30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
+                {([15, 30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
                   <button
                     key={`day-duration-${mins}m`}
                     type="button"

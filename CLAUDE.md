@@ -21,16 +21,53 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Tip denetimi: `npm run lint` · Testler: `npm test` · Derleme: `npm run build`
 - Proje Google AI Studio'da başlamıştı; sahibi AI Studio projesini sildi. Bundan sonra tüm geliştirme yalnızca bu depoda yapılır.
 
+## Oyun dengesi (ölçülerek ayarlandı)
+
+- **Ölçüm aracı:** `npm run balans` her dükkân türünün günlük cirosunu, kârını ve kurulum maliyetini kaç günde çıkardığını, ayrıca borsanın 5 farklı sayı üreteciyle 1 yıllık getirisini yazdırır. Dengeyi değiştirirsen önce/sonra çalıştır.
+- **Ek not:** Kişisel dükkânda otomatik mal ikmali yoktur (yalnızca şirket şubelerinde vardır); oyuncu elle sipariş verir. Ölçümde bunu `src/tests/balance/restockBot.ts` yapar.
+- **İlk dükkân kapısı:** Net değer `FIRST_SHOP_MIN_NET_WORTH` (`src/data/gameBalance.ts`, şu an 120.000 TL) olmadan ilk dükkân açılamaz. Amaç borsa aşamasının atlanmamasıdır. Yalnızca bu sayıyı değiştirerek başlangıcı kolaylaştırıp zorlaştırabilirsin.
+- **Dükkân cirosu:** Müşteri başına sepet tutarı `avgBasketValueTL` (`src/data/tradeCatalog.ts`, her dükkân şablonunda). Eskiden her müşteri bir koli (~435 TL) alıyordu, büfe günde ~40.000 TL ciro yapıp kendini ~5 günde çıkarıyordu. Hedef geri dönüş süreleri: büfe 45, manav 60, kafe 80, giyim 100, elektronik 130, mobilya 130, market 120, galeri 180 gün (`scripts/balans-olcumu.ts`).
+- **Haber dengesi:** Her sektörde olumlu ve olumsuz haber şablonlarının toplam etkisi (`baseImpact / decayRate`) eşit olmalı; aksi hâlde borsa tek yönlü yükselir. Yeni haber eklersen `src/tests/balance/balance.test.ts` dengeyi denetler.
+- **Bilinen:** Borsa nominal olarak yılda ortalama +%65–85 (ekonomide enflasyon %28). Büfe/manav ROI'si hâlâ borsadan yüksek; bu bilinçli, ilk dükkân kapısı dengeyi sağlar.
+
+## Oyun süresi ve arayüz tasarımı (mobil tycoon yönü)
+
+- **Oyun günü varsayılan olarak 15 gerçek dakikadır** (`DEFAULT_REAL_MINUTES_PER_GAME_DAY`, `engine/GameClockEngine.ts`). Seçenekler 15/30/45/60 dk. Hız düğmeleri yalnızca 1x ve 2x'tir; 4x kaldırıldı (eski kayıttaki 4x otomatik 2x olur). Eski kayıtlar kendi gün uzunluğunu korur; yalnızca yeni oyun 15 dk ile başlar.
+- **Arayüz ilkesi: basit, renkli, "tycoon" havası.** Teknik terim yok (limit emri, emir defteri, formül vb. "Gelişmiş" bölümüne taşınır). Alt menü emojili ve renkli, üst çubuk degrade, ekran arka planı açık degrade.
+- **Borsa ekranı** (`buildings/BorsaPanel.tsx`): üstte nakit/hisse değeri kartı, seçili hisse için büyük AL / SAT kartı (− / + ile lot, 10/50/100/Hepsi), altta hisse kartları. Borsa kapalıyken AL/SAT piyasa emri olarak sıraya girer. Limit emri formu ve emir defteri `tycoon-advanced-toggle` düğmesinin arkasındadır; eski `data-testid`ler orada durur.
+- **Dükkân ekranı** (`EsnafAndTradePanel.tsx`): dükkân yokken "İlk dükkânına ne kadar kaldı?" ilerleme çubuğu (`FIRST_SHOP_MIN_NET_WORTH`).
+- **Şirket ekranı kilitliyken** (`SirketMerkeziPanel.tsx`) eşik `PROGRESSION_RULES.entrepreneurNetWorth`'tan okunur.
+- **Rafları doldur** düğmesi (`shop-restock-all-btn`, dükkân ekranı): planı `engine/ShopRestockPlanner.ts` üretir (en ucuz toptancı, yoldaki siparişler sayılır, bütçeyi aşmaz). Test ölçüm robotu (`restockBot.ts`) aynı planı kullanır.
+- **Çevrimdışı ilerleme** en fazla 8 oyun günüdür (`MAX_OFFLINE_GAME_DAYS`, 15 dk/gün ile ~2 gerçek saat).
+- Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkânım (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
+
 ## Klasörler
 
-- `src/engine/` — oyun mantığı. `SimulationEngine.ts` ana döngü; `TradeAndShopEngine.ts` dükkân, sipariş,
-  stok, sevkiyat; `MarketEngine.ts` borsa; `CentralLedgerEngine.ts` ve `AccountingEngine.ts` para hareketleri;
+- `src/engine/` — oyun mantığı. `SimulationEngine.ts` ana döngü; `TradeAndShopEngine.ts` dükkân/ticaret ön yüzü ve günlük döngü; `MarketEngine.ts` borsa; `CentralLedgerEngine.ts` ve `AccountingEngine.ts` para hareketleri;
   `CompanyEngine.ts`, `IPOEngine.ts`, `BankLoanEngine.ts`, `MergerAcquisitionEngine.ts`.
+- **Tek cüzdan kuralı:** Oyuncunun kişisel nakdi (`state.cash`) yalnızca `engine/WalletEngine.ts` içinden değişir
+  (`earn` = para girer, `spend` = para çıkar, `setBalance` = defterle uzlaştırma). Başka dosyada `state.cash = ...` yazma;
+  `src/tests/wallet/wallet.test.ts` bunu otomatik denetler ve ihlalde testi kırar. Şirket (ve NPC şirket) nakdi `x.financials.cash` de aynı şekilde yalnızca `engine/CompanyWallet.ts` içinden değişir (`earn`, `spend`, `assign`); test bunu da denetler.
+  Dükkân kasaları (`cashAccountBalance`) henüz kendi motorlarında kalır.
+- **Ticaret motoru parçalandı.** `TradeAndShopEngine.ts` artık ön yüzdür (eski adlarla çağırmaya devam edilir) ve günlük döngüyü (`stepDailyTradeAndShops`) tutar.
+  Asıl işler: `TradeUniverse` (başlangıç durumu, kariyer aşaması), `TradeInventory` (stok partileri), `ShopOperations` (dükkân açma/yükseltme/kasa),
+  `TradeProcurement` (tedarik, sipariş, sevkiyat), `TradeProduction` (üretim, araç, ticari sözleşme), `ShopIncorporation` (şirketleşme),
+  `TradeAudit` (bütünlük denetimi), `ShopEquity` (dükkân özkaynağı). Katalog verileri `src/data/tradeCatalog.ts` içindedir (kaynaklar, reçeteler, tedarikçiler, dükkân şablonları).
+- **Ana motor parçalandı.** `SimulationEngine.ts` artık ince bir ön yüzdür (durum, saat, kayıt). Ağır işler fonksiyon olarak ayrı dosyalarda ve ilk parametre `engine`:
+  `DayCloseProcessor` (gün kapanışı, çevrimdışı ilerleme), `OrderBookProcessor` (emirler, hisse alım-satım), `StageProcessor` (mali yeniden hesaplama),
+  `PlayerCompanyActions` (şirket kurma, sermaye, yatırım projesi, halka arz, devralma), `SimulationScenarios` (30 günlük simülasyon, stres testi),
+  `SimulationPersistence` (kayıt temizleme/göç). Bu dosyalar `SimulationEngine`'i yalnızca tip olarak içe aktarır (`import type`), bu yüzden döngü oluşmaz.
+- **Aşama kuralları tek yerde:** `engine/ProgressionRules.ts`. Girişimci/halka arz/holding eşikleri ve "hangi aşamadayım" hesabı yalnızca burada yazılır;
+  başka dosyada `2_000_000` gibi eşik yazma, `PROGRESSION_RULES` sabitini kullan. Testleri `src/tests/progression/`.
+- **Bağımlılık döngüsü yok** (89+ dosyada denetlendi). Yeni bir motor eklerken alt modüller ön yüzü (`TradeAndShopEngine`) içe aktarmasın; aşağıdan yukarıya doğru bağımlılık kur.
 - `src/models/` — veri tipleri. Dükkân türleri `models/trade.ts` içinde `ShopType`
   (BUFE, MANAV, KAFE, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI, MARKET, OTOMOBIL_GALERISI).
 - `src/state/simulationStore.ts` — kayıt/yükleme ve migration.
 - `src/components/game/` — oyun arayüzü. `TycoonGameView.tsx` ana ekran, `BuildingDetailSheet.tsx` bina panelleri,
   `EsnafAndTradePanel.tsx` dükkân yönetimi.
+  `BuildingDetailSheet.tsx` artık yalnızca alt sayfa kabuğu ve yönlendiricidir; her binanın paneli `components/game/buildings/` altında kendi dosyasındadır
+  (`BorsaPanel`, `BankaPanel`, `HaberMerkeziPanel`, `OyuncuOfisiPanel`, `SirketMerkeziPanel`, `FabrikaPanel`, `ArgeMerkeziPanel`, `HoldingMerkeziPanel`).
+  Her panel kendi form durumunu (useState) kendi içinde tutar; ortak tipler `buildings/buildingTypes.ts` içindedir.
 - `src/tests/` — `node:test` ile yazılmış testler.
 
 ## Şehir haritası (en çok karıştırılan kısım)

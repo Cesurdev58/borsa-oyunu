@@ -18,6 +18,7 @@ import { MarketStock } from '../models/market';
 import { InstitutionalFund, PortfolioPosition } from '../models/player';
 import { IPOEligibilityResult, IPOExecutionResult } from '../models/simulation';
 import { MarketEngine } from './MarketEngine';
+import { CompanyWallet } from './CompanyWallet';
 
 export class IPOEngine {
   public static readonly MIN_OPERATING_DAYS = 5;
@@ -325,9 +326,7 @@ export class IPOEngine {
 
     // 2. Şirket bilançosuna yeni pay ihracı (sermaye artırımı) nakdini ekle (Çift Kayıt Muhasebe!)
     const newTotalShares = preIpoShares + actualPrimarySold;
-    company.financials.cash = Number(
-      (company.financials.cash + netProceedsToCompanyTreasury).toFixed(2)
-    );
+    CompanyWallet.earn(company, netProceedsToCompanyTreasury);
     company.capitalCash = company.financials.cash;
     company.financials.totalAssets = Number(
       (company.financials.totalAssets + netProceedsToCompanyTreasury).toFixed(2)

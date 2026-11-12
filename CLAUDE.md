@@ -67,6 +67,15 @@ dışından geçer; önce oradaki rotaları da güncelle. Bu yüzden yeni görü
 `src/components/game/CityWorldView.tsx` ve `CityBuilding.tsx` **eski ve kullanılmıyor**; hiçbir yerden çağrılmaz.
 Şehir görünümünü değiştirmek için bunları düzenleme.
 
+## 3D deneme (ana oyuna bağlı değil)
+
+`3d-deneme.html` ve `src/deneme3d/main.ts`: mahallenin bir köşesini gerçek 3D gösteren bağımsız deneme sahnesi
+(`three` kütüphanesi; fareyle döner ve yakınlaşır; arabalar yolda gider). Oyunun şehir ekranına, kayda, ekonomiye
+ve testlere hiçbir bağı yoktur. Açmak için `npm run dev` ve tarayıcıda `/3d-deneme.html`; adres sonuna
+`?kamera=x,y,z,hedefX,hedefY,hedefZ` eklenirse kamera o yere kurulur.
+Deneme sahnedeki binalar kodla üretilen basit modellerdir; bu, "bina kodla çizilmez" kuralının yalnızca deneme için
+yapılmış bilinçli istisnasıdır. Sahibi beğenip karar vermeden oyuna taşıma ve yeni bina üretme.
+
 ## Bina görselleri
 
 - Görseller `public/buildings/` altında şeffaf arka planlı PNG olarak durur ve `/buildings/ad.png` yolundan yüklenir.

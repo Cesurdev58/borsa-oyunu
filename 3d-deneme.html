@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Şehir 3D deneme</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #cfe3f3; font-family: system-ui, sans-serif; }
+      #sahne { position: fixed; inset: 0; }
+      #bilgi {
+        position: fixed; left: 16px; top: 14px; padding: 10px 14px; border-radius: 12px;
+        background: rgba(255,255,255,0.88); color: #1e293b; font-size: 14px; line-height: 1.4;
+        box-shadow: 0 2px 10px rgba(15,23,42,0.18); pointer-events: none;
+      }
+      #bilgi b { display: block; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <div id="sahne"></div>
+    <div id="bilgi"><b>Şehir 3D deneme</b>Fareyle sürükle: döndür · Tekerlek: yakınlaştır · Sağ tuş: kaydır</div>
+    <script type="module" src="/src/deneme3d/main.ts"></script>
+  </body>
+</html>

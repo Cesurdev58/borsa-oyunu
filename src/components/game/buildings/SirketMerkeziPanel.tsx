@@ -57,6 +57,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   formatCurrency,
   onOpenBuilding,
 }) => {
+  const [showSummaryMore, setShowSummaryMore] = useState(false);
   const [compName, setCompName] = useState('Anadolu Kuantum Teknoloji A.Ş.');
   const [compTicker, setCompTicker] = useState('ANKT');
   const [compSector, setCompSector] = useState<SectorId>('TEKNOLOJI');
@@ -697,8 +698,16 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           {/* 3 Kısa Durum Mesajı (Gerçek Veriden Üretilen) */}
+          <button
+            type="button"
+            data-testid="company-summary-more-toggle"
+            onClick={() => setShowSummaryMore((v) => !v)}
+            className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm active:scale-95"
+          >
+            {showSummaryMore ? '▲ Durum ve önerileri gizle' : '📋 Durum özeti ve öneriler'}
+          </button>
           <div
-            className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2"
+            className={`p-3 rounded-2xl bg-white border border-slate-200 space-y-2 ${showSummaryMore ? '' : 'hidden'}`}
             data-testid="company-summary-status-messages"
           >
             <div className="font-bold text-slate-900">
@@ -728,7 +737,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
 
           {/* Önerilen İşlemler (En fazla 3 öneri — ilgili bölüme yönlendirir) */}
           <div
-            className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2"
+            className={`p-3 rounded-2xl bg-white border border-slate-200 space-y-2 ${showSummaryMore ? '' : 'hidden'}`}
             data-testid="company-recommended-actions"
           >
             <div className="font-bold text-slate-900">

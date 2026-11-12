@@ -192,6 +192,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   );
   const [tradeTab, setTradeTab] = useState<TradeCenterTab>('TEDARIK');
   const [showAdvancedOrder, setShowAdvancedOrder] = useState(false);
+  const [showSummaryDetails, setShowSummaryDetails] = useState(false);
+  const [showIncorp, setShowIncorp] = useState(false);
 
   // Yeni şube açılış formu
   const [newShopType, setNewShopType] = useState<ShopType>('BUFE');
@@ -399,7 +401,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           </div>
 
           {activeShop && (
-            <div className="p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md flex items-center justify-between gap-3">
+            <div className="hidden p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-extrabold text-sm">🛒 Rafları doldur</div>
                 <div className="text-[13px] opacity-95">
@@ -591,6 +593,15 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   )}
                 </div>
 
+                <button
+                  type="button"
+                  data-testid="shop-summary-details-toggle"
+                  onClick={() => setShowSummaryDetails((v) => !v)}
+                  className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm active:scale-95"
+                >
+                  {showSummaryDetails ? '▲ Özeti gizle' : '📊 Bugünün özeti ve ipucu'}
+                </button>
+                <div className={showSummaryDetails ? 'space-y-3' : 'hidden'}>
                 {/* Bugünün özeti */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-2xl bg-slate-50 p-2.5">
@@ -654,6 +665,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   >
                     {activeShop.recommendedActionTR}
                   </div>
+                </div>
+
                 </div>
 
                 {/* 5 net işlem düğmesi: numarasız, kesilmeyen yazılarla */}
@@ -1269,12 +1282,25 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {!state.playerCompany && (
             <div
               data-testid="incorporation-transition-card"
-              className="p-4 rounded-2xl bg-gradient-to-br from-teal-50 via-white to-emerald-50 border border-teal-300 space-y-3"
+              className="p-3 rounded-3xl bg-gradient-to-br from-teal-50 via-white to-emerald-50 border border-teal-300 space-y-3"
             >
+              <button
+                type="button"
+                data-testid="incorporation-toggle"
+                onClick={() => setShowIncorp((v) => !v)}
+                className="w-full min-h-[48px] flex items-center justify-between gap-2 text-left font-extrabold text-slate-900"
+              >
+                <span>🏢 Şirket kur</span>
+                <span className="text-sm text-teal-700">
+                  {incorporationEligibility.eligible ? 'Hazırsın!' : 'Koşullar var'}{' '}
+                  {showIncorp ? '▲' : '▼'}
+                </span>
+              </button>
+              <div className={showIncorp ? 'space-y-3' : 'hidden'}>
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <span className="text-[13px] font-bold uppercase tracking-wider text-teal-800">
-                    Kariyer Dönüşümü · Esnaftan Kurumsal Şirkete Geçiş
+                    Esnaftan şirkete geçiş
                   </span>
                   <h5 className="text-sm font-extrabold text-slate-900">
                     İşletmeni Kurumsal Şirkete Dönüştür
@@ -1403,6 +1429,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   İşletmeni Kurumsal Şirkete Dönüştür
                 </button>
               </div>
+              </div>
             </div>
           )}
         </div>
@@ -1413,10 +1440,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             data-testid="trade-center-intro"
             className="rounded-2xl bg-sky-50 border border-sky-200 p-3 text-[13px] text-sky-900"
           >
-            <strong>Burası ileri seviye.</strong> Tek dükkân işletiyorsan buraya
-            girmen gerekmez; mal almak için "Dükkânlarım" ekranındaki{' '}
-            <strong>🛒 Mal al</strong> düğmesi yeter. Toptan ticaret, depo ve
-            fabrika işleri şirket kurunca işine yarar.
+            <strong>İleri seviye.</strong> Tek dükkânda buraya girmen gerekmez,
+            <strong> 🛒 Mal al</strong> yeter.
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
             {(
@@ -1462,7 +1487,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {tradeTab === 'TEDARIK' && (
             <div className="space-y-3">
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Depo: Malları toptan sakladığın yer. Dükkânlara buradan mal dağıtabilir, fabrikaya buradan hammadde verebilirsin.
+                💡 Depo: toptan mal sakladığın yer.
               </div>
               {/* 3 Depo Stok Özeti (Hammadde / Mamul / Dağıtım) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -1530,7 +1555,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   >
                     {ALL_RESOURCES.map((r) => (
                       <option key={r.id} value={r.id}>
-                        [{r.category}] {r.nameTR} (
+                        {r.category === 'RAW_MATERIAL' ? 'Hammadde' : r.category === 'INTERMEDIATE_GOOD' ? 'Ara ürün' : 'Hazır ürün'} · {r.nameTR} (
                         {formatCurrency(r.baseMarketPrice)})
                       </option>
                     ))}
@@ -1641,7 +1666,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {tradeTab === 'TESLIMATLAR' && (
             <div className="space-y-3">
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Verdiğin siparişlerin kargo durumu. Araç (filo) sahibi olursan malı kendi araçlarınla, daha ucuza taşırsın.
+                💡 Siparişlerin kargo durumu.
               </div>
               {/* Lojistik Filo & Araç Satın Alma */}
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2.5">
@@ -1785,7 +1810,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {tradeTab === 'SATIS_KANALLARI' && (
             <div className="space-y-3">
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Üretim: Hammaddeyi işleyip daha pahalı ürüne çevirmek. Örneğin un ve şekerden bisküvi yapmak. Reçete, hangi malzemeden ne üretileceğini söyler.
+                💡 Üretim: hammaddeyi daha pahalı ürüne çevirir.
               </div>
               {/* Reçeteli Üretim Zinciri */}
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
@@ -1865,7 +1890,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {tradeTab === 'SOZLESMELER' && (
             <div className="space-y-3">
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Toptan anlaşma: Bir müşteri firmayla belli miktarda mal satmak için önceden yaptığın anlaşma. Fiyat baştan bellidir, teslimat geciktirirsen ceza ödersin.
+                💡 Toptan anlaşma: önceden sabit fiyatla mal satma sözü.
               </div>
               <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2.5">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">

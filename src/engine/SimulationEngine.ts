@@ -9,22 +9,31 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
-import { createInitialNpcFunds } from '../data/npcCompanies';
-import { SECTOR_CONFIGS } from '../data/sectors';
+import {
+  createInitialNpcFunds,
+} from '../data/npcCompanies';
+import {
+  SECTOR_CONFIGS,
+} from '../data/sectors';
 import {
   FinancialStatement,
   PlayerCompany,
   QuarterlyFinancialReport,
   ValuationBreakdown,
 } from '../models/company';
-import { EconomicCyclePhase, MacroEconomyState } from '../models/economy';
+import {
+  EconomicCyclePhase,
+  MacroEconomyState,
+} from '../models/economy';
 import {
   ControlThresholdLevel,
   MarketStock,
   SectorId,
   SectorMetadata,
 } from '../models/market';
-import { NewsEvent } from '../models/news';
+import {
+  NewsEvent,
+} from '../models/news';
 import {
   InstitutionalFund,
   NPCFundStrategyType,
@@ -102,18 +111,44 @@ import {
   VehicleTypeId,
   Warehouse,
 } from '../models/trade';
-import { AccountingEngine } from './AccountingEngine';
-import { BankLoanEngine, LOAN_TYPE_CATALOG } from './BankLoanEngine';
-import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
-import { CompanyEngine, EstablishCompanyParams } from './CompanyEngine';
-import { EconomyEngine } from './EconomyEngine';
-import { GameClockEngine } from './GameClockEngine';
-import { IPOEngine } from './IPOEngine';
-import { MarketEngine } from './MarketEngine';
-import { MergerAcquisitionEngine } from './MergerAcquisitionEngine';
-import { NewsEngine } from './NewsEngine';
-import { NPCFundEngine } from './NPCFundEngine';
-import { RandomEngine } from './RandomEngine';
+import {
+  AccountingEngine,
+} from './AccountingEngine';
+import {
+  BankLoanEngine,
+  LOAN_TYPE_CATALOG,
+} from './BankLoanEngine';
+import {
+  CentralLedgerEngine,
+} from './CentralLedgerEngine';
+import {
+  CompanyEngine,
+  EstablishCompanyParams,
+} from './CompanyEngine';
+import {
+  EconomyEngine,
+} from './EconomyEngine';
+import {
+  GameClockEngine,
+} from './GameClockEngine';
+import {
+  IPOEngine,
+} from './IPOEngine';
+import {
+  MarketEngine,
+} from './MarketEngine';
+import {
+  MergerAcquisitionEngine,
+} from './MergerAcquisitionEngine';
+import {
+  NewsEngine,
+} from './NewsEngine';
+import {
+  NPCFundEngine,
+} from './NPCFundEngine';
+import {
+  RandomEngine,
+} from './RandomEngine';
 import {
   DEFAULT_ROUTES,
   RECIPE_CATALOG,
@@ -123,8 +158,19 @@ import {
   TradeAndShopEngine,
   VEHICLE_CATALOG,
 } from './TradeAndShopEngine';
-import { WalletEngine } from './WalletEngine';
-import { ValuationEngine } from './ValuationEngine';
+import {
+  WalletEngine,
+} from './WalletEngine';
+import * as SimulationPersistence from './SimulationPersistence';
+import * as DayCloseProcessor from './DayCloseProcessor';
+import * as OrderBookProcessor from './OrderBookProcessor';
+import * as StageProcessor from './StageProcessor';
+import * as PlayerCompanyActions from './PlayerCompanyActions';
+import * as SimulationScenarios from './SimulationScenarios';
+
+import {
+  ValuationEngine,
+} from './ValuationEngine';
 
 export {
   SECTOR_CONFIGS,
@@ -245,11 +291,11 @@ export class SimulationEngine {
   public static readonly INTRADAY_SUBSTEP_MINUTES =
     GameClockEngine.INTRADAY_SUBSTEP_MINUTES;
 
-  private state: SimulationState;
-  private rng: RandomEngine;
-  private pendingDailyActions: string[] = [];
-  private maxProcessedOfflineTimestampMs: number = 0;
-  private intradayTracking = {
+  public state: SimulationState;
+  public rng: RandomEngine;
+  public pendingDailyActions: string[] = [];
+  public maxProcessedOfflineTimestampMs: number = 0;
+  public intradayTracking = {
     ordersExecuted: 0,
     ordersExpired: 0,
     productionCompleted: 0,
@@ -268,7 +314,7 @@ export class SimulationEngine {
     this.state = this.createFreshInitialState(seed, initialCash);
   }
 
-  private computeDateISO(day: number): string {
+  public computeDateISO(day: number): string {
     const baseDate = new Date(Date.UTC(2026, 0, 1));
     baseDate.setUTCDate(baseDate.getUTCDate() + (day - 1));
     return baseDate.toISOString().slice(0, 10);
@@ -285,7 +331,7 @@ export class SimulationEngine {
    * - Toplam net varlık: 100.000 TL
    * - Girişimci, IPO ve Holding aşamaları: kilitli (eğer initialCash < 2.000.000 TL ise)
    */
-  private createFreshInitialState(
+  public createFreshInitialState(
     seed: number,
     initialCash: number
   ): SimulationState {
@@ -475,194 +521,7 @@ export class SimulationEngine {
     duplicateTransactionsFixedCount: number;
     duplicateOrdersFixedCount: number;
   } {
-    const rawTransactions: TransactionRecord[] = Array.isArray(state.transactions)
-      ? state.transactions
-      : [];
-    const seenTxIds = new Set<string>();
-    let duplicateTransactionsFixedCount = 0;
-    let maxExtractedTxSeq = 0;
-    let allTxCanonical = true;
-
-    for (const tx of rawTransactions) {
-      const idStr = typeof tx?.id === 'string' ? tx.id : '';
-      if (!idStr || seenTxIds.has(idStr)) {
-        duplicateTransactionsFixedCount += 1;
-      } else {
-        seenTxIds.add(idStr);
-      }
-
-      const canonicalMatch = /^TX-D\d+-S(\d+)$/.exec(idStr);
-      if (canonicalMatch) {
-        const seqVal = Number(canonicalMatch[1]);
-        if (Number.isFinite(seqVal) && seqVal > maxExtractedTxSeq) {
-          maxExtractedTxSeq = seqVal;
-        }
-      } else {
-        allTxCanonical = false;
-        const legacyMatch =
-          /^TX-D\d+-(\d+)$/.exec(idStr) || /^TX-(\d+)$/.exec(idStr);
-        if (legacyMatch) {
-          const legVal = Number(legacyMatch[1]);
-          if (Number.isFinite(legVal) && legVal > maxExtractedTxSeq) {
-            maxExtractedTxSeq = legVal;
-          }
-        }
-      }
-    }
-
-    const hasValidTxSeq =
-      typeof state.transactionSequence === 'number' &&
-      Number.isFinite(state.transactionSequence) &&
-      state.transactionSequence >= 0;
-
-    const existingTxSeq = hasValidTxSeq
-      ? Math.floor(state.transactionSequence!)
-      : 0;
-
-    const txCount = rawTransactions.length;
-    const needsTxMigration =
-      !hasValidTxSeq ||
-      duplicateTransactionsFixedCount > 0 ||
-      !allTxCanonical;
-
-    let migratedTransactions: TransactionRecord[];
-    let nextTransactionSequence: number;
-
-    if (needsTxMigration) {
-      // Oluşum sırasına (en eski kayıt index = txCount - 1 -> 1, en yeni kayıt index = 0 -> txCount) göre yeniden kimliklendir
-      migratedTransactions = rawTransactions.map((tx, idx) => {
-        const formationSeq = txCount - idx;
-        const txDay =
-          typeof tx.day === 'number' && Number.isFinite(tx.day) && tx.day >= 1
-            ? Math.floor(tx.day)
-            : 1;
-        return {
-          ...tx,
-          id: `TX-D${txDay}-S${String(formationSeq).padStart(8, '0')}`,
-        };
-      });
-      nextTransactionSequence = Math.max(
-        existingTxSeq,
-        maxExtractedTxSeq,
-        txCount
-      );
-    } else {
-      migratedTransactions = rawTransactions.map((tx) => ({ ...tx }));
-      nextTransactionSequence = Math.max(
-        existingTxSeq,
-        maxExtractedTxSeq,
-        txCount
-      );
-    }
-
-    // PendingOrders için aynı deterministik ve idempotent benzersizlik denetimi
-    const rawOrders: PendingOrder[] = Array.isArray(state.pendingOrders)
-      ? state.pendingOrders
-      : [];
-    const seenOrderIds = new Set<string>();
-    let duplicateOrdersFixedCount = 0;
-    let maxExtractedOrderSeq = 0;
-    let allOrdersCanonical = true;
-
-    for (const ord of rawOrders) {
-      const idStr = typeof ord?.id === 'string' ? ord.id : '';
-      if (!idStr || seenOrderIds.has(idStr)) {
-        duplicateOrdersFixedCount += 1;
-      } else {
-        seenOrderIds.add(idStr);
-      }
-
-      const canonicalOrdMatch = /^ORD-D\d+-S(\d+)$/.exec(idStr);
-      if (canonicalOrdMatch) {
-        const seqVal = Number(canonicalOrdMatch[1]);
-        if (Number.isFinite(seqVal) && seqVal > maxExtractedOrderSeq) {
-          maxExtractedOrderSeq = seqVal;
-        }
-      } else {
-        allOrdersCanonical = false;
-        const legacyOrdMatch =
-          /^ORD-D\d+-(\d+)$/.exec(idStr) || /^ORD-(\d+)$/.exec(idStr);
-        if (legacyOrdMatch) {
-          const legVal = Number(legacyOrdMatch[1]);
-          if (Number.isFinite(legVal) && legVal > maxExtractedOrderSeq) {
-            maxExtractedOrderSeq = legVal;
-          }
-        }
-      }
-    }
-
-    const hasValidOrderSeq =
-      typeof state.orderSequence === 'number' &&
-      Number.isFinite(state.orderSequence) &&
-      state.orderSequence >= 0;
-    const existingOrderSeq = hasValidOrderSeq
-      ? Math.floor(state.orderSequence!)
-      : 0;
-    const orderCount = rawOrders.length;
-    const needsOrderMigration =
-      !hasValidOrderSeq ||
-      duplicateOrdersFixedCount > 0 ||
-      !allOrdersCanonical;
-
-    let migratedOrders: PendingOrder[];
-    let nextOrderSequence: number;
-
-    if (needsOrderMigration) {
-      migratedOrders = rawOrders.map((ord, idx) => {
-        const formationSeq = orderCount - idx;
-        const ordDay =
-          typeof ord.createdDay === 'number' &&
-          Number.isFinite(ord.createdDay) &&
-          ord.createdDay >= 1
-            ? Math.floor(ord.createdDay)
-            : 1;
-        return {
-          ...ord,
-          id: `ORD-D${ordDay}-S${String(formationSeq).padStart(8, '0')}`,
-        };
-      });
-      nextOrderSequence = Math.max(
-        existingOrderSeq,
-        maxExtractedOrderSeq,
-        orderCount
-      );
-    } else {
-      migratedOrders = rawOrders.map((ord) => ({ ...ord }));
-      nextOrderSequence = Math.max(
-        existingOrderSeq,
-        maxExtractedOrderSeq,
-        orderCount
-      );
-    }
-
-    // NewsFeed içinde olası çakışmaları da idempotent biçimde denetle
-    const rawNews: NewsEvent[] = Array.isArray(state.newsFeed)
-      ? state.newsFeed
-      : [];
-    const seenNewsIds = new Set<string>();
-    const migratedNews: NewsEvent[] = rawNews.map((n, idx) => {
-      const baseId =
-        typeof n?.id === 'string' && n.id
-          ? n.id
-          : `NEWS-D${n?.day ?? 1}-S${String(rawNews.length - idx).padStart(4, '0')}`;
-      if (!seenNewsIds.has(baseId)) {
-        seenNewsIds.add(baseId);
-        return { ...n, id: baseId };
-      }
-      const dedupId = `${baseId}-S${String(rawNews.length - idx).padStart(4, '0')}`;
-      seenNewsIds.add(dedupId);
-      return { ...n, id: dedupId };
-    });
-
-    return {
-      transactions: migratedTransactions,
-      transactionSequence: nextTransactionSequence,
-      pendingOrders: migratedOrders,
-      orderSequence: nextOrderSequence,
-      newsFeed: migratedNews,
-      duplicateTransactionsFixedCount,
-      duplicateOrdersFixedCount,
-    };
+    return SimulationPersistence.sanitizeAndMigrateTransactionsAndOrders(state);
   }
 
   /**
@@ -1141,576 +1000,7 @@ export class SimulationEngine {
    *   ve gün sonu makro, haber, NPC bilanço, temettü, vadesi dolan emir ve muhasebe denetimini 1 kez yapar.
    */
   public closeCurrentDay(expectedDayToClose?: number): DailyLogEntry {
-    if (
-      typeof expectedDayToClose === 'number' &&
-      this.state.day !== expectedDayToClose
-    ) {
-      return this.state.dailyLogs[this.state.dailyLogs.length - 1];
-    }
-
-    const hadIntradaySteps =
-      this.state.intradayStepsProcessedToday > 0 ||
-      this.state.intradayMarketStepsCompletedToday > 0;
-
-    // Eğer gün içinde piyasa seansı henüz tamamlanmadıysa açık emirleri seans başlangıcında değerlendir
-    if (
-      this.state.intradayMarketStepsCompletedToday <
-        GameClockEngine.MARKET_OPEN_SUBSTEPS_PER_DAY &&
-      this.state.pendingOrders.length > 0
-    ) {
-      const prevSession = this.state.marketSession;
-      this.state.marketSession = 'MARKET_OPEN';
-      this.processPendingOrders();
-      this.state.marketSession = prevSession;
-    }
-
-    // 1. Yeni Gün Başlangıcı ve Saat Sıfırlaması (00:00)
-    this.state.day += 1;
-    const currentDay = this.state.day;
-    this.state.dateISO = this.computeDateISO(currentDay);
-    this.state.minutesIntoCurrentDay = 0;
-    this.state.currentGameHour = 0;
-    this.state.currentGameMinute = 0;
-    this.state.marketSession = GameClockEngine.getMarketSession(0);
-
-    let dividendsReceivedToday = 0;
-    let holdingSynergyReceivedToday = 0;
-
-    // Önceki günden tahakkuk etmiş temettü alacağı varsa nakde tahsil et
-    if (this.state.accruedDividendsReceivable > 0) {
-      const collected = this.state.accruedDividendsReceivable;
-      WalletEngine.earn(this.state, collected);
-      this.state.accruedDividendsReceivable = 0;
-      dividendsReceivedToday = Number(
-        (dividendsReceivedToday + collected).toFixed(2)
-      );
-    }
-
-    // 2. Makroekonomik Göstergeleri Güncelle
-    this.state.macro = EconomyEngine.updateMacroIndicators(
-      this.state.macro,
-      currentDay,
-      this.rng
-    );
-
-    // 3. Yeni Haberleri Üret ve 4. Mevcut Haberlerin Etkisini Azalt
-    const decayedFeed = NewsEngine.decayExistingNews(
-      this.state.newsFeed,
-      currentDay
-    );
-    const newNewsEvent = NewsEngine.generateDailyNews(
-      currentDay,
-      this.state.stocks,
-      this.rng
-    );
-    this.state.newsFeed = [newNewsEvent, ...decayedFeed.slice(0, 39)];
-    this.intradayTracking.newsGenerated += 1;
-    NewsEngine.updateStockSentimentsFromNews(
-      this.state.stocks,
-      this.state.newsFeed,
-      currentDay
-    );
-
-    // 5. Oyuncu Şirketi Operasyonlarını Tamamla (Çift sayımı önleyerek!)
-    if (this.state.playerCompany) {
-      const pc = this.state.playerCompany;
-      const sectorStocks = this.state.stocks.filter(
-        (s) => s.sector === pc.sector
-      );
-      const avgSectorSentiment =
-        sectorStocks.reduce((acc, s) => acc + s.sentimentScore, 0) /
-        Math.max(1, sectorStocks.length);
-
-      if (!hadIntradaySteps) {
-        CompanyEngine.stepPlayerCompanyOneDay(
-          pc,
-          this.state.macro,
-          avgSectorSentiment,
-          currentDay,
-          this.state.totalElapsedGameMinutes
-        );
-        this.intradayTracking.productionCompleted += pc.dailyUnitsProduced;
-        this.intradayTracking.revenueGenerated += pc.dailyRevenue;
-        this.intradayTracking.expensesPaid += pc.dailyOpex;
-      } else {
-        const remainingSubsteps = Math.max(
-          0,
-          GameClockEngine.SUBSTEPS_PER_DAY -
-            this.state.intradayStepsProcessedToday
-        );
-        if (remainingSubsteps > 0) {
-          const remFraction =
-            remainingSubsteps / GameClockEngine.SUBSTEPS_PER_DAY;
-          const stepDelta = CompanyEngine.stepPlayerCompanyIntraday(
-            pc,
-            this.state.macro,
-            avgSectorSentiment,
-            remFraction,
-            this.state.totalElapsedGameMinutes
-          );
-          this.intradayTracking.productionCompleted +=
-            stepDelta.unitsProducedDelta;
-          this.intradayTracking.revenueGenerated += stepDelta.revenueDelta;
-          this.intradayTracking.expensesPaid += stepDelta.expensesDelta;
-          this.intradayTracking.researchProgress += stepDelta.rdIncrement;
-        }
-        pc.operatingDays += 1;
-        if (pc.financials.EBITDA > 0) {
-          pc.corporateGovernanceScore = Number(
-            Math.min(98, pc.corporateGovernanceScore + 0.6).toFixed(1)
-          );
-        }
-        pc.revenueHistory.push(pc.annualizedRevenue);
-        pc.ebitdaHistory.push(pc.annualizedEbitda);
-        pc.valuationHistory.push(pc.equityValue);
-        if (pc.revenueHistory.length > 90) {
-          pc.revenueHistory.shift();
-          pc.ebitdaHistory.shift();
-          pc.valuationHistory.shift();
-        }
-        if (currentDay % 30 === 0) {
-          pc.quarterlyReports.push(
-            AccountingEngine.createQuarterlyReport(
-              pc.financials,
-              currentDay,
-              this.state.macro.corporateTaxRate
-            )
-          );
-        }
-      }
-
-      if (pc.isPubliclyListed) {
-        const listedStock = this.state.stocks.find(
-          (s) => s.ticker === pc.ticker
-        );
-        if (listedStock) {
-          listedStock.financials = pc.financials;
-          listedStock.valuation = pc.valuation;
-          listedStock.ebitdaAnnual = pc.annualizedEbitda;
-          listedStock.fundamentalPrice = pc.valuation.fairValuePerShare;
-        }
-      }
-
-      // Günlük şirket faaliyet gelir ve giderlerini Merkezi Muhasebe Defterine (idempotent olarak) işle
-      const compBankId = ACCOUNT_IDS.companyBank(pc.ticker);
-      if (pc.dailyRevenue > 0) {
-        CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-          idempotencyKey: `COMP-REV-${pc.ticker}-D${currentDay}`,
-          sourceAccountId: ACCOUNT_IDS.OPERATING_REVENUE,
-          destinationAccountId: compBankId,
-          amount: pc.dailyRevenue,
-          category: 'OPERATING_REVENUE_RECEIPT',
-          description: `${pc.ticker} Gün ${currentDay} ürün satış cirosu tahsilatı`,
-          relatedCompanyId: pc.ticker,
-          reservedOrderCash: this.getReservedCash(),
-        });
-      }
-      const inc = pc.incomeBreakdown;
-      const dailyPayroll = inc
-        ? Number(((inc.salariesExpense + inc.socialBenefitsExpense) / 252).toFixed(2))
-        : Number((pc.dailyOpex * 0.35).toFixed(2));
-      if (dailyPayroll > 0) {
-        CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-          idempotencyKey: `COMP-PAYROLL-${pc.ticker}-D${currentDay}`,
-          sourceAccountId: compBankId,
-          destinationAccountId: ACCOUNT_IDS.PAYROLL_EXPENSE,
-          amount: dailyPayroll,
-          category: 'PAYROLL_PAYMENT',
-          description: `${pc.ticker} Gün ${currentDay} personel ve maaş bordro ödemesi`,
-          relatedCompanyId: pc.ticker,
-          reservedOrderCash: this.getReservedCash(),
-        });
-      }
-      const dailyOpsAndRd = Math.max(0, Number((pc.dailyOpex - dailyPayroll).toFixed(2)));
-      if (dailyOpsAndRd > 0) {
-        CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-          idempotencyKey: `COMP-OPEX-${pc.ticker}-D${currentDay}`,
-          sourceAccountId: compBankId,
-          destinationAccountId: ACCOUNT_IDS.OPERATING_EXPENSE,
-          amount: dailyOpsAndRd,
-          category: 'OPERATING_EXPENSE_PAYMENT',
-          description: `${pc.ticker} Gün ${currentDay} üretim, stok depolama ve Ar-Ge gideri`,
-          relatedCompanyId: pc.ticker,
-          reservedOrderCash: this.getReservedCash(),
-        });
-      }
-      const dailyTax = inc ? Number((inc.taxExpense / 252).toFixed(2)) : 0;
-      if (dailyTax > 0) {
-        CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-          idempotencyKey: `COMP-TAX-${pc.ticker}-D${currentDay}`,
-          sourceAccountId: compBankId,
-          destinationAccountId: ACCOUNT_IDS.TAX_LIABILITY,
-          amount: dailyTax,
-          category: 'TAX_PAYMENT',
-          description: `${pc.ticker} Gün ${currentDay} kurumlar vergisi karşılığı`,
-          relatedCompanyId: pc.ticker,
-          reservedOrderCash: this.getReservedCash(),
-        });
-      }
-    }
-
-    // 5B. Esnaf Dükkânları, Ticaret Evreni, Sevkiyatlar, Mağaza Satışları ve Sözleşmeleri İşle
-    TradeAndShopEngine.stepDailyTradeAndShops(
-      this.state,
-      this.rng,
-      this.getReservedCash()
-    );
-    const todayTradeSummary = this.state.tradeState?.todaySummary;
-    if (todayTradeSummary) {
-      this.intradayTracking.revenueGenerated +=
-        todayTradeSummary.shopSalesRevenue +
-        todayTradeSummary.wholesaleAndContractRevenue;
-      this.intradayTracking.expensesPaid +=
-        todayTradeSummary.shopOpex + todayTradeSummary.logisticsCost;
-    }
-
-    // 6. NPC Şirket Kararlarını ve Günlük Bilanço/Değerlemelerini İşle
-    for (const stock of this.state.stocks) {
-      if (stock.isPlayerCompany) continue;
-
-      stock.financials = AccountingEngine.stepCompanyFinancialsOneDay(
-        stock.financials,
-        stock.sector,
-        this.state.macro,
-        stock.sentimentScore,
-        1.0
-      );
-      stock.ebitdaAnnual = stock.financials.EBITDA;
-      stock.valuation = ValuationEngine.computeCompanyValuation(
-        stock.financials,
-        stock.sector,
-        this.state.macro,
-        1.0
-      );
-      stock.fundamentalPrice = stock.valuation.fairValuePerShare;
-
-      if (stock.integrationDaysRemaining > 0) {
-        stock.integrationDaysRemaining -= 1;
-      }
-    }
-
-    // 7. NPC Fon Emirlerini Üret (İkincil Piyasa İşlemleri)
-    NPCFundEngine.stepSecondaryMarketFundTrading(
-      this.state.institutionalFunds,
-      this.state.stocks,
-      this.state.macro,
-      currentDay,
-      this.rng
-    );
-
-    // 8. Banka Kredileri (Günlük Tekil Faiz Tahakkuku ve Taksit Tahsilatı) + Kalan Oyuncu Borçları
-    const loanDaySummary = BankLoanEngine.stepDailyLoansAndInterest(
-      this.state,
-      this.getReservedCash()
-    );
-    if (
-      loanDaySummary.installmentsPaidCount > 0 ||
-      loanDaySummary.delinquentLoansCount > 0
-    ) {
-      this.pendingDailyActions.push(
-        `Banka Kredi Özeti: ${loanDaySummary.installmentsPaidCount} taksit ödendi, ${loanDaySummary.delinquentLoansCount} gecikme, ${loanDaySummary.totalInterestAccruedToday.toLocaleString('tr-TR')} TL günlük faiz tahakkuk etti.`
-      );
-    }
-
-    const activePlayerBankLoanDebt = (this.state.activeLoans || [])
-      .filter(
-        (l) =>
-          (l.status === 'ACTIVE' || l.status === 'DELINQUENT') &&
-          (l.borrowerType === 'PLAYER' || l.borrowerType === 'HOLDING')
-      )
-      .reduce(
-        (sum, l) => sum + l.remainingPrincipal + l.accruedInterestUnpaid,
-        0
-      );
-    const nonBankPlayerDebt = Math.max(
-      0,
-      this.state.totalDebt - activePlayerBankLoanDebt
-    );
-
-    if (nonBankPlayerDebt > 0) {
-      const dailyDebtInterest = Number(
-        (
-          (nonBankPlayerDebt *
-            Math.max(0.1, this.state.macro.policyInterestRate * 0.65)) /
-          252
-        ).toFixed(2)
-      );
-      if (this.state.cash >= dailyDebtInterest) {
-        WalletEngine.spend(this.state, dailyDebtInterest);
-      } else {
-        this.state.shortTermDebt = Number(
-          (this.state.shortTermDebt + dailyDebtInterest).toFixed(2)
-        );
-      }
-    }
-
-    // 9. Piyasa Fiyatlarını Güncelle (Gün içinde 96 adım tamamlandıysa iki kez çalıştırma!)
-    if (!hadIntradaySteps) {
-      MarketEngine.stepMarketPricesOneDay(
-        this.state.stocks,
-        this.state.macro,
-        this.rng
-      );
-      if (this.state.pendingOrders.length > 0) {
-        const prevSession = this.state.marketSession;
-        this.state.marketSession = 'MARKET_OPEN';
-        this.processPendingOrders();
-        this.state.marketSession = prevSession;
-      }
-    } else {
-      const remainingMarketSubsteps = Math.max(
-        0,
-        GameClockEngine.MARKET_OPEN_SUBSTEPS_PER_DAY -
-          this.state.intradayMarketStepsCompletedToday
-      );
-      if (remainingMarketSubsteps > 0) {
-        MarketEngine.stepMarketPricesIntraday(
-          this.state.stocks,
-          this.state.macro,
-          this.rng,
-          remainingMarketSubsteps /
-            GameClockEngine.MARKET_OPEN_SUBSTEPS_PER_DAY
-        );
-        if (this.state.pendingOrders.length > 0) {
-          const prevSession = this.state.marketSession;
-          this.state.marketSession = 'MARKET_OPEN';
-          this.processPendingOrders();
-          this.state.marketSession = prevSession;
-        }
-      }
-      // Gün sonu kapanış fiyatını priceHistory'e kaydet ve yeni gün için previousPrice güncelle
-      for (const stock of this.state.stocks) {
-        stock.priceHistory.push(stock.price);
-        if (stock.priceHistory.length > 120) {
-          stock.priceHistory.shift();
-        }
-        stock.previousPrice = stock.price;
-        stock.netOrderFlowLots = 0;
-      }
-    }
-
-    // Gün içi sayaçları sıfırla
-    this.state.intradayStepsProcessedToday = 0;
-    this.state.intradayMarketStepsCompletedToday = 0;
-
-    // Süresi dolan (expired) bekleyen emirlerin rezervlerini serbest bırak
-    this.expireOutdatedOrders(currentDay);
-
-    // 10. Temettü ve Holding Sinerjilerini Dağıt
-    for (const stock of this.state.stocks) {
-      if (currentDay % stock.dividendPeriodDays === 0) {
-        stock.lastExDividendDay = currentDay;
-        const pos = this.state.portfolio[stock.ticker];
-        if (pos && pos.shares > 0 && pos.lastPurchaseDay < currentDay) {
-          const periodYield =
-            stock.dividendYieldAnnual / (252 / stock.dividendPeriodDays);
-          const dividendPerShare = Math.min(
-            stock.price * periodYield,
-            Math.max(0, stock.financials.cash * 0.25) / stock.totalShares
-          );
-          const totalCompanyDividend = Number(
-            (dividendPerShare * stock.totalShares).toFixed(2)
-          );
-          const playerPayout = Number(
-            (pos.shares * dividendPerShare).toFixed(2)
-          );
-
-          if (
-            playerPayout > 0 &&
-            stock.financials.cash >= totalCompanyDividend
-          ) {
-            stock.financials.cash = Number(
-              (stock.financials.cash - totalCompanyDividend).toFixed(2)
-            );
-            stock.financials.totalAssets = Number(
-              (stock.financials.totalAssets - totalCompanyDividend).toFixed(2)
-            );
-            stock.financials.retainedEarnings = Number(
-              (
-                stock.financials.retainedEarnings - totalCompanyDividend
-              ).toFixed(2)
-            );
-            stock.financials.shareholdersEquity = Number(
-              (
-                stock.financials.totalAssets - stock.financials.totalLiabilities
-              ).toFixed(2)
-            );
-
-            WalletEngine.earn(this.state, playerPayout);
-            pos.totalDividendCollected = Number(
-              (pos.totalDividendCollected + playerPayout).toFixed(2)
-            );
-            dividendsReceivedToday = Number(
-              (dividendsReceivedToday + playerPayout).toFixed(2)
-            );
-            this.state.totalDividendsEarned = Number(
-              (this.state.totalDividendsEarned + playerPayout).toFixed(2)
-            );
-            this.intradayTracking.dividendsCollected = Number(
-              (
-                this.intradayTracking.dividendsCollected + playerPayout
-              ).toFixed(2)
-            );
-
-            this.recordTransaction({
-              type: 'DIVIDEND',
-              ticker: stock.ticker,
-              shares: pos.shares,
-              executionPrice: Number(dividendPerShare.toFixed(4)),
-              grossAmount: playerPayout,
-              commission: 0,
-              slippageBps: 0,
-              cashDelta: playerPayout,
-              description: `${stock.ticker} dönemsel temettü ödemesi (+${this.formatCurrency(playerPayout)})`,
-            });
-
-            CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-              idempotencyKey: `MKT-DIV-${stock.ticker}-D${currentDay}`,
-              sourceAccountId: ACCOUNT_IDS.DIVIDEND_PAYABLE,
-              destinationAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-              amount: playerPayout,
-              category: 'LEGAL_DIVIDEND',
-              description: `${stock.ticker} dönemsel temettü tahsilatı`,
-              relatedCompanyId: stock.ticker,
-              reservedOrderCash: this.getReservedCash(),
-            });
-          }
-        }
-      }
-
-      if (
-        stock.isControlledByPlayer &&
-        !stock.isPlayerCompany &&
-        stock.integrationDaysRemaining === 0
-      ) {
-        const dailyPositiveEbitda = Math.max(0, stock.financials.EBITDA / 252);
-        const synergyPayout = Number(
-          (
-            dailyPositiveEbitda *
-            0.12 *
-            (stock.playerOwnershipPct / 100)
-          ).toFixed(2)
-        );
-        if (synergyPayout > 0 && stock.financials.cash > synergyPayout * 3) {
-          stock.financials.cash = Number(
-            (stock.financials.cash - synergyPayout).toFixed(2)
-          );
-          stock.financials.totalAssets = Number(
-            (stock.financials.totalAssets - synergyPayout).toFixed(2)
-          );
-          stock.financials.retainedEarnings = Number(
-            (stock.financials.retainedEarnings - synergyPayout).toFixed(2)
-          );
-          stock.financials.shareholdersEquity = Number(
-            (
-              stock.financials.totalAssets - stock.financials.totalLiabilities
-            ).toFixed(2)
-          );
-
-          WalletEngine.earn(this.state, synergyPayout);
-          holdingSynergyReceivedToday = Number(
-            (holdingSynergyReceivedToday + synergyPayout).toFixed(2)
-          );
-          this.state.totalSynergyEarned = Number(
-            (this.state.totalSynergyEarned + synergyPayout).toFixed(2)
-          );
-
-          CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-            idempotencyKey: `HOLD-SYNERGY-${stock.ticker}-D${currentDay}`,
-            sourceAccountId: ACCOUNT_IDS.HOLDING_MAIN,
-            destinationAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-            amount: synergyPayout,
-            category: 'HOLDING_CAPITAL_TRANSFER',
-            description: `${stock.ticker} bağlı ortaklık sinerji nakit akışı`,
-            relatedCompanyId: stock.ticker,
-            reservedOrderCash: this.getReservedCash(),
-          });
-        }
-      }
-    }
-
-    // 11. Ay / Çeyrek Kapanışlarını Yap
-    if (currentDay % 30 === 0) {
-      for (const stock of this.state.stocks) {
-        if (!stock.isPlayerCompany) {
-          stock.quarterlyReports.push(
-            AccountingEngine.createQuarterlyReport(
-              stock.financials,
-              currentDay,
-              this.state.macro.corporateTaxRate
-            )
-          );
-          if (stock.quarterlyReports.length > 16) {
-            stock.quarterlyReports.shift();
-          }
-        }
-      }
-    }
-
-    this.state.lastProcessedDayClose = currentDay;
-    this.state.lastProcessedGameMinuteTotal = this.state.totalElapsedGameMinutes;
-    this.state.lastSimulationTickId = `TICK-D${currentDay}-M${this.state.totalElapsedGameMinutes}`;
-
-    // 12. Oyuncu Net Varlığını Hesapla ve 13. Aşama Kilitlerini Kontrol Et
-    this.recalculateFinancialsAndStages();
-    CentralLedgerEngine.recordBalanceSnapshot(this.state);
-
-    // 14. Muhasebe Bütünlüğünü Doğrula
-    const audit = AccountingEngine.auditSimulationIntegrity(this.state);
-    this.state.lastIntegrityAudit = audit;
-    this.state.randomState = this.rng.getState();
-
-    // 15. Gün Sonu Snapshot Oluştur
-    const logActions = [...this.pendingDailyActions];
-    if (dividendsReceivedToday > 0) {
-      logActions.push(
-        `Temettü tahsilatı: +${this.formatCurrency(dividendsReceivedToday)}`
-      );
-    }
-    if (holdingSynergyReceivedToday > 0) {
-      logActions.push(
-        `Holding bağlı ortaklık sinerji nakit akışı: +${this.formatCurrency(holdingSynergyReceivedToday)}`
-      );
-    }
-    if (logActions.length === 0) {
-      logActions.push(
-        'Piyasa fiyatlaması, bilançolar ve portföy değerlemesi güncellendi.'
-      );
-    }
-    this.pendingDailyActions = [];
-
-    const privateEquityVal = Number(
-      (
-        (this.state.playerCompany && !this.state.playerCompany.isPubliclyListed
-          ? this.state.playerCompany.equityValue
-          : 0) + TradeAndShopEngine.computeNonIncorporatedShopsEquity(this.state)
-      ).toFixed(2)
-    );
-
-    const entry: DailyLogEntry = {
-      day: currentDay,
-      dateISO: this.state.dateISO,
-      stage: this.state.stage,
-      cash: this.state.cash,
-      portfolioMarketValue: this.state.portfolioValue,
-      privateCompanyEquityValue: privateEquityVal,
-      accruedDividends: this.state.accruedDividendsReceivable,
-      totalDebt: this.state.totalDebt,
-      netWorth: this.state.netWorth,
-      marketIndexValue: this.state.marketIndex,
-      dividendsReceivedToday,
-      holdingSynergyReceivedToday,
-      headlineNews: newNewsEvent.headline,
-      actionsTaken: logActions,
-      integrityValid: audit.valid,
-    };
-
-    this.state.dailyLogs.push(entry);
-    if (this.state.dailyLogs.length > 400) {
-      this.state.dailyLogs.shift();
-    }
-
-    return entry;
+    return DayCloseProcessor.closeCurrentDay(this, expectedDayToClose);
   }
 
   /**
@@ -1788,143 +1078,7 @@ export class SimulationEngine {
     message: string;
     order: PendingOrder | null;
   } {
-    const { ticker, orderType, requestedShares, limitPrice, expiresInDays } =
-      params;
-
-    const stock = this.state.stocks.find((s) => s.ticker === ticker);
-    if (!stock) {
-      return {
-        success: false,
-        message: `${ticker} kodlu hisse bulunamadı.`,
-        order: null,
-      };
-    }
-
-    if (
-      !Number.isFinite(requestedShares) ||
-      Math.floor(requestedShares) !== requestedShares ||
-      requestedShares <= 0
-    ) {
-      return {
-        success: false,
-        message: 'Emir lot miktarı pozitif bir tam sayı olmalıdır.',
-        order: null,
-      };
-    }
-
-    const isLimit = orderType === 'LIMIT_BUY' || orderType === 'LIMIT_SELL';
-    if (
-      isLimit &&
-      (typeof limitPrice !== 'number' ||
-        !Number.isFinite(limitPrice) ||
-        limitPrice <= 0)
-    ) {
-      return {
-        success: false,
-        message: 'Limit emirler için geçerli ve pozitif bir limit fiyat girilmelidir.',
-        order: null,
-      };
-    }
-
-    const side: PendingOrderSide =
-      orderType === 'MARKET_BUY' || orderType === 'LIMIT_BUY' ? 'BUY' : 'SELL';
-
-    let reservedCash = 0;
-    let reservedShares = 0;
-
-    if (side === 'BUY') {
-      const currentOwned = this.state.portfolio[ticker]?.shares || 0;
-      const maxBuyable = Math.max(0, stock.totalShares - currentOwned);
-      if (requestedShares > maxBuyable) {
-        return {
-          success: false,
-          message: `Piyasada alınabilir maksimum ${maxBuyable.toLocaleString('tr-TR')} lot bulunmaktadır.`,
-          order: null,
-        };
-      }
-
-      reservedCash = MarketEngine.estimateBuyOrderReservation(
-        stock,
-        requestedShares,
-        isLimit ? limitPrice : undefined
-      );
-      const spendableCash = this.getSpendableCash();
-      if (reservedCash > spendableCash) {
-        return {
-          success: false,
-          message: `Yetersiz kullanılabilir nakit. Gereken Rezerv: ${this.formatCurrency(reservedCash)}, Kullanılabilir (Rezerv Dışı) Nakit: ${this.formatCurrency(spendableCash)}`,
-          order: null,
-        };
-      }
-    } else {
-      if (BankLoanEngine.isStockPledgedAsCollateral(this.state, ticker)) {
-        return {
-          success: false,
-          message: `${ticker} hissesi aktif bir banka kredisinde teminat olarak kilitlidir; satabilmek için önce ilgili krediyi kapatmalısınız.`,
-          order: null,
-        };
-      }
-      const availableShares = this.getAvailableShares(ticker);
-      if (requestedShares > availableShares) {
-        return {
-          success: false,
-          message: `Yetersiz kullanılabilir hisse. İstenen: ${requestedShares} lot, Kullanılabilir (Rezerv Dışı): ${availableShares} lot.`,
-          order: null,
-        };
-      }
-      reservedShares = requestedShares;
-    }
-
-    const ttlDays =
-      typeof expiresInDays === 'number' && Number.isFinite(expiresInDays)
-        ? Math.max(1, Math.floor(expiresInDays))
-        : 5;
-
-    const nextOrderSeq =
-      (typeof this.state.orderSequence === 'number' &&
-      Number.isFinite(this.state.orderSequence) &&
-      this.state.orderSequence >= 0
-        ? Math.floor(this.state.orderSequence)
-        : this.state.pendingOrders.length) + 1;
-    this.state.orderSequence = nextOrderSeq;
-
-    const order: PendingOrder = {
-      id: `ORD-D${this.state.day}-S${String(nextOrderSeq).padStart(8, '0')}`,
-      createdDay: this.state.day,
-      createdGameMinute: this.state.minutesIntoCurrentDay,
-      ticker,
-      orderType,
-      side,
-      requestedShares,
-      remainingShares: requestedShares,
-      limitPrice: isLimit ? Number(limitPrice!.toFixed(2)) : undefined,
-      status: 'PENDING',
-      executedShares: 0,
-      averageExecutionPrice: 0,
-      reservedCash,
-      reservedShares,
-      expiresAtDay: this.state.day + ttlDays,
-      transactionIds: [],
-    };
-
-    this.state.pendingOrders.unshift(order);
-    CentralLedgerEngine.syncLedgerWithState(this.state, this.getReservedCash());
-
-    // Eğer piyasa şu anda açıksa uygun emirleri hemen çalıştır
-    if (this.state.marketSession === 'MARKET_OPEN') {
-      this.processPendingOrders();
-    }
-
-    const statusText =
-      order.status === 'FILLED'
-        ? `hemen gerçekleşti (@ ${order.averageExecutionPrice.toFixed(2)} TL)`
-        : `kuyruğa alındı (${GameClockEngine.getMarketSessionLabelTR(this.state.marketSession)})`;
-
-    return {
-      success: true,
-      message: `${ticker} için ${requestedShares.toLocaleString('tr-TR')} lot ${orderType} emri ${statusText}.`,
-      order,
-    };
+    return OrderBookProcessor.placeOrder(this, params);
   }
 
   /**
@@ -1935,33 +1089,7 @@ export class SimulationEngine {
     message: string;
     order: PendingOrder | null;
   } {
-    const order = this.state.pendingOrders.find((o) => o.id === orderId);
-    if (!order) {
-      return {
-        success: false,
-        message: `${orderId} numaralı emir bulunamadı.`,
-        order: null,
-      };
-    }
-
-    if (order.status !== 'PENDING' && order.status !== 'PARTIALLY_FILLED') {
-      return {
-        success: false,
-        message: `${orderId} emri zaten ${order.status} durumunda olduğu için iptal edilemez.`,
-        order,
-      };
-    }
-
-    order.status = 'CANCELLED';
-    order.reservedCash = 0;
-    order.reservedShares = 0;
-    CentralLedgerEngine.syncLedgerWithState(this.state, this.getReservedCash());
-
-    return {
-      success: true,
-      message: `${order.ticker} (${order.orderType}) emri iptal edildi ve rezervler serbest bırakıldı.`,
-      order,
-    };
+    return OrderBookProcessor.cancelOrder(this, orderId);
   }
 
   /**
@@ -1971,186 +1099,11 @@ export class SimulationEngine {
     executedOrdersCount: number;
     executedOrderIds: string[];
   } {
-    if (this.state.marketSession !== 'MARKET_OPEN') {
-      return { executedOrdersCount: 0, executedOrderIds: [] };
-    }
-
-    let executedOrdersCount = 0;
-    const executedOrderIds: string[] = [];
-
-    // Emirleri oluşturulma sırasına göre (eskiden yeniye) işle
-    const activeOrders = [...this.state.pendingOrders]
-      .filter((o) => o.status === 'PENDING' || o.status === 'PARTIALLY_FILLED')
-      .reverse();
-
-    for (const order of activeOrders) {
-      const stock = this.state.stocks.find((s) => s.ticker === order.ticker);
-      if (!stock || order.remainingShares <= 0) continue;
-
-      let canExecute = false;
-      if (order.orderType === 'MARKET_BUY' || order.orderType === 'MARKET_SELL') {
-        canExecute = true;
-      } else if (
-        order.orderType === 'LIMIT_BUY' &&
-        typeof order.limitPrice === 'number'
-      ) {
-        canExecute =
-          stock.price <= order.limitPrice || stock.askPrice <= order.limitPrice;
-      } else if (
-        order.orderType === 'LIMIT_SELL' &&
-        typeof order.limitPrice === 'number'
-      ) {
-        canExecute =
-          stock.price >= order.limitPrice || stock.bidPrice >= order.limitPrice;
-      }
-
-      if (!canExecute) continue;
-
-      const netWorthBefore = this.state.netWorth;
-
-      if (order.side === 'BUY') {
-        const otherReservedCash = Math.max(
-          0,
-          this.getReservedCash() - order.reservedCash
-        );
-        const availableForThisOrder = Number(
-          Math.max(0, this.state.cash - otherReservedCash).toFixed(2)
-        );
-
-        const { result, newCash } = MarketEngine.executeBuyOrder({
-          stock,
-          sharesToBuy: order.remainingShares,
-          availableCash: availableForThisOrder,
-          portfolio: this.state.portfolio,
-          currentDay: this.state.day,
-          maxLimitPrice:
-            order.orderType === 'LIMIT_BUY' ? order.limitPrice : undefined,
-        });
-
-        if (result.success) {
-          WalletEngine.setBalance(this.state, newCash + otherReservedCash);
-          order.executedShares += result.sharesExecuted;
-          order.remainingShares = 0;
-          order.averageExecutionPrice = result.executionPrice;
-          order.status = 'FILLED';
-          order.reservedCash = 0;
-
-          if (
-            this.state.playerCompany &&
-            this.state.playerCompany.ticker === stock.ticker
-          ) {
-            this.state.playerCompany.playerOwnedShares =
-              this.state.portfolio[stock.ticker]?.shares || 0;
-            this.state.playerCompany.playerOwnershipPct =
-              stock.playerOwnershipPct;
-          }
-
-          this.recalculateFinancialsAndStages();
-          const txId = this.recordTransaction({
-            type: 'BUY',
-            ticker: stock.ticker,
-            shares: result.sharesExecuted,
-            executionPrice: result.executionPrice,
-            grossAmount: result.grossAmount,
-            commission: result.commission,
-            slippageBps: result.slippageBps,
-            cashDelta: -result.totalCost,
-            netWorthBefore,
-            netWorthAfter: this.state.netWorth,
-            description: `[${order.orderType}] ${result.message}`,
-          });
-          order.transactionIds.push(txId);
-          CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-            idempotencyKey: `ORD-BUY-${order.id}-${txId}`,
-            sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-            destinationAccountId: ACCOUNT_IDS.EQUITY_CAPITAL,
-            amount: result.totalCost,
-            category: 'STOCK_PURCHASE_COST',
-            description: `[${order.orderType}] ${result.message}`,
-            relatedCompanyId: stock.ticker,
-            reservedOrderCash: this.getReservedCash(),
-          });
-          this.pendingDailyActions.push(`[${order.orderType}] ${result.message}`);
-          executedOrdersCount += 1;
-          executedOrderIds.push(order.id);
-          this.intradayTracking.ordersExecuted += 1;
-        }
-      } else {
-        const { result, newCash } = MarketEngine.executeSellOrder({
-          stock,
-          sharesToSell: order.remainingShares,
-          availableCash: this.state.cash,
-          portfolio: this.state.portfolio,
-          minLimitPrice:
-            order.orderType === 'LIMIT_SELL' ? order.limitPrice : undefined,
-        });
-
-        if (result.success) {
-          WalletEngine.setBalance(this.state, newCash);
-          order.executedShares += result.sharesExecuted;
-          order.remainingShares = 0;
-          order.averageExecutionPrice = result.executionPrice;
-          order.status = 'FILLED';
-          order.reservedShares = 0;
-
-          if (
-            this.state.playerCompany &&
-            this.state.playerCompany.ticker === stock.ticker
-          ) {
-            this.state.playerCompany.playerOwnedShares =
-              this.state.portfolio[stock.ticker]?.shares || 0;
-            this.state.playerCompany.playerOwnershipPct =
-              stock.playerOwnershipPct;
-          }
-
-          this.recalculateFinancialsAndStages();
-          const txId = this.recordTransaction({
-            type: 'SELL',
-            ticker: stock.ticker,
-            shares: result.sharesExecuted,
-            executionPrice: result.executionPrice,
-            grossAmount: result.grossAmount,
-            commission: result.commission,
-            slippageBps: result.slippageBps,
-            cashDelta: result.netProceeds,
-            netWorthBefore,
-            netWorthAfter: this.state.netWorth,
-            description: `[${order.orderType}] ${result.message}`,
-          });
-          order.transactionIds.push(txId);
-          CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-            idempotencyKey: `ORD-SELL-${order.id}-${txId}`,
-            sourceAccountId: ACCOUNT_IDS.EQUITY_CAPITAL,
-            destinationAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-            amount: result.netProceeds,
-            category: 'STOCK_SALE_PROCEEDS',
-            description: `[${order.orderType}] ${result.message}`,
-            relatedCompanyId: stock.ticker,
-            reservedOrderCash: this.getReservedCash(),
-          });
-          this.pendingDailyActions.push(`[${order.orderType}] ${result.message}`);
-          executedOrdersCount += 1;
-          executedOrderIds.push(order.id);
-          this.intradayTracking.ordersExecuted += 1;
-        }
-      }
-    }
-
-    return { executedOrdersCount, executedOrderIds };
+    return OrderBookProcessor.processPendingOrders(this);
   }
 
-  private expireOutdatedOrders(currentDay: number): void {
-    for (const order of this.state.pendingOrders) {
-      if (
-        (order.status === 'PENDING' || order.status === 'PARTIALLY_FILLED') &&
-        currentDay >= order.expiresAtDay
-      ) {
-        order.status = 'EXPIRED';
-        order.reservedCash = 0;
-        order.reservedShares = 0;
-        this.intradayTracking.ordersExpired += 1;
-      }
-    }
+  public expireOutdatedOrders(currentDay: number): void {
+    return OrderBookProcessor.expireOutdatedOrders(this, currentDay);
   }
 
   // ============================================================================
@@ -2167,146 +1120,10 @@ export class SimulationEngine {
     lastTimestampISO?: string,
     currentTimestampISO?: string
   ): OfflineProgressSummary {
-    const startNetWorth = this.state.netWorth;
-    const warnings: string[] = [];
-
-    const effectiveLastISO =
-      lastTimestampISO || this.state.lastRealTimestampISO;
-    const effectiveCurrentISO =
-      currentTimestampISO || new Date().toISOString();
-
-    const parsedDiff = GameClockEngine.parseAndValidateTimestampDiff(
-      effectiveLastISO,
-      effectiveCurrentISO
-    );
-
-    if (!parsedDiff.valid) {
-      if (parsedDiff.warning) warnings.push(parsedDiff.warning);
-      const emptySummary: OfflineProgressSummary = {
-        realSecondsElapsed: 0,
-        gameMinutesAdvanced: 0,
-        gameDaysAdvanced: 0,
-        ordersExecuted: 0,
-        ordersExpired: 0,
-        productionCompleted: 0,
-        revenueGenerated: 0,
-        expensesPaid: 0,
-        researchProgress: 0,
-        dividendsCollected: 0,
-        newsGenerated: 0,
-        startNetWorth,
-        endNetWorth: this.state.netWorth,
-        warnings,
-      };
-      this.state.lastOfflineSummary = emptySummary;
-      return emptySummary;
-    }
-
-    const currentMs = Date.parse(effectiveCurrentISO);
-    const lastMs = Date.parse(effectiveLastISO);
-
-    // Aynı zaman aralığının iki kez işlenmesini engelle
-    if (
-      this.maxProcessedOfflineTimestampMs > 0 &&
-      currentMs <= this.maxProcessedOfflineTimestampMs
-    ) {
-      warnings.push(
-        'Bu çevrimdışı zaman aralığı daha önce işlendi; mükerrer ilerleme engellendi.'
-      );
-      const duplicateSummary: OfflineProgressSummary = {
-        realSecondsElapsed: 0,
-        gameMinutesAdvanced: 0,
-        gameDaysAdvanced: 0,
-        ordersExecuted: 0,
-        ordersExpired: 0,
-        productionCompleted: 0,
-        revenueGenerated: 0,
-        expensesPaid: 0,
-        researchProgress: 0,
-        dividendsCollected: 0,
-        newsGenerated: 0,
-        startNetWorth,
-        endNetWorth: this.state.netWorth,
-        warnings,
-      };
-      this.state.lastOfflineSummary = duplicateSummary;
-      return duplicateSummary;
-    }
-
-    const effectiveStartMs =
-      this.maxProcessedOfflineTimestampMs > lastMs
-        ? this.maxProcessedOfflineTimestampMs
-        : lastMs;
-    const effectiveRealSeconds = Math.max(
-      0,
-      (currentMs - effectiveStartMs) / 1000
-    );
-
-    const { cappedGameMinutes, wasCapped } =
-      GameClockEngine.computeCappedOfflineGameMinutes(
-        effectiveRealSeconds,
-        this.state.realMinutesPerGameDay,
-        GameClockEngine.MAX_OFFLINE_GAME_DAYS
-      );
-
-    if (wasCapped) {
-      warnings.push(
-        `Çevrimdışı ilerleme maksimum ${GameClockEngine.MAX_OFFLINE_GAME_DAYS} oyun günü (${GameClockEngine.MAX_OFFLINE_GAME_MINUTES} oyun dakikası) ile sınırlandırıldı.`
-      );
-    }
-
-    // İzleme sayaçlarını sıfırla
-    this.intradayTracking = {
-      ordersExecuted: 0,
-      ordersExpired: 0,
-      productionCompleted: 0,
-      revenueGenerated: 0,
-      expensesPaid: 0,
-      researchProgress: 0,
-      dividendsCollected: 0,
-      newsGenerated: 0,
-    };
-
-    const advanceRes =
-      cappedGameMinutes > 0
-        ? this.advanceGameMinutes(cappedGameMinutes)
-        : { gameMinutesAdvanced: 0, daysClosed: 0 };
-
-    this.maxProcessedOfflineTimestampMs = currentMs;
-    this.state.lastRealTimestampISO = effectiveCurrentISO;
-    this.state.lastOfflineProcessedTimestampISO = effectiveCurrentISO;
-
-    const summary: OfflineProgressSummary = {
-      realSecondsElapsed: Number(effectiveRealSeconds.toFixed(2)),
-      gameMinutesAdvanced: advanceRes.gameMinutesAdvanced,
-      gameDaysAdvanced: advanceRes.daysClosed,
-      ordersExecuted: this.intradayTracking.ordersExecuted,
-      ordersExpired: this.intradayTracking.ordersExpired,
-      productionCompleted: Number(
-        this.intradayTracking.productionCompleted.toFixed(2)
-      ),
-      revenueGenerated: Number(
-        this.intradayTracking.revenueGenerated.toFixed(2)
-      ),
-      expensesPaid: Number(this.intradayTracking.expensesPaid.toFixed(2)),
-      researchProgress: Number(
-        this.intradayTracking.researchProgress.toFixed(4)
-      ),
-      dividendsCollected: Number(
-        this.intradayTracking.dividendsCollected.toFixed(2)
-      ),
-      newsGenerated: this.intradayTracking.newsGenerated,
-      startNetWorth,
-      endNetWorth: this.state.netWorth,
-      warnings,
-    };
-
-    this.state.lastOfflineSummary = summary;
-    this.state.lastOfflineSummaryDismissed = advanceRes.gameMinutesAdvanced === 0;
-    return summary;
+    return DayCloseProcessor.processOfflineProgress(this, lastTimestampISO, currentTimestampISO);
   }
 
-  private syncPlayerCashBuckets(): void {
+  public syncPlayerCashBuckets(): void {
     const cleanTotalCash = Number(Math.max(0, this.state.cash).toFixed(2));
     WalletEngine.setBalance(this.state, cleanTotalCash);
     const personal = Number(
@@ -2339,152 +1156,10 @@ export class SimulationEngine {
    * toplamNetVarlik = nakit + holdingNakit + portföyPiyasaDegeri + oyuncuSirketDegeri + temettuAlacagi - borclar
    */
   public recalculateFinancialsAndStages(): void {
-    this.syncPlayerCashBuckets();
-
-    let portfolioVal = 0;
-    for (const stock of this.state.stocks) {
-      const pos = this.state.portfolio[stock.ticker];
-      const sharesOwned = pos ? pos.shares : 0;
-      stock.playerOwnershipPct = Number(
-        ((sharesOwned / stock.totalShares) * 100).toFixed(2)
-      );
-      stock.controlLevel = MarketEngine.computeControlLevel(
-        stock.playerOwnershipPct
-      );
-      if (sharesOwned > 0) {
-        portfolioVal += sharesOwned * stock.price;
-      }
-    }
-    this.state.portfolioValue = Number(portfolioVal.toFixed(2));
-
-    if (this.state.playerCompany) {
-      CompanyEngine.ensureCompanyV5Fields(
-        this.state.playerCompany,
-        this.state.macro
-      );
-      this.state.playerCompany.creditScore = BankLoanEngine.computeCreditScore(
-        this.state
-      );
-    }
-
-    const nonIncorporatedShopEquity =
-      TradeAndShopEngine.computeNonIncorporatedShopsEquity(this.state);
-    const privateCompanyEquity = Number(
-      (
-        (this.state.playerCompany && !this.state.playerCompany.isPubliclyListed
-          ? this.state.playerCompany.equityValue
-          : 0) + nonIncorporatedShopEquity
-      ).toFixed(2)
-    );
-
-    this.state.totalDebt = Number(
-      (this.state.shortTermDebt + this.state.longTermDebt).toFixed(2)
-    );
-
-    const totalPlayerAndHoldingCash = Number(
-      (this.state.cash + (this.state.holdingCash || 0)).toFixed(2)
-    );
-
-    this.state.netWorth = Number(
-      (
-        totalPlayerAndHoldingCash +
-        this.state.portfolioValue +
-        privateCompanyEquity +
-        this.state.accruedDividendsReceivable -
-        this.state.totalDebt
-      ).toFixed(2)
-    );
-
-    this.state.playerFinancials = {
-      cash: this.state.cash,
-      portfolioMarketValue: this.state.portfolioValue,
-      playerCompanyEquityValue: privateCompanyEquity,
-      accruedDividendsReceivable: this.state.accruedDividendsReceivable,
-      shortTermDebt: this.state.shortTermDebt,
-      longTermDebt: this.state.longTermDebt,
-      totalDebt: this.state.totalDebt,
-      netWorth: this.state.netWorth,
-    };
-
-    const benchmarkStocks = this.state.stocks.filter((s) => !s.isPlayerCompany);
-    const avgPrice =
-      benchmarkStocks.reduce((sum, s) => sum + s.price, 0) /
-      Math.max(1, benchmarkStocks.length);
-    this.state.marketIndex = Number(((avgPrice / 92.6375) * 1000).toFixed(2));
-
-    if (this.state.marketIndexHistory.length < this.state.day) {
-      this.state.marketIndexHistory.push(this.state.marketIndex);
-      this.state.netWorthHistory.push(this.state.netWorth);
-    } else {
-      this.state.marketIndexHistory[this.state.marketIndexHistory.length - 1] =
-        this.state.marketIndex;
-      this.state.netWorthHistory[this.state.netWorthHistory.length - 1] =
-        this.state.netWorth;
-    }
-
-    const incorpCheck = TradeAndShopEngine.checkIncorporationEligibility(
-      this.state
-    );
-    if (
-      this.state.netWorth >= SimulationEngine.STAGE_2_NET_WORTH_THRESHOLD ||
-      this.state.playerCompany !== null ||
-      incorpCheck.eligible
-    ) {
-      this.state.stageUnlocks.stage2Entrepreneur = true;
-    }
-
-    TradeAndShopEngine.ensureTradeUniverseState(this.state);
-
-    const ipoCheck = IPOEngine.checkEligibility(this.state.playerCompany);
-    if (
-      ipoCheck.eligible ||
-      (this.state.playerCompany && this.state.playerCompany.isPubliclyListed)
-    ) {
-      this.state.stageUnlocks.stage3Ipo = true;
-    }
-
-    const hasSignificantStakeOrControl =
-      this.state.controlledSubsidiaries.length > 0 ||
-      this.state.stocks.some(
-        (s) => !s.isPlayerCompany && s.playerOwnershipPct >= 5.0
-      ) ||
-      (this.state.playerCompany !== null &&
-        this.state.playerCompany.isPubliclyListed);
-
-    if (hasSignificantStakeOrControl) {
-      this.state.stageUnlocks.stage4Holding = true;
-    }
-
-    if (this.state.controlledSubsidiaries.length > 0) {
-      this.state.stage = SimulationStage.STAGE_4_HOLDING_MONOPOLY;
-    } else if (
-      this.state.playerCompany &&
-      this.state.playerCompany.isPubliclyListed
-    ) {
-      this.state.stage = SimulationStage.STAGE_3_IPO_PUBLIC;
-    } else if (
-      this.state.stageUnlocks.stage2Entrepreneur ||
-      this.state.playerCompany !== null
-    ) {
-      this.state.stage = SimulationStage.STAGE_2_ENTREPRENEUR;
-    } else {
-      this.state.stage = SimulationStage.STAGE_1_RETAIL_INVESTOR;
-    }
-
-    BankLoanEngine.syncCollateralPool(this.state);
-    const reservedCashNow = this.getReservedCash();
-    CentralLedgerEngine.syncLedgerWithState(this.state, reservedCashNow);
-
-    this.state.lastIntegrityAudit =
-      AccountingEngine.auditSimulationIntegrity(this.state);
-    this.state.lastFinancialIntegrityReport =
-      CentralLedgerEngine.runFinancialIntegrityAudit(
-        this.state,
-        reservedCashNow
-      );
+    return StageProcessor.recalculateFinancialsAndStages(this);
   }
 
-  private recordTransaction(
+  public recordTransaction(
     params: Omit<
       TransactionRecord,
       'id' | 'day' | 'netWorthBefore' | 'netWorthAfter'
@@ -2535,78 +1210,7 @@ export class SimulationEngine {
     commission?: number;
     slippageBps?: number;
   } {
-    const stock = this.state.stocks.find((s) => s.ticker === ticker);
-    if (!stock) {
-      return {
-        success: false,
-        message: `${ticker} kodlu hisse bulunamadı.`,
-        totalCost: 0,
-      };
-    }
-
-    const reservedCash = this.getReservedCash();
-    const spendableCash = this.getSpendableCash();
-    const netWorthBefore = this.state.netWorth;
-    const { result, newCash } = MarketEngine.executeBuyOrder({
-      stock,
-      sharesToBuy,
-      availableCash: spendableCash,
-      portfolio: this.state.portfolio,
-      currentDay: this.state.day,
-    });
-
-    if (!result.success) {
-      return {
-        success: false,
-        message: result.message,
-        totalCost: 0,
-      };
-    }
-
-    WalletEngine.setBalance(this.state, newCash + reservedCash);
-    if (
-      this.state.playerCompany &&
-      this.state.playerCompany.ticker === ticker
-    ) {
-      this.state.playerCompany.playerOwnedShares =
-        this.state.portfolio[ticker]?.shares || 0;
-      this.state.playerCompany.playerOwnershipPct = stock.playerOwnershipPct;
-    }
-
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(result.message);
-    const buyTxId = this.recordTransaction({
-      type: 'BUY',
-      ticker,
-      shares: result.sharesExecuted,
-      executionPrice: result.executionPrice,
-      grossAmount: result.grossAmount,
-      commission: result.commission,
-      slippageBps: result.slippageBps,
-      cashDelta: -result.totalCost,
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: result.message,
-    });
-    CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-      idempotencyKey: `DIRECT-BUY-${buyTxId}`,
-      sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-      destinationAccountId: ACCOUNT_IDS.EQUITY_CAPITAL,
-      amount: result.totalCost,
-      category: 'STOCK_PURCHASE_COST',
-      description: result.message,
-      relatedCompanyId: ticker,
-      reservedOrderCash: this.getReservedCash(),
-    });
-
-    return {
-      success: true,
-      message: result.message,
-      totalCost: result.totalCost,
-      executionPrice: result.executionPrice,
-      commission: result.commission,
-      slippageBps: result.slippageBps,
-    };
+    return OrderBookProcessor.buyStock(this, ticker, sharesToBuy);
   }
 
   /**
@@ -2624,96 +1228,7 @@ export class SimulationEngine {
     executionPrice?: number;
     commission?: number;
   } {
-    const stock = this.state.stocks.find((s) => s.ticker === ticker);
-    if (!stock) {
-      return {
-        success: false,
-        message: `${ticker} kodlu hisse bulunamadı.`,
-        netProceeds: 0,
-        realizedPnL: 0,
-      };
-    }
-
-    if (BankLoanEngine.isStockPledgedAsCollateral(this.state, ticker)) {
-      return {
-        success: false,
-        message: `${ticker} hissesi aktif bir banka kredisinde teminat olarak kilitlidir; satabilmek için önce ilgili krediyi kapatmalısınız.`,
-        netProceeds: 0,
-        realizedPnL: 0,
-      };
-    }
-
-    const availableUnreservedShares = this.getAvailableShares(ticker);
-    if (sharesToSell > availableUnreservedShares) {
-      return {
-        success: false,
-        message: `Portföyde satılabilir (rezerv dışı) yeterli ${ticker} hissesi bulunmuyor (Kullanılabilir: ${availableUnreservedShares} lot).`,
-        netProceeds: 0,
-        realizedPnL: 0,
-      };
-    }
-
-    const netWorthBefore = this.state.netWorth;
-    const { result, newCash } = MarketEngine.executeSellOrder({
-      stock,
-      sharesToSell,
-      availableCash: this.state.cash,
-      portfolio: this.state.portfolio,
-    });
-
-    if (!result.success) {
-      return {
-        success: false,
-        message: result.message,
-        netProceeds: 0,
-        realizedPnL: 0,
-      };
-    }
-
-    WalletEngine.setBalance(this.state, newCash);
-    if (
-      this.state.playerCompany &&
-      this.state.playerCompany.ticker === ticker
-    ) {
-      this.state.playerCompany.playerOwnedShares =
-        this.state.portfolio[ticker]?.shares || 0;
-      this.state.playerCompany.playerOwnershipPct = stock.playerOwnershipPct;
-    }
-
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(result.message);
-    const sellTxId = this.recordTransaction({
-      type: 'SELL',
-      ticker,
-      shares: result.sharesExecuted,
-      executionPrice: result.executionPrice,
-      grossAmount: result.grossAmount,
-      commission: result.commission,
-      slippageBps: result.slippageBps,
-      cashDelta: result.netProceeds,
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: result.message,
-    });
-    CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-      idempotencyKey: `DIRECT-SELL-${sellTxId}`,
-      sourceAccountId: ACCOUNT_IDS.EQUITY_CAPITAL,
-      destinationAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-      amount: result.netProceeds,
-      category: 'STOCK_SALE_PROCEEDS',
-      description: result.message,
-      relatedCompanyId: ticker,
-      reservedOrderCash: this.getReservedCash(),
-    });
-
-    return {
-      success: true,
-      message: result.message,
-      netProceeds: result.netProceeds,
-      realizedPnL: result.realizedPnL,
-      executionPrice: result.executionPrice,
-      commission: result.commission,
-    };
+    return OrderBookProcessor.sellStock(this, ticker, sharesToSell);
   }
 
   /**
@@ -2730,69 +1245,7 @@ export class SimulationEngine {
       initialCapacity?: number;
     }
   ): { success: boolean; message: string; company?: PlayerCompany } {
-    if (this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Zaten kurulmuş bir şirketiniz bulunuyor.',
-      };
-    }
-
-    const reservedCash = this.getReservedCash();
-    const spendableCash = this.getSpendableCash();
-    const netWorthBefore = this.state.netWorth;
-    const res = CompanyEngine.establishPlayerCompany({
-      input: {
-        name,
-        ticker,
-        sector,
-        initialCapital,
-        initialStaffCount: options?.initialStaffCount,
-        initialRdBudget: options?.initialRdBudget,
-        initialCapacity: options?.initialCapacity,
-      },
-      playerCash: spendableCash,
-      playerNetWorth: this.state.netWorth,
-      currentDay: this.state.day,
-      existingTickers: this.state.stocks.map((s) => s.ticker),
-      macro: this.state.macro,
-    });
-
-    if (!res.success || !res.company) {
-      return { success: false, message: res.message };
-    }
-
-    WalletEngine.setBalance(this.state, res.newPlayerCash + reservedCash);
-    this.state.playerCompany = res.company;
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(res.message);
-
-    const foundTxId = this.recordTransaction({
-      type: 'COMPANY_FOUNDING',
-      ticker: res.company.ticker,
-      grossAmount: initialCapital,
-      commission: 0,
-      slippageBps: 0,
-      cashDelta: -(netWorthBefore - this.state.cash),
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: res.message,
-    });
-    CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-      idempotencyKey: `FOUND-COMPANY-${res.company.ticker}-${foundTxId}`,
-      sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-      destinationAccountId: ACCOUNT_IDS.companyBank(res.company.ticker),
-      amount: initialCapital,
-      category: 'CAPITAL_INJECTION',
-      description: `${res.company.name} kuruluş sermayesi aktarımı`,
-      relatedCompanyId: res.company.ticker,
-      reservedOrderCash: this.getReservedCash(),
-    });
-
-    return {
-      success: true,
-      message: res.message,
-      company: res.company,
-    };
+    return PlayerCompanyActions.establishCompany(this, name, ticker, sector, initialCapital, options);
   }
 
   /**
@@ -2802,63 +1255,7 @@ export class SimulationEngine {
     success: boolean;
     message: string;
   } {
-    if (!this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Aktif bir oyuncu şirketi bulunmuyor.',
-      };
-    }
-
-    if (this.state.playerCompany.isPubliclyListed) {
-      return {
-        success: false,
-        message:
-          'Halka açık şirketlere doğrudan kişisel sermaye aktarımı yapılamaz; borsadan pay alabilirsiniz.',
-      };
-    }
-
-    const reservedCash = this.getReservedCash();
-    const spendableCash = this.getSpendableCash();
-    const netWorthBefore = this.state.netWorth;
-    const res = CompanyEngine.injectCapital({
-      company: this.state.playerCompany,
-      amount,
-      playerCash: spendableCash,
-    });
-
-    if (!res.success) {
-      return { success: false, message: res.message };
-    }
-
-    WalletEngine.setBalance(this.state, res.newPlayerCash + reservedCash);
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(res.message);
-
-    const capTxId = this.recordTransaction({
-      type: 'CAPITAL_INJECTION',
-      ticker: this.state.playerCompany.ticker,
-      grossAmount: amount,
-      commission: 0,
-      slippageBps: 0,
-      cashDelta: -amount,
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: res.message,
-    });
-    CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-      idempotencyKey: `CAP-INJ-${this.state.playerCompany.ticker}-${capTxId}`,
-      sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
-      destinationAccountId: ACCOUNT_IDS.companyBank(
-        this.state.playerCompany.ticker
-      ),
-      amount,
-      category: 'CAPITAL_INJECTION',
-      description: res.message,
-      relatedCompanyId: this.state.playerCompany.ticker,
-      reservedOrderCash: this.getReservedCash(),
-    });
-
-    return { success: true, message: res.message };
+    return PlayerCompanyActions.transferCapitalToCompany(this, amount);
   }
 
   /**
@@ -2882,65 +1279,7 @@ export class SimulationEngine {
     autoHireEnabled?: boolean;
     maxStorageUnits?: number;
   }): { success: boolean; message: string; capitalSpent: number } {
-    if (!this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Yönetilecek şirket bulunamadı.',
-        capitalSpent: 0,
-      };
-    }
-
-    const pc = this.state.playerCompany;
-    CompanyEngine.ensureCompanyV5Fields(pc, this.state.macro);
-    const staffBefore = pc.staffCount;
-    const capBefore = pc.productionCapacity;
-    const netWorthBefore = this.state.netWorth;
-
-    const res = CompanyEngine.configureOperations(pc, params);
-    if (!res.success) {
-      return res;
-    }
-
-    this.recalculateFinancialsAndStages();
-
-    const hiredCount = Math.max(0, pc.staffCount - staffBefore);
-    const capGain = Math.max(0, pc.productionCapacity - capBefore);
-
-    if (res.capitalSpent > 0) {
-      const txDesc =
-        hiredCount > 0
-          ? `${pc.name}: +${hiredCount} yeni çalışan işe alındı (Toplam: ${pc.staffCount} çalışan)`
-          : capGain > 0
-          ? `${pc.name}: +${capGain} br/gün üretim tesisi yatırımı`
-          : res.message;
-
-      const opsTxId = this.recordTransaction({
-        type: 'CAPITAL_INJECTION',
-        ticker: pc.ticker,
-        grossAmount: res.capitalSpent,
-        commission: 0,
-        slippageBps: 0,
-        cashDelta: 0,
-        netWorthBefore,
-        netWorthAfter: this.state.netWorth,
-        description: txDesc,
-      });
-
-      CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-        idempotencyKey: `OPS-CFG-${pc.ticker}-${opsTxId}`,
-        sourceAccountId: ACCOUNT_IDS.companyBank(pc.ticker),
-        destinationAccountId:
-          hiredCount > 0 ? ACCOUNT_IDS.PAYROLL_EXPENSE : ACCOUNT_IDS.FIXED_ASSET,
-        amount: res.capitalSpent,
-        category: hiredCount > 0 ? 'PAYROLL_PAYMENT' : 'CAPEX_INVESTMENT',
-        description: txDesc,
-        relatedCompanyId: pc.ticker,
-        reservedOrderCash: this.getReservedCash(),
-      });
-    }
-
-    this.pendingDailyActions.push(res.message);
-    return res;
+    return PlayerCompanyActions.configureCompanyOperations(this, params);
   }
 
   // ============================================================================
@@ -2977,48 +1316,7 @@ export class SimulationEngine {
     netAmountTransferred: number;
     taxWithheld: number;
   } {
-    const netWorthBefore = this.state.netWorth;
-    const res = CentralLedgerEngine.executeTransfer(
-      this.state,
-      {
-        idempotencyKey:
-          params.idempotencyKey ||
-          `XFER-D${this.state.day}-M${this.state.totalElapsedGameMinutes}-${params.sourceAccountId}-${params.destinationAccountId}-${params.amount.toFixed(2)}`,
-        sourceAccountId: params.sourceAccountId,
-        destinationAccountId: params.destinationAccountId,
-        amount: params.amount,
-        category: params.category,
-        description: params.description,
-        relatedCompanyId: this.state.playerCompany?.ticker,
-      },
-      this.getReservedCash()
-    );
-
-    this.recalculateFinancialsAndStages();
-
-    if (res.success && res.transaction) {
-      this.pendingDailyActions.push(res.message);
-      this.recordTransaction({
-        type: 'CAPITAL_INJECTION',
-        ticker: this.state.playerCompany?.ticker || 'FINANS',
-        grossAmount: params.amount,
-        commission: res.taxWithheld,
-        slippageBps: 0,
-        cashDelta:
-          params.destinationAccountId === 'PLAYER_PERSONAL_CASH' ||
-          params.destinationAccountId === 'PLAYER_INVESTMENT_CASH'
-            ? res.netAmountTransferred
-            : params.sourceAccountId === 'PLAYER_PERSONAL_CASH' ||
-              params.sourceAccountId === 'PLAYER_INVESTMENT_CASH'
-            ? -params.amount
-            : 0,
-        netWorthBefore,
-        netWorthAfter: this.state.netWorth,
-        description: res.message,
-      });
-    }
-
-    return res;
+    return PlayerCompanyActions.executeMoneyTransfer(this, params);
   }
 
   public getLoanOfferQuote(params: {
@@ -3144,90 +1442,7 @@ export class SimulationEngine {
     message: string;
     project: InvestmentProject | null;
   } {
-    if (!this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Yatırım başlatmak için aktif bir şirketiniz olmalıdır.',
-        project: null,
-      };
-    }
-
-    const upcomingLoanInstallments = (this.state.activeLoans || [])
-      .filter(
-        (l) =>
-          (l.status === 'ACTIVE' || l.status === 'DELINQUENT') &&
-          l.borrowerType === 'COMPANY' &&
-          l.nextPaymentGameDay - this.state.day <= 15
-      )
-      .reduce((sum, l) => sum + l.installmentAmount, 0);
-
-    const nextProjSeq = (this.state.projectSequence || 0) + 1;
-
-    if (params.fundingSource === 'BANK_LOAN') {
-      const quote = CompanyEngine.computeInvestmentProjectQuote(
-        this.state.playerCompany,
-        params.packageType,
-        {
-          customCapacityGain: params.customCapacityGain,
-          budgetMaxMode: params.budgetMaxMode,
-          upcomingLoanInstallments,
-        }
-      );
-      if (quote.totalCost > this.state.playerCompany.financials.cash) {
-        const neededLoan = Math.ceil(
-          quote.totalCost -
-            this.state.playerCompany.financials.cash +
-            25_000
-        );
-        const loanRes = this.takeOutBankLoan({
-          loanType:
-            params.packageType === 'NEW_FACTORY'
-              ? 'FACTORY_INVESTMENT'
-              : 'MACHINE_EQUIPMENT',
-          principal: neededLoan,
-          termInGameDays: 90,
-          idempotencyKey: `INV-LOAN-D${this.state.day}-P${nextProjSeq}`,
-        });
-        if (!loanRes.success) {
-          return {
-            success: false,
-            message: `Yatırım kredisi onaylanmadı: ${loanRes.message}`,
-            project: null,
-          };
-        }
-      }
-    }
-
-    const res = CompanyEngine.startInvestmentProject(this.state.playerCompany, {
-      packageType: params.packageType,
-      currentDay: this.state.day,
-      projectSeq: nextProjSeq,
-      customCapacityGain: params.customCapacityGain,
-      budgetMaxMode: params.budgetMaxMode,
-      upcomingLoanInstallments,
-      facilityLocation: params.facilityLocation,
-    });
-
-    if (res.success && res.project) {
-      this.state.projectSequence = nextProjSeq;
-      this.recalculateFinancialsAndStages();
-      this.pendingDailyActions.push(res.message);
-      CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-        idempotencyKey: `CAPEX-${res.project.projectId}`,
-        sourceAccountId: ACCOUNT_IDS.companyBank(
-          this.state.playerCompany.ticker
-        ),
-        destinationAccountId: ACCOUNT_IDS.FIXED_ASSET,
-        amount: res.project.totalCost,
-        category: 'CAPEX_INVESTMENT',
-        description: `${res.project.title} yatırım projesi ödemesi`,
-        relatedCompanyId: this.state.playerCompany.ticker,
-        relatedContractId: res.project.projectId,
-        reservedOrderCash: this.getReservedCash(),
-      });
-    }
-
-    return res;
+    return PlayerCompanyActions.startCompanyInvestmentProject(this, params);
   }
 
   public cancelCompanyInvestmentProject(projectId: string): {
@@ -3270,40 +1485,7 @@ export class SimulationEngine {
     cashProceeds: number;
     cashGenerated: number;
   } {
-    if (!this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Aktif şirket bulunamadı.',
-        unitsSold: 0,
-        cashProceeds: 0,
-        cashGenerated: 0,
-      };
-    }
-    const res = CompanyEngine.liquidateExcessInventory(
-      this.state.playerCompany,
-      unitsToLiquidate,
-      discountRatio
-    );
-    if (res.success) {
-      this.recalculateFinancialsAndStages();
-      this.pendingDailyActions.push(res.message);
-      CentralLedgerEngine.recordPostedAccountingEntry(this.state, {
-        idempotencyKey: `INV-LIQ-${this.state.playerCompany.ticker}-D${this.state.day}-M${this.state.totalElapsedGameMinutes}-${res.unitsSold}`,
-        sourceAccountId: ACCOUNT_IDS.INVENTORY_ASSET,
-        destinationAccountId: ACCOUNT_IDS.companyBank(
-          this.state.playerCompany.ticker
-        ),
-        amount: res.cashProceeds,
-        category: 'OPERATING_REVENUE_RECEIPT',
-        description: res.message,
-        relatedCompanyId: this.state.playerCompany.ticker,
-        reservedOrderCash: this.getReservedCash(),
-      });
-    }
-    return {
-      ...res,
-      cashGenerated: res.cashProceeds,
-    };
+    return PlayerCompanyActions.liquidateCompanyInventory(this, unitsToLiquidate, discountRatio);
   }
 
   /**
@@ -3337,70 +1519,7 @@ export class SimulationEngine {
     discountRatio: number = 0.12,
     primaryShareIssueRatio: number = 0.35
   ): IPOExecutionResult {
-    if (!this.state.playerCompany) {
-      return {
-        success: false,
-        message: 'Halka arz edilecek bir şirketiniz bulunmuyor.',
-        ticker: '',
-        offerPrice: 0,
-        priceRangeMin: 0,
-        priceRangeMax: 0,
-        fairPricePerShare: 0,
-        primaryNewSharesIssued: 0,
-        secondaryExistingSharesSold: 0,
-        offeredShares: 0,
-        subscribedShares: 0,
-        institutionalDemandShares: 0,
-        retailDemandShares: 0,
-        oversubscriptionMultiple: 0,
-        grossProceeds: 0,
-        underwritingFee: 0,
-        netProceedsToPlayerCash: 0,
-        netProceedsToCompanyTreasury: 0,
-        newTotalShares: 0,
-        remainingPlayerOwnershipPct: 0,
-        firstDayClosingPrice: 0,
-        fundParticipations: [],
-      };
-    }
-
-    const netWorthBefore = this.state.netWorth;
-    const { result, newPlayerCash } = IPOEngine.executeCompanyIPO({
-      company: this.state.playerCompany,
-      publicFloatRatio,
-      discountRatio,
-      primaryShareIssueRatio,
-      macro: this.state.macro,
-      stocks: this.state.stocks,
-      funds: this.state.institutionalFunds,
-      portfolio: this.state.portfolio,
-      playerCash: this.state.cash,
-      currentDay: this.state.day,
-    });
-
-    if (!result.success) {
-      return result;
-    }
-
-    WalletEngine.setBalance(this.state, newPlayerCash);
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(result.message);
-
-    this.recordTransaction({
-      type: 'IPO_PROCEEDS',
-      ticker: result.ticker,
-      shares: result.subscribedShares,
-      executionPrice: result.offerPrice,
-      grossAmount: result.grossProceeds,
-      commission: result.underwritingFee,
-      slippageBps: 0,
-      cashDelta: result.netProceedsToPlayerCash,
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: result.message,
-    });
-
-    return result;
+    return PlayerCompanyActions.executeIPO(this, publicFloatRatio, discountRatio, primaryShareIssueRatio);
   }
 
   /**
@@ -3410,72 +1529,7 @@ export class SimulationEngine {
     ticker: string,
     options?: { targetOwnershipPct?: number; useDebtFinancing?: boolean }
   ): TakeoverResult {
-    const stock = this.state.stocks.find((s) => s.ticker === ticker);
-    if (!stock) {
-      return {
-        success: false,
-        message: `${ticker} kodlu şirket bulunamadı.`,
-        ticker,
-        companyName: '',
-        previousOwnershipPct: 0,
-        newOwnershipPct: 0,
-        controlLevelBefore: 'NONE',
-        controlLevelAfter: 'NONE',
-        sharesAcquiredInTender: 0,
-        tenderOfferPrice: 0,
-        controlPremiumPct: 0,
-        defenseTriggered: false,
-        rivalBidOccurred: false,
-        rivalBidPremiumPct: 0,
-        debtFinancingUsed: 0,
-        interestRateOnFinancing: 0,
-        integrationCostPaid: 0,
-        totalTenderCost: 0,
-        estimatedDailySynergyDividend: 0,
-      };
-    }
-
-    const reservedCash = this.getReservedCash();
-    const spendableCash = this.getSpendableCash();
-    const netWorthBefore = this.state.netWorth;
-    const { result, newPlayerCash, newPlayerLongTermDebt } =
-      MergerAcquisitionEngine.executeTakeoverTenderOffer({
-        stock,
-        targetOwnershipPct: options?.targetOwnershipPct ?? 51.0,
-        useDebtFinancing: options?.useDebtFinancing ?? false,
-        playerCash: spendableCash,
-        playerLongTermDebt: this.state.longTermDebt,
-        portfolio: this.state.portfolio,
-        controlledSubsidiaries: this.state.controlledSubsidiaries,
-        macro: this.state.macro,
-        currentDay: this.state.day,
-        rng: this.rng,
-      });
-
-    if (!result.success) {
-      return result;
-    }
-
-    WalletEngine.setBalance(this.state, newPlayerCash + reservedCash);
-    this.state.longTermDebt = newPlayerLongTermDebt;
-    this.recalculateFinancialsAndStages();
-    this.pendingDailyActions.push(result.message);
-
-    this.recordTransaction({
-      type: 'TAKEOVER_TENDER',
-      ticker,
-      shares: result.sharesAcquiredInTender,
-      executionPrice: result.tenderOfferPrice,
-      grossAmount: result.totalTenderCost,
-      commission: result.integrationCostPaid,
-      slippageBps: 0,
-      cashDelta: -(result.totalTenderCost - result.debtFinancingUsed),
-      netWorthBefore,
-      netWorthAfter: this.state.netWorth,
-      description: result.message,
-    });
-
-    return result;
+    return PlayerCompanyActions.executeHostileTakeover(this, ticker, options);
   }
 
   // ============================================================================
@@ -3513,7 +1567,7 @@ export class SimulationEngine {
     summary: BatchSimulationSummary;
     finalState: SimulationState;
   } {
-    return this.run30DaySimulation(true, days, silentConsole);
+    return SimulationScenarios.runAutomatedStressScenario(this, days, silentConsole);
   }
 
   /**
@@ -3530,237 +1584,7 @@ export class SimulationEngine {
     summary: BatchSimulationSummary;
     finalState: SimulationState;
   } {
-    const consoleLines: string[] = [];
-    const printLine = (line: string) => {
-      consoleLines.push(line);
-      if (!silentConsole) {
-        console.log(line);
-      }
-    };
-
-    const startDay = this.state.day;
-    const startNetWorth = this.state.netWorth;
-    const startCash = this.state.cash;
-    const startPortfolioValue = this.state.portfolioValue;
-    const startTxSequence = this.state.transactionSequence;
-    const startDividends = this.state.totalDividendsEarned;
-    const startSynergy = this.state.totalSynergyEarned;
-    const startCompanyRev = this.state.playerCompany?.annualizedRevenue || 0;
-    const startCompanyEbitda = this.state.playerCompany?.annualizedEbitda || 0;
-
-    const initialStockPrices: Record<string, number> = {};
-    for (const s of this.state.stocks) {
-      initialStockPrices[s.ticker] = s.price;
-    }
-
-    const ipoEvents: string[] = [];
-    const takeoverEvents: string[] = [];
-    const integrityErrors: string[] = [];
-
-    printLine(
-      '================================================================================'
-    );
-    printLine(
-      `  BORSA VE HOLDİNG SİMÜLATÖRÜ - ${daysToRun} GÜNLÜK ${enableStrategyAutomation ? 'OTOMATİK STRES SENARYOSU' : 'SAF ZAMAN İLERLETMESİ'}`
-    );
-    printLine(
-      '================================================================================'
-    );
-    printLine(
-      `[BAŞLANGIÇ GÜN ${String(startDay).padStart(2, '0')}] Aşama: ${this.state.stage} | Nakit: ${this.formatCurrency(this.state.cash)} | Portföy: ${this.formatCurrency(this.state.portfolioValue)} | Net Varlık: ${this.formatCurrency(this.state.netWorth)}`
-    );
-
-    for (let step = 1; step <= daysToRun; step++) {
-      if (enableStrategyAutomation) {
-        for (const pos of Object.values(this.state.portfolio)) {
-          const st = this.state.stocks.find((s) => s.ticker === pos.ticker);
-          if (
-            st &&
-            !st.isPlayerCompany &&
-            !st.isControlledByPlayer &&
-            st.bidPrice > pos.averageCost * 1.07 &&
-            pos.shares >= 20
-          ) {
-            this.sellStock(
-              st.ticker,
-              Math.max(10, Math.floor(pos.shares * 0.4))
-            );
-          }
-        }
-
-        if (this.getSpendableCash() > 12_000) {
-          const candidates = [...this.state.stocks]
-            .filter((s) => !s.isPlayerCompany)
-            .sort((a, b) => {
-              const scoreA =
-                a.fundamentalPrice / a.price + a.sentimentScore * 8;
-              const scoreB =
-                b.fundamentalPrice / b.price + b.sentimentScore * 8;
-              return scoreB - scoreA;
-            });
-
-          const topPick = candidates[0];
-          if (topPick) {
-            const budget = this.getSpendableCash() * 0.35;
-            const lots = Math.min(
-              500,
-              Math.floor(budget / (topPick.askPrice * 1.002))
-            );
-            if (lots >= 10) {
-              this.buyStock(topPick.ticker, lots);
-            }
-          }
-        }
-
-        if (
-          !this.state.playerCompany &&
-          this.state.netWorth >= SimulationEngine.STAGE_2_NET_WORTH_THRESHOLD &&
-          this.getSpendableCash() >= 400_000
-        ) {
-          this.establishCompany(
-            'Turkuaz Kuantum & Bulut Sistemleri A.Ş.',
-            'TRKZ',
-            'TEKNOLOJI',
-            Math.min(this.getSpendableCash() * 0.65, 1_200_000)
-          );
-        } else if (
-          this.state.playerCompany &&
-          !this.state.playerCompany.isPubliclyListed
-        ) {
-          const pc = this.state.playerCompany;
-          if (pc.financials.cash > 300_000) {
-            this.configureCompanyOperations({
-              targetStaffCount: Math.min(180, pc.staffCount + 6),
-              targetProductionCapacity: Math.min(
-                220,
-                pc.productionCapacity + 8
-              ),
-              dailyRdBudget: Math.min(75_000, pc.dailyRdBudget + 5_000),
-            });
-          }
-
-          const ipoEligibility = this.checkIPOEligibility();
-          if (ipoEligibility.eligible) {
-            const ipoRes = this.executeIPO(0.3, 0.12, 0.35);
-            if (ipoRes.success) {
-              ipoEvents.push(ipoRes.message);
-            }
-          }
-        }
-
-        if (
-          this.state.playerCompany?.isPubliclyListed &&
-          this.state.controlledSubsidiaries.length === 0
-        ) {
-          const smallestNpc = [...this.state.stocks]
-            .filter((s) => !s.isPlayerCompany && !s.isControlledByPlayer)
-            .sort((a, b) => a.equityValue - b.equityValue)[0];
-          if (
-            smallestNpc &&
-            this.getSpendableCash() > smallestNpc.equityValue * 0.68
-          ) {
-            const toRes = this.executeHostileTakeover(smallestNpc.ticker);
-            if (toRes.success) {
-              takeoverEvents.push(toRes.message);
-            }
-          }
-        }
-      }
-
-      const log = this.tickDay();
-      if (!log.integrityValid) {
-        integrityErrors.push(
-          `Gün ${log.day}: ${this.state.lastIntegrityAudit.errors.join(', ')}`
-        );
-      }
-
-      printLine(
-        `[GÜN ${String(log.day).padStart(2, '0')} | ${log.dateISO}] Aşama ${log.stage} | Nakit: ${this.formatCurrency(log.cash)} | Portföy: ${this.formatCurrency(log.portfolioMarketValue)} | Net Varlık: ${this.formatCurrency(log.netWorth)} | Endeks: ${log.marketIndexValue.toFixed(1)}`
-      );
-      printLine(`   Haber: "${log.headlineNews}"`);
-      for (const act of log.actionsTaken) {
-        printLine(`   -> ${act}`);
-      }
-    }
-
-    const endNetWorth = this.state.netWorth;
-    const netWorthChange = Number((endNetWorth - startNetWorth).toFixed(2));
-    const netWorthChangePct = Number(
-      ((netWorthChange / Math.max(1, startNetWorth)) * 100).toFixed(2)
-    );
-
-    const stockPerformances = this.state.stocks.map((s) => {
-      const baseP = initialStockPrices[s.ticker] || s.previousPrice || s.price;
-      const returnPct = Number((((s.price - baseP) / baseP) * 100).toFixed(2));
-      return { ticker: s.ticker, name: s.name, returnPct };
-    });
-
-    const sortedByReturn = [...stockPerformances].sort(
-      (a, b) => b.returnPct - a.returnPct
-    );
-
-    const summary: BatchSimulationSummary = {
-      daysSimulated: daysToRun,
-      startDay,
-      endDay: this.state.day,
-      startNetWorth,
-      endNetWorth,
-      netWorthChange,
-      netWorthChangePct,
-      startCash,
-      endCash: this.state.cash,
-      cashChange: Number((this.state.cash - startCash).toFixed(2)),
-      startPortfolioValue,
-      endPortfolioValue: this.state.portfolioValue,
-      portfolioChange: Number(
-        (this.state.portfolioValue - startPortfolioValue).toFixed(2)
-      ),
-      totalDividendsCollected: Number(
-        (this.state.totalDividendsEarned - startDividends).toFixed(2)
-      ),
-      totalSynergyCollected: Number(
-        (this.state.totalSynergyEarned - startSynergy).toFixed(2)
-      ),
-      executedTransactionsCount: Math.max(
-        0,
-        this.state.transactionSequence - startTxSequence
-      ),
-      bestPerformingStocks: sortedByReturn.slice(0, 3),
-      worstPerformingStocks: [...sortedByReturn].reverse().slice(0, 3),
-      generatedNewsCount: daysToRun,
-      ipoEvents,
-      takeoverEvents,
-      companyRevenueDelta: Number(
-        (
-          (this.state.playerCompany?.annualizedRevenue || 0) - startCompanyRev
-        ).toFixed(2)
-      ),
-      companyEbitdaDelta: Number(
-        (
-          (this.state.playerCompany?.annualizedEbitda || 0) - startCompanyEbitda
-        ).toFixed(2)
-      ),
-      integrityErrors,
-    };
-
-    this.state.lastBatchSummary = summary;
-
-    printLine(
-      '================================================================================'
-    );
-    printLine(
-      `  ${daysToRun} GÜNLÜK SİMÜLASYON ÖZETİ: Başlangıç Net Varlık: ${this.formatCurrency(startNetWorth)} -> Bitiş Net Varlık: ${this.formatCurrency(endNetWorth)} (${netWorthChange >= 0 ? '+' : ''}${netWorthChangePct}%) | Bütünlük Hatası: ${integrityErrors.length}`
-    );
-    printLine(
-      '================================================================================'
-    );
-
-    return {
-      logs: this.state.dailyLogs,
-      consoleLines,
-      summary,
-      finalState: this.state,
-    };
+    return SimulationScenarios.run30DaySimulation(this, enableStrategyAutomation, daysToRun, silentConsole);
   }
 
   // ============================================================================

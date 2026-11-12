@@ -34,6 +34,7 @@ import {
 } from '../../engine/TradeAndShopEngine';
 import { SectorId } from '../../models/market';
 import { SimulationState } from '../../models/simulation';
+import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
 import {
   LogisticsVehicleType,
   PaymentTermType,
@@ -267,7 +268,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-sky-50 border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-            Birleşik Ekonomik Kariyer Döngüsü
+            🚀 Kariyerin
           </div>
           <div
             data-testid="career-stage-badge"
@@ -295,7 +296,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             }`}
           >
             <Store className="w-3.5 h-3.5" />
-            <span>Esnaf & Dükkânlar ({trade.shops.length})</span>
+            <span>🏪 Dükkânlarım ({trade.shops.length})</span>
           </button>
           <button
             type="button"
@@ -308,7 +309,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
-            <span>Ticaret Merkezi & Depo</span>
+            <span>📦 Depo & Sipariş</span>
           </button>
         </div>
       </div>
@@ -551,17 +552,33 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 flex items-center justify-between gap-3">
-              <div>
-                <div className="font-bold text-sm">
-                  Henüz Açık Bir Esnaf Dükkânınız Yok
-                </div>
-                <p className="text-amber-900/90 mt-0.5">
-                  Borsa kazançlarınızla ilk dükkânınızı (Büfe, Manav, Kafe,
-                  Mağaza veya Market) açarak düzenli günlük ticaret nakit akışı
-                  başlatabilirsiniz.
-                </p>
+            <div
+              data-testid="first-shop-progress"
+              className="p-4 rounded-3xl bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 text-amber-950 shadow-md space-y-2"
+            >
+              <div className="flex items-center gap-2 font-extrabold text-sm">
+                <span className="text-2xl">🏪</span>
+                {state.netWorth >= FIRST_SHOP_MIN_NET_WORTH
+                  ? 'Hazırsın! İlk dükkânını aç'
+                  : 'İlk dükkânına ne kadar kaldı?'}
               </div>
+              <div className="w-full h-4 bg-white/60 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(100, Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100))}%`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-bold font-mono">
+                <span>{formatCurrency(state.netWorth)}</span>
+                <span>🎯 {formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
+              </div>
+              {state.netWorth < FIRST_SHOP_MIN_NET_WORTH && (
+                <p className="text-[11px] font-semibold">
+                  Borsada hisse al-sat, parayı büyüt. Hedefe ulaşınca dükkân kurabilirsin!
+                </p>
+              )}
             </div>
           )}
 

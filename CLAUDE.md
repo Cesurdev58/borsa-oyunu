@@ -30,6 +30,15 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Haber dengesi:** Her sektörde olumlu ve olumsuz haber şablonlarının toplam etkisi (`baseImpact / decayRate`) eşit olmalı; aksi hâlde borsa tek yönlü yükselir. Yeni haber eklersen `src/tests/balance/balance.test.ts` dengeyi denetler.
 - **Bilinen:** Borsa nominal olarak yılda ortalama +%65–85 (ekonomide enflasyon %28). Büfe/manav ROI'si hâlâ borsadan yüksek; bu bilinçli, ilk dükkân kapısı dengeyi sağlar.
 
+## Oyun süresi ve arayüz tasarımı (mobil tycoon yönü)
+
+- **Oyun günü varsayılan olarak 15 gerçek dakikadır** (`DEFAULT_REAL_MINUTES_PER_GAME_DAY`, `engine/GameClockEngine.ts`). Seçenekler 15/30/45/60 dk. Hız düğmeleri yalnızca 1x ve 2x'tir; 4x kaldırıldı (eski kayıttaki 4x otomatik 2x olur). Eski kayıtlar kendi gün uzunluğunu korur; yalnızca yeni oyun 15 dk ile başlar.
+- **Arayüz ilkesi: basit, renkli, "tycoon" havası.** Teknik terim yok (limit emri, emir defteri, formül vb. "Gelişmiş" bölümüne taşınır). Alt menü emojili ve renkli, üst çubuk degrade, ekran arka planı açık degrade.
+- **Borsa ekranı** (`buildings/BorsaPanel.tsx`): üstte nakit/hisse değeri kartı, seçili hisse için büyük AL / SAT kartı (− / + ile lot, 10/50/100/Hepsi), altta hisse kartları. Borsa kapalıyken AL/SAT piyasa emri olarak sıraya girer. Limit emri formu ve emir defteri `tycoon-advanced-toggle` düğmesinin arkasındadır; eski `data-testid`ler orada durur.
+- **Dükkân ekranı** (`EsnafAndTradePanel.tsx`): dükkân yokken "İlk dükkânına ne kadar kaldı?" ilerleme çubuğu (`FIRST_SHOP_MIN_NET_WORTH`).
+- **Şirket ekranı kilitliyken** (`SirketMerkeziPanel.tsx`) eşik `PROGRESSION_RULES.entrepreneurNetWorth`'tan okunur.
+- Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkânım (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
+
 ## Klasörler
 
 - `src/engine/` — oyun mantığı. `SimulationEngine.ts` ana döngü; `TradeAndShopEngine.ts` dükkân/ticaret ön yüzü ve günlük döngü; `MarketEngine.ts` borsa; `CentralLedgerEngine.ts` ve `AccountingEngine.ts` para hareketleri;

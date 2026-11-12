@@ -22,15 +22,14 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between gap-2">
         <div>
           <div className="font-bold text-amber-950">
-            Dinamik Haber Akışı & Duyarlılık Sönümlenmesi
+            📰 Son Dakika
           </div>
           <div className="text-[11px] text-amber-800">
-            Her haberin fiyat etkisi yaşlandıkça üstel olarak azalır: I(yaş) =
-            I₀ · e^(-λ·yaş)
+            Haberler hisseleri oynatır. Eski haberlerin etkisi zamanla azalır.
           </div>
         </div>
         <span className="font-mono font-bold text-amber-900 shrink-0">
-          {state.newsFeed.length} Haber
+          {state.newsFeed.length} haber
         </span>
       </div>
 
@@ -51,7 +50,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   </span>
                   <span>·</span>
                   <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold">
-                    Sektör: {news.sector}
+                    {news.sector}
                   </span>
                   {news.targetTicker && (
                     <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-900 font-bold">
@@ -59,7 +58,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     </span>
                   )}
                   <span>·</span>
-                  <span className="text-slate-500">Yaş: {ageDays} gün</span>
+                  <span className="text-slate-500">{ageDays === 0 ? 'Bugün' : `${ageDays} gün önce`}</span>
                 </div>
 
                 <span
@@ -69,7 +68,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       : 'bg-rose-50 text-rose-700'
                   }`}
                 >
-                  Güncel Etki: {currentImpactPct >= 0 ? '+' : ''}
+                  Hisselere etkisi: {currentImpactPct >= 0 ? '+' : ''}
                   {currentImpactPct.toFixed(2)}% (İlk:{' '}
                   {initialImpactPct >= 0 ? '+' : ''}
                   {initialImpactPct.toFixed(2)}%)

@@ -85,12 +85,12 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     return (
       <header
         aria-label="Oyun Üst Bilgi Çubuğu"
-        className="sticky top-0 z-30 bg-white/95 border-b border-slate-200 px-2 sm:px-4 pt-[max(0.35rem,env(safe-area-inset-top))] pb-1.5 shadow-xs"
+        className="sticky top-0 z-30 bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 px-2 sm:px-4 pt-[max(0.35rem,env(safe-area-inset-top))] pb-2 shadow-md rounded-b-3xl"
       >
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-1 sm:gap-3">
           {/* Sol: Gün, Saat, Aşama ve Piyasa Durumu Rozeti */}
           <div className="flex flex-col min-w-0 shrink-0">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-slate-800 font-mono tabular-nums">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-white font-mono tabular-nums">
               <span data-testid="tycoon-top-day">Gün {day}</span>
               <span className="text-slate-300 hidden md:inline" aria-hidden="true">
                 ·
@@ -103,9 +103,9 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               </span>
               <span
                 data-testid="tycoon-game-clock"
-                className="inline-flex items-center gap-0.5 text-slate-900 font-bold"
+                className="inline-flex items-center gap-0.5 text-white font-bold"
               >
-                <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-600 shrink-0" />
+                <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white shrink-0" />
                 {formattedTime}
               </span>
             </div>
@@ -144,7 +144,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                   ? 'bg-emerald-50 border-emerald-300 motion-safe:scale-[1.02]'
                   : cashDeltaDirection === 'down'
                   ? 'bg-amber-50 border-amber-300 motion-safe:scale-[1.02]'
-                  : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200/90'
+                  : 'bg-white border-white shadow-md'
               }`}
             >
               <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-slate-500">
@@ -155,7 +155,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 data-testid="tycoon-top-cash"
                 data-full-value={cashMeta.full}
                 data-abbreviated-value={cashMeta.abbreviated}
-                className="text-[10px] sm:text-sm font-bold font-mono tabular-nums tracking-tight text-slate-900 whitespace-nowrap"
+                className="text-xs sm:text-sm font-extrabold font-mono tabular-nums tracking-tight text-slate-900 whitespace-nowrap"
               >
                 {showExactCash ? cashMeta.full : cashMeta.abbreviated}
               </div>
@@ -171,10 +171,10 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                   ? 'bg-emerald-50 border-emerald-300 motion-safe:scale-[1.02]'
                   : netWorthDeltaDirection === 'down'
                   ? 'bg-rose-50 border-rose-300 motion-safe:scale-[1.02]'
-                  : 'bg-emerald-50/60 hover:bg-emerald-100/60 border-emerald-200/80'
+                  : 'bg-amber-50 border-amber-200 shadow-md'
               }`}
             >
-              <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-emerald-800">
+              <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-amber-800">
                 <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600 shrink-0" />
                 <span>Net Varlık</span>
               </div>
@@ -182,7 +182,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 data-testid="tycoon-top-networth"
                 data-full-value={netWorthMeta.full}
                 data-abbreviated-value={netWorthMeta.abbreviated}
-                className="text-[10px] sm:text-sm font-bold font-mono tabular-nums tracking-tight text-emerald-900 whitespace-nowrap"
+                className="text-xs sm:text-sm font-extrabold font-mono tabular-nums tracking-tight text-amber-900 whitespace-nowrap"
               >
                 {showExactNetWorth ? netWorthMeta.full : netWorthMeta.abbreviated}
               </div>
@@ -196,7 +196,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="top-notifications-btn"
               onClick={onOpenNotifications}
               aria-label={`Bildirimler (${unreadNotificationsCount} yeni)`}
-              className="relative min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors"
+              className="relative min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-white/40 bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center transition-colors"
             >
               <Bell className="w-4 h-4" />
               {unreadNotificationsCount > 0 && (
@@ -216,7 +216,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="top-settings-btn"
               onClick={onOpenSettings}
               aria-label="Oyun Ayarları ve Geliştirici Araçları"
-              className="min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors"
+              className="min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] rounded-xl border border-white/40 bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center transition-colors"
             >
               <Settings className="w-4 h-4" />
             </button>

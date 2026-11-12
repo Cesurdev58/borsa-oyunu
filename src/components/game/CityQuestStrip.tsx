@@ -63,7 +63,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
         <section
           aria-label="Aktif Ana Hedef Şeridi"
           data-testid="city-quest-strip"
-          className="rounded-2xl border border-emerald-200/90 bg-white/95 px-3 py-1.5 shadow-2xs flex items-center justify-between gap-2"
+          className="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-emerald-50 px-3 py-2 shadow-md flex items-center justify-between gap-2"
         >
           {/* Tek Ana Hedef Satırı */}
           <div

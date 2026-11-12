@@ -5,6 +5,7 @@
  * SIRKET_MERKEZI bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
+import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 import React, {
   useEffect,
   useState,
@@ -111,45 +112,49 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   if (!isStage2Unlocked && !pc) {
     const progressPct = Math.min(
       100,
-      Math.floor((state.netWorth / 2_000_000) * 100)
+      Math.floor((state.netWorth / PROGRESSION_RULES.entrepreneurNetWorth) * 100)
     );
-    const remainingNeeded = Math.max(0, 2_000_000 - state.netWorth);
+    const remainingNeeded = Math.max(0, PROGRESSION_RULES.entrepreneurNetWorth - state.netWorth);
     return (
       <div
         className="space-y-4 text-xs"
         data-testid="sheet-content-SIRKET_MERKEZI-locked"
       >
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-              <Lock className="w-5 h-5" />
+        <div className="p-4 rounded-3xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-400 text-white shadow-lg space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/25 flex items-center justify-center text-2xl shrink-0">
+              🔒
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Şirket Arsası Kilitli (Aşama 2: Girişimci)
-              </h3>
-              <p className="text-slate-600">
-                Açılma Koşulu: Toplam Net Varlık ≥ ₺2.000.000
+              <h3 className="text-sm font-extrabold">Şirket kurmak için büyü!</h3>
+              <p className="opacity-95">
+                Toplam varlığın {formatCurrency(PROGRESSION_RULES.entrepreneurNetWorth)} olunca kendi şirketini kurabilirsin.
               </p>
             </div>
           </div>
 
+          <div className="flex items-center justify-between text-xl px-2">
+            <span title="Borsa">📈</span>
+            <span className="opacity-60">➜</span>
+            <span title="Dükkân">🏪</span>
+            <span className="opacity-60">➜</span>
+            <span title="Şirket">🏢</span>
+          </div>
+
           <div className="space-y-1.5">
-            <div className="flex justify-between font-mono text-[11px]">
-              <span>Mevcut: {formatCurrency(state.netWorth)}</span>
-              <span>Hedef: ₺2.000.000 (%{progressPct})</span>
-            </div>
-            <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-4 bg-white/30 rounded-full overflow-hidden">
               <div
-                className="h-full bg-teal-600 rounded-full transition-all"
+                className="h-full bg-gradient-to-r from-amber-300 to-yellow-400 rounded-full transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <div className="text-[11px] text-slate-600">
-              Kalan Gereksinim:{' '}
-              <strong className="font-mono text-slate-900">
-                {formatCurrency(remainingNeeded)}
-              </strong>
+            <div className="flex justify-between font-mono text-[11px] font-bold">
+              <span>{formatCurrency(state.netWorth)}</span>
+              <span>%{progressPct}</span>
+              <span>🎯 {formatCurrency(PROGRESSION_RULES.entrepreneurNetWorth)}</span>
+            </div>
+            <div className="text-[11px] opacity-95">
+              Kalan: <strong className="font-mono">{formatCurrency(remainingNeeded)}</strong>
             </div>
           </div>
 
@@ -157,9 +162,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <button
               type="button"
               onClick={() => onOpenBuilding('BORSA')}
-              className="w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
+              className="w-full min-h-[48px] rounded-2xl bg-white text-violet-700 font-extrabold text-sm shadow-md active:scale-95"
             >
-              Borsa Binasına Git ve Portföyünü Büyüt
+              📈 Borsaya git, parayı büyüt
             </button>
           )}
         </div>

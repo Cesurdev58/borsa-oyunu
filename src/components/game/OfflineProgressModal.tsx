@@ -82,7 +82,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
             <div className="grid grid-cols-2 gap-2.5">
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
                 <div className="text-slate-500">Geçen Gerçek Süre</div>
-                <div className="text-sm font-bold font-mono tabular-nums text-slate-900 mt-0.5">
+                <div className="text-sm font-bold tabular-nums tabular-nums text-slate-900 mt-0.5">
                   {realMinutes > 0
                     ? `${realMinutes} dk ${realSecondsRem} sn`
                     : `${realSecondsRem} sn`}
@@ -90,7 +90,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
               </div>
               <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-200/80">
                 <div className="text-sky-800">İlerleyen Oyun Süresi</div>
-                <div className="text-sm font-bold font-mono tabular-nums text-sky-950 mt-0.5">
+                <div className="text-sm font-bold tabular-nums tabular-nums text-sky-950 mt-0.5">
                   {summary.gameDaysAdvanced} Gün ({gameHours} sa {gameMinsRem}{' '}
                   dk)
                 </div>
@@ -105,7 +105,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
                   Net Varlık Değişimi
                 </span>
                 <span
-                  className={`font-mono font-bold ${
+                  className={`tabular-nums font-bold ${
                     netWorthDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'
                   }`}
                 >
@@ -113,7 +113,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
                   {formatCurrency(netWorthDelta)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-700">
+              <div className="flex items-center justify-between text-[13px] tabular-nums tabular-nums text-slate-700">
                 <span>Başlangıç: {formatCurrency(summary.startNetWorth)}</span>
                 <span>→</span>
                 <span className="font-bold text-slate-900">
@@ -123,59 +123,59 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
             </div>
 
             {/* Operasyonel & Piyasa Detayları */}
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="grid grid-cols-2 gap-2 text-[13px]">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Gerçekleşen Emir:</span>
-                <strong className="font-mono text-slate-900">
+                <strong className="tabular-nums text-slate-900">
                   {summary.ordersExecuted}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Süresi Dolan Emir:</span>
-                <strong className="font-mono text-slate-900">
+                <strong className="tabular-nums text-slate-900">
                   {summary.ordersExpired}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Üretim Miktarı:</span>
-                <strong className="font-mono text-slate-900">
+                <strong className="tabular-nums text-slate-900">
                   {summary.productionCompleted.toFixed(0)} br
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Şirket Geliri:</span>
-                <strong className="font-mono text-emerald-700">
+                <strong className="tabular-nums text-emerald-700">
                   {formatCurrency(summary.revenueGenerated)}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Şirket Gideri:</span>
-                <strong className="font-mono text-rose-700">
+                <strong className="tabular-nums text-rose-700">
                   {formatCurrency(summary.expensesPaid)}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Ar-Ge İlerlemesi:</span>
-                <strong className="font-mono text-violet-700">
+                <strong className="tabular-nums text-violet-700">
                   +{summary.researchProgress.toFixed(4)}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Tahsil Edilen Temettü:</span>
-                <strong className="font-mono text-amber-700">
+                <strong className="tabular-nums text-amber-700">
                   {formatCurrency(summary.dividendsCollected)}
                 </strong>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                 <span className="text-slate-600">Yeni Haberler:</span>
-                <strong className="font-mono text-slate-900">
+                <strong className="tabular-nums text-slate-900">
                   {summary.newsGenerated} Bülten
                 </strong>
               </div>
             </div>
 
             {summary.warnings.length > 0 && (
-              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 space-y-1">
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900 space-y-1">
                 {deriveDeterministicOfflineWarningItems(
                   summary.warnings,
                   summary.gameDaysAdvanced,

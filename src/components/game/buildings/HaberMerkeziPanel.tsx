@@ -24,11 +24,11 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="font-bold text-amber-950">
             📰 Son Dakika
           </div>
-          <div className="text-[11px] text-amber-800">
+          <div className="text-[13px] text-amber-800">
             Haberler hisseleri oynatır. Eski haberlerin etkisi zamanla azalır.
           </div>
         </div>
-        <span className="font-mono font-bold text-amber-900 shrink-0">
+        <span className="tabular-nums font-bold text-amber-900 shrink-0">
           {state.newsFeed.length} haber
         </span>
       </div>
@@ -43,8 +43,8 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               key={news.id}
               className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1.5"
             >
-              <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
-                <div className="flex items-center gap-1.5 font-mono">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 text-[13px]">
+                <div className="flex items-center gap-1.5 tabular-nums">
                   <span className="font-bold text-slate-900">
                     Gün {news.day}
                   </span>
@@ -62,7 +62,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
 
                 <span
-                  className={`font-mono font-bold px-2 py-0.5 rounded ${
+                  className={`tabular-nums font-bold px-2 py-0.5 rounded ${
                     currentImpactPct >= 0
                       ? 'bg-emerald-50 text-emerald-700'
                       : 'bg-rose-50 text-rose-700'
@@ -78,7 +78,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               <h4 className="font-bold text-slate-900 text-xs">
                 {news.headline}
               </h4>
-              <p className="text-slate-600 text-[11px] leading-relaxed">
+              <p className="text-slate-600 text-[13px] leading-relaxed">
                 {news.summary}
               </p>
             </div>

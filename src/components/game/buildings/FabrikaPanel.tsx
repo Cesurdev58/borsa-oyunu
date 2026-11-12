@@ -90,52 +90,52 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-FABRIKA-active"
     >
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono tabular-nums">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums tabular-nums">
         <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Bugünkü Üretim / En Fazla Üretim
           </div>
           <div className="text-sm font-bold text-slate-900 mt-0.5">
             {actualProd.toFixed(0)} / {installedCap} birim
           </div>
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Kapasite kullanımı: %{capUtilPct.toString().replace('.', ',')}
           </div>
         </div>
 
         <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Kullanılabilir Kapasite
           </div>
           <div className="text-sm font-bold text-slate-900 mt-0.5">
             {ops.effectiveCapacity.toFixed(0)} birim/gün
           </div>
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Makine Durumu: %{(ops.machineAvailability * 100).toFixed(0)}
           </div>
         </div>
 
         <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Bugünkü Satış & Satış Fırsatı
           </div>
           <div className="text-sm font-bold text-emerald-700 mt-0.5">
             {ops.actualSalesUnits.toFixed(0)} birim
           </div>
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Satış Fırsatı: {ops.marketDemand.toFixed(0)} birim
           </div>
         </div>
 
         <div className="p-3 rounded-2xl bg-white border border-slate-200">
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Depo Stok Durumu
           </div>
           <div className="text-sm font-bold text-slate-900 mt-0.5">
             {ops.inventoryUnits.toFixed(0)} /{' '}
             {ops.maximumStorageUnits.toFixed(0)} birim
           </div>
-          <div className="text-[10px] font-sans text-slate-500">
+          <div className="text-[13px] font-sans text-slate-500">
             Çalışan: {pc.staffCount} kişi
           </div>
         </div>
@@ -144,7 +144,7 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
       <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
         <div className="flex justify-between font-semibold text-slate-800">
           <span>Gün İçi Vardiya Üretim İlerlemesi</span>
-          <span className="font-mono">%{intradayPct}</span>
+          <span className="tabular-nums">%{intradayPct}</span>
         </div>
         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div
@@ -152,7 +152,7 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
             style={{ width: `${intradayPct}%` }}
           />
         </div>
-        <div className="text-[11px] text-slate-600 font-mono">
+        <div className="text-[13px] text-slate-600 tabular-nums">
           Birim Satış Fiyatı: {formatCurrency(ops.salePrice)} · Birim Üretim
           Maliyeti: {formatCurrency(ops.unitProductionCost)}
         </div>
@@ -199,7 +199,7 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="font-bold text-slate-900">
             Üretim Planı, Çalışan Alımı ve Tesis Yatırımları
           </div>
-          <div className="text-[11px] text-slate-600">
+          <div className="text-[13px] text-slate-600">
             Çalışan alımı, üretim hedefi ve yeni tesis yatırımları Şirket
             Merkezi’nde tek yerden yönetilir.
           </div>

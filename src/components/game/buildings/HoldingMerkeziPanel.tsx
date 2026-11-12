@@ -45,7 +45,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="font-bold text-amber-950">
               Holding Merkezi Kilit Koşulu (Aşama 4)
             </div>
-            <p className="text-amber-900 text-[11px] mt-0.5">
+            <p className="text-amber-900 text-[13px] mt-0.5">
               Bir NPC şirketinde en az %5 stratejik pay topladığınızda veya
               şirketinizi halka arz ettiğinizde Holding Aşaması aktifleşir.
               Aşağıdan öncü pay alabilir veya devralma hedeflerini inceleyebilirsiniz.
@@ -54,9 +54,9 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2.5 font-mono tabular-nums">
+      <div className="grid grid-cols-2 gap-2.5 tabular-nums tabular-nums">
         <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-200">
-          <div className="text-[11px] text-rose-800">
+          <div className="text-[13px] text-rose-800">
             Kontrol Edilen Bağlı Ortaklıklar
           </div>
           <div className="text-base font-bold text-rose-950 mt-0.5">
@@ -64,7 +64,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         </div>
         <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-[11px] text-emerald-800">
+          <div className="text-[13px] text-emerald-800">
             Toplam Holding Sinerji Geliri
           </div>
           <div className="text-base font-bold text-emerald-950 mt-0.5">
@@ -78,7 +78,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1">
                 Hedef Rakip Şirket Seçin
               </label>
               <select
@@ -94,11 +94,11 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 ))}
               </select>
             </div>
-            <div className="text-right font-mono">
+            <div className="text-right tabular-nums">
               <div className="text-xs font-bold text-slate-900">
                 Piyasa Değeri: {formatCurrency(selectedTarget.equityValue)}
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[13px] text-slate-500">
                 Mevcut Pay: %{selectedTarget.playerOwnershipPct.toFixed(2)} (
                 {selectedTarget.controlLevel})
               </div>
@@ -161,16 +161,16 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2"
             >
               <div>
-                <span className="font-mono font-bold text-slate-900">
+                <span className="tabular-nums font-bold text-slate-900">
                   {s.ticker}
                 </span>{' '}
                 <span className="text-slate-600">· {s.name}</span>
               </div>
-              <div className="font-mono text-right shrink-0">
+              <div className="tabular-nums text-right shrink-0">
                 <span className="font-bold text-slate-900">
                   %{s.playerOwnershipPct.toFixed(2)}
                 </span>{' '}
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                <span className="text-[13px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
                   {s.controlLevel}
                 </span>
               </div>

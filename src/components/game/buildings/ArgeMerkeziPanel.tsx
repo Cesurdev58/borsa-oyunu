@@ -52,9 +52,9 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-ARGE_MERKEZI-active"
     >
-      <div className="grid grid-cols-2 gap-2.5 font-mono tabular-nums">
+      <div className="grid grid-cols-2 gap-2.5 tabular-nums tabular-nums">
         <div className="p-3 rounded-2xl bg-violet-50/70 border border-violet-200">
-          <div className="text-violet-800 text-[11px]">
+          <div className="text-violet-800 text-[13px]">
             Günlük Ar-Ge Bütçesi
           </div>
           <div className="text-base font-bold text-violet-950 mt-0.5">
@@ -62,7 +62,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         </div>
         <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-emerald-800 text-[11px]">
+          <div className="text-emerald-800 text-[13px]">
             Teknoloji Kalite Çarpanı
           </div>
           <div className="text-base font-bold text-emerald-950 mt-0.5">
@@ -74,7 +74,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
         <div className="flex justify-between font-semibold text-slate-800">
           <span>İnovasyon & Ürün Kalite Seviyesi (Maks x2.50)</span>
-          <span className="font-mono">%{qualityProgressPct}</span>
+          <span className="tabular-nums">%{qualityProgressPct}</span>
         </div>
         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div

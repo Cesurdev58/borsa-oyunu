@@ -56,7 +56,7 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
         {/* Üst Satır: Oyun Saati, Piyasa Durumu ve Sonraki Önemli Olay */}
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 font-mono font-bold text-slate-900 tabular-nums">
+            <span className="inline-flex items-center gap-1.5 tabular-nums font-bold text-slate-900 tabular-nums">
               <Clock className="w-3.5 h-3.5 text-sky-600" />
               Saat: <span data-testid="controls-game-time">{formattedTime}</span>
             </span>
@@ -64,14 +64,14 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
               ·
             </span>
             <span
-              className={`px-2 py-0.5 rounded-md border text-[11px] font-semibold ${sessionMeta.bgClass} ${sessionMeta.textClass} ${sessionMeta.borderClass}`}
+              className={`px-2 py-0.5 rounded-md border text-[13px] font-semibold ${sessionMeta.bgClass} ${sessionMeta.textClass} ${sessionMeta.borderClass}`}
             >
               {sessionMeta.fullLabel}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-medium">
-            <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2 py-0.5 rounded-lg font-mono tabular-nums">
+          <div className="flex flex-wrap items-center gap-2 text-[13px] text-slate-600 font-medium">
+            <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2 py-0.5 rounded-lg tabular-nums tabular-nums">
               <Timer className="w-3 h-3 text-indigo-600" />
               <span>{nextEventLabelTR}:</span>
               <strong className="text-slate-900">
@@ -79,7 +79,7 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
               </strong>
             </span>
             {activePendingOrdersCount > 0 && nearestOrderExpiryDays !== null && (
-              <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg text-amber-900 font-mono tabular-nums">
+              <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg text-amber-900 tabular-nums tabular-nums">
                 <span>
                   {activePendingOrdersCount} Açık Emir (Vade: {nearestOrderExpiryDays} gün)
                 </span>
@@ -119,7 +119,7 @@ export const GameTimeControls: React.FC<GameTimeControlsProps> = React.memo(
                   data-testid={`speed-btn-${sc}x`}
                   onClick={() => onSetTimeScale(sc)}
                   aria-pressed={active}
-                  className={`min-h-[44px] min-w-[48px] px-3 py-1.5 rounded-xl text-xs font-mono font-bold inline-flex items-center justify-center gap-1 border transition-colors ${
+                  className={`min-h-[44px] min-w-[48px] px-3 py-1.5 rounded-xl text-xs tabular-nums font-bold inline-flex items-center justify-center gap-1 border transition-colors ${
                     active
                       ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'

@@ -245,7 +245,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
                     {header.title}
                   </h2>
-                  <p className="text-[11px] text-slate-500 truncate">
+                  <p className="text-[13px] text-slate-500 truncate">
                     {header.subtitle}
                   </p>
                 </div>

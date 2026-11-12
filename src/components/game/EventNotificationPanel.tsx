@@ -102,7 +102,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
                     <span className="font-medium truncate">
                       {latest.message}
                     </span>
-                    <span className="text-[10px] font-mono opacity-75 shrink-0">
+                    <span className="text-[13px] tabular-nums opacity-75 shrink-0">
                       (Gün {latest.day} · {latest.gameTime})
                     </span>
                   </div>
@@ -117,7 +117,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
             <button
               type="button"
               onClick={onOpenDrawer}
-              className="min-h-[36px] px-2.5 py-1 rounded-xl bg-white/90 hover:bg-white border border-slate-200/90 text-[11px] font-semibold text-slate-800 shrink-0 transition-colors"
+              className="min-h-[36px] px-2.5 py-1 rounded-xl bg-white/90 hover:bg-white border border-slate-200/90 text-[13px] font-semibold text-slate-800 shrink-0 transition-colors"
             >
               Geçmiş ({notifications.length})
             </button>
@@ -183,7 +183,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
                           <div className="min-w-0 flex-1 space-y-0.5">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold">{item.title}</span>
-                              <span className="text-[10px] font-mono opacity-80 shrink-0">
+                              <span className="text-[13px] tabular-nums opacity-80 shrink-0">
                                 Gün {item.day} · {item.gameTime}
                               </span>
                             </div>

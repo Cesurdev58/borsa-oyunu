@@ -45,6 +45,9 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - `src/state/simulationStore.ts` — kayıt/yükleme ve migration.
 - `src/components/game/` — oyun arayüzü. `TycoonGameView.tsx` ana ekran, `BuildingDetailSheet.tsx` bina panelleri,
   `EsnafAndTradePanel.tsx` dükkân yönetimi.
+  `BuildingDetailSheet.tsx` artık yalnızca alt sayfa kabuğu ve yönlendiricidir; her binanın paneli `components/game/buildings/` altında kendi dosyasındadır
+  (`BorsaPanel`, `BankaPanel`, `HaberMerkeziPanel`, `OyuncuOfisiPanel`, `SirketMerkeziPanel`, `FabrikaPanel`, `ArgeMerkeziPanel`, `HoldingMerkeziPanel`).
+  Her panel kendi form durumunu (useState) kendi içinde tutar; ortak tipler `buildings/buildingTypes.ts` içindedir.
 - `src/tests/` — `node:test` ile yazılmış testler.
 
 ## Şehir haritası (en çok karıştırılan kısım)

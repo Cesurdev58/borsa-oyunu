@@ -33,7 +33,7 @@ import {
   BuildingDetailContent,
   BuildingDetailSheet,
 } from './BuildingDetailSheet';
-import { IsometricNeighborhoodView } from './city/IsometricNeighborhoodView';
+import { CityNeighborhoodView } from './city3d/CityNeighborhoodView';
 import { deriveIsometricBuildings } from './city/cityLayout';
 import {
   CityCameraState,
@@ -343,7 +343,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         />
 
         {activeBottomTab === 'city' ? (
-          <IsometricNeighborhoodView
+          <CityNeighborhoodView
             state={state}
             ipoEligibility={ipoEligibility}
             formatCurrency={formatCurrency}

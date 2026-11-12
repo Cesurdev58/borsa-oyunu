@@ -67,16 +67,32 @@ dışından geçer; önce oradaki rotaları da güncelle. Bu yüzden yeni görü
 `src/components/game/CityWorldView.tsx` ve `CityBuilding.tsx` **eski ve kullanılmıyor**; hiçbir yerden çağrılmaz.
 Şehir görünümünü değiştirmek için bunları düzenleme.
 
-## 3D deneme (ana oyuna bağlı değil)
+## 3D şehir ekranı (oyunun şehir sekmesi artık bu)
 
-`3d-deneme.html` ve `src/deneme3d/main.ts`: mahallenin bir köşesini gerçek 3D gösteren bağımsız deneme sahnesi
-(`three` kütüphanesi; fareyle döner ve yakınlaşır; arabalar yolda gider). Oyunun şehir ekranına, kayda, ekonomiye
-ve testlere hiçbir bağı yoktur. Açmak için `npm run dev` ve tarayıcıda `/3d-deneme.html`; adres sonuna
-`?kamera=x,y,z,hedefX,hedefY,hedefZ` eklenirse kamera o yere kurulur.
-Deneme sahnedeki binalar kodla üretilen basit modellerdir; bu, "bina kodla çizilmez" kuralının yalnızca deneme için
-yapılmış bilinçli istisnasıdır. Sahibi beğenip karar vermeden oyuna taşıma ve yeni bina üretme.
+Şehir sekmesi gerçek 3D (`three` kütüphanesi) gösterir; `TycoonGameView.tsx` artık `CityNeighborhoodView` çağırır.
+Klasörü: `src/components/game/city3d/`
 
-## Bina görselleri
+| Dosya | Görevi |
+|---|---|
+| `CityNeighborhoodView.tsx` | Sarmalayıcı: tarayıcı 3D çizemiyorsa ya da oyuncu "Klasik görünüme geç" dediyse eski izometrik görünümü gösterir. Seçim `localStorage` içinde `city_view_mode` anahtarında (`klasik` / `3d`). 3D kütüphanesi yalnızca bu sekme açılınca yüklenir. |
+| `ThreeNeighborhoodView.tsx` | 3D ekranın React kısmı: tıklama, seçim paneli, yakınlaştırma düğmeleri, etiketler. Oyun verisini eski görünümle aynı fonksiyonlardan (`cityLayout.ts`) alır. |
+| `ThreeCityScene.ts` | Sahne: kamera, ışık (sabah/gün/akşam/gece), yollar, araçlar, ağaçlar, tıklama ve üzerine gelme. |
+| `models.ts` | Binaların 3D modelleri (8 ana bina, dükkân türleri, şehir blokları, kilitli/inşaat arsaları). |
+| `kit.ts` | Ortak yapı taşları: malzeme, pencere dokuları, ağaç, araba, lamba. |
+| `webgl.ts` | Tarayıcı 3D destekliyor mu kontrolü. Testler ve sunucu tarafı için hep "hayır" döner, yani testler eski görünümü kullanır. |
+
+Kurallar ve notlar:
+- 3D modeller kodla üretilir (düşük poligonlu). Eski "bina kodla çizilmez / PNG iste" kuralı yalnızca eski izometrik görünüm içindir;
+  PNG bina görselleri (`public/buildings/`, `buildingSprites.ts`) ve zemin/yol notları da sadece eski görünümü etkiler.
+- Harita koordinatları eski görünümle aynıdır (1600×1200 birim → 3D dünyada ×0,1). Yollar ve araç rotaları `ThreeCityScene.ts` içindeki
+  `ROADWAYS`, `ZONES`, `ROUTES` sabitlerinde; yolu oynatırsan rotaları da güncelle.
+- Dükkân türüne göre model: MARKET, KAFE, BUFE, MANAV, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI, OTOMOBIL_GALERISI hepsinin 3D modeli var.
+  Boş dükkân arsası "DÜKKÂN AÇ" çimenlik arsa olarak görünür; boş `urban-ticaret-otel-5` Butik Otel olur.
+- Etiketler kalabalık olmasın diye yakınlaşınca (kamera mesafesi < `LABEL_NEAR`) blok etiketleri görünür; ana binalar, dükkânlar, seçili ve üzerine gelinen her zaman gösterilir.
+- Kilitli binalar çitli inşaat arsası + vinç olarak görünür.
+- Test sayfası `3d-deneme.html` ve `src/deneme3d/` silindi; yerine bu gerçek 3D şehir geldi.
+
+## Bina görselleri (yalnızca eski izometrik görünüm için)
 
 - Görseller `public/buildings/` altında şeffaf arka planlı PNG olarak durur ve `/buildings/ad.png` yolundan yüklenir.
 - Bir bina `buildingSprites.ts` içinde tanımlıysa PNG ile, değilse eski CSS kutu çizimiyle gösterilir.
@@ -103,17 +119,14 @@ yapılmış bilinçli istisnasıdır. Sahibi beğenip karar vermeden oyuna taş�
 
 ## Bilinen eksikler
 
-- Haber Merkezi, Merkez Bankası ve Holding binalarının tabanı hâlâ yola çok yakın ya da biraz üstünde duruyor
-  (yol çizgileri araç rotaları yüzünden oynatılmadı).
-- Görseli beklenen binalar: Haber Merkezi, Oyuncu Ofisi, Şirket Merkezi, Fabrika, Ar-Ge Merkezi, Holding Merkezi;
-  6 dükkân türü; 15 şehir bloğu (ticaret hanı, toptancı, aktarma depo, takas kurumu, denetim kulesi, mamul deposu, lojistik,
-  enerji, veri kampüsü, test laboratuvarı, robotik merkezi, akademi, konut, poliklinik, belediye).
-  Üç boş arsa (iki genişleme parseli ve fabrika genişleme parseli) görsel gerektirmez, çimen olarak kalır.
-- Parseller eski küçük kutu binalara göre ölçülü; PNG binalar komşularına çok yakın duruyor.
-  Özellikle 3. dükkân bloğuna (`urban-ticaret-otel-5`) bir market görseli konunca yandaki panel ve binalarla çakışıyor.
-- Görseli olmayan 6 dükkân türü (büfe, manav, giyim, elektronik, mobilya, galeri) eski kutu çizimiyle duruyor.
-- Kalan 6 ana bina ve dükkân olmayan 19 şehir bloğu hâlâ CSS kutu çizimi kullanıyor.
-- Bir dükkân görseli yüklenemezse o blok, tür değişse bile oturum boyunca eski çizimde kalır (sayfa yenilenince düzelir).
+- 3D şehirde yaya yok; yalnızca araçlar hareket eder. Eski görünümdeki olay/nabız efektleri 3D'de yok.
+- 3D modeller basit ve düşük poligonlu; ana binaların ayrıntısı artırılabilir ya da sahibinin vereceği hazır 3D model dosyalarıyla (.glb) değiştirilebilir.
+- En yakın yakınlaştırmada sağ alttaki hız düğmeleri bazı etiketlerin üstüne gelebilir.
+- Yazı tipi ve simge dosyaları ağ kısıtı olan ortamlarda yüklenemeyebilir (oyunu etkilemez).
+- Eski izometrik görünümde (klasik mod): Haber Merkezi, Merkez Bankası ve Holding tabanı yola yakın; 6 dükkân türü
+  (büfe, manav, giyim, elektronik, mobilya, galeri) ve kalan ana binalar/şehir blokları PNG yerine eski kutu çizimiyle duruyor;
+  bir dükkân görseli yüklenemezse o blok oturum boyunca eski çizimde kalır.
+- Aynı dosyayı AI Studio'da ve burada aynı anda düzenleme; değişiklikler birbirini ezer.
 
 ## Çalışma kuralları
 

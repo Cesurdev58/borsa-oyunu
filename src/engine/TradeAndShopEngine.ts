@@ -455,13 +455,10 @@ export class TradeAndShopEngine {
               : Math.max(0.08, Math.pow(1 / priceRatio, 2.3));
 
           const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
+          // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür; birim sayısı = sepet payı / satış fiyatı.
+          // (Eskiden her müşteri bir "koli" alıyordu; bu yüzden büfe günde ~40.000 TL ciro yapıyordu.)
           const unitsPerCustomer =
-            shop.shopType === 'OTOMOBIL_GALERISI'
-              ? 0.25
-              : shop.shopType === 'MOBILYA_MAGAZASI' ||
-                shop.shopType === 'ELEKTRONIK_MAGAZASI'
-              ? 0.45
-              : 1.1;
+            tpl.avgBasketValueTL / Math.max(1, fairRetailPrice);
 
           const demandedUnits = Math.max(
             1,

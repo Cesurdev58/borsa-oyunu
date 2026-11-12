@@ -335,6 +335,8 @@ export interface ShopTemplate {
   minStaffRequired: number;
   staffDailyWagePerPerson: number;
   baseCustomerCapacity: number;
+  /** Müşteri başına ortalama sepet tutarı (TL, satış fiyatıyla). Günlük ciro ≈ müşteri sayısı × bu değer. */
+  avgBasketValueTL: number;
   baseShelfCapacity: number;
   baseBackroomCapacity: number;
   allowedResourceIds: string[];

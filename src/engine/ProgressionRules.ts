@@ -13,6 +13,7 @@
  *  4. Holding             (bağlı ortaklık varsa; kilit ise %5+ hisse ya da halka açık şirketle açılır)
  */
 
+import { FIRST_SHOP_MIN_NET_WORTH } from '../data/gameBalance';
 import { SimulationStage } from '../models/simulation';
 import type { SimulationState } from '../models/simulation';
 import { CompanyEngine } from './CompanyEngine';
@@ -28,6 +29,8 @@ export const PROGRESSION_RULES = {
   expansionDistrictNetWorth: 5_000_000,
   expansionDistrictStaff: 40,
   expansionDistrictGovernanceScore: 75,
+  /** İlk dükkânı (esnaflığı) açmak için gereken net değer (TL). */
+  firstShopNetWorth: FIRST_SHOP_MIN_NET_WORTH,
   /** Net değer kayıtta yoksa varsayılan. */
   defaultNetWorth: 100_000,
 } as const;

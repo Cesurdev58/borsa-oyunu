@@ -21,6 +21,15 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Tip denetimi: `npm run lint` · Testler: `npm test` · Derleme: `npm run build`
 - Proje Google AI Studio'da başlamıştı; sahibi AI Studio projesini sildi. Bundan sonra tüm geliştirme yalnızca bu depoda yapılır.
 
+## Oyun dengesi (ölçülerek ayarlandı)
+
+- **Ölçüm aracı:** `npm run balans` her dükkân türünün günlük cirosunu, kârını ve kurulum maliyetini kaç günde çıkardığını, ayrıca borsanın 5 farklı sayı üreteciyle 1 yıllık getirisini yazdırır. Dengeyi değiştirirsen önce/sonra çalıştır.
+- **Ek not:** Kişisel dükkânda otomatik mal ikmali yoktur (yalnızca şirket şubelerinde vardır); oyuncu elle sipariş verir. Ölçümde bunu `src/tests/balance/restockBot.ts` yapar.
+- **İlk dükkân kapısı:** Net değer `FIRST_SHOP_MIN_NET_WORTH` (`src/data/gameBalance.ts`, şu an 120.000 TL) olmadan ilk dükkân açılamaz. Amaç borsa aşamasının atlanmamasıdır. Yalnızca bu sayıyı değiştirerek başlangıcı kolaylaştırıp zorlaştırabilirsin.
+- **Dükkân cirosu:** Müşteri başına sepet tutarı `avgBasketValueTL` (`src/data/tradeCatalog.ts`, her dükkân şablonunda). Eskiden her müşteri bir koli (~435 TL) alıyordu, büfe günde ~40.000 TL ciro yapıp kendini ~5 günde çıkarıyordu. Hedef geri dönüş süreleri: büfe 45, manav 60, kafe 80, giyim 100, elektronik 130, mobilya 130, market 120, galeri 180 gün (`scripts/balans-olcumu.ts`).
+- **Haber dengesi:** Her sektörde olumlu ve olumsuz haber şablonlarının toplam etkisi (`baseImpact / decayRate`) eşit olmalı; aksi hâlde borsa tek yönlü yükselir. Yeni haber eklersen `src/tests/balance/balance.test.ts` dengeyi denetler.
+- **Bilinen:** Borsa nominal olarak yılda ortalama +%65–85 (ekonomide enflasyon %28). Büfe/manav ROI'si hâlâ borsadan yüksek; bu bilinçli, ilk dükkân kapısı dengeyi sağlar.
+
 ## Klasörler
 
 - `src/engine/` — oyun mantığı. `SimulationEngine.ts` ana döngü; `TradeAndShopEngine.ts` dükkân/ticaret ön yüzü ve günlük döngü; `MarketEngine.ts` borsa; `CentralLedgerEngine.ts` ve `AccountingEngine.ts` para hareketleri;

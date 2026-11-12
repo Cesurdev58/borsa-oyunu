@@ -29,6 +29,13 @@ import { ValuationEngine } from './ValuationEngine';
 export class MarketEngine {
   public static readonly DT = 1 / 252;
   public static readonly MINIMUM_STOCK_PRICE = 1.0;
+  /**
+   * Haber puanının günlük getiriye çevrilme katsayısı.
+   * Haber puanı (en çok ±0,045) her gün getiri olarak eklenir. Haber şablonları dengeli olmak zorundadır
+   * (bkz. NewsEngine); aksi hâlde bu katsayı borsayı tek yönlü yükseltir.
+   */
+  public static readonly NEWS_RETURN_WEIGHT = 0.65;
+
   public static readonly DAILY_MAX_LOG_RETURN = 0.18; // Günlük tavan/taban marj sınırı (~%20)
   public static readonly COMMISSION_RATE = 0.0015; // %0.15 borsa komisyonu
 
@@ -146,7 +153,7 @@ export class MarketEngine {
       const diffusionTerm = stock.sigma * Math.sqrt(dt) * epsilon;
 
       // 2. Haber Etkisi (şirketin duyarlılığı ile ağırlıklandırılmış)
-      const haberEtkisi = Math.max(-0.035, Math.min(0.035, stock.sentimentScore * 0.65));
+      const haberEtkisi = Math.max(-0.035, Math.min(0.035, stock.sentimentScore * MarketEngine.NEWS_RETURN_WEIGHT));
 
       // 3. Temel Değer Etkisi (Fiyatın şirketin 5-yöntemli adil değerine yakınsama eğilimi)
       const fundamentalPrice = Math.max(1.0, stock.valuation.fairValuePerShare);
@@ -248,7 +255,7 @@ export class MarketEngine {
       const diffusionTerm = stock.sigma * Math.sqrt(dtSub) * epsilon;
 
       const haberEtkisi =
-        Math.max(-0.035, Math.min(0.035, stock.sentimentScore * 0.65)) *
+        Math.max(-0.035, Math.min(0.035, stock.sentimentScore * MarketEngine.NEWS_RETURN_WEIGHT)) *
         cleanFraction;
 
       const fundamentalPrice = Math.max(1.0, stock.valuation.fairValuePerShare);

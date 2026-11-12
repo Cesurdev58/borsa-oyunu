@@ -19,7 +19,7 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Vite + React 19 + TypeScript + Tailwind 4. Sunucu yok; kayıt tarayıcı `localStorage` üzerinde.
 - Kurulum: `npm install --legacy-peer-deps` (düz `npm install` bağımlılık çakışmasıyla hata verir).
 - Tip denetimi: `npm run lint` · Testler: `npm test` · Derleme: `npm run build`
-- Proje Google AI Studio'da başladı. Aynı dosyayı hem AI Studio'da hem burada düzenleme; değişiklikler birbirini ezer.
+- Proje Google AI Studio'da başlamıştı; sahibi AI Studio projesini sildi. Bundan sonra tüm geliştirme yalnızca bu depoda yapılır.
 
 ## Klasörler
 
@@ -126,7 +126,6 @@ Kurallar ve notlar:
 - Eski izometrik görünümde (klasik mod): Haber Merkezi, Merkez Bankası ve Holding tabanı yola yakın; 6 dükkân türü
   (büfe, manav, giyim, elektronik, mobilya, galeri) ve kalan ana binalar/şehir blokları PNG yerine eski kutu çizimiyle duruyor;
   bir dükkân görseli yüklenemezse o blok oturum boyunca eski çizimde kalır.
-- Aynı dosyayı AI Studio'da ve burada aynı anda düzenleme; değişiklikler birbirini ezer.
 
 ## Çalışma kuralları
 

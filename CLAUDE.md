@@ -32,6 +32,12 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
   Asıl işler: `TradeUniverse` (başlangıç durumu, kariyer aşaması), `TradeInventory` (stok partileri), `ShopOperations` (dükkân açma/yükseltme/kasa),
   `TradeProcurement` (tedarik, sipariş, sevkiyat), `TradeProduction` (üretim, araç, ticari sözleşme), `ShopIncorporation` (şirketleşme),
   `TradeAudit` (bütünlük denetimi), `ShopEquity` (dükkân özkaynağı). Katalog verileri `src/data/tradeCatalog.ts` içindedir (kaynaklar, reçeteler, tedarikçiler, dükkân şablonları).
+- **Ana motor parçalandı.** `SimulationEngine.ts` artık ince bir ön yüzdür (durum, saat, kayıt). Ağır işler fonksiyon olarak ayrı dosyalarda ve ilk parametre `engine`:
+  `DayCloseProcessor` (gün kapanışı, çevrimdışı ilerleme), `OrderBookProcessor` (emirler, hisse alım-satım), `StageProcessor` (mali yeniden hesaplama),
+  `PlayerCompanyActions` (şirket kurma, sermaye, yatırım projesi, halka arz, devralma), `SimulationScenarios` (30 günlük simülasyon, stres testi),
+  `SimulationPersistence` (kayıt temizleme/göç). Bu dosyalar `SimulationEngine`'i yalnızca tip olarak içe aktarır (`import type`), bu yüzden döngü oluşmaz.
+- **Aşama kuralları tek yerde:** `engine/ProgressionRules.ts`. Girişimci/halka arz/holding eşikleri ve "hangi aşamadayım" hesabı yalnızca burada yazılır;
+  başka dosyada `2_000_000` gibi eşik yazma, `PROGRESSION_RULES` sabitini kullan. Testleri `src/tests/progression/`.
 - **Bağımlılık döngüsü yok** (89+ dosyada denetlendi). Yeni bir motor eklerken alt modüller ön yüzü (`TradeAndShopEngine`) içe aktarmasın; aşağıdan yukarıya doğru bağımlılık kur.
 - `src/models/` — veri tipleri. Dükkân türleri `models/trade.ts` içinde `ShopType`
   (BUFE, MANAV, KAFE, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI, MARKET, OTOMOBIL_GALERISI).

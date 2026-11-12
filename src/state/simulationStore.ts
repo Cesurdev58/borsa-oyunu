@@ -15,6 +15,7 @@ import { CentralLedgerEngine } from '../engine/CentralLedgerEngine';
 import { CompanyEngine } from '../engine/CompanyEngine';
 import { EconomyEngine } from '../engine/EconomyEngine';
 import { GameClockEngine } from '../engine/GameClockEngine';
+import { ProgressionRules } from '../engine/ProgressionRules';
 import { SimulationEngine, SimulationState } from '../engine/SimulationEngine';
 import { TradeAndShopEngine } from '../engine/TradeAndShopEngine';
 
@@ -118,8 +119,8 @@ export class SimulationStore {
     const pc = st.playerCompany ?? null;
     const hasCompany = Boolean(pc);
     const netWorth = typeof st.netWorth === 'number' ? st.netWorth : 100_000;
-    const isStage2 = Boolean(st.stageUnlocks?.stage2Entrepreneur || hasCompany || netWorth >= 2_000_000);
-    const isStage4 = Boolean(st.stageUnlocks?.stage4Holding || (st.stage ?? 1) >= 4);
+    const isStage2 = ProgressionRules.hasEntrepreneurAccess(st);
+    const isStage4 = ProgressionRules.isHoldingStage(st);
 
     const unlockedDistricts = new Set<string>([
       'FINANS_BOLGESI',
@@ -130,12 +131,7 @@ export class SimulationStore {
       unlockedDistricts.add('SANAYI_BOLGESI');
       unlockedDistricts.add('TEKNOLOJI_BOLGESI');
     }
-    if (
-      isStage4 ||
-      netWorth >= 5_000_000 ||
-      (pc && pc.staffCount >= 40) ||
-      (pc && (pc.corporateGovernanceScore ?? 50) >= 75)
-    ) {
+    if (ProgressionRules.qualifiesForExpansionDistricts(st)) {
       unlockedDistricts.add('KILITLI_GENISLEME_ALANLARI');
     }
     if (existing?.unlockedDistricts) {

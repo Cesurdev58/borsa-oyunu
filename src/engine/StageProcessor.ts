@@ -7,9 +7,6 @@
  */
 
 import {
-  SimulationStage,
-} from '../models/simulation';
-import {
   AccountingEngine,
 } from './AccountingEngine';
 import {
@@ -22,14 +19,12 @@ import {
   CompanyEngine,
 } from './CompanyEngine';
 import {
-  IPOEngine,
-} from './IPOEngine';
-import {
   MarketEngine,
 } from './MarketEngine';
 import {
   TradeAndShopEngine,
 } from './TradeAndShopEngine';
+import { ProgressionRules } from './ProgressionRules';
 import type {
   SimulationEngine,
 } from './SimulationEngine';
@@ -118,54 +113,8 @@ export function recalculateFinancialsAndStages(engine: SimulationEngine): void {
         engine.state.netWorth;
     }
 
-    const incorpCheck = TradeAndShopEngine.checkIncorporationEligibility(
-      engine.state
-    );
-    if (
-      engine.state.netWorth >= CompanyEngine.STAGE_2_NET_WORTH_THRESHOLD ||
-      engine.state.playerCompany !== null ||
-      incorpCheck.eligible
-    ) {
-      engine.state.stageUnlocks.stage2Entrepreneur = true;
-    }
-
-    TradeAndShopEngine.ensureTradeUniverseState(engine.state);
-
-    const ipoCheck = IPOEngine.checkEligibility(engine.state.playerCompany);
-    if (
-      ipoCheck.eligible ||
-      (engine.state.playerCompany && engine.state.playerCompany.isPubliclyListed)
-    ) {
-      engine.state.stageUnlocks.stage3Ipo = true;
-    }
-
-    const hasSignificantStakeOrControl =
-      engine.state.controlledSubsidiaries.length > 0 ||
-      engine.state.stocks.some(
-        (s) => !s.isPlayerCompany && s.playerOwnershipPct >= 5.0
-      ) ||
-      (engine.state.playerCompany !== null &&
-        engine.state.playerCompany.isPubliclyListed);
-
-    if (hasSignificantStakeOrControl) {
-      engine.state.stageUnlocks.stage4Holding = true;
-    }
-
-    if (engine.state.controlledSubsidiaries.length > 0) {
-      engine.state.stage = SimulationStage.STAGE_4_HOLDING_MONOPOLY;
-    } else if (
-      engine.state.playerCompany &&
-      engine.state.playerCompany.isPubliclyListed
-    ) {
-      engine.state.stage = SimulationStage.STAGE_3_IPO_PUBLIC;
-    } else if (
-      engine.state.stageUnlocks.stage2Entrepreneur ||
-      engine.state.playerCompany !== null
-    ) {
-      engine.state.stage = SimulationStage.STAGE_2_ENTREPRENEUR;
-    } else {
-      engine.state.stage = SimulationStage.STAGE_1_RETAIL_INVESTOR;
-    }
+    // Aşama kilitleri ve güncel aşama tek kural dosyasından gelir.
+    ProgressionRules.applyUnlocksAndStage(engine.state);
 
     BankLoanEngine.syncCollateralPool(engine.state);
     const reservedCashNow = engine.getReservedCash();

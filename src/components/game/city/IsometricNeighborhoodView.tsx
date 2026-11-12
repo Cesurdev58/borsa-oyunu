@@ -58,6 +58,8 @@ interface IsometricNeighborhoodViewProps {
   onTickDay: () => void;
   nextEventLabelTR: string;
   nextEventFormattedRemaining: string;
+  /** Şehirdeki dükkân kartından "Rafları doldur" için (isteğe bağlı). */
+  onRestockShop?: (shopId: string) => void;
 }
 
 /**

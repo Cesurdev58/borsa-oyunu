@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -275,6 +276,30 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       state.lastOfflineSummary.gameMinutesAdvanced > 0
   );
 
+  const handleRestockShop = useCallback(
+    (shopId: string) => {
+      const shop = state.tradeState?.shops.find((sh) => sh.shopId === shopId);
+      if (!shop || !sharedActions.onPlaceProcurementOrder) return;
+      const plan = planShopRestock(
+        state,
+        shopId,
+        state.cash + shop.cashAccountBalance
+      );
+      for (const o of plan.orders) {
+        sharedActions.onPlaceProcurementOrder({
+          supplierId: o.supplierId,
+          resourceId: o.resourceId,
+          quantity: o.quantity,
+          destinationType: 'SHOP',
+          destinationId: shopId,
+          paymentTermType: 'CASH',
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state]
+  );
+
   const sharedActions: BuildingDetailActions = {
     selectedTicker,
     onSelectTicker,
@@ -374,6 +399,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             onTickDay={onTickDay}
             nextEventLabelTR={nextEvent.eventLabelTR}
             nextEventFormattedRemaining={nextEvent.formattedRemaining}
+            onRestockShop={handleRestockShop}
           />
         ) : (
           <section

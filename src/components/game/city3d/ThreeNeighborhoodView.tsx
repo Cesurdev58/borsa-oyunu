@@ -13,7 +13,11 @@ import {
 } from '../city/cityLayout';
 import { CityUrbanBlockNode, CityZoomPreset } from '../city/cityVisualTypes';
 import { IsometricNeighborhoodView } from '../city/IsometricNeighborhoodView';
-import { IsometricSelectionOverlay } from '../city/IsometricSelectionOverlay';
+import {
+  IsometricSelectionOverlay,
+  type SelectedShopInfo,
+} from '../city/IsometricSelectionOverlay';
+import { planShopRestock } from '../../../engine/ShopRestockPlanner';
 import { ThreeCityScene } from './ThreeCityScene';
 
 export type CityViewProps = React.ComponentProps<typeof IsometricNeighborhoodView>;
@@ -47,6 +51,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
     nextEventLabelTR,
     nextEventFormattedRemaining,
     onSwitchClassic,
+    onRestockShop,
   }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const sceneRef = useRef<ThreeCityScene | null>(null);
@@ -102,6 +107,32 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
       [urbanBlocks, selectedUrbanBlockId]
     );
 
+    const selectedShopInfo = useMemo<SelectedShopInfo | null>(() => {
+      const shopId = selectedUrbanBlock?.activeShopId;
+      const shop = shopId
+        ? state.tradeState?.shops.find((sh) => sh.shopId === shopId)
+        : undefined;
+      if (!shop) return null;
+      const used = shop.inventoryBatches.reduce((sum, b) => sum + b.quantity, 0);
+      const plan = planShopRestock(
+        state,
+        shop.shopId,
+        state.cash + shop.cashAccountBalance
+      );
+      return {
+        shopId: shop.shopId,
+        sales: shop.todaySalesRevenue,
+        profit: shop.todayNetProfit,
+        fillPct: Math.min(
+          100,
+          Math.round((used / Math.max(1, shop.shelfCapacity)) * 100)
+        ),
+        restockCost: plan.totalCost,
+        canRestock: plan.orders.length > 0,
+      };
+    }, [state, selectedUrbanBlock]);
+
+
     const hasPlayerCompany = Boolean(state.playerCompany);
     const isProducing = Boolean(state.playerCompany && state.playerCompany.dailyUnitsProduced > 0);
     const inventoryUnits =
@@ -129,6 +160,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
         if (
           block.isUnlocked &&
           block.statusClassification === 'ACTIVE' &&
+          !block.activeShopId &&
           (block.districtId === 'TICARET_BOLGESI' || block.districtId === 'SANAYI_BOLGESI')
         ) {
           onOpenBuildingDetailSheet(block.linkedBuildingId, block.linkedCompanySubTab);
@@ -239,6 +271,9 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
         <IsometricSelectionOverlay
           selectedBuilding={highlightedBuilding}
           selectedUrbanBlock={selectedUrbanBlock}
+          shopInfo={selectedShopInfo}
+          onRestockShop={onRestockShop}
+          formatCurrency={formatCurrency}
           onOpenDetailSheet={onOpenBuildingDetailSheet}
           onClearSelection={handleClearSelection}
         />

@@ -1,3 +1,4 @@
+import { NumberInput } from './game/ui/NumberInput';
 import React, { useState } from 'react';
 import {
   PlayerCompany,
@@ -238,9 +239,9 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   >
                     İlk Personel
                   </label>
-                  <input
+                  <NumberInput
                     id="founder-staff"
-                    type="number"
+                    
                     min={5}
                     max={150}
                     value={initialStaff}
@@ -255,9 +256,9 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   >
                     Üretim Kapasitesi
                   </label>
-                  <input
+                  <NumberInput
                     id="founder-capacity"
-                    type="number"
+                    
                     min={10}
                     max={200}
                     value={initialCapacity}
@@ -272,9 +273,9 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   >
                     Ar-Ge (TL/Gün)
                   </label>
-                  <input
+                  <NumberInput
                     id="founder-rd"
-                    type="number"
+                    
                     min={0}
                     step={5000}
                     value={initialRd}
@@ -512,8 +513,8 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
+              <NumberInput
+                
                 aria-label="Aktarılacak Sermaye Tutarı"
                 min={10_000}
                 step={50_000}

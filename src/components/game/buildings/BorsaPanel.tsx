@@ -5,6 +5,7 @@
  * BORSA bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
+import { NumberInput } from '../ui/NumberInput';
 import React, {
   useEffect,
   useState,
@@ -184,7 +185,17 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             −
           </button>
           <div className="text-center">
-            <div className="text-2xl font-extrabold tabular-nums text-slate-900">{lotAmount}</div>
+            <NumberInput
+              data-testid="tycoon-lot-quick-input"
+              aria-label="Kaç lot?"
+              min={1}
+              step={1}
+              value={lotAmount}
+              onChange={(e) =>
+                setLotAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
+              }
+              className="w-28 text-center text-2xl font-extrabold tabular-nums text-slate-900 bg-white rounded-xl border border-slate-200 min-h-[44px]"
+            />
             <div className="text-[13px] text-slate-500">
               lot · yaklaşık {formatCurrency(lotAmount * selectedStock.askPrice)}
             </div>
@@ -199,23 +210,33 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           </button>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {[10, 50, 100].map((n) => (
             <button
               key={n}
               type="button"
               onClick={() => setLotAmount(n)}
-              className="flex-1 min-h-[36px] rounded-xl bg-slate-100 text-slate-700 text-xs font-bold active:scale-95"
+              className="flex-1 min-h-[44px] rounded-xl bg-slate-100 text-slate-700 text-sm font-bold active:scale-95"
             >
               {n}
             </button>
           ))}
           <button
             type="button"
+            data-testid="tycoon-lot-max-buy-btn"
             onClick={() => setLotAmount(Math.max(1, maxAffordableLots))}
-            className="flex-1 min-h-[36px] rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold active:scale-95"
+            className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-emerald-100 text-emerald-800 text-sm font-extrabold active:scale-95"
           >
-            Hepsi
+            💵 Hepsini al
+          </button>
+          <button
+            type="button"
+            data-testid="tycoon-lot-max-sell-btn"
+            disabled={availableSharesToSell <= 0}
+            onClick={() => setLotAmount(Math.max(1, availableSharesToSell))}
+            className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-rose-100 text-rose-800 disabled:bg-slate-100 disabled:text-slate-400 text-sm font-extrabold active:scale-95"
+          >
+            💰 Hepsini sat
           </button>
         </div>
 
@@ -401,10 +422,10 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             >
               Miktar (Lot) · Maks: {maxAffordableLots}
             </label>
-            <input
+            <NumberInput
               id="tycoon-lot-input"
               data-testid="tycoon-lot-input"
-              type="number"
+              
               min={1}
               step={1}
               value={lotAmount}
@@ -444,10 +465,10 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               >
                 Limit Fiyatı (TL)
               </label>
-              <input
+              <NumberInput
                 id="tycoon-limit-price-input"
                 data-testid="tycoon-limit-price-input"
-                type="number"
+                
                 min={0.1}
                 step={0.1}
                 value={limitPriceInput}

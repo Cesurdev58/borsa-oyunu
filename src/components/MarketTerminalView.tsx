@@ -1,3 +1,4 @@
+import { NumberInput } from './game/ui/NumberInput';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   MarketStock,
@@ -465,9 +466,9 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                 </span>
               </div>
 
-              <input
+              <NumberInput
                 id="order-lots-input"
-                type="number"
+                
                 min={1}
                 max={activeStock.totalShares}
                 value={orderLots}
@@ -539,10 +540,10 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                     >
                       Limit Fiyatı (TL):
                     </label>
-                    <input
+                    <NumberInput
                       id="limit-price-input"
                       aria-label="Limit Fiyatı (TL)"
-                      type="number"
+                      
                       step="0.1"
                       min="1"
                       value={limitPriceInput}

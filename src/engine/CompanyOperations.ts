@@ -21,6 +21,7 @@ import {
 import {
   CompanyInvestmentProjects,
 } from './CompanyInvestmentProjects';
+import { CompanyWallet } from './CompanyWallet';
 
 export class CompanyOperations {
   /**
@@ -67,9 +68,7 @@ export class CompanyOperations {
         company.financials.inventoryUnits * company.financials.unitProductionCost
       ).toFixed(2)
     );
-    company.financials.cash = Number(
-      (company.financials.cash + cashProceeds).toFixed(2)
-    );
+    CompanyWallet.earn(company, cashProceeds);
     company.capitalCash = company.financials.cash;
     company.financials.totalAssets = Number(
       (
@@ -132,7 +131,7 @@ export class CompanyOperations {
     // Kurumsal Kredi Kullanımı (Eski çağrılarla geriye uyumluluk)
     if (typeof params.borrowLoanAmount === 'number' && params.borrowLoanAmount > 0) {
       const loan = Number(params.borrowLoanAmount.toFixed(2));
-      company.financials.cash = Number((company.financials.cash + loan).toFixed(2));
+      CompanyWallet.earn(company, loan);
       company.capitalCash = company.financials.cash;
       company.financials.longTermDebt = Number(
         (company.financials.longTermDebt + loan).toFixed(2)
@@ -183,9 +182,7 @@ export class CompanyOperations {
               capitalSpent: 0,
             };
           }
-          company.financials.cash = Number(
-            (company.financials.cash - capexCost).toFixed(2)
-          );
+          CompanyWallet.spend(company, capexCost);
           company.financials.fixedAssets = Number(
             (company.financials.fixedAssets + capexCost).toFixed(2)
           );
@@ -251,9 +248,7 @@ export class CompanyOperations {
             capitalSpent: 0,
           };
         }
-        company.financials.cash = Number(
-          (company.financials.cash - onboardingFee).toFixed(2)
-        );
+        CompanyWallet.spend(company, onboardingFee);
         company.financials.totalAssets = Number(
           (company.financials.totalAssets - onboardingFee).toFixed(2)
         );

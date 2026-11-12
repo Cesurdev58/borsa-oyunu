@@ -43,3 +43,18 @@ test('Tek cüzdan kuralı: oyuncu nakdi (state.cash) yalnızca WalletEngine içi
   }
   assert.deepEqual(offenders, [], `Doğrudan nakit yazımı bulundu: ${offenders.join(', ')}`);
 });
+
+test('Şirket kasası kuralı: bir şirketin nakdi (x.financials.cash) yalnızca CompanyWallet içinde yazılır', () => {
+  const offenders: string[] = [];
+  // Yeni kurulan şirketin ilk bilanço taslağındaki yerel `financials.cash` atamaları kapsam dışıdır.
+  const writeRe = /[\w\])]\.financials\.cash\s*(?:=(?!=)|\+=|-=)/;
+  for (const file of walk('src')) {
+    if (file.endsWith('CompanyWallet.ts')) continue;
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .forEach((line, i) => {
+        if (writeRe.test(line)) offenders.push(`${file}:${i + 1}`);
+      });
+  }
+  assert.deepEqual(offenders, [], `Doğrudan şirket nakdi yazımı bulundu: ${offenders.join(', ')}`);
+});

@@ -28,6 +28,7 @@ import {
 import {
   TradeUniverse,
 } from './TradeUniverse';
+import { CompanyWallet } from './CompanyWallet';
 
 export class ShopOperations {
   /**
@@ -84,9 +85,7 @@ export class ShopOperations {
         };
       }
       // Şirket şubesi açılışı: Nakit azalır, sabit kıymet (fixedAssets) setupCost kadar artar, şube kasası initialWorkingCash tutar
-      pc.financials.cash = Number(
-        (pc.financials.cash - setupCost).toFixed(2)
-      );
+      CompanyWallet.spend(pc, setupCost);
       pc.capitalCash = pc.financials.cash;
       pc.financials.fixedAssets = Number(
         (pc.financials.fixedAssets + setupCost).toFixed(2)
@@ -261,7 +260,7 @@ export class ShopOperations {
           costPaid: 0,
         };
       }
-      pc.financials.cash = Number((pc.financials.cash - upgradeCost).toFixed(2));
+      CompanyWallet.spend(pc, upgradeCost);
       pc.capitalCash = pc.financials.cash;
       pc.financials.fixedAssets = Number(
         (pc.financials.fixedAssets + upgradeCost).toFixed(2)

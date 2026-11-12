@@ -25,6 +25,7 @@ import {
 } from '../models/finance';
 import { SimulationState } from '../models/simulation';
 import { WalletEngine } from './WalletEngine';
+import { CompanyWallet } from './CompanyWallet';
 
 export const ACCOUNT_IDS = {
   PLAYER_PERSONAL: 'ACC-PLAYER-PERSONAL',
@@ -886,7 +887,7 @@ export class CentralLedgerEngine {
         );
 
         if (Math.abs(cashDeltaForCompany) >= 0.01) {
-          pc.financials.cash = newCompanyCash;
+          CompanyWallet.assign(pc, newCompanyCash);
           pc.capitalCash = newCompanyCash;
           pc.financials.totalAssets = Number(
             (

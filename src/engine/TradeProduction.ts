@@ -32,6 +32,7 @@ import {
 import {
   TradeUniverse,
 } from './TradeUniverse';
+import { CompanyWallet } from './CompanyWallet';
 
 export class TradeProduction {
   /**
@@ -181,7 +182,7 @@ export class TradeProduction {
     if (state.playerCompany) {
       const pc = state.playerCompany;
       const cashPaid = Math.min(pc.financials.cash, operatingCashCost);
-      pc.financials.cash = Number((pc.financials.cash - cashPaid).toFixed(2));
+      CompanyWallet.spend(pc, cashPaid);
       pc.capitalCash = pc.financials.cash;
       pc.financials.inventory = Number(
         (pc.financials.inventory + cashPaid).toFixed(2)
@@ -297,9 +298,7 @@ export class TradeProduction {
           vehicle: null,
         };
       }
-      pc.financials.cash = Number(
-        (pc.financials.cash - spec.purchaseCost).toFixed(2)
-      );
+      CompanyWallet.spend(pc, spec.purchaseCost);
       pc.capitalCash = pc.financials.cash;
       pc.financials.fixedAssets = Number(
         (pc.financials.fixedAssets + spec.purchaseCost).toFixed(2)
@@ -631,9 +630,7 @@ export class TradeProduction {
         pc.financials.inventory = Number(
           Math.max(0, pc.financials.inventory - consumed.totalCostBasis).toFixed(2)
         );
-        pc.financials.cash = Number(
-          (pc.financials.cash + grossRevenue).toFixed(2)
-        );
+        CompanyWallet.earn(pc, grossRevenue);
         pc.capitalCash = pc.financials.cash;
         pc.financials.totalAssets = Number(
           (

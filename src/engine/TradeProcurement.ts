@@ -32,6 +32,7 @@ import {
 import {
   TradeUniverse,
 } from './TradeUniverse';
+import { CompanyWallet } from './CompanyWallet';
 
 export class TradeProcurement {
   /**
@@ -314,7 +315,7 @@ export class TradeProcurement {
           };
         }
         // Şirket nakdi azalır, yoldaki stok varlığı (inventory) aynı tutarda artar -> bilanço denkliği korunur!
-        pc.financials.cash = Number((pc.financials.cash - totalCost).toFixed(2));
+        CompanyWallet.spend(pc, totalCost);
         pc.capitalCash = pc.financials.cash;
         pc.financials.inventory = Number(
           (pc.financials.inventory + totalCost).toFixed(2)
@@ -555,9 +556,7 @@ export class TradeProcurement {
       refundedAmount = order.paidAmount;
       if (useCompanyAccount && state.playerCompany) {
         const pc = state.playerCompany;
-        pc.financials.cash = Number(
-          (pc.financials.cash + refundedAmount).toFixed(2)
-        );
+        CompanyWallet.earn(pc, refundedAmount);
         pc.capitalCash = pc.financials.cash;
         pc.financials.inventory = Number(
           Math.max(0, pc.financials.inventory - refundedAmount).toFixed(2)

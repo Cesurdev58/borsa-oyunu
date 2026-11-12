@@ -64,6 +64,7 @@ export {
   VEHICLE_CATALOG,
   DEFAULT_ROUTES,
 } from '../data/tradeCatalog';
+import { CompanyWallet } from './CompanyWallet';
 
 /**
  * Ticaret motoru ön yüzü (facade).
@@ -557,9 +558,9 @@ export class TradeAndShopEngine {
         pc.financials.inventory = Number(
           Math.max(0, pc.financials.inventory - inventoryReductionTotal).toFixed(2)
         );
-        pc.financials.cash = Number(
+        CompanyWallet.assign(pc, Number(
           Math.max(0, pc.financials.cash + netCashFlowToday).toFixed(2)
-        );
+        ));
         pc.capitalCash = pc.financials.cash;
         pc.financials.totalAssets = Number(
           (
@@ -683,9 +684,7 @@ export class TradeAndShopEngine {
           pc.financials.receivables = Number(
             Math.max(0, pc.financials.receivables - collected).toFixed(2)
           );
-          pc.financials.cash = Number(
-            (pc.financials.cash + collected).toFixed(2)
-          );
+          CompanyWallet.earn(pc, collected);
           pc.capitalCash = pc.financials.cash;
           pc.financials.totalAssets = Number(
             (
@@ -715,9 +714,7 @@ export class TradeAndShopEngine {
         if (state.playerCompany) {
           const pc = state.playerCompany;
           if (pc.financials.cash >= toPay) {
-            pc.financials.cash = Number(
-              (pc.financials.cash - toPay).toFixed(2)
-            );
+            CompanyWallet.spend(pc, toPay);
             pc.capitalCash = pc.financials.cash;
             pc.supplierPayableBalance = Number(
               Math.max(0, (pc.supplierPayableBalance ?? 0) - toPay).toFixed(2)
@@ -787,9 +784,7 @@ export class TradeAndShopEngine {
         if (state.playerCompany) {
           const pc = state.playerCompany;
           const paidPenalty = Math.min(pc.financials.cash, penalty);
-          pc.financials.cash = Number(
-            (pc.financials.cash - paidPenalty).toFixed(2)
-          );
+          CompanyWallet.spend(pc, paidPenalty);
           pc.capitalCash = pc.financials.cash;
           pc.financials.totalAssets = Number(
             (

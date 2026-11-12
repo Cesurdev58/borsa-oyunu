@@ -50,6 +50,7 @@ import {
 import type {
   SimulationEngine,
 } from './SimulationEngine';
+import { CompanyWallet } from './CompanyWallet';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
     if (
@@ -430,9 +431,7 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
             playerPayout > 0 &&
             stock.financials.cash >= totalCompanyDividend
           ) {
-            stock.financials.cash = Number(
-              (stock.financials.cash - totalCompanyDividend).toFixed(2)
-            );
+            CompanyWallet.spend(stock, totalCompanyDividend);
             stock.financials.totalAssets = Number(
               (stock.financials.totalAssets - totalCompanyDividend).toFixed(2)
             );
@@ -503,9 +502,7 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
           ).toFixed(2)
         );
         if (synergyPayout > 0 && stock.financials.cash > synergyPayout * 3) {
-          stock.financials.cash = Number(
-            (stock.financials.cash - synergyPayout).toFixed(2)
-          );
+          CompanyWallet.spend(stock, synergyPayout);
           stock.financials.totalAssets = Number(
             (stock.financials.totalAssets - synergyPayout).toFixed(2)
           );

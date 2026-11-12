@@ -27,6 +27,7 @@ import {
 import {
   CompanyCapacity,
 } from './CompanyCapacity';
+import { CompanyWallet } from './CompanyWallet';
 
 export class CompanyFounding {
   public static readonly STAGE_2_NET_WORTH_THRESHOLD = 2_000_000;
@@ -456,7 +457,7 @@ export class CompanyFounding {
 
     const newPlayerCash = Number((playerCash - cleanAmount).toFixed(2));
     company.capitalCash = Number((company.capitalCash + cleanAmount).toFixed(2));
-    company.financials.cash = Number((company.financials.cash + cleanAmount).toFixed(2));
+    CompanyWallet.earn(company, cleanAmount);
     company.financials.totalAssets = Number(
       (company.financials.totalAssets + cleanAmount).toFixed(2)
     );

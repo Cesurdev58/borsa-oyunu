@@ -19,6 +19,7 @@ import {
 import {
   INVESTMENT_PACKAGE_CATALOG,
 } from '../data/companyCatalog';
+import { CompanyWallet } from './CompanyWallet';
 
 export class CompanyInvestmentProjects {
   /**
@@ -181,9 +182,7 @@ export class CompanyInvestmentProjects {
     }
 
     // Nakit azalır, Yapılmakta Olan Yatırımlar (Fixed Assets) aynı tutarda artar -> Bilanço denkliği korunur!
-    company.financials.cash = Number(
-      (company.financials.cash - quote.totalCost).toFixed(2)
-    );
+    CompanyWallet.spend(company, quote.totalCost);
     company.financials.fixedAssets = Number(
       (company.financials.fixedAssets + quote.totalCost).toFixed(2)
     );
@@ -270,9 +269,7 @@ export class CompanyInvestmentProjects {
     company.financials.fixedAssets = Number(
       Math.max(25_000, company.financials.fixedAssets - project.paidAmount).toFixed(2)
     );
-    company.financials.cash = Number(
-      (company.financials.cash + refundedAmount).toFixed(2)
-    );
+    CompanyWallet.earn(company, refundedAmount);
     company.capitalCash = company.financials.cash;
     company.financials.totalAssets = Number(
       (

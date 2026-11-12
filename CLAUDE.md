@@ -42,6 +42,7 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Üst çubuk** (`GameTopBar.tsx`): yalnızca gün/saat, büyük para kutusu, aşama yıldızı, zil, ayar. Net varlık, aşama ve borsa durumu para kutusuna dokununca açılan kartta.
 - **Yazı boyutu:** en küçük yazı 13 punto (`index.css` içinde `--text-xs` ve `src/components/game` altında `text-[13px]`). Rakamlar daktilo (mono) yazısıyla çizilmez; `font-mono` yalnızca kod/teknik yerlerde kalır.
 - **Dükkân ekranı** (`buildings/OyuncuOfisiPanel.tsx` + `buildings/ShopDashboard.tsx`): her dükkân için bir kart (satış, kâr, raf doluluğu, "Rafları doldur", "Yönet"). "Yönet" eski ayrıntılı paneli (`EsnafAndTradePanel`) açar; varlık/aşama/portföy/işlem geçmişi "Varlıklarım" düğmesinin arkasındadır (DOM'da gizli durur, testler okur).
+- **Şirket sekmesi** (`TycoonGameView.tsx` + `buildings/SirketMerkeziPanel.tsx`): mor degrade başlık kartı, iki satırlı emojili alt sekmeler (Özet/Üretim/Ekip/Para/Gelişim; kimlikler `company-subtab-*` aynı). Fabrika ve Ar-Ge panelleri `company-factory-toggle` düğmesinin arkasındadır (DOM'da gizli durur).
 - Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkân (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
 
 ## Klasörler

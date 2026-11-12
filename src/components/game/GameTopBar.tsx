@@ -118,7 +118,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
             onClick={() => setInfoOpen((v) => !v)}
             aria-label={cashMeta.ariaLabel}
             aria-expanded={infoOpen}
-            className={`flex-1 min-w-0 max-w-[190px] min-h-[48px] px-3 rounded-2xl text-center shadow-md transition-all duration-200 cursor-pointer active:scale-95 ${
+            className={`flex-1 min-w-0 max-w-[190px] min-h-[48px] px-2 rounded-2xl text-center shadow-md transition-all duration-200 cursor-pointer active:scale-95 ${
               cashDeltaDirection === 'up'
                 ? 'bg-emerald-100 motion-safe:scale-[1.03]'
                 : cashDeltaDirection === 'down'
@@ -130,7 +130,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="tycoon-top-cash"
               data-full-value={cashMeta.full}
               data-abbreviated-value={cashMeta.abbreviated}
-              className="text-lg font-extrabold tabular-nums text-slate-900 whitespace-nowrap leading-tight"
+              className="text-base font-extrabold tabular-nums text-slate-900 whitespace-nowrap leading-tight truncate"
             >
               💰 {cashMeta.abbreviated}
             </div>
@@ -156,10 +156,10 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
           )}
 
           {/* Sağ: seviye, bildirim, ayarlar */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <span
               data-testid="tycoon-top-stage"
-              className="min-w-[44px] min-h-[44px] rounded-2xl bg-amber-300 text-amber-950 font-extrabold text-sm flex flex-col items-center justify-center leading-none shadow"
+              className="min-w-[40px] min-h-[44px] rounded-2xl bg-amber-300 text-amber-950 font-extrabold text-sm flex flex-col items-center justify-center leading-none shadow"
               title={`Aşama ${stage}`}
             >
               <Star className="w-4 h-4 fill-amber-600 text-amber-700" aria-hidden="true" />
@@ -170,7 +170,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="top-notifications-btn"
               onClick={onOpenNotifications}
               aria-label={`Bildirimler (${unreadNotificationsCount} yeni)`}
-              className="relative min-w-[44px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
+              className="relative min-w-[40px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
             >
               <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
@@ -189,7 +189,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="top-settings-btn"
               onClick={onOpenSettings}
               aria-label="Oyun Ayarları ve Geliştirici Araçları"
-              className="min-w-[44px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
+              className="min-w-[40px] min-h-[44px] rounded-2xl bg-white/90 hover:bg-white text-slate-700 flex items-center justify-center shadow"
             >
               <Settings className="w-5 h-5" />
             </button>

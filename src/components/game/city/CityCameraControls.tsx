@@ -14,7 +14,6 @@ import {
   Pause,
   Play,
   Sunrise,
-  Timer,
   X,
   ZoomIn,
   ZoomOut,
@@ -85,13 +84,23 @@ export const CityCameraControls: React.FC<CityCameraControlsProps> = React.memo(
           aria-expanded={isTimePanelOpen}
           aria-label={`${nextEventLabelTR} ${nextEventFormattedRemaining} — Detaylı zaman panelini aç`}
           onClick={() => setIsTimePanelOpen((prev) => !prev)}
-          className="absolute top-2.5 left-2.5 z-20 min-h-[32px] px-2 py-1 rounded-full bg-white/95 hover:bg-white border border-slate-200/90 shadow-xs flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-700 pointer-events-auto max-w-[165px] sm:max-w-none transition-colors"
+          className="absolute top-2.5 left-2.5 z-20 min-h-[40px] px-3 py-1 rounded-full bg-white/95 hover:bg-white border border-slate-200/90 shadow-xs flex items-center gap-1.5 text-[13px] text-slate-700 pointer-events-auto transition-colors"
         >
-          <Timer className="w-3 h-3 text-sky-600 shrink-0" />
-          <span className="truncate font-medium max-w-[74px] sm:max-w-none">
-            {nextEventLabelTR}
+          <span className="font-semibold whitespace-nowrap">
+            {nextEventLabelTR.includes('Açılış')
+              ? '🔔'
+              : nextEventLabelTR.includes('Piyasa Kapanış')
+              ? '🌙'
+              : '🌅'}
+            <span className="hidden min-[420px]:inline">
+              {nextEventLabelTR.includes('Açılış')
+                ? ' Borsa açılışına'
+                : nextEventLabelTR.includes('Piyasa Kapanış')
+                ? ' Borsa kapanışına'
+                : ' Gün sonuna'}
+            </span>
           </span>
-          <strong className="font-mono text-slate-900 tabular-nums whitespace-nowrap">
+          <strong className="text-slate-900 tabular-nums whitespace-nowrap">
             {nextEventFormattedRemaining}
           </strong>
           {isTimePanelOpen ? (
@@ -196,7 +205,7 @@ export const CityCameraControls: React.FC<CityCameraControlsProps> = React.memo(
 
           <span
             data-testid="camera-zoom-label"
-            className="px-1 text-[10px] font-mono font-bold text-slate-700"
+            className="hidden min-[420px]:inline px-1 text-[13px] font-bold text-slate-700"
           >
             {zoomLabelTR}
           </span>

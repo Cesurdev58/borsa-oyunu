@@ -45,6 +45,7 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Şirket sekmesi** (`TycoonGameView.tsx` + `buildings/SirketMerkeziPanel.tsx`): mor degrade başlık kartı, iki satırlı emojili alt sekmeler (Özet/Üretim/Ekip/Para/Gelişim; kimlikler `company-subtab-*` aynı). Fabrika ve Ar-Ge panelleri `company-factory-toggle` düğmesinin arkasındadır (DOM'da gizli durur).
 - **İlk oyun rehberi** (`FirstRunGuide.tsx`): yalnızca 1. günde, bir kez gösterilen 4 adımlı açılış kartı; bitince `localStorage` anahtarı `first_run_guide_done_v1` işaretlenir (sunucu tarafında/testlerde hiç gösterilmez). **Kutlama** (`CelebrationOverlay.tsx`): dükkân sayısı ya da aşama artınca konfeti + kart (yalnızca görsel).
 - Dükkân açılınca Dükkân ekranı otomatik dükkân kartlarına döner.
+- **Şehirde dükkân kartı:** 3D şehirde dolu bir dükkân bloğuna dokununca panel açılmaz; `IsometricSelectionOverlay` içinde satış, kâr, raf doluluğu ve "Rafları doldur" (`selection-shop-restock-btn`) görünür, "Yönet" paneli açar (`ThreeNeighborhoodView.tsx`, `onRestockShop` → `TycoonGameView.handleRestockShop`). Testi `src/tests/city/shopSelectionCard.test.ts`. Not: bu kartın canlı tarayıcıda tıklayarak ekran görüntüsü doğrulaması yapılamadı (3D tuvalde isabetli tıklama zor); yalnızca test ve derleme doğrulandı.
 - Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkân (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
 
 ## Klasörler

@@ -50,3 +50,13 @@
 @media (prefers-reduced-motion: reduce) {
   .confetti-piece { display: none; }
 }
+
+/* Sayı kutularında küçük artır/azalt okları görünmesin (büyük düğmeler var) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

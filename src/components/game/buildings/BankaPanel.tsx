@@ -5,6 +5,7 @@
  * BANKA bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
+import { NumberInput } from '../ui/NumberInput';
 import React, {
   useState,
 } from 'react';
@@ -206,9 +207,9 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
           <div className="rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 p-4 text-center space-y-2">
             <div className="text-sm font-bold text-emerald-800">💸 Ne kadar taşıyalım?</div>
-            <input
+            <NumberInput
               data-testid="xfer-amount-input"
-              type="number"
+              
               min={100}
               step={5_000}
               value={xferAmount}
@@ -435,9 +436,9 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                   Ne kadar? (en fazla{' '}
                   {formatCurrency(loanQuote.maxEligibleAmount)})
                 </label>
-                <input
+                <NumberInput
                   data-testid="loan-principal-input"
-                  type="number"
+                  
                   min={25_000}
                   step={25_000}
                   value={loanPrincipalInput}

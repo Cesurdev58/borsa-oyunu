@@ -5,6 +5,7 @@
  * SIRKET_MERKEZI bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
+import { NumberInput } from '../ui/NumberInput';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 import React, {
   useEffect,
@@ -227,8 +228,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               <label className="block text-[13px] font-semibold text-slate-700 mb-1">
                 Kasaya koyacağın para (en az 400.000 TL)
               </label>
-              <input
-                type="number"
+              <NumberInput
+                
                 min={400_000}
                 step={50_000}
                 value={compCapital}
@@ -879,8 +880,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     <label className="text-[13px] font-semibold text-slate-700">
                       Özel Hedef (birim/gün):
                     </label>
-                    <input
-                      type="number"
+                    <NumberInput
+                      
                       min={1}
                       step={10}
                       value={prodGuideCustomUnits}
@@ -978,8 +979,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
 
             {/* Ürün Fiyatlandırma ve Stok Eritme */}
             <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center gap-2">
-              <input
-                type="number"
+              <NumberInput
+                
                 min={20}
                 step={10}
                 placeholder="Yeni birim satış fiyatı"
@@ -1105,10 +1106,10 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 >
                   Özel sayı:
                 </label>
-                <input
+                <NumberInput
                   id="hire-custom-count-input"
                   data-testid="hire-custom-input"
-                  type="number"
+                  
                   min={1}
                   max={50000}
                   step={1}
@@ -1354,8 +1355,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <input
-                  type="number"
+                <NumberInput
+                  
                   min={50_000}
                   step={50_000}
                   value={injectAmount}
@@ -1713,8 +1714,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 <label className="text-[13px] font-semibold text-slate-700">
                   Hedef Ek Kapasite (birim/gün):
                 </label>
-                <input
-                  type="number"
+                <NumberInput
+                  
                   min={5}
                   max={10000}
                   value={customCapDelta}

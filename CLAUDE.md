@@ -90,6 +90,8 @@ Kurallar ve notlar:
   Boş dükkân arsası "DÜKKÂN AÇ" çimenlik arsa olarak görünür; boş `urban-ticaret-otel-5` Butik Otel olur.
 - Etiketler kalabalık olmasın diye yakınlaşınca (kamera mesafesi < `LABEL_NEAR`) blok etiketleri görünür; ana binalar, dükkânlar, seçili ve üzerine gelinen her zaman gösterilir.
 - Kilitli binalar çitli inşaat arsası + vinç olarak görünür.
+- Gündüz/gece geçişinde ışık, gökyüzü ve çimen rengi yumuşakça değişir (`stepLook`); gece yıldızlar çıkar. Dönem değerleri `LOOKS` içinde.
+- Hepsi açık hâli denemek için: `stageUnlocks`'u açık, şirketi kurulmuş bir kayıtla aç (Fabrika ve Ar-Ge şirket kurulunca, Holding 4. aşama ile açılır).
 - Ekrandaki düğmelerin (sağ alt hız düğmeleri, üst bar, sol alt geçiş düğmesi) altına düşen etiketler otomatik gizlenir (`ThreeCityScene.ts`, `labelCovered`). Düğmelerin yeri değişirse oradaki sayıları güncelle.
 - Ana binalara ayrıntılar `models.ts` içindeki `addCoreDetails` ile eklenir (giriş basamağı, çalı, bayrak, çatı klimaları, helikopter pisti, güneş paneli, yükleme rampası).
 - Test sayfası `3d-deneme.html` ve `src/deneme3d/` silindi; yerine bu gerçek 3D şehir geldi.
@@ -121,7 +123,7 @@ Kurallar ve notlar:
 
 ## Bilinen eksikler
 
-- 3D şehirde yayalar yalnızca üç kaldırım rotasında yürür (`WALK_PATHS`); binalara girip çıkmazlar. Eski görünümdeki olay/nabız efektleri 3D'de yok.
+- 3D şehirde yayalar üç kaldırım rotasında yürür (`WALK_PATHS`); her rotadaki ilk 3 yaya arada Borsa, Banka ya da Haber Merkezi'nin kapısına girip çıkar (`WALK_DOORS`). Diğer binalara girmezler. Eski görünümdeki olay/nabız efektleri 3D'de yok.
 - 3D modeller basit ve düşük poligonlu; ana binaların ayrıntısı artırılabilir ya da sahibinin vereceği hazır 3D model dosyalarıyla (.glb) değiştirilebilir.
 - Yazı tipi ve simge dosyaları ağ kısıtı olan ortamlarda yüklenemeyebilir (oyunu etkilemez).
 - Eski izometrik görünümde (klasik mod): Haber Merkezi, Merkez Bankası ve Holding tabanı yola yakın; 6 dükkân türü

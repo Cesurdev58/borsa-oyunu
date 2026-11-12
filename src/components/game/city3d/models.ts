@@ -289,7 +289,7 @@ function addCoreDetails(g: THREE.Group, node: IsometricBuildingNode, w: number, 
       break;
     }
     case 'HOLDING_MERKEZI': {
-      const top = 28 + lvl * 4;
+      const top = 24 + lvl * 3;
       g.add(cyl(3.2, 3.2, 0.3, stdMat('#4a4f55'), 0, top + 0.15, 0, 18));
       const h = sign('H', '#4a4f55', '#ffd23f', 3.6, 3.6, 128);
       h.rotation.x = -Math.PI / 2;
@@ -398,7 +398,7 @@ export function buildCore(node: IsometricBuildingNode): THREE.Group {
       break;
     }
     case 'HOLDING_MERKEZI': {
-      g.add(makeTower(w * 0.78, d * 0.78, 28 + lvl * 4, '#3c5f86', '#7fb4e0', '#c8d6e4', 'HOLDİNG', '#7c3aed', rng, 4));
+      g.add(makeTower(w * 0.78, d * 0.78, 24 + lvl * 3, '#3c5f86', '#7fb4e0', '#c8d6e4', 'HOLDİNG', '#7c3aed', rng, 4));
       break;
     }
     default:

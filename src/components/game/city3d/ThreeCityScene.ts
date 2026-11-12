@@ -128,6 +128,13 @@ const WALK_PATHS: [number, number][][] = [
   [[-64, 26.4], [64, 26.4], [64, 32.7], [-64, 32.7], [-64, 26.4]],
 ];
 
+/** Yayaların girip çıktığı binaların kapıları (dünya birimi). Bina merkezi + ön yüz. */
+const WALK_DOORS: [number, number][] = [
+  [wx(795), wz(215) + 205 * 0.085 * 0.4 + 1.6],
+  [wx(1245), wz(285) + 190 * 0.085 * 0.4 + 1.6],
+  [wx(350), wz(275) + 185 * 0.085 * 0.4 + 1.6],
+];
+
 function pathLength(path: [number, number][]): number {
   let t = 0;
   for (let i = 0; i < path.length - 1; i++) t += Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
@@ -228,8 +235,26 @@ export class ThreeCityScene {
   private decoGroup = new THREE.Group();
   private decoStage = -1;
   private vehicleGroup = new THREE.Group();
+  private lookTarget: PhaseLook | null = null;
+  private lookReady = false;
+  private lookCur = {
+    sky: new THREE.Color('#bfdcf5'),
+    hemiSky: new THREE.Color('#d6e8ff'),
+    hemiGround: new THREE.Color('#8c8470'),
+    sun: new THREE.Color('#fff0d6'),
+    grass: new THREE.Color('#86bd55'),
+    hemi: 1.25,
+    sunI: 2.8,
+    glow: 0,
+    lamps: 0,
+    exposure: 1.05,
+    sunPos: new THREE.Vector3(-90, 130, 70),
+  };
+  private tmpColor = new THREE.Color();
+  private tmpVec = new THREE.Vector3();
+  private stars!: THREE.Points;
   private walkerGroup = new THREE.Group();
-  private walkers: { obj: THREE.Group; path: number; offset: number; speed: number; legL?: THREE.Object3D; legR?: THREE.Object3D }[] = [];
+  private walkers: { obj: THREE.Group; path: number; offset: number; speed: number; legL?: THREE.Object3D; legR?: THREE.Object3D; visitor: boolean; mode: 'path' | 'toDoor' | 'inside' | 'back'; timer: number; door: [number, number]; from: [number, number] }[] = [];
   private vehicles: { obj: THREE.Group; route: CityTrafficRouteId; duration: number; delay: number }[] = [];
   private trafficKey = '';
   private selRing: THREE.Mesh;
@@ -311,6 +336,23 @@ export class ThreeCityScene {
     this.scene.add(this.vehicleGroup);
     this.scene.add(this.walkerGroup);
     this.buildWalkers();
+    {
+      const starRng = createRng('yildizlar');
+      const pts: number[] = [];
+      for (let i = 0; i < 260; i++) {
+        const a = starRng() * Math.PI * 2;
+        const el = 0.25 + starRng() * 0.9;
+        const r = 500;
+        pts.push(Math.cos(a) * Math.cos(el) * r, Math.sin(el) * r, Math.sin(a) * Math.cos(el) * r);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      this.stars = new THREE.Points(geo, new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+      this.stars.visible = false;
+      this.scene.add(this.stars);
+      this.scene.background = new THREE.Color('#bfdcf5');
+      this.scene.fog = new THREE.Fog('#bfdcf5', 330, 720);
+    }
 
     const ringMat = (color: string, opacity: number) =>
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false });
@@ -557,20 +599,52 @@ export class ThreeCityScene {
   private applyPhase(phase: string, force = false): void {
     if (!force && phase === this.phase) return;
     this.phase = phase;
-    const look = LOOKS[phase] ?? LOOKS.DAY;
-    this.scene.background = new THREE.Color(look.sky);
-    this.scene.fog = new THREE.Fog(look.sky, 330, 720);
-    this.hemi.color.set(look.hemiSky);
-    this.hemi.groundColor.set(look.hemiGround);
-    this.hemi.intensity = look.hemi;
-    this.sun.color.set(look.sun);
-    this.sun.intensity = look.sunI;
-    this.sun.position.set(...look.sunPos);
-    this.grassMat.color.set(look.grass);
-    this.renderer.toneMappingExposure = look.exposure;
-    setWindowGlow(look.glow);
-    setLampGlow(look.lamps ? 1.4 : 0);
-    this.lampPools.forEach((p) => (p.visible = look.lamps > 0));
+    this.lookTarget = LOOKS[phase] ?? LOOKS.DAY;
+    // İlk kurulumda ya da zorlamada anında geç; normalde ışık yumuşakça değişir (stepLook).
+    if (force || !this.lookReady) {
+      this.lookReady = true;
+      this.stepLook(10);
+    }
+  }
+
+  /** Işık ve gökyüzü değerlerini hedef döneme doğru yumuşakça yaklaştırır. */
+  private stepLook(dt: number): void {
+    const t = this.lookTarget;
+    if (!t) return;
+    const k = 1 - Math.exp(-dt * 1.6);
+    const c = this.lookCur;
+    const mixC = (cur: THREE.Color, hex: string): void => {
+      cur.lerp(this.tmpColor.set(hex), k);
+    };
+    mixC(c.sky, t.sky);
+    mixC(c.hemiSky, t.hemiSky);
+    mixC(c.hemiGround, t.hemiGround);
+    mixC(c.sun, t.sun);
+    mixC(c.grass, t.grass);
+    c.hemi += (t.hemi - c.hemi) * k;
+    c.sunI += (t.sunI - c.sunI) * k;
+    c.glow += (t.glow - c.glow) * k;
+    c.lamps += (t.lamps - c.lamps) * k;
+    c.exposure += (t.exposure - c.exposure) * k;
+    c.sunPos.lerp(this.tmpVec.set(...t.sunPos), k);
+
+    (this.scene.background as THREE.Color).copy(c.sky);
+    if (this.scene.fog) (this.scene.fog as THREE.Fog).color.copy(c.sky);
+    this.hemi.color.copy(c.hemiSky);
+    this.hemi.groundColor.copy(c.hemiGround);
+    this.hemi.intensity = c.hemi;
+    this.sun.color.copy(c.sun);
+    this.sun.intensity = c.sunI;
+    this.sun.position.copy(c.sunPos);
+    this.grassMat.color.copy(c.grass);
+    this.renderer.toneMappingExposure = c.exposure;
+    setWindowGlow(c.glow);
+    setLampGlow(c.lamps * 1.4);
+    this.lampPools.forEach((p) => (p.visible = c.lamps > 0.15));
+    // Yıldızlar yalnızca gece belirir.
+    const starOpacity = Math.max(0, Math.min(1, (c.glow - 0.6) / 0.4)) * Math.max(0, (t.glow >= 1 ? 1 : 0.6));
+    this.stars.visible = starOpacity > 0.02;
+    (this.stars.material as THREE.PointsMaterial).opacity = starOpacity;
   }
 
   private applyQuality(q: GraphicsQualityLevel): void {
@@ -830,6 +904,11 @@ export class ThreeCityScene {
           speed: (1.3 + rng() * 0.7) * (rng() < 0.5 ? 1 : -1),
           legL: obj.getObjectByName('legL') ?? undefined,
           legR: obj.getObjectByName('legR') ?? undefined,
+          visitor: i < 3 && pi < 2,
+          mode: 'path',
+          timer: 6 + rng() * 14,
+          door: [0, 0],
+          from: [0, 0],
         });
       }
     });
@@ -837,6 +916,10 @@ export class ThreeCityScene {
 
   private moveWalkers(dt: number): void {
     for (const w of this.walkers) {
+      if (w.visitor && w.mode !== 'path') {
+        this.moveVisitor(w, dt);
+        continue;
+      }
       const path = WALK_PATHS[w.path];
       const total = pathLength(path);
       w.offset = (((w.offset + w.speed * dt) % total) + total) % total;
@@ -856,10 +939,69 @@ export class ThreeCityScene {
       const dirz = (b[1] - a[1]) / segLen;
       const sign = w.speed < 0 ? -1 : 1;
       const swing = Math.sin(this.elapsed * 6 + w.offset) * 0.6;
+      w.obj.visible = true;
       w.obj.position.set(a[0] + (b[0] - a[0]) * f, 0.2 + Math.abs(swing) * 0.06, a[1] + (b[1] - a[1]) * f);
+      if (w.visitor && dt > 0) {
+        w.timer -= dt;
+        if (w.timer <= 0) {
+          let best: [number, number] | null = null;
+          let bd = 15;
+          for (const door of WALK_DOORS) {
+            const dd = Math.hypot(door[0] - w.obj.position.x, door[1] - w.obj.position.z);
+            if (dd < bd) {
+              bd = dd;
+              best = door;
+            }
+          }
+          if (best) {
+            w.mode = 'toDoor';
+            w.door = best;
+            w.from = [w.obj.position.x, w.obj.position.z];
+          } else {
+            w.timer = 4;
+          }
+        }
+      }
       w.obj.rotation.y = Math.atan2(-dirz * sign, dirx * sign);
       if (w.legL) w.legL.rotation.z = swing;
       if (w.legR) w.legR.rotation.z = -swing;
+    }
+  }
+
+  /** Yaya binanın kapısına yürür, içeride bekler, çıkıp kaldırıma geri döner. */
+  private moveVisitor(w: (typeof this.walkers)[number], dt: number): void {
+    const speed = 1.8;
+    const swing = Math.sin(this.elapsed * 6 + w.offset) * 0.6;
+    const walkTo = (tx: number, tz: number): boolean => {
+      const dx = tx - w.obj.position.x;
+      const dz = tz - w.obj.position.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 0.15) return true;
+      const step = Math.min(dist, speed * dt);
+      w.obj.position.x += (dx / dist) * step;
+      w.obj.position.z += (dz / dist) * step;
+      w.obj.rotation.y = Math.atan2(-dz, dx);
+      if (w.legL) w.legL.rotation.z = swing;
+      if (w.legR) w.legR.rotation.z = -swing;
+      return false;
+    };
+    if (w.mode === 'toDoor') {
+      if (walkTo(w.door[0], w.door[1])) {
+        w.mode = 'inside';
+        w.timer = 4 + (w.offset % 5);
+        w.obj.visible = false;
+      }
+    } else if (w.mode === 'inside') {
+      w.timer -= dt;
+      if (w.timer <= 0) {
+        w.mode = 'back';
+        w.obj.visible = true;
+      }
+    } else if (w.mode === 'back') {
+      if (walkTo(w.from[0], w.from[1])) {
+        w.mode = 'path';
+        w.timer = 12 + (w.offset % 12);
+      }
     }
   }
 
@@ -984,6 +1126,7 @@ export class ThreeCityScene {
     this.controls.target.z = Math.max(-66, Math.min(66, this.controls.target.z));
     this.controls.update();
 
+    this.stepLook(dt);
     this.moveVehicles();
     this.moveWalkers(this.paused ? 0 : dt);
     const near = this.camera.position.distanceTo(this.controls.target) < LABEL_NEAR;

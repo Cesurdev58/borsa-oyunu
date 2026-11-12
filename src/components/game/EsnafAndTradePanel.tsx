@@ -993,12 +993,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'EDIT_PRICES' && activeShop && (
             <div
               data-testid="shop-edit-prices-box"
-              className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3"
+              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
             >
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                Mağaza Satış Fiyatı Politikası ({activeShop.nameTR})
-              </h5>
-              <div className="space-y-2">
+              <div className="text-lg font-extrabold text-slate-900">
+                🏷️ Fiyatlar
+              </div>
+              <div className="space-y-3">
                 {(activeShopTemplate?.allowedResourceIds ?? []).map(
                   (prodId) => {
                     const resDef = RESOURCE_CATALOG[prodId];
@@ -1016,22 +1016,21 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     return (
                       <div
                         key={prodId}
-                        className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2"
+                        className="p-3 rounded-2xl bg-slate-50 space-y-2"
                       >
-                        <div>
-                          <div className="text-xs font-bold text-slate-900">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-bold text-slate-900 text-base">
                             {resDef?.nameTR || prodId}
                           </div>
-                          <div className="text-[13px] tabular-nums text-slate-600">
-                            Etiket Fiyatı: {formatCurrency(currentSellPrice)}{' '}
-                            (Çarpan: {currentMult.toFixed(2)}x)
+                          <div className="font-extrabold text-emerald-700 tabular-nums shrink-0">
+                            {formatCurrency(currentSellPrice)}
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="grid grid-cols-3 gap-2">
                           {[
-                            { label: 'İndirimli (0.90x)', val: 0.9 },
-                            { label: 'Dengeli (1.00x)', val: 1.0 },
-                            { label: 'Yüksek Marj (1.18x)', val: 1.18 },
+                            { label: '🏷️ Ucuz', val: 0.9 },
+                            { label: '⚖️ Normal', val: 1.0 },
+                            { label: '💎 Pahalı', val: 1.18 },
                           ].map((preset) => (
                             <button
                               key={preset.label}
@@ -1042,10 +1041,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                                   priceMultipliers: { [prodId]: preset.val },
                                 })
                               }
-                              className={`px-2.5 py-1 rounded-lg text-[13px] font-bold border cursor-pointer ${
+                              className={`min-h-[48px] rounded-2xl text-sm font-extrabold active:scale-95 ${
                                 Math.abs(currentMult - preset.val) < 0.04
-                                  ? 'bg-slate-900 text-white border-slate-900'
-                                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                                  ? 'bg-slate-900 text-white shadow'
+                                  : 'bg-white text-slate-700 border border-slate-200'
                               }`}
                             >
                               {preset.label}
@@ -1057,97 +1056,95 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   }
                 )}
               </div>
+              <div className="text-[13px] text-slate-500 text-center">
+                Ucuz: çok müşteri, az kâr · Pahalı: az müşteri, çok kâr
+              </div>
             </div>
           )}
 
           {shopActionTab === 'MANAGE_STAFF' && activeShop && (
             <div
               data-testid="shop-manage-staff-box"
-              className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3"
+              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
             >
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                    Dükkân Çalışanları ve Kasa Aktarımı
-                  </h5>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Mevcut Çalışan: <strong>{activeShop.staffCount}</strong> /
-                    Minimum Gereken:{' '}
-                    <strong>{activeShop.minStaffRequired}</strong> kişi
-                  </p>
+              <div className="text-lg font-extrabold text-slate-900">
+                👥 Çalışanlar
+              </div>
+              <div className="rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 p-5 text-center">
+                <div className="text-5xl font-extrabold text-indigo-900 tabular-nums">
+                  {activeShop.staffCount}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    data-testid="shop-hire-1-btn"
-                    onClick={() =>
-                      onConfigureShop({
-                        shopId: activeShop.shopId,
-                        staffDelta: 1,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
-                  >
-                    +1 Çalışan Al
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="shop-hire-3-btn"
-                    onClick={() =>
-                      onConfigureShop({
-                        shopId: activeShop.shopId,
-                        staffDelta: 3,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold cursor-pointer"
-                  >
-                    +3 Çalışan Al
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="shop-fire-1-btn"
-                    onClick={() =>
-                      onConfigureShop({
-                        shopId: activeShop.shopId,
-                        staffDelta: -1,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold cursor-pointer"
-                  >
-                    -1 Azalt
-                  </button>
+                <div className="text-sm font-bold text-indigo-800 mt-1">
+                  çalışan · en az {activeShop.minStaffRequired} gerekli
                 </div>
               </div>
-
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  data-testid="shop-hire-1-btn"
+                  onClick={() =>
+                    onConfigureShop({ shopId: activeShop.shopId, staffDelta: 1 })
+                  }
+                  className="min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow active:scale-95"
+                >
+                  ➕ 1 kişi al
+                </button>
+                <button
+                  type="button"
+                  data-testid="shop-hire-3-btn"
+                  onClick={() =>
+                    onConfigureShop({ shopId: activeShop.shopId, staffDelta: 3 })
+                  }
+                  className="min-h-[56px] rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 text-white font-extrabold shadow active:scale-95"
+                >
+                  ➕ 3 kişi al
+                </button>
+              </div>
+              <button
+                type="button"
+                data-testid="shop-fire-1-btn"
+                onClick={() =>
+                  onConfigureShop({ shopId: activeShop.shopId, staffDelta: -1 })
+                }
+                className="w-full min-h-[48px] rounded-2xl bg-slate-100 text-slate-700 font-bold active:scale-95"
+              >
+                ➖ 1 kişiyi çıkar
+              </button>
+              <div className="text-[13px] text-slate-500 text-center">
+                Çok çalışan = hızlı satış, ama maaşları da artar.
+              </div>
             </div>
           )}
 
           {shopActionTab === 'UPGRADE_SHOP' && activeShop && (
             <div
               data-testid="shop-upgrade-box"
-              className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-wrap items-center justify-between gap-3"
+              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
             >
-              <div>
-                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Dükkân Fiziksel ve Ticari Seviye Geliştirme (Seviye{' '}
-                  {activeShop.level} → {Math.min(5, activeShop.level + 1)})
-                </h5>
-                <p className="text-xs text-slate-600 mt-1">
-                  Her seviye artışında şehirdeki dükkân binası fiziksel olarak
-                  büyür, raf/depo kapasitesi ve günlük müşteri trafiği +%45
-                  artar.
-                </p>
+              <div className="text-lg font-extrabold text-slate-900">
+                ⬆️ Dükkânı geliştir
+              </div>
+              <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-5 text-center">
+                <div className="text-4xl font-extrabold text-amber-900">
+                  Seviye {activeShop.level}
+                  {activeShop.level < 5 && (
+                    <span className="text-amber-600"> → {activeShop.level + 1}</span>
+                  )}
+                </div>
+                <div className="text-sm font-bold text-amber-800 mt-2">
+                  Daha büyük raf, %45 daha çok müşteri
+                </div>
               </div>
               <button
                 type="button"
                 data-testid="shop-upgrade-confirm-btn"
                 disabled={activeShop.level >= 5}
                 onClick={() => onUpgradeShopLevel(activeShop.shopId)}
-                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-slate-300 text-white text-xs font-bold cursor-pointer"
+                className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
               >
                 {activeShop.level >= 5
-                  ? 'Maksimum Seviye (Sv.5)'
-                  : `Seviye ${activeShop.level + 1}'e Yükselt`}
+                  ? '🏆 En üst seviye'
+                  : `⬆️ Seviye ${activeShop.level + 1}'e yükselt`}
               </button>
             </div>
           )}
@@ -1155,18 +1152,18 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'OPEN_BRANCH' && (
             <div
               data-testid="shop-open-branch-box"
-              className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3"
+              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
             >
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  8 Farklı Esnaf ve Mağaza Türünden Yeni İşletme Aç
-                </h5>
-                <span className="text-xs tabular-nums font-bold text-emerald-700">
-                  Kullanılabilir Nakit: {formatCurrency(spendableCash)}
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-lg font-extrabold text-slate-900">
+                  ➕ Yeni dükkân
+                </div>
+                <span className="text-sm tabular-nums font-bold text-emerald-700">
+                  💰 {formatCurrency(spendableCash)}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {ALL_SHOP_TEMPLATES.map((tpl) => {
                   const totalCost =
                     tpl.openingCost + tpl.decorationCost + newShopCashFloat;
@@ -1177,74 +1174,58 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       type="button"
                       data-testid={`shop-type-card-${tpl.shopType}`}
                       onClick={() => setNewShopType(tpl.shopType)}
-                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      className={`p-3 rounded-3xl border-2 text-center cursor-pointer active:scale-95 ${
                         selected
-                          ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400/50'
-                          : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-amber-50 border-amber-500 shadow'
+                          : 'bg-slate-50 border-transparent'
                       }`}
                     >
-                      <div className="text-xs font-extrabold text-slate-900">
+                      <div className="text-4xl">{SHOP_EMOJI[tpl.shopType] ?? '🏪'}</div>
+                      <div className="text-sm font-extrabold text-slate-900 mt-1">
                         {tpl.nameTR}
                       </div>
-                      <div className="text-[13px] tabular-nums text-amber-800 font-bold mt-0.5">
-                        Kurulum:{' '}
+                      <div className="text-sm tabular-nums text-amber-800 font-bold mt-0.5">
                         {formatCurrency(tpl.openingCost + tpl.decorationCost)}
                       </div>
-                      <div className="text-[13px] text-slate-600 mt-0.5">
+                      <div className="sr-only">
                         Kira: {formatCurrency(tpl.dailyRentBase)}/g · Marj %
-                        {Math.round(tpl.defaultGrossMarginPct)}
+                        {Math.round(tpl.defaultGrossMarginPct)} ·{' '}
+                        {tpl.specificMechanicTitleTR} · Min.{tpl.minStaffRequired}{' '}
+                        çalışan {totalCost}
                       </div>
-                      <div className="text-[13px] text-slate-500 mt-0.5 line-clamp-1">
-                        {tpl.specificMechanicTitleTR} · Min.
-                        {tpl.minStaffRequired} çalışan
-                      </div>
-                      <div className="sr-only">{totalCost}</div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Seçili Mağaza Türü Detayı ve Açılış Butonu */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <div className="text-xs font-extrabold text-slate-900">
-                      {selectedShopTemplateForNew.nameTR} —{' '}
-                      {selectedShopTemplateForNew.specificMechanicDescriptionTR}
-                    </div>
-                    <div className="text-[13px] text-slate-600 mt-0.5">
-                      Başlangıç Sermayesi:{' '}
-                      <strong>
-                        {formatCurrency(selectedShopTemplateForNew.openingCost)}
-                      </strong>{' '}
-                      + Dekorasyon:{' '}
-                      <strong>
-                        {formatCurrency(
-                          selectedShopTemplateForNew.decorationCost
-                        )}
-                      </strong>{' '}
-                      + Kasa Harçlığı:{' '}
-                      <strong>{formatCurrency(newShopCashFloat)}</strong> ={' '}
-                      <strong className="text-amber-800">
-                        {formatCurrency(
-                          selectedShopTemplateForNew.openingCost +
-                            selectedShopTemplateForNew.decorationCost +
-                            newShopCashFloat
-                        )}
-                      </strong>
-                    </div>
-                  </div>
+              <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 p-4 space-y-3">
+                <div className="font-extrabold text-slate-900 text-base">
+                  {SHOP_EMOJI[selectedShopTemplateForNew.shopType] ?? '🏪'}{' '}
+                  {selectedShopTemplateForNew.nameTR}
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    data-testid="new-shop-name-input"
-                    type="text"
-                    placeholder={`Örn: Merkez ${selectedShopTemplateForNew.nameTR}`}
-                    value={newShopCustomName}
-                    onChange={(e) => setNewShopCustomName(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-semibold"
-                  />
+                <div className="text-sm text-slate-700">
+                  {selectedShopTemplateForNew.specificMechanicDescriptionTR}
+                </div>
+                <div className="flex justify-between text-sm font-bold">
+                  <span>Toplam</span>
+                  <span className="tabular-nums text-amber-800">
+                    {formatCurrency(
+                      selectedShopTemplateForNew.openingCost +
+                        selectedShopTemplateForNew.decorationCost +
+                        newShopCashFloat
+                    )}
+                  </span>
+                </div>
+                <input
+                  data-testid="new-shop-name-input"
+                  type="text"
+                  placeholder={`Dükkân adı (örn: Merkez ${selectedShopTemplateForNew.nameTR})`}
+                  value={newShopCustomName}
+                  onChange={(e) => setNewShopCustomName(e.target.value)}
+                  className="w-full min-h-[48px] px-3 rounded-2xl bg-white border border-slate-200 text-sm font-semibold"
+                />
+                <label className="block text-[13px] font-semibold text-slate-600">
+                  Kasaya başlangıç parası
                   <input
                     data-testid="new-shop-cash-float-input"
                     type="number"
@@ -1253,27 +1234,25 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     step={2000}
                     value={newShopCashFloat}
                     onChange={(e) =>
-                      setNewShopCashFloat(
-                        Math.max(0, Number(e.target.value) || 0)
-                      )
+                      setNewShopCashFloat(Math.max(0, Number(e.target.value) || 0))
                     }
-                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
+                    className="mt-1 w-full min-h-[48px] px-3 rounded-2xl bg-white border border-slate-200 text-sm tabular-nums font-bold"
                   />
-                  <button
-                    type="button"
-                    data-testid="confirm-open-shop-btn"
-                    onClick={() =>
-                      onOpenShop({
-                        shopType: newShopType,
-                        customName: newShopCustomName.trim() || undefined,
-                        initialCashFloat: newShopCashFloat,
-                      })
-                    }
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer shadow-2xs"
-                  >
-                    {selectedShopTemplateForNew.nameTR} Aç
-                  </button>
-                </div>
+                </label>
+                <button
+                  type="button"
+                  data-testid="confirm-open-shop-btn"
+                  onClick={() =>
+                    onOpenShop({
+                      shopType: newShopType,
+                      customName: newShopCustomName.trim() || undefined,
+                      initialCashFloat: newShopCashFloat,
+                    })
+                  }
+                  className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow active:scale-95"
+                >
+                  🏪 {selectedShopTemplateForNew.nameTR} aç
+                </button>
               </div>
             </div>
           )}

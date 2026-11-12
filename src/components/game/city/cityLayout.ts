@@ -850,7 +850,7 @@ export function deriveCityAtmosphere(gameHour: number): CityAtmosphereTheme {
         labelTR: 'Sabah · Açık Pastel Gökyüzü',
         skySurfaceClass:
           'from-sky-100 via-amber-50/70 to-emerald-50/80 text-slate-900',
-        groundTintClass: 'bg-[#eef6f0]',
+        groundTintClass: 'bg-[#a3d36e]',
         plazaSurfaceClass: 'bg-amber-50/90 border-amber-200/80',
         streetLightsOn: false,
         windowsLitRatio: 0.15,
@@ -864,7 +864,7 @@ export function deriveCityAtmosphere(gameHour: number): CityAtmosphereTheme {
         labelTR: 'Gündüz · Canlı Finans Mahallesi',
         skySurfaceClass:
           'from-sky-100/90 via-slate-50 to-emerald-50/75 text-slate-900',
-        groundTintClass: 'bg-[#edf5ef]',
+        groundTintClass: 'bg-[#8ac84a]',
         plazaSurfaceClass: 'bg-white/95 border-slate-200',
         streetLightsOn: false,
         windowsLitRatio: 0.0,
@@ -878,7 +878,7 @@ export function deriveCityAtmosphere(gameHour: number): CityAtmosphereTheme {
         labelTR: 'Akşam · Gün Batımı & Seans Sonrası',
         skySurfaceClass:
           'from-amber-100/80 via-rose-100/60 to-indigo-100/80 text-slate-900',
-        groundTintClass: 'bg-[#e6ecec]',
+        groundTintClass: 'bg-[#7aa85a]',
         plazaSurfaceClass: 'bg-amber-50/85 border-amber-200/70',
         streetLightsOn: true,
         windowsLitRatio: 0.55,
@@ -893,7 +893,7 @@ export function deriveCityAtmosphere(gameHour: number): CityAtmosphereTheme {
         labelTR: 'Gece · Sokak Işıkları Açık',
         skySurfaceClass:
           'from-[#1e293b] via-[#26354d] to-[#334155] text-slate-100',
-        groundTintClass: 'bg-[#283548]',
+        groundTintClass: 'bg-[#2c4636]',
         plazaSurfaceClass: 'bg-slate-800/90 border-slate-600/80',
         streetLightsOn: true,
         windowsLitRatio: 0.75,

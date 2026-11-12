@@ -7,6 +7,25 @@ import React from 'react';
 import { SimulationStage } from '../../../models/simulation';
 import { CityAtmosphereTheme } from './cityVisualTypes';
 
+/** Haritanın dört kenarındaki ağaç kuşağı. Sabit sayı üreteciyle bir kez hesaplanır. */
+const TREE_BELT: { x: number; y: number; r: number }[] = (() => {
+  let seed = 20240607;
+  const rnd = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+  const trees: { x: number; y: number; r: number }[] = [];
+  for (let i = 0; i < 110; i++) {
+    trees.push({ x: rnd() * 1600, y: rnd() * 62, r: 14 + rnd() * 10 });
+    trees.push({ x: rnd() * 1600, y: 1140 + rnd() * 60, r: 14 + rnd() * 10 });
+  }
+  for (let i = 0; i < 46; i++) {
+    trees.push({ x: rnd() * 34, y: 60 + rnd() * 1080, r: 14 + rnd() * 10 });
+    trees.push({ x: 1566 + rnd() * 34, y: 60 + rnd() * 1080, r: 14 + rnd() * 10 });
+  }
+  return trees.sort((a, b) => a.y - b.y);
+})();
+
 interface IsometricRoadLayerProps {
   stage: SimulationStage;
   atmosphere: CityAtmosphereTheme;
@@ -21,11 +40,11 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
     const isNight = atmosphere.phase === 'NIGHT';
     const isStage2Plus = stage >= SimulationStage.STAGE_2_ENTREPRENEUR;
 
-    const roadFill = isNight ? '#334155' : '#cbd5e1';
-    const industrialRoadFill = isNight ? '#3b4252' : '#bcc6d4';
-    const roadStroke = isNight ? '#475569' : '#94a3b8';
-    const sidewalkFill = isNight ? '#475569' : '#e2e8f0';
-    const laneMarking = isNight ? '#94a3b8' : '#f8fafc';
+    const roadFill = isNight ? '#2b3340' : '#4b5563';
+    const industrialRoadFill = isNight ? '#2f3744' : '#454e5c';
+    const roadStroke = isNight ? '#556070' : '#cbd5e1';
+    const sidewalkFill = isNight ? '#5b6676' : '#d6d3cb';
+    const laneMarking = isNight ? '#cbd5e1' : '#ffffff';
 
     return (
       <div
@@ -54,20 +73,30 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
                 strokeWidth="1"
               />
             </pattern>
+            <pattern
+              id="iso-grass-texture"
+              width="44"
+              height="44"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="9" cy="12" r="1.6" fill={isNight ? '#3f6a4e' : '#6fa63a'} opacity="0.55" />
+              <circle cx="31" cy="30" r="1.6" fill={isNight ? '#27402f' : '#b7e07a'} opacity="0.6" />
+              <circle cx="38" cy="8" r="1.2" fill={isNight ? '#27402f' : '#b7e07a'} opacity="0.5" />
+            </pattern>
           </defs>
 
-          {/* Tüm Zemin İzometrik Karo Deseni */}
-          <rect width="1600" height="1200" fill="url(#iso-ground-grid)" />
+          {/* Canlı çimen zemin dokusu */}
+          <rect width="1600" height="1200" fill="url(#iso-grass-texture)" />
 
-          {/* UZAK UFUK SİLÜETİ (Kuzey Ufuk Çizgisi) */}
-          <g opacity={isNight ? '0.38' : '0.28'}>
-            <rect x="80" y="18" width="55" height="60" rx="4" fill="#64748b" />
-            <rect x="145" y="30" width="42" height="48" rx="4" fill="#94a3b8" />
-            <rect x="440" y="14" width="64" height="64" rx="4" fill="#64748b" />
-            <rect x="512" y="26" width="48" height="52" rx="4" fill="#94a3b8" />
-            <rect x="1040" y="16" width="60" height="62" rx="4" fill="#64748b" />
-            <rect x="1110" y="28" width="46" height="50" rx="4" fill="#94a3b8" />
-            <rect x="1410" y="20" width="58" height="58" rx="4" fill="#64748b" />
+          {/* HARİTA KENARLARINDA AĞAÇ KUŞAĞI (orman) */}
+          <g>
+            {TREE_BELT.map((t, i) => (
+              <g key={`belt-${i}`}>
+                <circle cx={t.x} cy={t.y + 3} r={t.r} fill="rgba(0,0,0,0.18)" />
+                <circle cx={t.x} cy={t.y} r={t.r} fill={isNight ? '#173a27' : '#2f6b2a'} />
+                <circle cx={t.x - t.r * 0.25} cy={t.y - t.r * 0.28} r={t.r * 0.62} fill={isNight ? '#1f4d34' : '#4f9a3c'} />
+              </g>
+            ))}
           </g>
 
           {/* 6 BÖLGE PARSEL ZEMİN BLOKLARI (Düzenli Şehir Adaları) */}
@@ -78,10 +107,10 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="1150"
             height="245"
             rx="32"
-            fill={isNight ? '#1e293b' : '#f1f5f9'}
-            stroke={isNight ? '#334155' : '#cbd5e1'}
-            strokeWidth="2"
-            opacity="0.82"
+            fill={isNight ? '#3a463f' : '#dedbd0'}
+            stroke={isNight ? '#51604f' : '#f8fafc'}
+            strokeWidth="4"
+            opacity="0.9"
           />
 
           {/* 2. Ticaret Bölgesi Batı Adası */}
@@ -91,10 +120,10 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="415"
             height="375"
             rx="28"
-            fill={isNight ? '#1f2937' : '#fef3c7'}
-            stroke={isNight ? '#374151' : '#fde68a'}
-            strokeWidth="2"
-            opacity="0.65"
+            fill={isNight ? '#433f3a' : '#d8cdb8'}
+            stroke={isNight ? '#5b564f' : '#f8fafc'}
+            strokeWidth="4"
+            opacity="0.88"
           />
 
           {/* 3. Teknoloji & Kurumsal Kampüs Doğu Adası */}
@@ -104,10 +133,10 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="420"
             height="375"
             rx="28"
-            fill={isNight ? '#172554' : '#e0f2fe'}
-            stroke={isNight ? '#1e3a8a' : '#bae6fd'}
-            strokeWidth="2"
-            opacity="0.68"
+            fill={isNight ? '#2c4a3a' : '#a9d98f'}
+            stroke={isNight ? '#456a55' : '#f8fafc'}
+            strokeWidth="4"
+            opacity="0.85"
           />
 
           {/* 4. Sanayi Bölgesi Güneybatı Adası (Geniş Lojistik Zemini) */}
@@ -117,10 +146,10 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="545"
             height="325"
             rx="28"
-            fill={isNight ? '#1e293b' : '#e2e8f0'}
-            stroke={isNight ? '#475569' : '#cbd5e1'}
-            strokeWidth="2.5"
-            opacity="0.85"
+            fill={isNight ? '#443f39' : '#c2b6a4'}
+            stroke={isNight ? '#5f5850' : '#f8fafc'}
+            strokeWidth="4"
+            opacity="0.9"
           />
 
           {/* 5. Ar-Ge & Holding Güneydoğu Adası */}
@@ -130,10 +159,10 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="865"
             height="325"
             rx="28"
-            fill={isNight ? '#1e1b4b' : '#ecfeff'}
-            stroke={isNight ? '#312e81' : '#a5f3fc'}
-            strokeWidth="2"
-            opacity="0.72"
+            fill={isNight ? '#33503f' : '#c4e3a0'}
+            stroke={isNight ? '#4f7059' : '#f8fafc'}
+            strokeWidth="4"
+            opacity="0.88"
           />
 
           {/* 6. Kuzeybatı & Kuzeydoğu Genişleme Parselleri */}
@@ -143,8 +172,8 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="135"
             height="230"
             rx="22"
-            fill={isNight ? '#1e293b' : '#dcfce7'}
-            stroke={isNight ? '#334155' : '#86efac'}
+            fill={isNight ? '#2a4a35' : '#9fd36a'}
+            stroke={isNight ? '#4f7059' : '#e7f5d0'}
             strokeDasharray="8 6"
             strokeWidth="2"
             opacity="0.6"
@@ -155,8 +184,8 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             width="140"
             height="230"
             rx="22"
-            fill={isNight ? '#1e293b' : '#dcfce7'}
-            stroke={isNight ? '#334155' : '#86efac'}
+            fill={isNight ? '#2a4a35' : '#9fd36a'}
+            stroke={isNight ? '#4f7059' : '#e7f5d0'}
             strokeDasharray="8 6"
             strokeWidth="2"
             opacity="0.6"
@@ -165,8 +194,8 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
           {/* Yeşil Park ve Bahçe Parselleri */}
           <polygon
             points="800,455 965,540 800,625 635,540"
-            fill={isNight ? '#1e3a2f' : '#d1fae5'}
-            stroke={isNight ? '#065f46' : '#a7f3d0'}
+            fill={isNight ? '#2a4a35' : '#8fcd57'}
+            stroke={isNight ? '#4f7059' : '#e7f5d0'}
             strokeWidth="3"
           />
 
@@ -406,14 +435,14 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
           {/* 5. MERKEZ FİNANS MEYDANI VE YAŞAM PARKI (İzometrik Elmas Meydan) */}
           <polygon
             points="795,435 1015,580 795,725 575,580"
-            fill={isNight ? '#1e293b' : '#f8fafc'}
+            fill={isNight ? '#4a5260' : '#e7e5de'}
             stroke={roadStroke}
             strokeWidth="3"
           />
           <polygon
             points="795,470 960,580 795,690 630,580"
-            fill={isNight ? '#0f172a' : '#ecfdf5'}
-            stroke={isNight ? '#334155' : '#bbf7d0'}
+            fill={isNight ? '#2a4a35' : '#86c94a'}
+            stroke={isNight ? '#4f7059' : '#e7f5d0'}
             strokeWidth="2"
           />
           {/* Meydan Köşegen Yaya Yolları */}
@@ -422,7 +451,7 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             y1="580"
             x2="960"
             y2="580"
-            stroke={isNight ? '#334155' : '#e2e8f0'}
+            stroke={isNight ? '#5b6676' : '#e7e5de'}
             strokeWidth="12"
           />
           <line
@@ -430,9 +459,12 @@ export const IsometricRoadLayer: React.FC<IsometricRoadLayerProps> = React.memo(
             y1="470"
             x2="795"
             y2="690"
-            stroke={isNight ? '#334155' : '#e2e8f0'}
+            stroke={isNight ? '#5b6676' : '#e7e5de'}
             strokeWidth="12"
           />
+          {/* Meydan göleti */}
+          <ellipse cx="795" cy="580" rx="58" ry="32" fill={isNight ? '#245068' : '#5bbcf0'} stroke="#f8fafc" strokeWidth="4" />
+          <ellipse cx="785" cy="572" rx="26" ry="9" fill="rgba(255,255,255,0.35)" />
         </svg>
       </div>
     );

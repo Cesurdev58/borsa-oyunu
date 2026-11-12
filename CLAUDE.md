@@ -55,6 +55,15 @@ Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` alt
   (ör. `urban-ticaret-magaza-1`, `urban-ticaret-kafe-2`, `urban-ticaret-toptanci-4`).
   Tıklanınca bir ana binanın panelini açarlar (`linkedBuildingId`).
 
+**Zemin ve yollar** (`IsometricRoadLayer.tsx` ve `cityLayout.ts` içindeki `deriveCityAtmosphere`):
+canlı çimen zemin (gün batımı ve gecede koyu yeşile döner), koyu asfalt yollar, açık kaldırımlar, bölgelere göre farklı zemin
+(finans taş, ticaret otopark, sanayi beton, teknoloji ve Ar-Ge çim), harita kenarlarında ağaç kuşağı, ortada meydan ve gölet.
+Ağaç kuşağı rastgele değil, sabit sayı üretecinden gelir; her çizimde aynıdır.
+
+**Yol çizgilerinin yerini değiştirme.** Araçların ve yayaların rotaları `IsometricVehicleLayer.tsx` içinde sabit
+koordinatlarla yazılı (halka yol 520..1070 × 380..770, güney cadde y=895, batı sokak x=215 gibi). Yolu oynatırsan araçlar yolun
+dışından geçer; önce oradaki rotaları da güncelle. Bu yüzden yeni görünüm yol çizgilerini yerinde bıraktı, yalnızca görünümünü yeniledi.
+
 `src/components/game/CityWorldView.tsx` ve `CityBuilding.tsx` **eski ve kullanılmıyor**; hiçbir yerden çağrılmaz.
 Şehir görünümünü değiştirmek için bunları düzenleme.
 
@@ -85,9 +94,14 @@ Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` alt
 
 ## Bilinen eksikler
 
+- Haber Merkezi, Merkez Bankası ve Holding binalarının tabanı hâlâ yola çok yakın ya da biraz üstünde duruyor
+  (yol çizgileri araç rotaları yüzünden oynatılmadı).
+- Görseli beklenen binalar: Haber Merkezi, Oyuncu Ofisi, Şirket Merkezi, Fabrika, Ar-Ge Merkezi, Holding Merkezi;
+  6 dükkân türü; 15 şehir bloğu (ticaret hanı, toptancı, aktarma depo, takas kurumu, denetim kulesi, mamul deposu, lojistik,
+  enerji, veri kampüsü, test laboratuvarı, robotik merkezi, akademi, konut, poliklinik, belediye).
+  Üç boş arsa (iki genişleme parseli ve fabrika genişleme parseli) görsel gerektirmez, çimen olarak kalır.
 - Parseller eski küçük kutu binalara göre ölçülü; PNG binalar komşularına çok yakın duruyor.
   Özellikle 3. dükkân bloğuna (`urban-ticaret-otel-5`) bir market görseli konunca yandaki panel ve binalarla çakışıyor.
-- Koyu şehir zemini yeni bina stiliyle uyumsuz.
 - Görseli olmayan 6 dükkân türü (büfe, manav, giyim, elektronik, mobilya, galeri) eski kutu çizimiyle duruyor.
 - Kalan 6 ana bina ve dükkân olmayan 19 şehir bloğu hâlâ CSS kutu çizimi kullanıyor.
 - Bir dükkân görseli yüklenemezse o blok, tür değişse bile oturum boyunca eski çizimde kalır (sayfa yenilenince düzelir).

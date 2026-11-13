@@ -106,6 +106,12 @@ Eskiden şirket satışı yalnızca kendi kapasitesine bağlıydı; fabrika büy
 - Arayüz: dükkân kartında altın "Müdür" rozeti ve "Müdür: …" satırı (`ShopDashboard.tsx`); "Yönet → Çalışanlar" ekranının başında müdür kartı (`shop-manager-box`, `shop-manager-hire-btn`, `shop-manager-sweep-toggle`, `shop-manager-fire-btn`). Müdürlü dükkânlar "Bugünün görevleri" raf görevine sayılmaz. Akış: `SimulationEngine.hireShopManager / fireShopManager / setShopManagerSweep` → `App.tsx` → `TycoonGameView` → `OyuncuOfisiPanel` → `EsnafAndTradePanel`.
 - Testi `src/tests/decisions/shopManager.test.ts`.
 
+## Gün sonu raporu
+
+- Gün oyun saatiyle 00:00'da kapanır (`DayCloseProcessor.closeCurrentDay`, adım 16). Biten günün özeti `engine/DayReportEngine.ts` (`buildDayReport`) ile çıkarılır ve `state.lastDayReport` içinde saklanır (tip `DayReport`, `models/simulation.ts`; eski kayıtlarda yoktur; kayıt/yükleme `simulationStore.ts` ve `restoreFromSavedState` alanı taşır). Yalnızca okur, ekonomiyi değiştirmez.
+- İçerik: net varlık başı/sonu (başlangıç bir önceki gün kaydından), şirket günlük satış/gider/kâr (muhasebedeki yıllık tutar ÷ 120) ve pazar payı, kişisel dükkânlar (şubeler hariç) satış/kâr/müşteri, borsa kârı (portföy değer farkı − o günkü alış + satış), en çok kazandıran/düşen hisse, temettü, holding kazancı, servet vergisi.
+- Arayüz `components/game/DayReportCard.tsx`: gün dönünce sol altta altın kapsül (`day-report-capsule`, `coin` sesi), dokununca kart (`day-report-card`, `day-report-delta`, `-company`, `-shops`, `-market`, `-extras`, `-other`, `day-report-close-btn`). Kendiliğinden açılmaz. Kutuların dışında kalan değişim "Diğer (şirket değeri, faiz, kira…)" satırında gösterilir, böylece rakamlar toplamla uyuşur. Kayıt yeni açılınca eldeki rapor görülmüş sayılır (yalnızca oyun açıkken dönen günler kapsül çıkarır). Ayarlarda `settings-day-report-toggle` (`uiSettings.showDayReport`) kapatır. Testi `src/tests/ui/dayReport.test.ts`.
+
 ## Tekrar hoş geldin penceresi
 
 - `OfflineProgressModal.tsx`: lacivert kart, büyük altın "+₺" net varlık farkı, gelir/gider/temettü kutuları ve altın "Topla ve devam et" düğmesi (`offline-modal-continue-btn`).

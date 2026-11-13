@@ -56,6 +56,7 @@ import type {
   SimulationEngine,
 } from './SimulationEngine';
 import { CompanyWallet } from './CompanyWallet';
+import { buildDayReport } from './DayReportEngine';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
     if (
@@ -64,6 +65,10 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     ) {
       return engine.state.dailyLogs[engine.state.dailyLogs.length - 1];
     }
+
+    const netWorthBeforeClose = engine.state.netWorth;
+    const portfolioBeforeClose = engine.state.portfolioValue;
+    const previousLog = engine.state.dailyLogs[engine.state.dailyLogs.length - 1];
 
     const hadIntradaySteps =
       engine.state.intradayStepsProcessedToday > 0 ||
@@ -638,6 +643,15 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       actionsTaken: logActions,
       integrityValid: audit.valid,
     };
+
+    // 16. Gün sonu raporu (yalnızca gösterim)
+    engine.state.lastDayReport = buildDayReport(engine.state, currentDay - 1, {
+      dividends: dividendsReceivedToday,
+      holdingIncome: holdingSynergyReceivedToday,
+      previousLog,
+      netWorthBeforeClose,
+      portfolioBeforeClose,
+    });
 
     engine.state.dailyLogs.push(entry);
     if (engine.state.dailyLogs.length > 400) {

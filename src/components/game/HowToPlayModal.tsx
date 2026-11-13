@@ -75,6 +75,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Ekranın üstündeki "Sıradaki hedef" şeridi o an ne yapman gerektiğini söyler. "Git" düğmesi seni oraya götürür.',
         'Bir oyun günü 15 gerçek dakika sürer. Sağ alttaki düğmeyle zamanı 2 kat hızlandırabilirsin. Uygulama kapalıyken oyun en fazla 8 gün ilerler.',
         'Üstteki para kutusuna dokununca toplam varlığını görürsün. Zil bildirimleri, yıldız ise hangi aşamada olduğunu gösterir.',
+        'Gün gece 00:00\'da döner. O an sol altta altın "Gün raporu" çıkar: dokununca şirketin, dükkânların ve borsanın o gün ne kazandırdığını görürsün.',
       ],
       go: { label: 'Şehre dön', tab: 'city' },
     },

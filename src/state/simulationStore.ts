@@ -622,6 +622,7 @@ export class SimulationStore {
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
         wealthTax: st.wealthTax,
+        lastDayReport: st.lastDayReport,
         balanceVersion: st.balanceVersion,
       };
 

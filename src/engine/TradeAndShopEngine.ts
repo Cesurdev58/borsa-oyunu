@@ -8,6 +8,7 @@
  *   Hammadde -> Tedarikçi -> Satın Alma -> Sevkiyat -> Depo -> Üretim -> Mamul Deposu -> Dağıtım -> Mağaza / Kurumsal Müşteri -> Satış -> Tahsilat
  */
 
+import { MANAGER_PROFIT_SHARE } from '../data/gameBalance';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -517,11 +518,26 @@ export class TradeAndShopEngine {
 
       // 4e. Günlük kira, personel ve işletme giderleri
       shop.todayPayrollCost = Number(
-        (shop.staffCount * shop.staffDailyWagePerPerson).toFixed(2)
+        (
+          shop.staffCount * shop.staffDailyWagePerPerson +
+          (shop.manager ? shop.manager.dailyWage : 0)
+        ).toFixed(2)
       );
       shop.todayRentAndOpex = Number(
         (shop.dailyRent + shop.level * 120).toFixed(2)
       );
+      // Müdür primi: müdürden önceki günlük kârın bir payı (zarar günlerinde prim yok)
+      if (shop.manager) {
+        const preManagerProfit =
+          shop.todaySalesRevenue -
+          shop.todayCogs -
+          shop.todayPayrollCost -
+          shop.todayRentAndOpex -
+          shop.todaySpoilageCost;
+        const bonus = Math.max(0, preManagerProfit) * MANAGER_PROFIT_SHARE;
+        shop.manager.todayBonus = Number(bonus.toFixed(2));
+        shop.todayPayrollCost = Number((shop.todayPayrollCost + bonus).toFixed(2));
+      }
       const totalDailyExpenses = Number(
         (shop.todayPayrollCost + shop.todayRentAndOpex).toFixed(2)
       );

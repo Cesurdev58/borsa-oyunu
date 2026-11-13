@@ -8,6 +8,8 @@
  * - 3. Mantıklı ve tutarlı sistem (Borsa -> Esnaf -> Çok Şubeli Ticaret -> Şirketleşme -> Fabrika & Holding kariyer döngüsü)
  */
 
+import { getManagerQuote } from '../../engine/ShopManager';
+import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
 import { NumberInput } from './ui/NumberInput';
 import React, { useMemo, useState } from 'react';
 import {
@@ -24,6 +26,8 @@ import {
   TrendingUp,
   Truck,
   Users,
+  Lock,
+  UserCog,
 } from 'lucide-react';
 import {
   RECIPE_CATALOG,
@@ -54,6 +58,9 @@ export interface EsnafAndTradeActionsProps {
     initialCashFloat?: number;
   }) => void;
   onUpgradeShopLevel: (shopId: string) => void;
+  onHireShopManager?: (shopId: string) => void;
+  onFireShopManager?: (shopId: string) => void;
+  onSetShopManagerSweep?: (shopId: string, on: boolean) => void;
   onTransferShopCash: (params: {
     shopId: string;
     direction: 'TO_SHOP' | 'FROM_SHOP';
@@ -158,6 +165,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   initialSection = 'SHOPS',
   onOpenShop,
   onUpgradeShopLevel,
+  onHireShopManager,
+  onFireShopManager,
+  onSetShopManagerSweep,
   onTransferShopCash,
   onConfigureShop,
   onPlaceProcurementOrder,
@@ -1060,6 +1070,113 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
             </div>
           )}
+
+          {shopActionTab === 'MANAGE_STAFF' && activeShop && !activeShop.isCompanyBranch && (() => {
+            const mq = getManagerQuote(state, activeShop, Math.max(0, state.cash - spendableCash));
+            const mgr = activeShop.manager;
+            return (
+              <div data-testid="shop-manager-box" className="g-card p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="g-section-title flex items-center gap-2">
+                    <UserCog className="w-5 h-5 text-[var(--g-navy-600)]" /> Müdür
+                  </div>
+                  {mgr ? (
+                    <span className="g-pill bg-[#ecfaf3] text-[var(--g-green-dark)]">Çalışıyor</span>
+                  ) : activeShop.level < MANAGER_MIN_SHOP_LEVEL ? (
+                    <span className="g-pill bg-[var(--g-surface-2)] text-[var(--g-muted)]">
+                      <Lock className="w-3.5 h-3.5" /> Seviye {MANAGER_MIN_SHOP_LEVEL}
+                    </span>
+                  ) : null}
+                </div>
+
+                {mgr ? (
+                  <>
+                    <div className="g-hero p-4 space-y-2">
+                      <div className="g-hero-label">Müdürün sana gönderdiği kâr</div>
+                      <div className="g-hero-value text-[32px]">{formatCurrency(mgr.totalSweptToPlayer)}</div>
+                      <div className="text-[13px] font-bold text-white/70">Son gün: {mgr.lastActionTR}</div>
+                    </div>
+                    {mgr.lowCash && (
+                      <div className="g-tip">Kasa boş, müdür mal alamıyor. Kasaya para koy.</div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 text-center tabular-nums">
+                      <div className="g-card-soft p-2.5">
+                        <div className="text-[13px] font-bold text-[var(--g-muted)]">Sabit maaş</div>
+                        <div className="font-extrabold">{formatCurrency(mgr.dailyWage)}/gün</div>
+                      </div>
+                      <div className="g-card-soft p-2.5">
+                        <div className="text-[13px] font-bold text-[var(--g-muted)]">Bugünkü prim</div>
+                        <div className="font-extrabold">{formatCurrency(mgr.todayBonus ?? 0)}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        data-testid="shop-manager-sweep-toggle"
+                        data-active={mgr.sweepProfits ? 'true' : 'false'}
+                        onClick={() => onSetShopManagerSweep?.(activeShop.shopId, !mgr.sweepProfits)}
+                        className="g-choice px-2 text-sm"
+                      >
+                        {mgr.sweepProfits ? 'Kârı bana gönderiyor' : 'Kâr kasada birikiyor'}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="shop-manager-fire-btn"
+                        onClick={() => onFireShopManager?.(activeShop.shopId)}
+                        className="g-btn g-btn-secondary text-sm"
+                      >
+                        Görevden al
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-[var(--g-muted)] leading-snug">
+                      Müdür rafları dükkân kasasıyla kendisi doldurur, biriken kârı sana gönderir. Sen uğraşmazsın, biraz daha az kazanırsın.
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
+                      <div className="g-card-soft p-2.5">
+                        <div className="text-[13px] font-bold text-[var(--g-muted)]">Maaş</div>
+                        <div className="font-extrabold text-sm">{formatCurrency(mq.dailyWage)}/gün</div>
+                      </div>
+                      <div className="g-card-soft p-2.5">
+                        <div className="text-[13px] font-bold text-[var(--g-muted)]">Prim</div>
+                        <div className="font-extrabold text-sm">Kârın %{Math.round(MANAGER_PROFIT_SHARE * 100)}'i</div>
+                      </div>
+                      <div className="g-card-soft p-2.5">
+                        <div className="text-[13px] font-bold text-[var(--g-muted)]">Başlarken</div>
+                        <div className="font-extrabold text-sm">{formatCurrency(mq.hireFee + mq.topUp)}</div>
+                      </div>
+                    </div>
+                    {mq.topUp > 0 && (
+                      <div className="text-[13px] font-semibold text-[var(--g-muted)] text-center">
+                        İşe alma {formatCurrency(mq.hireFee)} + kasaya işletme parası {formatCurrency(mq.topUp)}
+                      </div>
+                    )}
+                    {activeShop.level < MANAGER_MIN_SHOP_LEVEL ? (
+                      <button
+                        type="button"
+                        onClick={() => setShopActionTab('UPGRADE_SHOP')}
+                        className="g-btn g-btn-navy w-full"
+                      >
+                        Önce dükkânı {MANAGER_MIN_SHOP_LEVEL}. seviyeye yükselt
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        data-testid="shop-manager-hire-btn"
+                        disabled={!mq.allowed || !onHireShopManager}
+                        onClick={() => onHireShopManager?.(activeShop.shopId)}
+                        className="g-btn g-btn-gold w-full"
+                      >
+                        {mq.allowed ? 'Müdür tut' : mq.reasonTR}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {shopActionTab === 'MANAGE_STAFF' && activeShop && (
             <div

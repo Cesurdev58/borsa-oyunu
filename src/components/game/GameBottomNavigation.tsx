@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Briefcase, Building2, CandlestickChart, Newspaper, Store } from 'lucide-react';
+import { BookOpen, Briefcase, Building2, CandlestickChart, Newspaper, Store } from 'lucide-react';
 import { GameBottomTab } from './gameTypes';
 
 interface GameBottomNavigationProps {
@@ -13,6 +13,8 @@ interface GameBottomNavigationProps {
   openOrdersCount: number;
   portfolioPositionsCount: number;
   hasPlayerCompany: boolean;
+  /** "Nasıl oynanır?" rehberini açar (sekme değil, pencere) */
+  onOpenGuide?: () => void;
 }
 
 export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
@@ -23,6 +25,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
       openOrdersCount,
       portfolioPositionsCount,
       hasPlayerCompany,
+      onOpenGuide,
     }) => {
       const tabs: Array<{
         id: GameBottomTab;
@@ -53,7 +56,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
             boxShadow: '0 -8px 24px -12px rgba(18,28,68,.55)',
           }}
         >
-          <div className="max-w-5xl mx-auto grid grid-cols-5 gap-1">
+          <div className={`max-w-5xl mx-auto grid ${onOpenGuide ? 'grid-cols-6' : 'grid-cols-5'} gap-0.5`}>
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               const { Icon } = tab;
@@ -101,6 +104,21 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                 </button>
               );
             })}
+            {onOpenGuide && (
+              <button
+                type="button"
+                data-testid="bottom-nav-guide"
+                onClick={onOpenGuide}
+                className="relative min-h-[58px] min-w-[44px] py-1 flex flex-col items-center justify-center"
+              >
+                <span className="w-11 h-9 rounded-xl flex items-center justify-center" style={{ color: 'rgba(255,255,255,.6)' }}>
+                  <BookOpen className="w-5 h-5" strokeWidth={2.1} />
+                </span>
+                <span className="text-[13px] leading-tight mt-1 truncate max-w-full text-white/60 font-bold">
+                  Rehber
+                </span>
+              </button>
+            )}
           </div>
         </nav>
       );

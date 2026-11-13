@@ -7,6 +7,8 @@
 
 import { NumberInput } from '../ui/NumberInput';
 import { HelpTip } from '../ui/HelpTip';
+import { SectorIcon, sectorLabel } from '../ui/SectorIcon';
+import { SECTOR_GUIDE, SECTOR_GUIDE_ORDER } from '../../../data/sectorGuide';
 import { effectiveCorporateTaxRate } from '../../../engine/TaxRules';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 import React, {
@@ -176,29 +178,120 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   }
 
   if (!pc) {
+    const guide = SECTOR_GUIDE[compSector];
+    const dots = (n: number, color: string) => (
+      <span className="flex gap-1" aria-label={`${n}/3`}>
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="w-3 h-3 rounded-full"
+            style={{ background: i <= n ? color : 'rgba(17,26,51,.12)' }}
+          />
+        ))}
+      </span>
+    );
+    const difficultyColor = (d: string) =>
+      d === 'Kolay'
+        ? 'bg-[var(--g-green)] text-white'
+        : d === 'Orta'
+        ? 'bg-[var(--g-gold)] text-[#3a2600]'
+        : 'bg-[var(--g-red)] text-white';
     return (
       <div
         className="space-y-4 text-xs"
         data-testid="sheet-content-SIRKET_MERKEZI-founding"
       >
-        <div className="p-3.5 g-card-soft space-y-3">
-          <h3 className="text-sm font-bold text-teal-950">
-            Kendi şirketini kur!
-          </h3>
+        <div className="g-hero p-5 space-y-1">
+          <div className="g-hero-label">Kendi şirketini kur</div>
+          <div className="g-display text-2xl font-extrabold text-white">1. Sektörünü seç</div>
+          <p className="text-[13px] text-white/75 font-semibold">
+            Sektör, şirketinin ne kadar hızlı büyüyeceğini, ne kadar kazanabileceğini ve rakiplerini belirler.
+            Sonradan değiştirilemez.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2" data-testid="company-sector-picker">
+          {SECTOR_GUIDE_ORDER.map((sid) => {
+            const g = SECTOR_GUIDE[sid];
+            const active = sid === compSector;
+            return (
+              <button
+                key={sid}
+                type="button"
+                data-testid={`company-sector-choice-${sid}`}
+                data-active={active ? 'true' : 'false'}
+                onClick={() => setCompSector(sid)}
+                className="g-choice p-3 text-left flex items-center gap-2.5 min-h-[64px]"
+              >
+                <SectorIcon sector={sid} size="md" />
+                <span className="min-w-0">
+                  <span className="block font-extrabold text-[var(--g-ink)] text-sm truncate">
+                    {sectorLabel(sid)}
+                  </span>
+                  <span
+                    className={`inline-block mt-0.5 px-2 rounded-full text-[13px] font-extrabold ${difficultyColor(g.difficulty)}`}
+                  >
+                    {g.difficulty}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="g-card p-4 space-y-3" data-testid="company-sector-detail">
+          <div className="flex items-center gap-2.5">
+            <SectorIcon sector={compSector} size="lg" />
+            <div>
+              <div className="g-display text-lg font-extrabold text-[var(--g-ink)]">
+                {sectorLabel(compSector)}
+              </div>
+              <div className="text-[13px] text-[var(--g-muted)] font-semibold">
+                {SECTOR_CONFIGS[compSector].name}
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-[var(--g-ink)]">{guide.pitchTR}</p>
+          <div className="space-y-2 text-sm font-bold text-[var(--g-ink)]">
+            <div className="flex items-center justify-between">
+              <span>Büyüme hızı</span>
+              {dots(guide.growth, 'var(--g-green)')}
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Kâr tavanı</span>
+              {dots(guide.ceiling, 'var(--g-gold)')}
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Rakip almak kolay</span>
+              {dots(guide.rivalEase, 'var(--g-navy-600)')}
+            </div>
+          </div>
+          <div className="rounded-xl p-3 bg-[rgba(39,174,96,.10)] text-sm">
+            <span className="font-extrabold text-[var(--g-green-dark)]">Artısı: </span>
+            {guide.plusTR}
+          </div>
+          <div className="rounded-xl p-3 bg-[rgba(231,76,60,.10)] text-sm">
+            <span className="font-extrabold text-[var(--g-red)]">Dikkat: </span>
+            {guide.minusTR}
+          </div>
+        </div>
+
+        <div className="g-card p-4 space-y-3">
+          <div className="g-section-title">2. Adını ve sermayesini belirle</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                 Şirketin adı
               </label>
               <input
                 type="text"
                 value={compName}
                 onChange={(e) => setCompName(e.target.value)}
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 text-slate-900"
+                className="g-input w-full min-h-[48px]"
               />
             </div>
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                 Borsa kodu (3-4 harf)
               </label>
               <input
@@ -206,40 +299,26 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 maxLength={5}
                 value={compTicker}
                 onChange={(e) => setCompTicker(e.target.value.toUpperCase())}
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900"
+                className="g-input w-full min-h-[48px] tabular-nums"
               />
             </div>
-            <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
-                Sektör
-              </label>
-              <select
-                value={compSector}
-                onChange={(e) => setCompSector(e.target.value as SectorId)}
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 text-slate-900"
-              >
-                {(Object.keys(SECTOR_CONFIGS) as SectorId[]).map((s) => (
-                  <option key={s} value={s}>
-                    {SECTOR_CONFIGS[s].name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+            <div className="sm:col-span-2">
+              <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                 Kasaya koyacağın para (en az 400.000 TL)
               </label>
               <NumberInput
-                
                 min={400_000}
                 step={50_000}
                 value={compCapital}
                 onChange={(e) =>
                   setCompCapital(Math.max(400_000, Number(e.target.value) || 400_000))
                 }
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900"
+                className="g-input w-full min-h-[48px] tabular-nums"
               />
             </div>
+          </div>
+          <div className="g-tip">
+            Kasaya koyduğun para fabrikayı büyütmeye ve maaşlara gider. Fazlasını sonra temettüyle geri çekebilirsin.
           </div>
 
           <button
@@ -258,9 +337,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 }
               )
             }
-            className="g-btn g-btn-primary w-full"
+            className="g-btn g-btn-primary w-full min-h-[56px]"
           >
-            Şirketi Kur ({formatCurrency(compCapital)})
+            {sectorLabel(compSector)} şirketini kur ({formatCurrency(compCapital)})
           </button>
         </div>
       </div>

@@ -63,7 +63,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
     {
       emoji: '🛒',
       title: 'Rafları dolu tut',
-      text: 'Dükkânda "Rafları doldur" düğmesine basman yeter. Raflar boşalırsa satış durur. Hazırsan başlayalım!',
+      text: 'Dükkânda "Rafları doldur" düğmesine basman yeter. Raflar boşalırsa satış durur. Takılırsan alt menüdeki Rehber\'e bak. Hazırsan başlayalım!',
     },
   ];
   const last = step === steps.length - 1;

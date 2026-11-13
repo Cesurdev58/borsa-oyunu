@@ -85,8 +85,9 @@ export const SECTOR_CONFIGS: Record<SectorId, SectorMetadata> = {
     baseVolatility: 0.21,
     baseDrift: 0.15,
     unitPrice: 195,
-    unitCost: 108,
-    dailyStaffWage: 1450,
+    // Eskiden 108 / 1450: ince marj işçiliği karşılamıyor, perakende şirketi hiç kâra geçemiyordu
+    unitCost: 95,
+    dailyStaffWage: 1000,
     unitCapacityCost: 520,
     macroBeta: 0.9,
   },

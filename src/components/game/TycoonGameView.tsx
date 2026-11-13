@@ -45,6 +45,7 @@ import {
 import { CityQuestStrip } from './CityQuestStrip';
 import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
+import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
 import { DecisionCard } from './DecisionCard';
 import { play, setFeedbackSettings, vibrate } from './ui/feedback';
@@ -138,6 +139,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   formatCurrency,
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
   const [selectedBuildingId, setSelectedBuildingId] =
@@ -561,6 +563,15 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         openOrdersCount={activePendingOrders.length}
         portfolioPositionsCount={portfolioPositionsCount}
         hasPlayerCompany={state.playerCompany !== null}
+        onOpenGuide={() => setIsGuideOpen(true)}
+      />
+
+      <HowToPlayModal
+        open={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onGoTab={setActiveBottomTab}
+        onOpenBuilding={handleOpenBuildingDetailSheet}
+        formatCurrency={formatCurrency}
       />
 
       {/* 5. BİNA YÖNETİM PANELİ (Bottom Sheet / Modal) */}

@@ -86,6 +86,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       points: [
         'Bir hisseye dokun, kaç adet (lot) alacağını − / + ile seç, sonra AL ya da SAT de.',
         'Borsa her gün 10:00–18:00 arası açıktır. Kapalıyken verdiğin emir borsa açılınca gerçekleşir.',
+        '"Hedef emir" kutusunda bir fiyat yazarsan, hisse o fiyata gelince kendiliğinden alınır ya da satılır.',
+        '"Varlıklarım" kutusu toplam paranı ve hangi hissede ne kazandığını, "İşlem geçmişi" yaptığın her alım-satımı gösterir.',
         'Fiyatlar haberlerle oynar. Haberler sekmesinde her haberin hangi hisseyi "yükselttiği" ya da "düşürdüğü" yazar.',
         'Bazı şirketler temettü öder: hissen varsa 10 günde bir hesabına para gelir.',
         'Paranı tek hisseye yatırma; farklı sektörlere dağıtırsan bir düşüş seni batırmaz.',

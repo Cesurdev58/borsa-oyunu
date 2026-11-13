@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Award, CheckCircle2, ChevronRight, X } from 'lucide-react';
 import { SimulationState } from '../../models/simulation';
 import { CityBuildingId } from './gameTypes';
@@ -25,8 +25,8 @@ interface CityQuestStripProps {
  * - Aynı anda yalnızca 1 aktif görev gösterir.
  * - Ödüller yalnızca itibar puanı, profil rozeti ve kozmetik şehir unvanıdır; ekonomik nakit dengesini bozmaz.
  */
-export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
-  ({
+export const CityQuestStrip: React.FC<CityQuestStripProps> = (
+  {
     questModel,
     state,
     hasOpenedBorsaBuilding = false,
@@ -35,13 +35,13 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
   }) => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-    const resolvedModel = useMemo(() => {
-      if (questModel) return questModel;
-      if (state) {
-        return deriveCityQuestStripModel(state, hasOpenedBorsaBuilding);
-      }
-      return null;
-    }, [questModel, state, hasOpenedBorsaBuilding]);
+    // Motor durumu yerinde değiştirir (aynı nesne), bu yüzden burada önbellek tutulmaz;
+    // hesap ucuzdur ve her çizimde güncel hedefi verir.
+    const resolvedModel = questModel
+      ? questModel
+      : state
+      ? deriveCityQuestStripModel(state, hasOpenedBorsaBuilding)
+      : null;
 
     if (!resolvedModel) return null;
 
@@ -216,5 +216,4 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = React.memo(
         )}
       </>
     );
-  }
-);
+  };

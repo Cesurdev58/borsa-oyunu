@@ -572,14 +572,14 @@ export default function App() {
       if (!res.success) {
         pushNotification({
           category: 'ORDER_CANCELLED',
-          title: 'Emir Reddedildi',
+          title: 'Emir verilemedi',
           message: res.message,
           severity: 'error',
         });
       } else if (res.order && res.order.status === 'PENDING') {
         pushNotification({
           category: 'ORDER_PARTIAL',
-          title: `Emir Kuyruğa Alındı (${res.order.ticker})`,
+          title: res.order.limitPrice ? `Hedef emir bekliyor (${res.order.ticker})` : `Emir sıraya girdi (${res.order.ticker})`,
           message: res.message,
           severity: 'info',
         });

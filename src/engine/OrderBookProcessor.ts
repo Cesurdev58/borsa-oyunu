@@ -169,14 +169,20 @@ export function placeOrder(engine: SimulationEngine, params: {
       engine.processPendingOrders();
     }
 
-    const statusText =
-      order.status === 'FILLED'
-        ? `hemen gerçekleşti (@ ${order.averageExecutionPrice.toFixed(2)} TL)`
-        : `kuyruğa alındı (${GameClockEngine.getMarketSessionLabelTR(engine.state.marketSession)})`;
+    const sideText = side === 'BUY' ? 'alış' : 'satış';
+    const lotText = `${ticker} · ${requestedShares.toLocaleString('tr-TR')} lot ${sideText}`;
+    let message: string;
+    if (order.status === 'FILLED') {
+      message = `${lotText} hemen gerçekleşti (${order.averageExecutionPrice.toFixed(2)} ₺).`;
+    } else if (isLimit) {
+      message = `${lotText}: fiyat ${limitPrice!.toFixed(2)} ₺ olunca kendiliğinden yapılacak.`;
+    } else {
+      message = `${lotText}: borsa kapalı, 10:00'da açılınca yapılacak.`;
+    }
 
     return {
       success: true,
-      message: `${ticker} için ${requestedShares.toLocaleString('tr-TR')} lot ${orderType} emri ${statusText}.`,
+      message,
       order,
     };
   }

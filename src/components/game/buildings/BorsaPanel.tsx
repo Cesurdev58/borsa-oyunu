@@ -18,6 +18,8 @@ import {
   SectorId,
 } from '../../../models/market';
 import { SectorIcon, sectorLabel } from '../ui/SectorIcon';
+import { History, ListChecks, Wallet } from 'lucide-react';
+import { AssetsSection, HistorySection, OrdersSection } from './InvestorSections';
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
@@ -33,25 +35,26 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   spendableCash,
   reservedCash,
   getReservedShares,
-  formattedTime,
   formatCurrency,
 }) => {
   const [sectorFilter, setSectorFilter] = useState<SectorId | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [lotAmount, setLotAmount] = useState<number>(50);
-  const [orderMode, setOrderMode] = useState<'LIMIT' | 'MARKET'>('LIMIT');
-  const [limitPriceInput, setLimitPriceInput] = useState<number>(124.5);
-  const [advanced, setAdvanced] = useState(false);
+  const [section, setSection] = useState<'NONE' | 'ASSETS' | 'HISTORY' | 'ORDERS'>('NONE');
   const [tradeNote, setTradeNote] = useState<string | null>(null);
 
   const selectedStock =
     state.stocks.find((s) => s.ticker === selectedTicker) || state.stocks[0];
 
   useEffect(() => {
-    if (selectedStock) {
-      setLimitPriceInput(Number(selectedStock.askPrice.toFixed(2)));
-    }
+    setTradeNote(null);
   }, [selectedStock?.ticker]);
+
+  const toggleSection = (id: 'ASSETS' | 'HISTORY' | 'ORDERS') =>
+    setSection((cur) => (cur === id ? 'NONE' : id));
+  const openOrderCount = state.pendingOrders.filter(
+    (o) => o.status === 'PENDING' || o.status === 'PARTIALLY_FILLED'
+  ).length;
 
   // 1. BORSA BİNASI
 
@@ -73,13 +76,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
     MarketEngine.maxMarketBuyableShares(selectedStock, ownedShares),
     Math.max(
       0,
-      Math.floor(
-        spendableCash /
-          ((orderMode === 'LIMIT' && limitPriceInput > 0
-            ? limitPriceInput
-            : selectedStock.askPrice) *
-            1.002)
-      )
+      Math.floor(spendableCash / (selectedStock.askPrice * 1.002))
     )
   );
 
@@ -144,6 +141,90 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
 
       </div>
 
+      {/* Varlıklarım · İşlem geçmişi · Bekleyen emirler */}
+      <div className="grid grid-cols-3 gap-2" data-testid="borsa-tools-strip">
+        {(
+          [
+            {
+              id: 'ASSETS',
+              testId: 'assets-toggle',
+              icon: Wallet,
+              label: 'Varlıklarım',
+              sub: formatCurrency(state.netWorth),
+            },
+            {
+              id: 'HISTORY',
+              testId: 'borsa-history-toggle',
+              icon: History,
+              label: 'İşlemlerim',
+              sub: `${state.transactions.length} işlem`,
+            },
+            {
+              id: 'ORDERS',
+              testId: 'tycoon-advanced-toggle',
+              icon: ListChecks,
+              label: 'Hedef emir',
+              sub: openOrderCount > 0 ? `${openOrderCount} bekliyor` : 'Fiyat belirle',
+            },
+          ] as const
+        ).map((t) => {
+          const active = section === t.id;
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              data-testid={t.testId}
+              data-active={active ? 'true' : 'false'}
+              onClick={() => toggleSection(t.id)}
+              className={`relative g-card p-2.5 min-h-[84px] flex flex-col items-center justify-center gap-1 text-center active:scale-[0.98] border-2 ${
+                active ? 'border-[var(--g-navy-400)] bg-[#eef1fb]' : 'border-transparent'
+              }`}
+            >
+              <Icon size={22} className="text-[var(--g-navy-600)]" />
+              <span className="text-[13px] font-extrabold text-[var(--g-ink)] leading-tight">
+                {t.label}
+              </span>
+              <span className="text-[13px] text-[var(--g-muted)] leading-tight tabular-nums truncate max-w-full">
+                {t.sub}
+              </span>
+              {t.id === 'ORDERS' && openOrderCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-[var(--g-gold)] text-[#3a2600] text-[13px] font-extrabold flex items-center justify-center">
+                  {openOrderCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={section === 'ASSETS' ? 'g-rise' : 'hidden'}>
+        <AssetsSection
+          state={state}
+          formatCurrency={formatCurrency}
+          onSelectTicker={(t) => {
+            onSelectTicker(t);
+            setSection('NONE');
+          }}
+        />
+      </div>
+      <div className={section === 'HISTORY' ? 'g-rise' : 'hidden'}>
+        <HistorySection state={state} formatCurrency={formatCurrency} />
+      </div>
+      <div className={section === 'ORDERS' ? 'g-rise' : 'hidden'}>
+        <OrdersSection
+          state={state}
+          ticker={selectedStock.ticker}
+          formatCurrency={formatCurrency}
+          onSelectTicker={onSelectTicker}
+          onPlaceOrder={onPlaceOrder}
+          onCancelOrder={onCancelOrder}
+          spendableCash={spendableCash}
+          reservedCash={reservedCash}
+          getReservedShares={getReservedShares}
+        />
+      </div>
+
       {/* Hızlı al/sat kartı */}
       <div className="g-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
@@ -163,7 +244,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               <span className="whitespace-nowrap">{selectedStock.price.toFixed(2)} ₺</span>
             </div>
             <div className="text-[13px] text-slate-500">
-              {ownedShares > 0 ? `Sende ${ownedShares} lot var` : 'Sende yok'}
+              {ownedShares > 0 ? `Sende ${ownedShares} lot` : 'Sende yok'}
             </div>
           </div>
         </div>
@@ -203,13 +284,16 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-5 gap-1.5" data-testid="tycoon-lot-presets">
           {[10, 50, 100].map((n) => (
             <button
               key={n}
               type="button"
+              data-testid={`tycoon-lot-preset-${n}`}
               onClick={() => setLotAmount(n)}
-              className="g-btn g-btn-secondary flex-1"
+              className={`g-choice min-h-[48px] text-sm font-extrabold tabular-nums ${
+                lotAmount === n ? 'is-active' : ''
+              }`}
             >
               {n}
             </button>
@@ -217,8 +301,11 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <button
             type="button"
             data-testid="tycoon-lot-max-buy-btn"
+            disabled={maxAffordableLots <= 0}
             onClick={() => setLotAmount(Math.max(1, maxAffordableLots))}
-            className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-emerald-100 text-emerald-800 text-sm font-extrabold active:scale-95"
+            className={`g-choice min-h-[48px] px-1 text-[13px] font-extrabold leading-tight text-[var(--g-green-dark)] disabled:opacity-40 ${
+              maxAffordableLots > 0 && lotAmount === maxAffordableLots ? 'is-active' : ''
+            }`}
           >
             Hepsini al
           </button>
@@ -227,7 +314,9 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             data-testid="tycoon-lot-max-sell-btn"
             disabled={availableSharesToSell <= 0}
             onClick={() => setLotAmount(Math.max(1, availableSharesToSell))}
-            className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-rose-100 text-rose-800 disabled:bg-slate-100 disabled:text-slate-400 text-sm font-extrabold active:scale-95"
+            className={`g-choice min-h-[48px] px-1 text-[13px] font-extrabold leading-tight text-[var(--g-red)] disabled:opacity-40 ${
+              availableSharesToSell > 0 && lotAmount === availableSharesToSell ? 'is-active' : ''
+            }`}
           >
             Hepsini sat
           </button>
@@ -339,306 +428,6 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           })}
         </div>
       </div>
-
-      <button
-        type="button"
-        data-testid="tycoon-advanced-toggle"
-        onClick={() => setAdvanced((v) => !v)}
-        className="g-btn g-btn-secondary w-full"
-      >
-        {advanced ? '▲ Gelişmiş emirleri gizle' : '▼ Gelişmiş emirler (limit emri, emir defteri)'}
-      </button>
-      {advanced && (
-        <div className="space-y-4">
-      {/* Seçili Hisse Emir Verme Kartı */}
-      <div className="p-3.5 g-card-soft space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900 tabular-nums">
-                {selectedStock.ticker}
-              </span>
-              <span className="text-[13px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-semibold">
-                {selectedStock.sector}
-              </span>
-            </div>
-            <div className="text-[13px] text-slate-600 truncate">
-              {selectedStock.name}
-            </div>
-          </div>
-          <div className="text-right tabular-nums tabular-nums">
-            <div className="text-sm font-bold text-slate-900">
-              {selectedStock.price.toFixed(2)} TL
-            </div>
-            <div className="text-[13px] text-slate-500">
-              Alış: {selectedStock.bidPrice.toFixed(2)} · Satış:{' '}
-              {selectedStock.askPrice.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        {/* Emir Modu Seçimi (Limit vs Piyasa) */}
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-slate-200">
-          <button
-            type="button"
-            data-testid="tycoon-order-mode-limit"
-            onClick={() => setOrderMode('LIMIT')}
-            className={`min-h-[40px] rounded-lg font-semibold transition-colors ${
-              orderMode === 'LIMIT'
-                ? 'g-choice is-active'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            Limit Emir
-          </button>
-          <button
-            type="button"
-            data-testid="tycoon-order-mode-market"
-            onClick={() => setOrderMode('MARKET')}
-            className={`min-h-[40px] rounded-lg font-semibold transition-colors ${
-              orderMode === 'MARKET'
-                ? 'g-choice is-active'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            Piyasa Emri
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label
-              htmlFor="tycoon-lot-input"
-              className="block text-[13px] font-semibold text-slate-700 mb-1"
-            >
-              Miktar (Lot) · Maks: {maxAffordableLots}
-            </label>
-            <NumberInput
-              id="tycoon-lot-input"
-              data-testid="tycoon-lot-input"
-              
-              min={1}
-              step={1}
-              value={lotAmount}
-              onChange={(e) =>
-                setLotAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
-              }
-              className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900 text-xs"
-            />
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {[10, 50, 100, 250].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setLotAmount(preset)}
-                  className="min-h-[32px] px-2 py-1 rounded-lg bg-white border border-slate-200 text-[13px] tabular-nums text-slate-700 hover:bg-slate-100"
-                >
-                  {preset} Lot
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  setLotAmount(Math.max(1, maxAffordableLots))
-                }
-                className="min-h-[32px] px-2 py-1 rounded-lg bg-emerald-100 text-emerald-900 text-[13px] font-semibold"
-              >
-                Maks Al
-              </button>
-            </div>
-          </div>
-
-          {orderMode === 'LIMIT' ? (
-            <div>
-              <label
-                htmlFor="tycoon-limit-price-input"
-                className="block text-[13px] font-semibold text-slate-700 mb-1"
-              >
-                Limit Fiyatı (TL)
-              </label>
-              <NumberInput
-                id="tycoon-limit-price-input"
-                data-testid="tycoon-limit-price-input"
-                
-                min={0.1}
-                step={0.1}
-                value={limitPriceInput}
-                onChange={(e) =>
-                  setLimitPriceInput(
-                    Math.max(0.1, Number(e.target.value) || 0.1)
-                  )
-                }
-                className="w-full min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 tabular-nums text-slate-900 text-xs"
-              />
-              <div className="text-[13px] text-slate-500 mt-1.5">
-                Portföyde kullanılabilir: {availableSharesToSell} lot (Bloke:{' '}
-                {reservedShares})
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-[13px] text-slate-600">
-              <div>
-                Piyasa açıkken anında aktif fiyattan gerçekleşir; kapalıyken saat
-                10:00 açılışını bekler.
-              </div>
-              <div className="mt-1 tabular-nums text-slate-800">
-                Mevcut Lot: {availableSharesToSell} lot
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Emir Aksiyon Butonları */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            data-testid="tycoon-place-buy-order-btn"
-            onClick={() =>
-              onPlaceOrder({
-                ticker: selectedStock.ticker,
-                orderType:
-                  orderMode === 'LIMIT' ? 'LIMIT_BUY' : 'MARKET_BUY',
-                requestedShares: lotAmount,
-                limitPrice:
-                  orderMode === 'LIMIT' ? limitPriceInput : undefined,
-              })
-            }
-            className="g-btn g-btn-primary px-3"
-          >
-            {orderMode === 'LIMIT' ? 'Limit Alış Emri Ver' : 'Piyasa Alış Emri Ver'} (
-            {selectedStock.ticker})
-          </button>
-
-          <button
-            type="button"
-            data-testid="tycoon-place-sell-order-btn"
-            disabled={availableSharesToSell <= 0}
-            onClick={() =>
-              onPlaceOrder({
-                ticker: selectedStock.ticker,
-                orderType:
-                  orderMode === 'LIMIT' ? 'LIMIT_SELL' : 'MARKET_SELL',
-                requestedShares: Math.min(lotAmount, availableSharesToSell),
-                limitPrice:
-                  orderMode === 'LIMIT' ? limitPriceInput : undefined,
-              })
-            }
-            className="g-btn g-btn-danger px-3"
-          >
-            {orderMode === 'LIMIT'
-              ? 'Limit Satış Emri Ver'
-              : 'Piyasa Satış Emri Ver'}{' '}
-            ({selectedStock.ticker})
-          </button>
-        </div>
-
-        {/* Hızlı Doğrudan Al / Sat Butonları */}
-        <div className="pt-2 border-t border-emerald-200/70 flex items-center justify-between gap-2">
-          <span className="text-[13px] text-slate-600">
-            Anında Doğrudan İşlem:
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => onBuyStock(selectedStock.ticker, lotAmount)}
-              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold text-[13px]"
-            >
-              Anında Al ({lotAmount} Lot)
-            </button>
-            <button
-              type="button"
-              disabled={availableSharesToSell <= 0}
-              onClick={() =>
-                onSellStock(
-                  selectedStock.ticker,
-                  Math.min(lotAmount, availableSharesToSell)
-                )
-              }
-              className="min-h-[38px] px-3 py-1 rounded-lg bg-white hover:bg-rose-50 disabled:opacity-50 text-rose-800 border border-rose-300 font-semibold text-[13px]"
-            >
-              Anında Sat
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Açık ve Gerçekleşen Emirler Listesi */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-900">
-            Emir Defteri ({state.pendingOrders.length})
-          </h3>
-          <span className="text-[13px] tabular-nums text-slate-500">
-            Bloke Nakit: {formatCurrency(reservedCash)}
-          </span>
-        </div>
-
-        {state.pendingOrders.length === 0 ? (
-          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-center">
-            Henüz oluşturulmuş bir emir bulunmuyor.
-          </div>
-        ) : (
-          <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {state.pendingOrders.slice(0, 15).map((ord) => (
-              <div
-                key={ord.id}
-                data-testid={`tycoon-order-row-${ord.id}`}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="tabular-nums font-bold text-slate-900">
-                      {ord.ticker}
-                    </span>
-                    <span className="text-[13px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 tabular-nums">
-                      {ord.orderType}
-                    </span>
-                    <span
-                      data-testid={`tycoon-order-status-${ord.id}`}
-                      className={`text-[13px] font-bold px-1.5 py-0.5 rounded ${
-                        ord.status === 'FILLED'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : ord.status === 'PENDING' ||
-                            ord.status === 'PARTIALLY_FILLED'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {ord.status}
-                    </span>
-                  </div>
-                  <div className="text-[13px] text-slate-600 tabular-nums mt-0.5">
-                    {ord.requestedShares} lot
-                    {ord.limitPrice
-                      ? ` · Limit: ${ord.limitPrice.toFixed(2)} TL`
-                      : ''}
-                    {ord.averageExecutionPrice > 0
-                      ? ` · Gerç: ${ord.averageExecutionPrice.toFixed(2)} TL`
-                      : ''}
-                    {ord.reservedCash > 0
-                      ? ` · Rezerv: ${formatCurrency(ord.reservedCash)}`
-                      : ''}
-                  </div>
-                </div>
-
-                {(ord.status === 'PENDING' ||
-                  ord.status === 'PARTIALLY_FILLED') && (
-                  <button
-                    type="button"
-                    onClick={() => onCancelOrder(ord.id)}
-                    className="min-h-[38px] px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[13px] shrink-0"
-                  >
-                    İptal Et
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-        </div>
-      )}
 
     </div>
   );

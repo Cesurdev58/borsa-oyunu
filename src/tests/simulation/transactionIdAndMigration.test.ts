@@ -305,7 +305,7 @@ test('11, 12, 13. Pending order ID\'leri ve Notification ID\'leri benzersiz kal�
     const state = engine.getState();
     const sheetHtml = renderToStaticMarkup(
       React.createElement(BuildingDetailSheet, {
-        buildingId: 'OYUNCU_OFISI',
+        buildingId: 'BORSA',
         state,
         onClose: () => {},
         onOpenBuilding: () => {},
@@ -328,7 +328,8 @@ test('11, 12, 13. Pending order ID\'leri ve Notification ID\'leri benzersiz kal�
         formatCurrency: formatCurrencyTR,
       })
     );
-    assert.ok(sheetHtml.includes('Son İşlem Geçmişi'));
+    assert.ok(sheetHtml.includes('data-testid="borsa-history-section"'));
+    assert.ok(sheetHtml.includes('İşlem geçmişim'));
 
     const mockNotifications: GameNotificationItem[] = Array.from(
       { length: 30 },

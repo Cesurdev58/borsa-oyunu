@@ -9,6 +9,8 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
+import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as ShopManager from './ShopManager';
 import {
@@ -296,6 +298,14 @@ export class SimulationEngine {
   public state: SimulationState;
   public rng: RandomEngine;
   public pendingDailyActions: string[] = [];
+  /** Kayıt yeni dengeye taşınırken oyuncuya bir kez gösterilecek notlar */
+  public migrationNotices: string[] = [];
+
+  public consumeMigrationNotices(): string[] {
+    const out = this.migrationNotices;
+    this.migrationNotices = [];
+    return out;
+  }
   public maxProcessedOfflineTimestampMs: number = 0;
   public intradayTracking = {
     ordersExecuted: 0,
@@ -426,6 +436,7 @@ export class SimulationEngine {
       netWorthHistory: [cleanInitialCash],
       macro,
       stocks: initialStocks,
+      balanceVersion: CURRENT_BALANCE_VERSION,
       portfolio: {},
       pendingOrders: [],
       playerCompany: null,
@@ -698,6 +709,9 @@ export class SimulationEngine {
           : Math.max(0, day - 1),
       lastFinancialIntegrityReport: cloned.lastFinancialIntegrityReport ?? null,
       tradeState: cloned.tradeState,
+      decisionEvents: cloned.decisionEvents,
+      wealthTax: cloned.wealthTax,
+      balanceVersion: cloned.balanceVersion,
     };
 
     const parsedLastTs = Date.parse(restored.lastRealTimestampISO);
@@ -714,6 +728,11 @@ export class SimulationEngine {
 
     this.state = restored;
     TradeAndShopEngine.ensureTradeUniverseState(this.state);
+    // Eski kayıtları yeni geç oyun dengesine taşı (bir kez)
+    for (const msg of migrateBalance(this.state)) {
+      this.pendingDailyActions.push(`[Denge] ${msg}`);
+      this.migrationNotices.push(msg);
+    }
     this.recalculateFinancialsAndStages();
   }
 
@@ -934,6 +953,7 @@ export class SimulationEngine {
     }
 
     // 4. Oyuncu Şirketi Gün İçi Operasyonları (Üretim, Satış, Personel, Ar-Ge, Pazarlama)
+    SectorMarket.refreshPlayerMarketContext(this.state);
     if (this.state.playerCompany) {
       const pc = this.state.playerCompany;
       const sectorStocks = this.state.stocks.filter(

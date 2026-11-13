@@ -10,6 +10,7 @@
  * - İştirak değerinin ve nakit akışının iki kez sayılmasını önleyen konsolidasyon kuralları.
  */
 
+import { HOLDING_PAYOUT_RATIO } from '../data/gameBalance';
 import { MacroEconomyState } from '../models/economy';
 import { MarketStock } from '../models/market';
 import { PortfolioPosition } from '../models/player';
@@ -18,6 +19,29 @@ import { MarketEngine } from './MarketEngine';
 import { RandomEngine } from './RandomEngine';
 
 export class MergerAcquisitionEngine {
+  /**
+   * Arayüz için devralma bedeli tahmini (%51 için). Rakip teklif şansı hariçtir, gerçek bedel biraz yüksek çıkabilir.
+   */
+  public static estimateTakeover(stock: MarketStock, ownedShares: number): {
+    estimatedCost: number;
+    premiumPct: number;
+    dailyPayout: number;
+  } {
+    const prevPct = (ownedShares / Math.max(1, stock.totalShares)) * 100;
+    const targetShares = Math.floor(stock.totalShares * 0.51) + 1;
+    const needed = Math.max(0, targetShares - ownedShares);
+    const premium =
+      0.2 + 0.08 * Math.max(0, stock.sentimentScore * 10) + (prevPct < 10 ? 0.06 : 0);
+    const cost = needed * stock.askPrice * (1 + premium) * 1.018;
+    const dailyPayout =
+      Math.max(0, stock.financials.netIncome / 120) * HOLDING_PAYOUT_RATIO * 0.51;
+    return {
+      estimatedCost: Math.round(cost),
+      premiumPct: Math.round(premium * 100),
+      dailyPayout: Math.round(dailyPayout),
+    };
+  }
+
   /**
    * Rakip bir NPC şirketine çoğunluk kontrolü (>%50) veya tam sahiplik için Düşmanca Devralma
    * Çağrısı (Hostile Takeover Tender Offer) düzenler.
@@ -221,8 +245,8 @@ export class MergerAcquisitionEngine {
 
     const estimatedDailySynergyDividend = Number(
       (
-        Math.max(0, stock.financials.EBITDA / 252) *
-        0.12 *
+        Math.max(0, stock.financials.netIncome / 120) *
+        HOLDING_PAYOUT_RATIO *
         (stock.playerOwnershipPct / 100)
       ).toFixed(2)
     );

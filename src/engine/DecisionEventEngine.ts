@@ -318,14 +318,23 @@ export function onDayClosed(state: SimulationState, reservedCash: number): strin
     }
   }
 
-  // 2. Süresi geçen kart
+  // 2. Süresi geçen kart: karar verilmezse ikinci (pasif) seçenek kendiliğinden uygulanır.
+  //    Böylece günleri hızlı ilerletmek kötü olaylardan kaçmanın yolu olmaz.
   if (ds.pending && day > ds.pending.expiresDay) {
+    const pending = ds.pending;
+    const fallback = pending.choices.find((c) => c.id === 'B');
+    let resultTR = 'Karar verilmedi';
+    if (fallback && fallback.effects.length > 0) {
+      const applied = applyEffects(state, pending, fallback, reservedCash);
+      resultTR = `Karar verilmedi, "${fallback.labelTR}" sayıldı${applied ? `: ${applied}` : ''}`;
+      messages.push(`${pending.titleTR}: ${resultTR}`);
+    }
     ds.history.push({
-      eventId: ds.pending.eventId,
-      templateId: ds.pending.templateId,
+      eventId: pending.eventId,
+      templateId: pending.templateId,
       day,
       choiceId: 'EXPIRED',
-      resultTR: 'Karar verilmedi',
+      resultTR,
     });
     ds.pending = null;
   }
@@ -369,6 +378,35 @@ export function canAffordChoice(state: SimulationState, choiceDef: DecisionChoic
   return cost <= spendableCash(state, reservedCash) + 0.01;
 }
 
+function applyEffects(
+  state: SimulationState,
+  pending: PendingDecision,
+  ch: DecisionChoice,
+  reservedCash: number
+): string {
+  const ds = ensureDecisionState(state);
+  const shop = pending.shopId ? state.tradeState?.shops.find((s) => s.shopId === pending.shopId) ?? null : null;
+  ch.effects.forEach((e, i) => {
+    if (e.kind === 'CASH') {
+      moveCash(state, e.amount, `DEC-${pending.eventId}-${ch.id}-${i}`, `Karar: ${pending.titleTR}`, reservedCash);
+    } else if (e.kind === 'SATISFACTION' && shop) {
+      shop.customerSatisfaction = Number(clamp(shop.customerSatisfaction + e.delta, 0, 100).toFixed(1));
+    } else if (e.kind === 'DEMAND_BOOST' && shop) {
+      shop.demandBoost = { multiplier: e.multiplier, untilDay: state.day + e.days };
+    } else if (e.kind === 'DELAYED_CASH') {
+      const willPay = e.chancePct >= 100 || decisionHash(state.seed ?? 1, pending.day, 50 + i) * 100 < e.chancePct;
+      ds.scheduledPayouts.push({
+        id: `${pending.eventId}-${ch.id}-${i}`,
+        payDay: state.day + e.inDays,
+        amount: e.amount,
+        willPay,
+        labelTR: pending.titleTR,
+      });
+    }
+  });
+  return ch.hintTR;
+}
+
 export function resolveDecision(
   state: SimulationState,
   choiceId: 'A' | 'B',
@@ -382,26 +420,7 @@ export function resolveDecision(
   if (!canAffordChoice(state, ch, reservedCash)) {
     return { success: false, message: 'Bunun için yeterli paran yok.' };
   }
-  const shop = pending.shopId ? state.tradeState?.shops.find((s) => s.shopId === pending.shopId) ?? null : null;
-
-  ch.effects.forEach((e, i) => {
-    if (e.kind === 'CASH') {
-      moveCash(state, e.amount, `DEC-${pending.eventId}-${choiceId}-${i}`, `Karar: ${pending.titleTR}`, reservedCash);
-    } else if (e.kind === 'SATISFACTION' && shop) {
-      shop.customerSatisfaction = Number(clamp(shop.customerSatisfaction + e.delta, 0, 100).toFixed(1));
-    } else if (e.kind === 'DEMAND_BOOST' && shop) {
-      shop.demandBoost = { multiplier: e.multiplier, untilDay: state.day + e.days };
-    } else if (e.kind === 'DELAYED_CASH') {
-      const willPay = e.chancePct >= 100 || decisionHash(state.seed ?? 1, pending.day, 50 + i) * 100 < e.chancePct;
-      ds.scheduledPayouts.push({
-        id: `${pending.eventId}-${choiceId}-${i}`,
-        payDay: state.day + e.inDays,
-        amount: e.amount,
-        willPay,
-        labelTR: pending.titleTR,
-      });
-    }
-  });
+  applyEffects(state, pending, ch, reservedCash);
 
   ds.history.push({
     eventId: pending.eventId,

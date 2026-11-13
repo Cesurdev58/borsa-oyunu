@@ -170,6 +170,8 @@ export interface CentralLedgerState {
   ledgerSequence: number;
   paidDividendKeys: string[]; // `${companyId}-D${day}`
   chargedInterestKeys: string[]; // `${loanId}-D${day}`
+  /** Şirketten yönetici maaşı/huzur hakkı olarak bugün çekilen tutar (eski kayıtlarda yoktur) */
+  executivePayToday?: { day: number; amount: number };
   balanceSnapshots: BalanceSnapshot[];
   lastIntegrityReport: FinancialIntegrityAuditReport;
 }
@@ -191,6 +193,13 @@ export interface CompanyOperationsState {
   potentialSalesUnits: number;
   actualSalesUnits: number;
   unmetDemand: number;
+  /** Sektör pazarı (eski kayıtlarda yoktur): bugünkü toplam pazar, rakiplerin sattığı ve oyuncunun payı */
+  sectorMarketUnits?: number;
+  rivalUnitsInMarket?: number;
+  controlledRivalUnits?: number;
+  playerMarketSharePct?: number;
+  /** Pazar doldu mu: kapasitenin önemli kısmı satılamıyor */
+  marketSaturated?: boolean;
   unitProductionCost: number;
   unitStorageCost: number;
   unitLogisticsCost: number;

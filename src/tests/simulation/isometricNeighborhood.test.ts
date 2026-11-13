@@ -159,7 +159,7 @@ test('İzometrik Mahalle Test 8, 9, 10: Şirket kurulduğunda arsa şirket merke
   assert.equal(byId('HOLDING_MERKEZI').isUnlocked, false);
 
   // Oyuncu 3.5M TL ile başladığında ve bir NPC şirketinde %5+ pay topladığında Holding ve Şirket Arsası açılır
-  const richEngine = new SimulationEngine(20260101, 3_500_000);
+  const richEngine = new SimulationEngine(20260101, 12_000_000);
   const krgo = richEngine.getState().stocks.find((s) => s.ticker === 'KRGO')!;
   const buyRes = richEngine.buyStock('KRGO', Math.ceil(krgo.totalShares * 0.06));
   assert.equal(buyRes.success, true);

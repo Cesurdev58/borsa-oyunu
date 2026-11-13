@@ -54,6 +54,8 @@ import {
   GameNotificationItem,
 } from './gameTypes';
 import { OfflineProgressModal } from './OfflineProgressModal';
+import { wealthTaxBase } from '../../engine/TaxRules';
+import { WEALTH_TAX_ANNUAL_RATE, WEALTH_TAX_FREE_AMOUNT } from '../../data/gameBalance';
 
 interface TycoonGameViewProps extends BuildingDetailActions {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
@@ -222,6 +224,17 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     () => notifications.filter((n) => !n.read).length,
     [notifications]
   );
+
+  // Servet vergisi: nakit + hisse eşiğin %75'ini geçince ya da vergi ödenmişse bilgi göster
+  const wealthBase = wealthTaxBase(state);
+  const wealthTaxNote =
+    wealthBase >= WEALTH_TAX_FREE_AMOUNT * 0.75 || (state.wealthTax?.totalPaid ?? 0) > 0
+      ? `Servet vergisi: nakit ve hisselerinin ${formatCurrency(WEALTH_TAX_FREE_AMOUNT)} üstü için yılda %${Math.round(
+          WEALTH_TAX_ANNUAL_RATE * 100
+        )}, 30 günde bir alınır.${
+          state.wealthTax?.lastAmount ? ` Son: ${formatCurrency(state.wealthTax.lastAmount)}.` : ''
+        }`
+      : undefined;
 
   const handleSetGraphicsQuality = useCallback(
     (quality: GraphicsQualityLevel) => {
@@ -406,6 +419,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         cash={state.cash}
         netWorth={state.netWorth}
         unreadNotificationsCount={unreadNotificationsCount}
+        wealthTaxNote={wealthTaxNote}
         onOpenNotifications={handleOpenNotifications}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}

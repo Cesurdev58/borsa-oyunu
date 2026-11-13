@@ -19,6 +19,8 @@ interface GameTopBarProps {
   cash: number;
   netWorth: number;
   unreadNotificationsCount: number;
+  /** Servet vergisi bilgisi (yalnızca vergi eşiğine yaklaşınca dolu) */
+  wealthTaxNote?: string;
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   onSwitchToDeveloperDashboard: () => void;
@@ -35,6 +37,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     cash,
     netWorth,
     unreadNotificationsCount,
+    wealthTaxNote,
     onOpenNotifications,
     onOpenSettings,
   }) => {
@@ -232,6 +235,14 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               <div className="text-[13px] text-white/60 font-bold">Borsa</div>
               <div className="g-display font-extrabold text-base">{sessionMeta.shortLabel}</div>
             </div>
+            {wealthTaxNote && (
+              <div
+                data-testid="tycoon-wealth-tax-note"
+                className="col-span-2 rounded-xl bg-white/[0.06] p-2.5 text-[13px] text-white/80 font-semibold"
+              >
+                {wealthTaxNote}
+              </div>
+            )}
             <div className="col-span-2 text-[13px] text-white/50 text-center font-semibold">{formatDateTR(dateISO)}</div>
           </div>
         )}

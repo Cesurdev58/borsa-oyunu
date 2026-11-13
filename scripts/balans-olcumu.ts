@@ -9,6 +9,8 @@
 import { SimulationEngine } from '../src/engine/SimulationEngine';
 import { SHOP_TEMPLATES } from '../src/engine/TradeAndShopEngine';
 import { restockShops } from '../src/tests/balance/restockBot';
+import { answerDecisionSensibly } from '../src/tests/balance/decisionBot';
+import { expandByTakeover, growCompanyGreedy } from '../src/tests/balance/companyBot';
 
 const HEDEF_GERI_DONUS: Record<string, number> = {
   BUFE: 45,
@@ -35,6 +37,7 @@ for (const type of Object.keys(SHOP_TEMPLATES)) {
   const revenues: number[] = [];
   for (let d = 1; d <= 90; d++) {
     restockShops(eng);
+    answerDecisionSensibly(eng);
     eng.advanceDaysWithoutPlayerDecisions(1, true);
     const shop = eng.getState().tradeState!.shops[0];
     if (d > 20) {
@@ -70,6 +73,7 @@ for (const type of Object.keys(SHOP_TEMPLATES)) {
     const profits: number[] = [];
     for (let d = 1; d <= 90; d++) {
       if (!withManager) restockShops(eng);
+      answerDecisionSensibly(eng);
       eng.advanceDaysWithoutPlayerDecisions(1, true);
       const shop = eng.getState().tradeState!.shops[0];
       if (d > 20) profits.push(shop.todayNetProfit);
@@ -106,4 +110,35 @@ for (const seed of [20261104, 1, 2, 3, 4]) {
   console.log(
     `seed ${seed}: endeks %${((end.marketIndex / idx0 - 1) * 100).toFixed(0)} | hisse ort. %${avg.toFixed(0)} | en iyi ${ch[0].t} %${ch[0].c.toFixed(0)} | en kötü ${ch[ch.length - 1].t} %${ch[ch.length - 1].c.toFixed(0)}`
   );
+}
+
+console.log('\n=== ŞİRKET (hep büyüyen oyuncu: pazar dolunca temettü çekip rakip devralır) ===');
+console.log('Hedef: şirket önce hızlı büyür, sektör pazarı dolunca kâr düzleşir; daha fazlası için rakip devralmak gerekir.');
+for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
+  const eng = new SimulationEngine(20261104, 2_500_000);
+  eng.establishCompany('Ölçüm A.Ş.', 'OLCM', sector, 2_000_000, {
+    initialStaffCount: 40,
+    initialCapacity: 100,
+    initialRdBudget: 10_000,
+  });
+  const notes: string[] = [];
+  const rows: string[] = [];
+  for (let d = 1; d <= 2100; d++) {
+    growCompanyGreedy(eng);
+    const t = expandByTakeover(eng);
+    if (t) notes.push(`gün ${d}: ${t}`);
+    eng.advanceDaysWithoutPlayerDecisions(1, true);
+    if (d % 300 === 0) {
+      const st = eng.getState();
+      const c = st.playerCompany!;
+      rows.push(
+        `  gün ${String(d).padEnd(5)} şirket kârı/gün ${fmt(c.financials.netIncome / 120).padStart(11)}` +
+          ` · pazar payı %${String(c.operations?.playerMarketSharePct ?? 0).padEnd(5)}` +
+          ` · net varlık ${fmt(st.netWorth).padStart(15)} · ödenen servet vergisi ${fmt(st.wealthTax?.totalPaid ?? 0)}`
+      );
+    }
+  }
+  console.log(sector);
+  rows.forEach((r) => console.log(r));
+  notes.forEach((n) => console.log('  ' + n));
 }

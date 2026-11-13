@@ -6,6 +6,7 @@
  * (CompanyEngine dosyasından ayrıldı; dış dünya hâlâ CompanyEngine.* üzerinden erişebilir.)
  */
 
+import { CAPEX_UNIT_MULTIPLIER } from '../data/gameBalance';
 import {
   SECTOR_CONFIGS,
 } from '../data/sectors';
@@ -50,9 +51,17 @@ export class CompanyOperations {
       };
     }
 
+    // Tasfiye pazarın dışında, toptan ve zararına yapılır: fiyat üretim maliyetinin altındadır.
+    // (Aksi hâlde pazar dolunca fazla üretimi tasfiyeyle satmak sınırsız kâr kapısı olurdu.)
     const cleanDiscount = Math.max(0.1, Math.min(0.6, discountRatio));
     const liquidationPrice = Number(
-      (company.financials.unitSellingPrice * (1 - cleanDiscount)).toFixed(2)
+      (
+        Math.min(
+          company.financials.unitSellingPrice,
+          company.financials.unitProductionCost
+        ) *
+        (1 - cleanDiscount)
+      ).toFixed(2)
     );
     const cashProceeds = Number((cleanUnits * liquidationPrice).toFixed(2));
     const costRemoved = Number(
@@ -173,7 +182,7 @@ export class CompanyOperations {
           const scaleFactor =
             1 + Math.pow(company.productionCapacity / 250, 0.32) * 0.45;
           const capexCost = Number(
-            (deltaCap * sectorCfg.unitCapacityCost * 4.0 * scaleFactor).toFixed(2)
+            (deltaCap * sectorCfg.unitCapacityCost * CAPEX_UNIT_MULTIPLIER * scaleFactor).toFixed(2)
           );
           if (capexCost > company.financials.cash) {
             return {

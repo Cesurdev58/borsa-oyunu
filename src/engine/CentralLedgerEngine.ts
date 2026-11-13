@@ -11,6 +11,7 @@
  * - Her hesabın bakiyesini defter hareketlerinden yeniden hesaplayıp doğrulayan `runFinancialIntegrityAudit` sunar.
  */
 
+import { EXECUTIVE_PAY_DAILY_MIN, EXECUTIVE_PAY_REVENUE_SHARE } from '../data/gameBalance';
 import {
   Account,
   AccountOwnerType,
@@ -54,6 +55,12 @@ const ALLOWED_COMPANY_TO_PLAYER_CATEGORIES: Set<TransactionCategory> = new Set([
   'STOCK_SALE_PROCEEDS',
   'CAPITAL_REDUCTION',
 ]);
+
+/** Şirketten günde çekilebilecek en yüksek yönetici maaşı + huzur hakkı */
+export function executivePayDailyCap(state: SimulationState): number {
+  const rev = Math.max(0, state.playerCompany?.dailyRevenue ?? 0);
+  return Math.max(EXECUTIVE_PAY_DAILY_MIN, rev * EXECUTIVE_PAY_REVENUE_SHARE);
+}
 
 export const TRANSFER_CATEGORY_LABELS_TR: Record<TransactionCategory, string> = {
   PERSONAL_TO_INVESTMENT: 'Kişisel Hesaptan Yatırım Hesabına Transfer',
@@ -727,6 +734,30 @@ export class CentralLedgerEngine {
         }
       }
 
+      if (params.category === 'EXECUTIVE_SALARY' || params.category === 'BOARD_FEE') {
+        // Maaş ve huzur hakkı günlük üst sınırlıdır; büyük para ancak temettüyle (kâr kadar) çekilebilir
+        const cap = executivePayDailyCap(state);
+        const paidToday =
+          ledger.executivePayToday && ledger.executivePayToday.day === state.day
+            ? ledger.executivePayToday.amount
+            : 0;
+        if (cleanAmount > cap - paidToday + 0.01) {
+          return recordRejection(
+            `Yönetici maaşı ve huzur hakkı günde en fazla ${Math.round(cap).toLocaleString('tr-TR')} TL olabilir (bugün kalan: ${Math.max(0, Math.round(cap - paidToday)).toLocaleString('tr-TR')} TL). Daha fazlası için temettü dağıt.`
+          );
+        }
+      }
+
+      if (params.category === 'CAPITAL_REDUCTION') {
+        const paidIn = state.playerCompany?.financials.paidInCapital ?? 0;
+        const maxReduction = Math.max(0, paidIn - 100_000);
+        if (cleanAmount > maxReduction + 0.01) {
+          return recordRejection(
+            `Sermaye azaltımı yalnızca konulan sermaye kadar yapılabilir (en fazla ${Math.round(maxReduction).toLocaleString('tr-TR')} TL). Kâr ancak temettüyle çekilebilir.`
+          );
+        }
+      }
+
       if (params.category === 'LEGAL_DIVIDEND') {
         const companyId = state.playerCompany?.ticker || 'COMPANY';
         const divKey = `${companyId}-D${state.day}`;
@@ -794,6 +825,14 @@ export class CentralLedgerEngine {
 
     destAcc.balance = Number((destAcc.balance + netAmountToDest).toFixed(2));
     destAcc.updatedAtDay = state.day;
+
+    if (params.category === 'EXECUTIVE_SALARY' || params.category === 'BOARD_FEE') {
+      const prev =
+        ledger.executivePayToday && ledger.executivePayToday.day === state.day
+          ? ledger.executivePayToday.amount
+          : 0;
+      ledger.executivePayToday = { day: state.day, amount: Number((prev + cleanAmount).toFixed(2)) };
+    }
 
     const entries: LedgerEntry[] = [
       {

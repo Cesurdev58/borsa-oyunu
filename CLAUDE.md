@@ -30,6 +30,21 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Haber dengesi:** Her sektörde olumlu ve olumsuz haber şablonlarının toplam etkisi (`baseImpact / decayRate`) eşit olmalı; aksi hâlde borsa tek yönlü yükselir. Yeni haber eklersen `src/tests/balance/balance.test.ts` dengeyi denetler.
 - **Müdür dengesi:** `npm run balans` "MÜDÜR" bölümü her dükkân türünü 2. seviyede elle (her gün rafları doldurarak) ve müdürle 90 gün oynatır. Hedef: müdürlü kâr, elle kârın %70–85'i (şu an %71–86). Ayar sayıları `gameBalance.ts` içinde `MANAGER_*`.
 - **Bilinen:** Borsa nominal olarak yılda ortalama +%65–85 (ekonomide enflasyon %28). Büfe/manav ROI'si hâlâ borsadan yüksek; bu bilinçli, ilk dükkân kapısı dengeyi sağlar.
+- **Ölçümde karar kartları:** `npm run balans` dükkân ve müdür bölümlerinde kartlara "dikkatli oyuncu" gibi cevap verir (`src/tests/balance/decisionBot.ts`). Kartları hiç cevaplamayan oyuncu (kart süresi dolunca B seçeneği uygulanır) dükkân türüne göre ~%10–40 daha az kâr eder.
+
+## Geç oyun dengesi (şirket ve holding)
+
+Eskiden şirket satışı yalnızca kendi kapasitesine bağlıydı; fabrika büyüdükçe sınırsız satıyor, ~90 günde ikiye katlanıyordu (900. günde günde 12,9 Mn kâr). Ayarların hepsi `src/data/gameBalance.ts` içinde "GEÇ OYUN DENGESİ" başlığı altında.
+
+- **Sektör pazarı** (`engine/SectorMarket.ts`): her sektörün günlük pazarı sınırlıdır (`baseSectorMarketUnits`, rakiplerin kapasitesinden türetilir, `RIVAL_START_SHARE` = rakipler başta %45). Oyuncu yalnızca rakiplerin bıraktığı boşluğa satar; talep boşluğa yaklaşınca yumuşakça tavana dayanır (`saturatedPlayerDemand`, `CompanyDailyStep` içinde). Oyuncu büyüdükçe rakiplerin müşterisi azalır (`RIVAL_PRESSURE`, `rivalDemandMultiplier`, NPC adımında `AccountingEngine.stepCompanyFinancialsOneDay` son parametresi). Bağlam her gün kapanışında ve gün içi adımda `refreshPlayerMarketContext` ile şirkete yazılır (`operations.sectorMarketUnits`, `rivalUnitsInMarket`, `controlledRivalUnits`, `playerMarketSharePct`, `marketSaturated`).
+- **Rakipler gerçek büyüklükte:** NPC şirketlerin hisse sayısı, kapasitesi, personeli ve bilançosu `NPC_SCALE` (50) katı. Hisse fiyatı ve tahta derinliği (`liquidityDepthLots`) değişmez, bu yüzden borsa aşaması aynı kalır (ölçüldü, fark %1'in altında). Holding açılışı (%5 pay) artık ~6 Mn TL ister.
+- **Devralma:** aynı sektördeki rakip devralınınca artık oyuncuyla yarışmaz, müşterileri oyuncuya açılır; kâr payı = rakibin günlük net kârı × sahiplik × `HOLDING_PAYOUT_RATIO`. Borsadan normal alımla bir rakibin en fazla `MARKET_BUY_MAX_OWNERSHIP_PCT` (%30) alınabilir (`MarketEngine.maxMarketBuyableShares`); kontrol için devralma teklifi (kontrol primi) gerekir. Holding ekranı tahmini bedeli ve günlük ek kazancı gösterir (`MergerAcquisitionEngine.estimateTakeover`).
+- **Yatırım daha yavaş:** kapasite yatırımı birim maliyeti `CAPEX_UNIT_MULTIPLIER` (9, eskiden 4). Tam satılan kapasitede geri dönüş ~120–185 gün.
+- **Vergiler** (`engine/TaxRules.ts`): şirket kârına kademeli kurumlar vergisi (`CORPORATE_TAX_BRACKETS`, günlük 150 bin üstü +%7, 600 bin üstü +%15). Servet vergisi (`engine/WealthTaxEngine.ts`, gün kapanışı 5B-3): 30 günde bir, nakit + hisse + holding kasası + şirkete verilen ortak borcu + kişisel dükkân kasaları − borç toplamının 20 Mn üstünden yılda %3; nakit yetmezse kısa vadeli borca yazılır. Üst çubuktaki para kartında açıklama çıkar (`tycoon-wealth-tax-note`).
+- **Kapatılan açıklar:** şirketten "yönetici maaşı/huzur hakkı" günde en fazla max(25 bin, cironun %3'ü) çekilebilir (eskiden sınırsızdı, %15 vergiyle bütün kasa çekiliyordu); sermaye azaltımı en fazla konulan sermaye kadar; stok tasfiyesi üretim maliyetinin altında (pazar dolunca fazla üretimi tasfiyeyle satmak kâr kapısıydı); şirketi olmayan oyuncunun bireysel kredisine +%20 faiz (borsa getirisiyle ucuz kredi arbitrajı); aynı türden her ek dükkân müşteriyi paylaşır (`SHOP_SAME_TYPE_CROWDING`); cevapsız karar kartının süresi dolunca B seçeneği uygulanır (hızlı ilerletmek kötü olaydan kaçış olmasın).
+- **Ölçüm:** `npm run balans` → "ŞİRKET" bölümü, robot `src/tests/balance/companyBot.ts` (`growCompanyGreedy` pazar dolana kadar en büyük yatırımı yapar; `expandByTakeover` temettü çekip aynı sektördeki rakibi devralır). Şu anki sonuç: teknolojide pazar ~900. günde dolar, kâr günde ~0,9 Mn'da düzleşir; iki rakip devralınınca ~1,4 Mn. Savunmada ~2,7 Mn, enerjide ~0,6 Mn. Testleri `src/tests/balance/lateGame.test.ts`.
+- **Eski kayıt göçü** (`engine/BalanceMigration.ts`, `state.balanceVersion` = 2, `restoreFromSavedState` içinde bir kez): rakipler büyütülür, oyuncunun elindeki hisse adedi ve değeri aynı kalır (yalnızca yüzde küçülür); eskiden çok ucuza devralınmış rakiplerin bedeli iade edilip kontrol bırakılır; eski dengede dev olmuş şirketin personeli ve üretim planı yeni pazara göre indirilir. Oyuncuya "Oyun dengesi güncellendi" bildirimi çıkar (`engine.consumeMigrationNotices`, `App.tsx`).
+- **Bilinen:** Perakende sektöründe kurulan şirket başlangıçta zarar eder (rakip perakendeciler de zararda); bu eski bir durum, ayrıca bakılmalı.
 
 ## Oyun süresi ve arayüz tasarımı (mobil tycoon yönü)
 
@@ -77,7 +92,8 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Etkiler: `CASH` (kişisel nakit, WalletEngine + merkezi defter kaydı), `SATISFACTION` (dükkân memnuniyeti), `DEMAND_BOOST` (dükkânda geçici müşteri çarpanı, `ShopInstance.demandBoost`, `TradeAndShopEngine` müşteri hesabında çarpılır), `DELAYED_CASH` (ileride gelecek/gidecek para; şans sonucu karar anında belirlenir, `scheduledPayouts`).
 - Tutarlar ölçeklidir: dükkân olaylarında günlük cironun ~%30'u (800–30.000 ₺), kişisel olaylarda net varlığın ~%2'si (1.000–40.000 ₺). Parası yetmeyen seçenek seçilemez.
 - Arayüz: `components/game/DecisionCard.tsx` (lacivert kart, iki büyük seçenek, "Sonra karar ver" ile sağ altta altın "Karar bekliyor" kapsülüne küçülür). `SimulationEngine.resolveDecisionEvent('A'|'B')` → `App.tsx handleResolveDecision` → `TycoonGameView onResolveDecision`. Testi `src/tests/decisions/decisionEvents.test.ts`.
-- `npm run balans` karar kartlarını seçmez (kartlar süresi dolup etkisiz kapanır), bu yüzden denge ölçümü değişmez.
+- Kart 2 gün içinde cevaplanmazsa B seçeneği kendiliğinden uygulanır ("Karar verilmedi, … sayıldı"; `applyEffects` ortak fonksiyonu). `npm run balans` kartlara `decisionBot.ts` ile cevap verir.
+- Kayıttan yükleme `decisionEvents` alanını artık korur (eskiden yeniden yüklemede bekleyen kart kayboluyordu).
 
 ## Dükkân müdürü (otomatik yönetim)
 
@@ -111,6 +127,7 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Aşama kuralları tek yerde:** `engine/ProgressionRules.ts`. Girişimci/halka arz/holding eşikleri ve "hangi aşamadayım" hesabı yalnızca burada yazılır;
   başka dosyada `2_000_000` gibi eşik yazma, `PROGRESSION_RULES` sabitini kullan. Testleri `src/tests/progression/`.
 - **Bağımlılık döngüsü yok** (89+ dosyada denetlendi). Yeni bir motor eklerken alt modüller ön yüzü (`TradeAndShopEngine`) içe aktarmasın; aşağıdan yukarıya doğru bağımlılık kur.
+- Geç oyun dosyaları: `SectorMarket.ts` (sektör pazarı), `TaxRules.ts` (vergi hesabı), `WealthTaxEngine.ts` (servet vergisi tahsili), `BalanceMigration.ts` (eski kayıt göçü). Hepsi yalnızca alt motorları içe aktarır.
 - `src/models/` — veri tipleri. Dükkân türleri `models/trade.ts` içinde `ShopType`
   (BUFE, MANAV, KAFE, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI, MARKET, OTOMOBIL_GALERISI).
 - `src/state/simulationStore.ts` — kayıt/yükleme ve migration.

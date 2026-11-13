@@ -32,3 +32,51 @@ export const MANAGER_HIRE_FEE_DAYS = 30;
 export const MANAGER_CASH_RESERVE_DAYS = 3;
 /** Kasa, ayrılan payın bu katını geçince fazlası oyuncuya aktarılır */
 export const MANAGER_SWEEP_TRIGGER_MULT = 3;
+
+/**
+ * GEÇ OYUN DENGESİ (şirket ve holding aşaması)
+ * Ölçüm: `npm run balans` → "ŞİRKET" bölümü (hep en çok yatırım yapan oyuncu, 900 gün).
+ * Eskiden şirket satışı yalnızca kendi kapasitesine bağlıydı: fabrikayı büyüttükçe sınırsız satılıyordu
+ * ve şirket ~90 günde bir ikiye katlanıyordu. Artık her sektörün sınırlı bir pazarı var.
+ */
+
+/** Rakip (NPC) şirketlerin büyüklük katsayısı: hisse sayısı, kapasite, personel ve bilanço bu katla büyütülür.
+ *  Hisse fiyatı değişmez (borsa aşaması aynı kalır), yalnızca şirketin toplam değeri ve devralma bedeli büyür. */
+export const NPC_SCALE = 50;
+/** Oyun başında adı bilinen rakiplerin, kendi sektör pazarındaki toplam payı */
+export const RIVAL_START_SHARE = 0.45;
+/** Oyuncunun pazar payı %P iken rakiplerin müşterisi P × bu oran kadar azalır */
+export const RIVAL_PRESSURE = 0.5;
+/** Oyuncunun boş pazardan alabileceği pay: taban + şirketin çekiciliği (fiyat, kalite, pazarlama) */
+export const MARKET_REACH_BASE = 0.55;
+
+/** Fabrika kapasite yatırımının birim maliyet katsayısı (sektörün birim kapasite maliyeti × bu sayı). Eskiden 4. */
+export const CAPEX_UNIT_MULTIPLIER = 9;
+
+/** Şirket kurumlar vergisi dilimleri (günlük vergi öncesi kâr). İlk dilim ekonomideki temel orandır (%25). */
+export const CORPORATE_TAX_BRACKETS: { upToDaily: number; extraRate: number }[] = [
+  { upToDaily: 150_000, extraRate: 0 },
+  { upToDaily: 600_000, extraRate: 0.07 },
+  { upToDaily: Infinity, extraRate: 0.15 },
+];
+
+/** Servet vergisi: her 30 günde bir, (nakit + hisse − borç) bu eşiği aşan kısmından yıllık oranın 1/12'si */
+export const WEALTH_TAX_FREE_AMOUNT = 20_000_000;
+export const WEALTH_TAX_ANNUAL_RATE = 0.03;
+export const WEALTH_TAX_PERIOD_DAYS = 30;
+
+/** Borsadan normal alımla bir rakibin en fazla bu yüzdesine sahip olunabilir; fazlası için devralma teklifi gerekir */
+export const MARKET_BUY_MAX_OWNERSHIP_PCT = 30;
+
+/** Şirketten "yönetici maaşı / huzur hakkı" olarak çekilebilecek günlük üst sınır: max(taban, günlük cironun payı) */
+export const EXECUTIVE_PAY_DAILY_MIN = 25_000;
+export const EXECUTIVE_PAY_REVENUE_SHARE = 0.03;
+
+/** Şirketi olmayan oyuncunun bireysel kredisine eklenen faiz (yıllık). Borsa getirisiyle ucuz kredi arbitrajını önler. */
+export const PERSONAL_LOAN_EXTRA_SPREAD = 0.2;
+
+/** Aynı türden her ek dükkân, o türdeki bütün dükkânların müşterisini paylaştırır: 1 / (1 + bu sayı × (adet − 1)) */
+export const SHOP_SAME_TYPE_CROWDING = 0.15;
+
+/** Kontrol edilen (devralınan) rakibin günlük net kârından, sahiplik payı oranında oyuncuya aktarılan kısım */
+export const HOLDING_PAYOUT_RATIO = 0.6;

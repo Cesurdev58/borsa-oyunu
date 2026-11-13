@@ -30,6 +30,8 @@ import {
 import {
   CompanyInvestmentProjects,
 } from './CompanyInvestmentProjects';
+import { readMarketContext, saturatedPlayerDemand } from './SectorMarket';
+import { progressiveCorporateTax } from './TaxRules';
 
 export class CompanyDailyStep {
   /**
@@ -260,14 +262,28 @@ export class CompanyDailyStep {
           );
     ops.companyDemandShare = demandShare;
 
-    const fullDayPotentialSales =
+    const rawPotentialSales =
       totalSectorMarketDemand <= 0
         ? 0
         : Math.max(
             0,
             Math.round(totalSectorMarketDemand * demandShare)
           );
+    // Sektör pazarı sınırlıdır: rakiplerin bıraktığı boşluk dolarken satış tavana yaklaşır
+    const marketCtx = readMarketContext(company.sector, ops);
+    const saturated = saturatedPlayerDemand({
+      rawDemand: rawPotentialSales,
+      demandShare,
+      macroFactor,
+      context: marketCtx,
+    });
+    const fullDayPotentialSales = rawPotentialSales <= 0 ? 0 : saturated.units;
     ops.potentialSalesUnits = fullDayPotentialSales;
+    ops.sectorMarketUnits = marketCtx.marketUnits;
+    ops.rivalUnitsInMarket = Math.round(marketCtx.uncontrolledRivalUnits);
+    ops.controlledRivalUnits = Math.round(marketCtx.controlledRivalUnits);
+    ops.marketSaturated =
+      rawPotentialSales > 0 && fullDayPotentialSales < rawPotentialSales * 0.85;
 
     const stepDesiredSales = Number(
       (fullDayPotentialSales * cleanFraction).toFixed(4)
@@ -278,6 +294,9 @@ export class CompanyDailyStep {
     );
 
     ops.actualSalesUnits = Number((stepSoldUnits / cleanFraction).toFixed(2));
+    ops.playerMarketSharePct = Number(
+      ((ops.actualSalesUnits / Math.max(1, saturated.marketUnits)) * 100).toFixed(1)
+    );
     ops.unmetDemand = Number(
       Math.max(0, fullDayPotentialSales - ops.actualSalesUnits).toFixed(2)
     );
@@ -353,8 +372,8 @@ export class CompanyDailyStep {
     const effectiveInterestRate = Math.max(0.1, macro.policyInterestRate * 0.6);
     const fullDayInterest = (fin.totalLiabilities * effectiveInterestRate) / 252;
     const fullDayPreTax = fullDayEbit - fullDayInterest;
-    const fullDayTax =
-      fullDayPreTax > 0 ? fullDayPreTax * macro.corporateTaxRate : 0;
+    // Kademeli kurumlar vergisi: büyük kârın üst dilimi daha yüksek oranla vergilenir
+    const fullDayTax = progressiveCorporateTax(fullDayPreTax, macro.corporateTaxRate);
     const fullDayNetIncome = fullDayPreTax - fullDayTax;
 
     // 6. Bilanço ve Nakit Güncellemesi (Stok para değildir; satış olmadan nakde dönüşmez!)
@@ -448,10 +467,7 @@ export class CompanyDailyStep {
       (fullDayInterest * annualizationFactor).toFixed(2)
     );
     fin.preTaxIncome = Number((fin.EBIT - fin.interestExpense).toFixed(2));
-    fin.taxExpense =
-      fin.preTaxIncome > 0
-        ? Number((fin.preTaxIncome * macro.corporateTaxRate).toFixed(2))
-        : 0;
+    fin.taxExpense = Number((fullDayTax * annualizationFactor).toFixed(2));
     fin.netIncome = Number((fin.preTaxIncome - fin.taxExpense).toFixed(2));
 
     fin.cash = newCash;

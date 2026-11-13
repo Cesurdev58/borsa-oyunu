@@ -318,7 +318,7 @@ describe('İzometrik Şehir Görsel Kalite, HUD, Görev Şeridi ve Performans Te
   });
 
   it('12. Holding aşaması açıldığında Holding Kulesi aktif görsel duruma geçer', () => {
-    const engine = new SimulationEngine(20260101, 3_500_000);
+    const engine = new SimulationEngine(20260101, 12_000_000);
     const tracker = createInitialCityVisualTracker(engine.getState());
 
     const krgo = engine.getState().stocks.find((s) => s.ticker === 'KRGO')!;

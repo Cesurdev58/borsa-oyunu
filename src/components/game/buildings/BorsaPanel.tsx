@@ -6,6 +6,7 @@
  */
 
 import { NumberInput } from '../ui/NumberInput';
+import { MarketEngine } from '../../../engine/MarketEngine';
 import React, {
   useEffect,
   useState,
@@ -68,14 +69,17 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   const ownedShares = state.portfolio[selectedStock.ticker]?.shares || 0;
   const reservedShares = getReservedShares(selectedStock.ticker);
   const availableSharesToSell = Math.max(0, ownedShares - reservedShares);
-  const maxAffordableLots = Math.max(
-    0,
-    Math.floor(
-      spendableCash /
-        ((orderMode === 'LIMIT' && limitPriceInput > 0
-          ? limitPriceInput
-          : selectedStock.askPrice) *
-          1.002)
+  const maxAffordableLots = Math.min(
+    MarketEngine.maxMarketBuyableShares(selectedStock, ownedShares),
+    Math.max(
+      0,
+      Math.floor(
+        spendableCash /
+          ((orderMode === 'LIMIT' && limitPriceInput > 0
+            ? limitPriceInput
+            : selectedStock.askPrice) *
+            1.002)
+      )
     )
   );
 

@@ -621,6 +621,8 @@ export class SimulationStore {
         cityState: SimulationStore.deriveOrMigrateCityState(st, day),
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
+        wealthTax: st.wealthTax,
+        balanceVersion: st.balanceVersion,
       };
 
       TradeAndShopEngine.ensureTradeUniverseState(migratedState);

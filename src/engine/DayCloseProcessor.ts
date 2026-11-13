@@ -8,6 +8,9 @@
 
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as ShopManager from './ShopManager';
+import * as SectorMarket from './SectorMarket';
+import * as WealthTaxEngine from './WealthTaxEngine';
+import { HOLDING_PAYOUT_RATIO } from '../data/gameBalance';
 import {
   DailyLogEntry,
   OfflineProgressSummary,
@@ -126,6 +129,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     );
 
     // 5. Oyuncu Şirketi Operasyonlarını Tamamla (Çift sayımı önleyerek!)
+    // Sektör pazarı: rakiplerin dünkü satışları oyuncunun bugün satabileceği boşluğu belirler
+    SectorMarket.refreshPlayerMarketContext(engine.state);
     if (engine.state.playerCompany) {
       const pc = engine.state.playerCompany;
       const sectorStocks = engine.state.stocks.filter(
@@ -274,6 +279,10 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.pendingDailyActions.push(`[Müdür] ${msg}`);
     }
 
+    // 5B-3. Servet vergisi (her 30 günde bir, büyük nakit + hisse birikiminden)
+    const wealthMsg = WealthTaxEngine.chargeWealthTaxIfDue(engine.state, engine.getReservedCash());
+    if (wealthMsg) engine.pendingDailyActions.push(`[Vergi] ${wealthMsg}`);
+
     // 5C. Karar kartları: ertelenmiş ödemeler, süresi geçen kart, yeni olay
     for (const msg of DecisionEventEngine.onDayClosed(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Karar] ${msg}`);
@@ -297,7 +306,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
         stock.sector,
         engine.state.macro,
         stock.sentimentScore,
-        1.0
+        1.0,
+        undefined,
+        0,
+        // Oyuncu aynı sektörde büyüdükçe rakip müşteri kaybeder
+        SectorMarket.rivalDemandMultiplier(engine.state, stock.sector, stock.isControlledByPlayer)
       );
       stock.ebitdaAnnual = stock.financials.EBITDA;
       stock.valuation = ValuationEngine.computeCompanyValuation(
@@ -505,11 +518,12 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
         !stock.isPlayerCompany &&
         stock.integrationDaysRemaining === 0
       ) {
-        const dailyPositiveEbitda = Math.max(0, stock.financials.EBITDA / 252);
+        // Bağlı ortaklık kâr payı: rakibin günlük net kârının sahiplik payı kadarının HOLDING_PAYOUT_RATIO'su
+        const dailyNetProfit = Math.max(0, stock.financials.netIncome / 120);
         const synergyPayout = Number(
           (
-            dailyPositiveEbitda *
-            0.12 *
+            dailyNetProfit *
+            HOLDING_PAYOUT_RATIO *
             (stock.playerOwnershipPct / 100)
           ).toFixed(2)
         );

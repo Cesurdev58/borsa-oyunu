@@ -10,8 +10,12 @@ test('Takeover için gerekli nakit veya finansman olmadan işlem tamamlanmaz; ye
   assert.equal(poorEngine.getState().controlledSubsidiaries.length, 0);
   assert.equal(poorEngine.getState().cash, 100_000);
 
+  // Rakipler artık gerçek büyüklükte: 5 milyon TL eskiden yetiyordu, artık yetmez
+  const midEngine = new SimulationEngine(20261104, 5_000_000);
+  assert.equal(midEngine.executeHostileTakeover('KRGO').success, false);
+
   // Yeterli sermayeye sahip Holding test fixture
-  const holdingEngine = new SimulationEngine(20261104, 5_000_000);
+  const holdingEngine = new SimulationEngine(20261104, 150_000_000);
   // Önce %10 stratejik pay topla
   const krgo = holdingEngine.getState().stocks.find((s) => s.ticker === 'KRGO')!;
   const tenPctLots = Math.ceil(krgo.totalShares * 0.1);

@@ -11,10 +11,24 @@ import React, {
 import {
   Lock,
 } from 'lucide-react';
+import { MergerAcquisitionEngine } from '../../../engine/MergerAcquisitionEngine';
+import { MARKET_BUY_MAX_OWNERSHIP_PCT } from '../../../data/gameBalance';
+import type { ControlThresholdLevel } from '../../../models/market';
 
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
+
+const CONTROL_LABEL_TR: Record<ControlThresholdLevel, string> = {
+  NONE: '—',
+  SIGNIFICANT_5: 'Ortak',
+  STRATEGIC_10: 'Büyük ortak',
+  MINORITY_25: 'Güçlü ortak',
+  BLOCKING_33: 'Güçlü ortak',
+  MAJORITY_50: 'Senin',
+  SUPERMAJORITY_67: 'Senin',
+  FULL_100: 'Tamamen senin',
+};
 
 export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -22,8 +36,14 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
   onExecuteTakeover,
   formatCurrency,
 }) => {
+  const myCompany = state.playerCompany;
+  // Varsayılan hedef: oyuncunun kendi sektöründeki ilk rakip (devralınca pazarı açılır)
+  const defaultTarget =
+    state.stocks.find(
+      (s) => !s.isPlayerCompany && !s.isControlledByPlayer && myCompany && s.sector === myCompany.sector
+    )?.ticker ?? 'KRGO';
   const [takeoverTargetTicker, setTakeoverTargetTicker] =
-    useState<string>('KRGO');
+    useState<string>(defaultTarget);
   const [useDebtForTakeover, setUseDebtForTakeover] = useState<boolean>(false);
 
 
@@ -65,33 +85,66 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       {/* Devralma İşlem Kartı */}
       {selectedTarget && (
         <div className="g-card p-3.5 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <label className="block text-[13px] font-semibold text-slate-600 mb-1">
-                Hangi şirket?
-              </label>
-              <select
-                value={selectedTarget.ticker}
-                onChange={(e) => setTakeoverTargetTicker(e.target.value)}
-                className="min-h-[40px] px-3 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-slate-900"
-              >
-                {npcStocks.map((s) => (
-                  <option key={s.ticker} value={s.ticker}>
-                    {s.ticker} - {s.name} (Payınız: %
-                    {s.playerOwnershipPct.toFixed(2)})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="text-right tabular-nums">
-              <div className="text-xs font-bold text-slate-900">
-                {formatCurrency(selectedTarget.equityValue)}
-              </div>
-              <div className="text-[13px] text-slate-500">
-                Payın: %{selectedTarget.playerOwnershipPct.toFixed(1)}
-              </div>
+          <div className="space-y-1.5">
+            <label className="block text-[13px] font-semibold text-slate-600">
+              Hangi şirket?
+            </label>
+            <select
+              value={selectedTarget.ticker}
+              onChange={(e) => setTakeoverTargetTicker(e.target.value)}
+              data-testid="holding-target-select"
+              className="g-input w-full min-h-[44px] font-semibold"
+            >
+              {npcStocks.map((s) => (
+                <option key={s.ticker} value={s.ticker}>
+                  {s.name}
+                  {myCompany && s.sector === myCompany.sector ? ' · senin sektörün' : ''}
+                  {s.isControlledByPlayer ? ' · senin' : ''}
+                </option>
+              ))}
+            </select>
+            <div className="flex justify-between text-[13px] text-[var(--g-muted)] font-semibold tabular-nums">
+              <span>Şirket değeri {formatCurrency(selectedTarget.equityValue)}</span>
+              <span>Payın %{selectedTarget.playerOwnershipPct.toFixed(1)}</span>
             </div>
           </div>
+
+          {(() => {
+            const owned = state.portfolio[selectedTarget.ticker]?.shares ?? 0;
+            const est = MergerAcquisitionEngine.estimateTakeover(selectedTarget, owned);
+            const sameSector = !!myCompany && myCompany.sector === selectedTarget.sector;
+            const market = myCompany?.operations?.sectorMarketUnits ?? 0;
+            const rivalUnits = selectedTarget.financials.dailyUnitsSold ?? 0;
+            const rivalPct =
+              sameSector && market > 0 ? Math.round((rivalUnits / market) * 100) : 0;
+            // Aynı sektörde: rakibin müşterileri şirketine açılır (kapasite büyütülürse)
+            const myUnits = Math.max(1, myCompany?.operations?.actualSalesUnits ?? 0);
+            const myProfitPerUnit = myCompany ? Math.max(0, myCompany.financials.netIncome / 120) / myUnits : 0;
+            const marketGain = sameSector ? Math.round(rivalUnits * myProfitPerUnit) : 0;
+            const dailyGain = est.dailyPayout + marketGain;
+            return (
+              <div className="grid grid-cols-2 gap-2 tabular-nums" data-testid="holding-takeover-estimate">
+                <div className="g-card-soft p-2.5">
+                  <div className="text-[13px] text-[var(--g-muted)] font-semibold">Devralma bedeli (yakl.)</div>
+                  <div className="g-display text-lg font-extrabold text-[var(--g-gold-dark)]">
+                    {selectedTarget.isControlledByPlayer ? '—' : formatCurrency(est.estimatedCost)}
+                  </div>
+                </div>
+                <div className="g-card-soft p-2.5">
+                  <div className="text-[13px] text-[var(--g-muted)] font-semibold">Günlük ek kazanç (yakl.)</div>
+                  <div className="g-display text-lg font-extrabold text-[var(--g-green-dark)]">
+                    +{formatCurrency(dailyGain)}
+                  </div>
+                </div>
+                <div className="g-tip col-span-2">
+                  {sameSector
+                    ? `Senin sektöründe: devralınca pazarın yaklaşık %${rivalPct}'i şirketine açılır (kapasiteni büyütürsen). Kâr payın günde ${formatCurrency(est.dailyPayout)}.`
+                    : 'Başka sektörde: yalnızca kâr payı getirir, şirketinin pazarını değiştirmez.'}{' '}
+                  Borsadan en fazla %{MARKET_BUY_MAX_OWNERSHIP_PCT} alınabilir; kontrol için devralma teklifi gerekir.
+                </div>
+              </div>
+            );
+          })()}
 
           <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
             <input
@@ -159,7 +212,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   %{s.playerOwnershipPct.toFixed(2)}
                 </span>{' '}
                 <span className="text-[13px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
-                  {s.controlLevel}
+                  {CONTROL_LABEL_TR[s.controlLevel] ?? '—'}
                 </span>
               </div>
             </div>

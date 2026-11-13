@@ -11,6 +11,7 @@
  * - Aynı teminatın iki kredide kullanılmasını ve grup içi para dolaşımıyla yapay kredi skoru üretilmesini engeller.
  */
 
+import { PERSONAL_LOAN_EXTRA_SPREAD } from '../data/gameBalance';
 import { SECTOR_CONFIGS } from '../data/sectors';
 import {
   BankLoanType,
@@ -345,13 +346,16 @@ export class BankLoanEngine {
       : 0.04;
     const scoreRiskSpread = Math.max(0, (750 - creditScore) * 0.00025);
 
+    // Şirketi olmayan oyuncu bireysel kredi çeker: faizi daha yüksektir (borsa getirisiyle ucuz kredi arbitrajı olmasın)
+    const personalSpread = borrowerType === 'PLAYER' ? PERSONAL_LOAN_EXTRA_SPREAD : 0;
     const annualInterestRate = Number(
       Math.max(
         0.12,
         state.macro.policyInterestRate * 0.65 +
           cfg.spreadOverPolicyRate +
           sectorRiskPenalty +
-          scoreRiskSpread
+          scoreRiskSpread +
+          personalSpread
       ).toFixed(4)
     );
 

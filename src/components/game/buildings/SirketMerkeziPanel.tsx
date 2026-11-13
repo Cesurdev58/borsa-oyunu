@@ -6,6 +6,8 @@
  */
 
 import { NumberInput } from '../ui/NumberInput';
+import { HelpTip } from '../ui/HelpTip';
+import { effectiveCorporateTaxRate } from '../../../engine/TaxRules';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 import React, {
   useEffect,
@@ -688,6 +690,82 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Sektör pazarı: oyuncunun payı, rakipler ve boş alan */}
+          {(() => {
+            const market = Math.max(1, ops.sectorMarketUnits ?? 0);
+            if (!ops.sectorMarketUnits) return null;
+            const myPct = Math.min(100, (ops.actualSalesUnits / market) * 100);
+            const rivals = state.stocks.filter(
+              (s) => !s.isPlayerCompany && s.sector === pc.sector
+            );
+            const rivalPct = Math.min(
+              100 - myPct,
+              ((ops.rivalUnitsInMarket ?? 0) / market) * 100
+            );
+            const preTaxDaily = pc.financials.preTaxIncome / 120;
+            const taxPct = Math.round(
+              effectiveCorporateTaxRate(preTaxDaily, state.macro.corporateTaxRate) * 100
+            );
+            return (
+              <div className="g-card p-4 space-y-3" data-testid="company-market-card">
+                <div className="flex items-end justify-between gap-2">
+                  <div>
+                    <div className="text-[13px] font-bold text-[var(--g-muted)] flex items-center gap-1">
+                      Pazardaki payın
+                      <HelpTip text="Her sektörün günlük satış pazarı sınırlıdır. Rakiplerin tuttuğu müşteriye satamazsın; rakip devralınca o müşteriler sana açılır." />
+                    </div>
+                    <div className="g-display text-3xl font-extrabold text-[var(--g-navy-800)] tabular-nums">
+                      %{myPct.toFixed(0)}
+                    </div>
+                  </div>
+                  <div className="text-right text-[13px] text-[var(--g-muted)] tabular-nums">
+                    Pazar: {Math.round(market).toLocaleString('tr-TR')} birim/gün
+                    <div>Kâr vergisi: ort. %{taxPct}</div>
+                  </div>
+                </div>
+                <div className="g-track h-3.5 flex overflow-hidden" aria-label="Pazar dağılımı">
+                  <div className="g-fill" style={{ width: `${myPct}%` }} />
+                  <div
+                    className="h-full bg-[var(--g-red)] opacity-70"
+                    style={{ width: `${rivalPct}%` }}
+                  />
+                </div>
+                <div className="text-[13px] text-[var(--g-muted)] font-semibold">
+                  Yeşil: sen · Kırmızı: rakipler · Gri: boş pazar
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[13px]">
+                  {rivals.map((r) => (
+                    <span
+                      key={r.ticker}
+                      className="g-pill"
+                      data-testid={`company-rival-${r.ticker}`}
+                    >
+                      {r.isControlledByPlayer ? 'Senin: ' : ''}
+                      {r.name.split(' ')[0]} %
+                      {Math.round(((r.financials.dailyUnitsSold ?? 0) / market) * 100)}
+                    </span>
+                  ))}
+                </div>
+                {ops.marketSaturated && (
+                  <>
+                    <div className="g-tip" data-testid="company-market-full-tip">
+                      Pazar doldu: fazla üretim satılmıyor. Daha çok satmak için bir rakibi devral
+                      ya da fiyat, kalite ve pazarlamayla payını büyüt. Fazla personeli azaltmak kârı korur.
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="company-market-takeover-btn"
+                      onClick={() => onOpenBuilding?.(state.stageUnlocks.stage4Holding ? 'HOLDING_MERKEZI' : 'BORSA')}
+                      className="g-btn g-btn-navy w-full"
+                    >
+                      Rakipleri gör
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {/* 3 Kısa Durum Mesajı (Gerçek Veriden Üretilen) */}
           <button

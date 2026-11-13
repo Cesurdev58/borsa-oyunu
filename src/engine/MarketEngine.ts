@@ -16,6 +16,7 @@
  */
 
 import { NPC_COMPANY_BLUEPRINTS } from '../data/npcCompanies';
+import { MARKET_BUY_MAX_OWNERSHIP_PCT, NPC_SCALE } from '../data/gameBalance';
 import { SECTOR_CONFIGS } from '../data/sectors';
 import { MacroEconomyState } from '../models/economy';
 import { ControlThresholdLevel, MarketStock } from '../models/market';
@@ -54,10 +55,37 @@ export class MarketEngine {
   }
 
   /**
+   * Borsadan normal alımla en fazla kaç lot alınabilir. Rakip şirketlerde sahiplik MARKET_BUY_MAX_OWNERSHIP_PCT
+   * ile sınırlıdır; kontrolü ele geçirmek için devralma teklifi (kontrol primiyle) gerekir.
+   */
+  public static maxMarketBuyableShares(stock: MarketStock, currentOwned: number): number {
+    if (stock.isPlayerCompany || stock.isControlledByPlayer) {
+      return Math.max(0, stock.totalShares - currentOwned);
+    }
+    const cap = Math.floor((stock.totalShares * MARKET_BUY_MAX_OWNERSHIP_PCT) / 100);
+    return Math.max(0, Math.min(stock.totalShares, cap) - currentOwned);
+  }
+
+  public static marketBuyLimitMessage(stock: MarketStock, maxBuyable: number): string {
+    if (!stock.isPlayerCompany && !stock.isControlledByPlayer) {
+      return `Borsadan bir şirketin en fazla %${MARKET_BUY_MAX_OWNERSHIP_PCT}'u alınabilir. Şu an alabileceğin: ${maxBuyable.toLocaleString('tr-TR')} lot. Daha fazlası için Holding'den devralma teklifi ver.`;
+    }
+    return `Piyasada alınabilir maksimum ${maxBuyable.toLocaleString('tr-TR')} lot bulunmaktadır.`;
+  }
+
+  /**
    * 16 kurgusal NPC şirketini tam muhasebe bilançosu ve 5-yöntemli değerlemeyle oluşturur.
    */
   public static createInitialMarketStocks(macro: MacroEconomyState): MarketStock[] {
-    return NPC_COMPANY_BLUEPRINTS.map((bp) => {
+    return NPC_COMPANY_BLUEPRINTS.map((rawBp) => {
+      // Rakipler gerçek büyüklükte: hisse sayısı, kapasite ve personel NPC_SCALE ile büyür, hisse fiyatı aynı kalır.
+      // Tahta derinliği (liquidityDepthLots) büyütülmez: borsadaki fiyat hareketleri ve kayma eskisi gibi kalır.
+      const bp = {
+        ...rawBp,
+        totalShares: rawBp.totalShares * NPC_SCALE,
+        staffCount: rawBp.staffCount * NPC_SCALE,
+        productionCapacityUnits: rawBp.productionCapacityUnits * NPC_SCALE,
+      };
       const sectorCfg = SECTOR_CONFIGS[bp.sector];
       const marketCap = bp.initialPrice * bp.totalShares;
       const initialEquityCapital = Number((marketCap / (sectorCfg.basePbMultiple * 0.72)).toFixed(2));
@@ -417,13 +445,13 @@ export class MarketEngine {
 
     const currentPos = portfolio[stock.ticker];
     const currentOwned = currentPos ? currentPos.shares : 0;
-    const maxBuyableLots = Math.max(0, stock.totalShares - currentOwned);
+    const maxBuyableLots = MarketEngine.maxMarketBuyableShares(stock, currentOwned);
 
     if (sharesToBuy > maxBuyableLots) {
       return {
         result: {
           success: false,
-          message: `Piyasada alınabilir maksimum ${maxBuyableLots.toLocaleString('tr-TR')} lot bulunmaktadır.`,
+          message: MarketEngine.marketBuyLimitMessage(stock, maxBuyableLots),
           ticker: stock.ticker,
           sharesExecuted: 0,
           executionPrice: 0,

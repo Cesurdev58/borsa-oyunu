@@ -8,6 +8,7 @@
  *   Hammadde -> Tedarikçi -> Satın Alma -> Sevkiyat -> Depo -> Üretim -> Mamul Deposu -> Dağıtım -> Mağaza / Kurumsal Müşteri -> Satış -> Tahsilat
  */
 
+import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { MANAGER_PROFIT_SHARE } from '../data/gameBalance';
 import {
   SimulationState,
@@ -413,11 +414,15 @@ export class TradeAndShopEngine {
           0.85 + (shop.specificState.showroomSlots || 6) * 0.04;
       }
 
+      // Aynı türden çok dükkân aynı mahallenin müşterisini paylaşır
+      const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
+      const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
       const rawDailyCustomers = Math.max(
         1,
         Math.round(
           shop.maxCustomerCapacity *
             0.68 *
+            crowdingFactor *
             staffAdequacyRatio *
             satisfactionFactor *
             reputationFactor *

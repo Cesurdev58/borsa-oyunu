@@ -83,7 +83,22 @@ export default function App() {
   const [notifications, setNotifications] = useState<GameNotificationItem[]>(
     () => {
       const st = engineRef.current!.getState();
+      // Eski kayıt yeni dengeye taşındıysa oyuncuya bir kez anlat
+      const migrationItems: GameNotificationItem[] = engineRef
+        .current!.consumeMigrationNotices()
+        .map((msg, i) => ({
+          id: `INIT-BALANCE-${i}`,
+          category: 'STAGE_UNLOCKED' as const,
+          title: 'Oyun dengesi güncellendi',
+          message: msg,
+          day: st.day,
+          gameTime: engineRef.current!.getFormattedGameTime(),
+          severity: 'warning' as const,
+          important: true,
+          read: false,
+        }));
       return [
+        ...migrationItems,
         {
           id: 'INIT-WELCOME',
           category: 'NEW_DAY',

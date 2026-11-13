@@ -6,6 +6,7 @@
  * (CompanyEngine dosyasından ayrıldı; dış dünya hâlâ CompanyEngine.* üzerinden erişebilir.)
  */
 
+import { CAPEX_UNIT_MULTIPLIER } from '../data/gameBalance';
 import {
   SECTOR_CONFIGS,
 } from '../data/sectors';
@@ -69,7 +70,7 @@ export class CompanyInvestmentProjects {
     const scaleComplexityFactor =
       pkg.complexityMultiplier * (1 + Math.pow(currentCap / 250, 0.32) * 0.45);
     const unitCapexCost = Number(
-      (sectorCfg.unitCapacityCost * 4.0 * scaleComplexityFactor).toFixed(2)
+      (sectorCfg.unitCapacityCost * CAPEX_UNIT_MULTIPLIER * scaleComplexityFactor).toFixed(2)
     );
 
     let capacityGainUnits: number;

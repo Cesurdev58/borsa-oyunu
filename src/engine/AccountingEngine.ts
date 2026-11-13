@@ -148,7 +148,8 @@ export class AccountingEngine {
     sentimentScore: number,
     techQualityMultiplier: number = 1.0,
     customDailyRd?: number,
-    customDailyMarketing: number = 0
+    customDailyMarketing: number = 0,
+    demandMultiplier: number = 1
   ): FinancialStatement {
     const sectorCfg = SECTOR_CONFIGS[sector];
     const safeTech = ValuationEngine.clampTechMultiplier(techQualityMultiplier);
@@ -199,7 +200,8 @@ export class AccountingEngine {
     );
 
     const baseMarketDemandForCompany = Math.round(
-      installedCapacity * 0.84 * macroDemandFactor * priceElasticityFactor
+      installedCapacity * 0.84 * macroDemandFactor * priceElasticityFactor *
+        Math.max(0, demandMultiplier)
     );
     const availableUnitsToSell = Math.max(0, fin.inventoryUnits + dailyUnitsProduced);
     const dailyUnitsSold = Math.max(

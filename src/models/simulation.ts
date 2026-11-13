@@ -201,6 +201,10 @@ export interface CitySavedState {
 export interface SimulationState {
   /** Karar kartları (eski kayıtlarda yoktur; motor gerektiğinde oluşturur) */
   decisionEvents?: import('./decisions').DecisionEventsState;
+  /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
+  wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Denge sürümü: eski kayıtları yeni dengeye taşıyan göç bir kez çalışsın diye (yoksa 1 sayılır) */
+  balanceVersion?: number;
   schemaVersion: number;
   seed: number;
   randomState: number;

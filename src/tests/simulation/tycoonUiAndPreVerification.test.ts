@@ -165,7 +165,7 @@ test('UI Test 1-3 & 11-12: Tycoon şehir binaları başlangıçta doğru kilit d
   assert.equal(byId.HOLDING_MERKEZI.isUnlocked, false);
 
   // Aşama 2 ve şirket kurulduğunda Şirket Merkezi, Fabrika ve Ar-Ge açılmalı
-  const richEngine = new SimulationEngine(20261104, 3_000_000);
+  const richEngine = new SimulationEngine(20261104, 14_000_000);
   richEngine.establishCompany(
     'Turkuaz Robotik A.Ş.',
     'TRKR',

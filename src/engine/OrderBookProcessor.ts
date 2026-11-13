@@ -88,11 +88,11 @@ export function placeOrder(engine: SimulationEngine, params: {
 
     if (side === 'BUY') {
       const currentOwned = engine.state.portfolio[ticker]?.shares || 0;
-      const maxBuyable = Math.max(0, stock.totalShares - currentOwned);
+      const maxBuyable = MarketEngine.maxMarketBuyableShares(stock, currentOwned);
       if (requestedShares > maxBuyable) {
         return {
           success: false,
-          message: `Piyasada alınabilir maksimum ${maxBuyable.toLocaleString('tr-TR')} lot bulunmaktadır.`,
+          message: MarketEngine.marketBuyLimitMessage(stock, maxBuyable),
           order: null,
         };
       }

@@ -1662,7 +1662,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               <div className="g-card p-4 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h5 className="text-base font-extrabold text-slate-900">
-                    Kendi araçların ({trade.vehicles.length} Araç)
+                    Araçların ({trade.vehicles.length} Araç)
                   </h5>
                   <span className="text-[13px] text-slate-500">
                     Kargo masrafını düşürür
@@ -1695,7 +1695,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {trade.shops.length > 0 && (
                 <div className="g-card p-4 space-y-2.5">
                   <h5 className="text-base font-extrabold text-slate-900">
-                    Merkezi Depodan Mağaza Şubesine Ürün Sevk Et
+                    Depodan dükkâna mal gönder
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <select
@@ -1746,9 +1746,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           });
                         }
                       }}
-                      className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer"
+                      className="g-btn g-btn-primary w-full"
                     >
-                      Şubeye Sevk Et
+                      Dükkâna gönder
                     </button>
                   </div>
                 </div>
@@ -1757,7 +1757,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* Aktif Sevkiyatlar Listesi */}
               <div className="g-card p-4 space-y-2">
                 <h5 className="text-base font-extrabold text-slate-900">
-                  Yoldaki ve Tamamlanan Teslimatlar ({trade.shipments.length})
+                  Teslimatlar ({trade.shipments.length})
                 </h5>
                 {trade.shipments.length === 0 ? (
                   <p className="text-xs text-slate-500">
@@ -1913,7 +1913,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             onClick={() =>
                               onAcceptCommercialContract(ct.contractId)
                             }
-                            className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold cursor-pointer"
+                            className="g-btn g-btn-navy g-btn-sm"
                           >
                             Sözleşmeyi Kabul Et
                           </button>

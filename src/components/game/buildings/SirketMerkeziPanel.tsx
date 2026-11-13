@@ -931,7 +931,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
 
                 {capacityUtilizationPct < 70 && (
-                  <div className="p-2.5 g-card-soft text-amber-900 text-[13px]">
+                  <div className="g-tip">
                     Mevcut En Fazla Üretim kapasitenizin yalnızca %
                     {capacityUtilizationPct.toString().replace('.', ',')}’i
                     kullanılıyor. Yeni tesis yatırımı yerine önce mevcut
@@ -1574,7 +1574,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     type="button"
                     disabled={!ipoEligibility.eligible}
                     onClick={() => onExecuteIPO(0.3, 0.12, 0.35)}
-                    className="w-full min-h-[40px] rounded-xl bg-sky-600 hover:bg-sky-500 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold"
+                    className="g-btn g-btn-navy w-full"
                   >
                     Şirketi Halka Arz Et (%30 Halka Açıklık · %12 İskonto)
                   </button>
@@ -1594,7 +1594,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           {capacityUtilizationPct < 70 && (
             <div
               data-testid="low-capacity-utilization-warning"
-              className="p-3 g-card-soft text-amber-950 text-[13px] font-medium leading-relaxed"
+              className="g-tip"
             >
               Fabrikanın yalnızca %
               {capacityUtilizationPct.toString().replace('.', ',')}’i dolu.
@@ -1721,7 +1721,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
               <div>
                 <div className="font-sans text-slate-500">
-                  Kapasite Artışı
+                  Kapasite
                 </div>
                 <div className="font-bold text-emerald-700">
                   +{invQuote.capacityGainUnits} birim/gün
@@ -1729,7 +1729,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
               <div>
                 <div className="font-sans text-slate-500">
-                  Yatırım Maliyeti
+                  Maliyet
                 </div>
                 <div className="font-bold text-slate-900">
                   {formatCurrency(invQuote.totalCost)}
@@ -1737,7 +1737,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
               <div>
                 <div className="font-sans text-slate-500">
-                  Tamamlanma Süresi
+                  Süre
                 </div>
                 <div className="font-bold text-amber-800">
                   {invQuote.durationDays} Gün (%
@@ -1745,7 +1745,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
               </div>
               <div>
-                <div className="font-sans text-slate-500">İptal Bedeli</div>
+                <div className="font-sans text-slate-500">Vazgeçersen kesinti</div>
                 <div className="font-bold text-rose-700">
                   {formatCurrency(invQuote.cancellationCost)}
                 </div>
@@ -1775,7 +1775,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               }}
               className="g-btn g-btn-primary w-full"
             >
-              Üretim Tesisi Yatırımını Başlat (+{invQuote.capacityGainUnits}{' '}
+              Yatırımı başlat (+{invQuote.capacityGainUnits}{' '}
               birim/gün · {formatCurrency(invQuote.totalCost)})
             </button>
 
@@ -1846,7 +1846,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   }
                   className="g-btn g-btn-secondary px-4"
                 >
-                  ₺5.000
+                  − ₺5.000
                 </button>
                 <button
                   type="button"
@@ -1857,7 +1857,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   }
                   className="g-btn g-btn-navy px-4"
                 >
-                  ₺10.000
+                  + ₺10.000
                 </button>
               </div>
             </div>

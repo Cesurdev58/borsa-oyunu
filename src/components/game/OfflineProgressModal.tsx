@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { Clock, Sparkles, TrendingUp, X } from 'lucide-react';
+import { Clock, Sparkles, X } from 'lucide-react';
+import { play } from './ui/feedback';
 import { OfflineProgressSummary } from '../../models/simulation';
 import { deriveDeterministicOfflineWarningItems } from './city/questAndHudLogic';
 
@@ -34,6 +35,12 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
     const realSecondsRem = Math.round(summary.realSecondsElapsed % 60);
     const gameHours = Math.floor(summary.gameMinutesAdvanced / 60);
     const gameMinsRem = summary.gameMinutesAdvanced % 60;
+    const awayDays = Math.floor(summary.gameMinutesAdvanced / 1440);
+    const awayHours = Math.floor((summary.gameMinutesAdvanced % 1440) / 60);
+    const awayText =
+      [awayDays > 0 ? `${awayDays} gün` : '', awayHours > 0 ? `${awayHours} saat` : '']
+        .filter(Boolean)
+        .join(' ') || `${gameMinsRem} dakika`;
     const netWorthDelta = Number(
       (summary.endNetWorth - summary.startNetWorth).toFixed(2)
     );
@@ -44,159 +51,92 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
         aria-modal="true"
         aria-label="Çevrimdışı İlerleme Özeti"
         data-testid="offline-progress-modal"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-3 sm:p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(18,28,68,.6)] p-4"
         onClick={onDismiss}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="g-card w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
+          className="celebration-in w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] rounded-[26px] bg-white shadow-2xl"
         >
-          {/* Başlık */}
-          <div className="px-5 py-4 bg-[var(--g-surface-2)] border-b border-slate-200 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="g-card w-9 h-9 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-sky-600" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Çevrimdışı İlerleme Raporu
-                </h2>
-                <p className="text-xs text-slate-600">
-                  Siz yokken finans şehrinde gerçekleşen işlemler
-                </p>
-              </div>
-            </div>
+          <div className="g-hero rounded-none px-5 pt-6 pb-5 text-center">
             <button
               type="button"
               aria-label="Çevrimdışı Özetini Kapat"
               onClick={onDismiss}
-              className="min-w-[44px] min-h-[44px] rounded-xl hover:bg-white/80 flex items-center justify-center text-slate-600"
+              className="absolute right-3 top-3 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
+            <div
+              className="mx-auto w-14 h-14 rounded-full flex items-center justify-center"
+              style={{ background: 'linear-gradient(180deg,#ffe08a,var(--g-gold))', boxShadow: '0 4px 0 var(--g-gold-dark)' }}
+            >
+              <Clock className="w-7 h-7 text-[#6b4500]" strokeWidth={2.4} />
+            </div>
+            <h2 className="g-display mt-3 text-2xl font-extrabold text-white">Tekrar hoş geldin!</h2>
+            <p className="text-[13px] font-semibold text-white/65">
+              Sen yokken {awayText} geçti
+              <span className="sr-only">
+                {realMinutes > 0 ? `${realMinutes} dk ${realSecondsRem} sn` : `${realSecondsRem} sn`}
+              </span>
+            </p>
+            <div className="mt-4 g-hero-label">Toplam varlığın</div>
+            <div
+              className={`g-display text-[40px] font-extrabold leading-none tabular-nums ${
+                netWorthDelta >= 0 ? 'text-[var(--g-gold)]' : 'text-[#ffb4b2]'
+              }`}
+            >
+              {netWorthDelta >= 0 ? '+' : '−'}
+              {formatCurrency(Math.abs(netWorthDelta))}
+            </div>
+            <div className="text-[13px] font-bold text-white/60 tabular-nums mt-1">
+              {formatCurrency(summary.startNetWorth)} → {formatCurrency(summary.endNetWorth)}
+            </div>
           </div>
 
-          {/* İçerik */}
-          <div className="p-5 overflow-y-auto space-y-4 text-xs">
-            {/* Geçen Süre Özeti */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="text-slate-500">Geçen Gerçek Süre</div>
-                <div className="text-sm font-bold tabular-nums tabular-nums text-slate-900 mt-0.5">
-                  {realMinutes > 0
-                    ? `${realMinutes} dk ${realSecondsRem} sn`
-                    : `${realSecondsRem} sn`}
-                </div>
+          <div className="p-4 overflow-y-auto space-y-3 text-sm">
+            <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
+              <div className="g-card-soft p-2.5">
+                <div className="text-[13px] font-bold text-[var(--g-muted)]">Gelir</div>
+                <div className="font-extrabold text-[var(--g-green-dark)]">{formatCurrency(summary.revenueGenerated)}</div>
               </div>
-              <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-200/80">
-                <div className="text-sky-800">İlerleyen Oyun Süresi</div>
-                <div className="text-sm font-bold tabular-nums tabular-nums text-sky-950 mt-0.5">
-                  {summary.gameDaysAdvanced} Gün ({gameHours} sa {gameMinsRem}{' '}
-                  dk)
-                </div>
+              <div className="g-card-soft p-2.5">
+                <div className="text-[13px] font-bold text-[var(--g-muted)]">Gider</div>
+                <div className="font-extrabold text-[var(--g-red)]">{formatCurrency(summary.expensesPaid)}</div>
+              </div>
+              <div className="g-card-soft p-2.5">
+                <div className="text-[13px] font-bold text-[var(--g-muted)]">Temettü</div>
+                <div className="font-extrabold text-[var(--g-gold-dark)]">{formatCurrency(summary.dividendsCollected)}</div>
               </div>
             </div>
-
-            {/* Net Varlık Değişimi */}
-            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1.5">
-              <div className="flex items-center justify-between text-emerald-900 font-semibold">
-                <span className="inline-flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                  Net Varlık Değişimi
-                </span>
-                <span
-                  className={`tabular-nums font-bold ${
-                    netWorthDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'
-                  }`}
-                >
-                  {netWorthDelta >= 0 ? '+' : ''}
-                  {formatCurrency(netWorthDelta)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[13px] tabular-nums tabular-nums text-slate-700">
-                <span>Başlangıç: {formatCurrency(summary.startNetWorth)}</span>
-                <span>→</span>
-                <span className="font-bold text-slate-900">
-                  Bitiş: {formatCurrency(summary.endNetWorth)}
-                </span>
-              </div>
+            <div className="flex flex-wrap justify-center gap-1.5 text-[13px] font-bold text-[var(--g-muted)]">
+              {summary.ordersExecuted > 0 && <span className="g-pill bg-[var(--g-surface-2)]">{summary.ordersExecuted} emir gerçekleşti</span>}
+              {summary.productionCompleted > 0 && <span className="g-pill bg-[var(--g-surface-2)]">{summary.productionCompleted.toFixed(0)} birim üretildi</span>}
+              {summary.newsGenerated > 0 && <span className="g-pill bg-[var(--g-surface-2)]">{summary.newsGenerated} yeni haber</span>}
+              {summary.ordersExpired > 0 && <span className="g-pill bg-[#ffe9e8] text-[var(--g-red-dark)]">{summary.ordersExpired} emrin süresi doldu</span>}
             </div>
-
-            {/* Operasyonel & Piyasa Detayları */}
-            <div className="grid grid-cols-2 gap-2 text-[13px]">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Gerçekleşen Emir:</span>
-                <strong className="tabular-nums text-slate-900">
-                  {summary.ordersExecuted}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Süresi Dolan Emir:</span>
-                <strong className="tabular-nums text-slate-900">
-                  {summary.ordersExpired}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Üretim Miktarı:</span>
-                <strong className="tabular-nums text-slate-900">
-                  {summary.productionCompleted.toFixed(0)} br
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Şirket Geliri:</span>
-                <strong className="tabular-nums text-emerald-700">
-                  {formatCurrency(summary.revenueGenerated)}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Şirket Gideri:</span>
-                <strong className="tabular-nums text-rose-700">
-                  {formatCurrency(summary.expensesPaid)}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Ar-Ge İlerlemesi:</span>
-                <strong className="tabular-nums text-violet-700">
-                  +{summary.researchProgress.toFixed(4)}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Tahsil Edilen Temettü:</span>
-                <strong className="tabular-nums text-amber-700">
-                  {formatCurrency(summary.dividendsCollected)}
-                </strong>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
-                <span className="text-slate-600">Yeni Haberler:</span>
-                <strong className="tabular-nums text-slate-900">
-                  {summary.newsGenerated} Bülten
-                </strong>
-              </div>
-            </div>
-
             {summary.warnings.length > 0 && (
-              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900 space-y-1">
+              <div className="g-tip flex-col !gap-1">
                 {deriveDeterministicOfflineWarningItems(
                   summary.warnings,
                   summary.gameDaysAdvanced,
                   summary.gameMinutesAdvanced
                 ).map((item) => (
-                  <div key={item.id}>• {item.text}</div>
+                  <div key={item.id}>{item.text}</div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Alt Aksiyon */}
-          <div className="px-5 py-3.5 border-t border-slate-200 bg-slate-50">
+          <div className="px-4 pb-4">
             <button
               type="button"
               data-testid="offline-modal-continue-btn"
               onClick={onDismiss}
-              className="g-btn g-btn-primary w-full inline-flex items-center justify-center gap-1.5"
+              className="g-btn g-btn-gold w-full"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Devam Et</span>
+              <span>Topla ve devam et</span>
             </button>
           </div>
         </div>

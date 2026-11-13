@@ -9,6 +9,7 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import * as DecisionEventEngine from './DecisionEventEngine';
 import {
   createInitialNpcFunds,
 } from '../data/npcCompanies';
@@ -1618,6 +1619,16 @@ export class SimulationEngine {
       message: res.message,
       shop: res.shop ?? undefined,
     };
+  }
+
+  /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  public resolveDecisionEvent(choiceId: 'A' | 'B'): { success: boolean; message: string } {
+    const res = DecisionEventEngine.resolveDecision(this.state, choiceId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Karar] ${res.message}`);
+    }
+    return res;
   }
 
   public upgradeShopLevel(shopId: string): {

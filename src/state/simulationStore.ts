@@ -11,6 +11,7 @@
  *   yapılandırılmış olarak raporlar.
  */
 
+import { ensureDecisionState } from '../engine/DecisionEventEngine';
 import { CentralLedgerEngine } from '../engine/CentralLedgerEngine';
 import { CompanyEngine } from '../engine/CompanyEngine';
 import { EconomyEngine } from '../engine/EconomyEngine';
@@ -619,9 +620,11 @@ export class SimulationStore {
         lastFinancialIntegrityReport: st.lastFinancialIntegrityReport ?? null,
         cityState: SimulationStore.deriveOrMigrateCityState(st, day),
         tradeState: st.tradeState,
+        decisionEvents: st.decisionEvents,
       };
 
       TradeAndShopEngine.ensureTradeUniverseState(migratedState);
+      ensureDecisionState(migratedState);
 
       return {
         schemaVersion: SimulationStore.CURRENT_SCHEMA_VERSION,

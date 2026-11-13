@@ -711,6 +711,7 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       wealthTax: cloned.wealthTax,
+      lastDayReport: cloned.lastDayReport,
       balanceVersion: cloned.balanceVersion,
     };
 

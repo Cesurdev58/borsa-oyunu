@@ -136,6 +136,43 @@ export interface AccountingAuditResult {
   errors: string[];
 }
 
+/** Gün sonu raporu: 00:00'da biten günün özeti (yalnızca gösterim; ekonomiyi etkilemez). */
+export interface DayReport {
+  /** Biten gün */
+  day: number;
+  netWorthStart: number;
+  netWorthEnd: number;
+  cashEnd: number;
+  market: {
+    /** Fiyat hareketinden gelen kâr/zarar (alım-satım tutarı hariç) */
+    pnl: number;
+    portfolioValue: number;
+    trades: number;
+    best?: { ticker: string; pct: number };
+    worst?: { ticker: string; pct: number };
+  };
+  dividends: number;
+  holdingIncome: number;
+  shops: Array<{
+    shopId: string;
+    name: string;
+    shopType: string;
+    revenue: number;
+    profit: number;
+    customers: number;
+  }>;
+  shopsRevenue: number;
+  shopsProfit: number;
+  company?: {
+    name: string;
+    revenue: number;
+    costs: number;
+    profit: number;
+    marketSharePct?: number;
+  };
+  wealthTax: number;
+}
+
 export interface DailyLogEntry {
   day: number;
   dateISO: string;
@@ -203,6 +240,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Son biten günün raporu (gün sonu raporu; eski kayıtlarda yoktur) */
+  lastDayReport?: DayReport;
   /** Denge sürümü: eski kayıtları yeni dengeye taşıyan göç bir kez çalışsın diye (yoksa 1 sayılır) */
   balanceVersion?: number;
   schemaVersion: number;

@@ -24,6 +24,8 @@ export interface UISettingsState {
   graphicsQuality: GraphicsQualityLevel;
   audio: AudioSettingsState;
   hasOpenedBorsaBuilding: boolean;
+  /** Gün dönünce (00:00) "Gün raporu" kapsülü çıksın mı? */
+  showDayReport?: boolean;
   lastCameraPanX?: number;
   lastCameraPanY?: number;
   lastZoomPreset?: CityZoomPresetSetting;
@@ -98,6 +100,7 @@ export class UISettingsStore {
         isMuted: false,
       },
       hasOpenedBorsaBuilding: false,
+      showDayReport: true,
       lastCameraPanX: 0,
       lastCameraPanY: 0,
       lastZoomPreset: 'NORMAL',
@@ -162,6 +165,8 @@ export class UISettingsStore {
         typeof candidate.hasOpenedBorsaBuilding === 'boolean'
           ? candidate.hasOpenedBorsaBuilding
           : false,
+      showDayReport:
+        typeof candidate.showDayReport === 'boolean' ? candidate.showDayReport : true,
       lastCameraPanX:
         typeof candidate.lastCameraPanX === 'number' &&
         Number.isFinite(candidate.lastCameraPanX)

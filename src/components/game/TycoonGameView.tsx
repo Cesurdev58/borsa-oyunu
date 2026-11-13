@@ -48,6 +48,7 @@ import { GameBottomNavigation } from './GameBottomNavigation';
 import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
 import { DecisionCard } from './DecisionCard';
+import { DayReportCard } from './DayReportCard';
 import { play, setFeedbackSettings, vibrate } from './ui/feedback';
 import {
   CityBuildingId,
@@ -405,6 +406,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         reservedCash={Math.max(0, state.cash - spendableCash)}
         onResolve={onResolveDecision}
       />
+      <DayReportCard
+        report={state.lastDayReport}
+        enabled={uiSettings.showDayReport !== false}
+        formatCurrency={formatCurrency}
+      />
       <FirstRunGuide
         day={state.day}
         formatCurrency={formatCurrency}
@@ -661,6 +667,34 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   );
                 })}
               </div>
+            </div>
+
+            {/* Gün sonu raporu */}
+            <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-200">
+              <div>
+                <div className="font-extrabold text-[var(--g-ink)]">Gün sonu raporu</div>
+                <div className="text-[13px] text-[var(--g-muted)]">
+                  Gün 00:00'da dönünce günün özeti hazır olur.
+                </div>
+              </div>
+              <button
+                type="button"
+                data-testid="settings-day-report-toggle"
+                aria-pressed={uiSettings.showDayReport !== false}
+                onClick={() =>
+                  setUiSettings(
+                    UISettingsStore.saveSettings({
+                      ...UISettingsStore.loadSettings(),
+                      showDayReport: uiSettings.showDayReport === false,
+                    })
+                  )
+                }
+                className={`g-btn g-btn-sm shrink-0 ${
+                  uiSettings.showDayReport !== false ? 'g-btn-primary' : 'g-btn-secondary'
+                }`}
+              >
+                {uiSettings.showDayReport !== false ? 'Açık' : 'Kapalı'}
+              </button>
             </div>
 
             {/* Ses Yöneticisi (UI Audio Infrastructure) */}

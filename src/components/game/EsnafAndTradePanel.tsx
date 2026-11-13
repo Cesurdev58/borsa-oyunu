@@ -8,6 +8,7 @@
  * - 3. Mantıklı ve tutarlı sistem (Borsa -> Esnaf -> Çok Şubeli Ticaret -> Şirketleşme -> Fabrika & Holding kariyer döngüsü)
  */
 
+import { shopHoursLabel, shopOpenStatus } from '../../data/shopHours';
 import { getManagerQuote } from '../../engine/ShopManager';
 import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
 import { NumberInput } from './ui/NumberInput';
@@ -461,6 +462,18 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     {activeShop.level}/5
                     {activeShop.isCompanyBranch ? ' · Şirket şubesi' : ''}
                   </div>
+                  {(() => {
+                    const st = shopOpenStatus(activeShop.shopType, state.minutesIntoCurrentDay ?? 0);
+                    return (
+                      <div
+                        data-testid="active-shop-hours"
+                        className={`text-[13px] font-bold inline-flex items-center gap-1 ${st.open ? 'text-[#5ee6a5]' : 'text-white/60'}`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${st.open ? 'bg-[#5ee6a5]' : 'bg-white/40'}`} />
+                        {st.label} · {shopHoursLabel(activeShop.shopType)}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -616,7 +629,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 {/* Bugünün özeti */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-2xl bg-slate-50 p-2.5">
-                    <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                    <div className="text-[13px] text-slate-500">Dünkü satış</div>
                     <div
                       data-testid="shop-metric-daily-revenue"
                       className="text-sm tabular-nums font-extrabold text-slate-900"
@@ -630,7 +643,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-2.5">
                     <div className="text-[13px] text-slate-500">
-                      Bugünkü kâr
+                      Dünkü kâr
                       <HelpTip text="Satıştan elde edilen para eksi malın maliyeti, personel ve kira giderleri." />
                     </div>
                     <div
@@ -1315,6 +1328,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       <div className="text-sm tabular-nums text-amber-800 font-bold mt-0.5">
                         {formatCurrency(tpl.openingCost + tpl.decorationCost)}
                       </div>
+                      <div
+                        data-testid={`shop-type-hours-${tpl.shopType}`}
+                        className="text-[13px] tabular-nums text-slate-500 font-semibold"
+                      >
+                        {shopHoursLabel(tpl.shopType)}
+                      </div>
                       <div className="sr-only">
                         Kira: {formatCurrency(tpl.dailyRentBase)}/g · Marj %
                         {Math.round(tpl.defaultGrossMarginPct)} ·{' '}
@@ -1333,6 +1352,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
                 <div className="text-sm text-slate-700">
                   {selectedShopTemplateForNew.specificMechanicDescriptionTR}
+                </div>
+                <div className="text-sm text-slate-700">
+                  Açık saatler: <b className="tabular-nums">{shopHoursLabel(selectedShopTemplateForNew.shopType)}</b>
                 </div>
                 <div className="flex justify-between text-sm font-bold">
                   <span>Toplam</span>

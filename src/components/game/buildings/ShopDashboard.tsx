@@ -6,11 +6,12 @@
  * Ayrıntılı yönetim (sipariş, fiyat, personel...) "Yönet" ile eski panelde açılır.
  */
 
+import { shopOpenStatus } from '../../../data/shopHours';
 import { Check, Plus, UserCog } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
-import { SHOP_TEMPLATES, TradeAndShopEngine } from '../../../engine/TradeAndShopEngine';
+import { TradeAndShopEngine } from '../../../engine/TradeAndShopEngine';
 import { planShopRestock } from '../../../engine/ShopRestockPlanner';
 import { FIRST_SHOP_MIN_NET_WORTH } from '../../../data/gameBalance';
 import type { EsnafAndTradeActionsProps } from '../EsnafAndTradePanel';
@@ -108,7 +109,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     {
       id: 'profit',
       done: profitOk,
-      text: profitOk ? 'Bugün kâr ettin' : 'Bugün ilk kârını yap — raflar dolu olsun, satış gelsin',
+      text: profitOk ? 'Dün kâr ettin' : 'Kâra geç: raflar dolu olsun, sonuç gece yarısı gelir',
       emoji: '💰',
     },
   ];
@@ -148,7 +149,6 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
       </div>
 
       {trade.shops.map((shop, i) => {
-        const tpl = SHOP_TEMPLATES[shop.shopType];
         const used = shop.inventoryBatches.reduce((s, b) => s + b.quantity, 0);
         const fillPct = Math.min(
           100,
@@ -161,6 +161,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
           spendableCash + shop.cashAccountBalance
         );
         const profit = shop.todayNetProfit;
+        const openNow = shopOpenStatus(shop.shopType, state.minutesIntoCurrentDay ?? 0);
         return (
           <div
             key={shop.shopId}
@@ -173,8 +174,16 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
               <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[28px]">{SHOP_EMOJI[shop.shopType] ?? '🏪'}</span>
               <div className="min-w-0 flex-1">
                 <div className="g-display font-extrabold text-[17px] leading-tight truncate">{shop.nameTR}</div>
-                <div className="text-[13px] font-semibold text-white/65">
-                  {tpl?.nameTR ?? shop.shopType} · Seviye {shop.level}
+                <div className="text-[13px] font-semibold text-white/65 flex items-center gap-1.5 flex-wrap">
+                  <span>Seviye {shop.level}</span>
+                  <span aria-hidden>·</span>
+                  <span
+                    data-testid={`shop-card-hours-${shop.shopId}`}
+                    className={`inline-flex items-center gap-1 ${openNow.open ? 'text-[#5ee6a5]' : 'text-white/60'}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${openNow.open ? 'bg-[#5ee6a5]' : 'bg-white/40'}`} />
+                    {openNow.label}
+                  </span>
                 </div>
               </div>
               {shop.manager && (
@@ -190,13 +199,13 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
             <div className="p-3 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                  <div className="text-[13px] text-slate-500">Dünkü satış</div>
                   <div className="font-extrabold text-slate-900 tabular-nums">
                     {formatCurrency(shop.todaySalesRevenue)}
                   </div>
                 </div>
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
+                  <div className="text-[13px] text-slate-500">Dünkü kâr</div>
                   <div
                     className={`font-extrabold tabular-nums ${
                       profit >= 0 ? 'text-emerald-600' : 'text-rose-600'

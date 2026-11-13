@@ -106,6 +106,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Her dükkânın kendi kasası vardır. Mal alımı ve maaşlar oradan ödenir. Kasa azalınca cebinden para koy, kâr birikince "Kâr al" de.',
         'Raf boşsa satış olmaz. "Rafları doldur" en ucuz toptancıdan mal ısmarlar. Mal birkaç günde gelir; gelene kadar "Yolda" yazar.',
         'Fiyat, çalışan ve dükkân büyütme için dükkân kartındaki "Yönet" düğmesine dokun.',
+        'Her dükkân türünün çalışma saati vardır (büfe 07:00–23:00, galeri 09:00–19:00 gibi). Günün satışı gece yarısı toplanır; kartta "Dünkü satış" ve "Dünkü kâr" o günün sonucudur.',
         `${MANAGER_MIN_SHOP_LEVEL}. seviyeye gelen dükkâna müdür tutabilirsin. Rafları kendisi doldurur, kârı sana gönderir; karşılığında kârın biraz azalır.`,
         'Aynı türden çok dükkân açma, müşteriyi paylaşırlar. Farklı türler açmak daha kârlı.',
         `Ara sıra bir karar kartı çıkar (festival, denetim gibi). ${DECISION_LIFETIME_DAYS} gün içinde seçmezsen ikinci seçenek seçilmiş sayılır.`,

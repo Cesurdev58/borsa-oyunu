@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { shopOpenStatus } from '../../../data/shopHours';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CityBuildingId } from '../gameTypes';
 import { CityCameraControls } from '../city/CityCameraControls';
@@ -107,7 +108,8 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
       [urbanBlocks, selectedUrbanBlockId]
     );
 
-    const selectedShopInfo = useMemo<SelectedShopInfo | null>(() => {
+    // Motor durumu aynı nesnede değişir; önbellek tutulmaz ki kart açıkken rakamlar güncel kalsın.
+    const selectedShopInfo: SelectedShopInfo | null = (() => {
       const shopId = selectedUrbanBlock?.activeShopId;
       const shop = shopId
         ? state.tradeState?.shops.find((sh) => sh.shopId === shopId)
@@ -129,8 +131,10 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
         ),
         restockCost: plan.totalCost,
         canRestock: plan.orders.length > 0,
+        hoursLabel: shopOpenStatus(shop.shopType, state.minutesIntoCurrentDay ?? 0).label,
+        openNow: shopOpenStatus(shop.shopType, state.minutesIntoCurrentDay ?? 0).open,
       };
-    }, [state, selectedUrbanBlock]);
+    })();
 
 
     const hasPlayerCompany = Boolean(state.playerCompany);

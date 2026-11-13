@@ -216,7 +216,8 @@ const ZOOM_DISTANCE: Record<CityZoomPreset, number> = { CLOSER: 130, NORMAL: 185
 // Sabit açı (Clash of Clans / Hay Day gibi): ~50° yukarıdan, hafif çapraz. Kamera dönmez.
 const VIEW_DIR = new THREE.Vector3(0.32, 0.98, 0.72).normalize();
 /** Bu mesafeden yakında bütün blok etiketleri açılır. */
-const LABEL_NEAR = 165;
+/** Dokunulan binanın adı bu kadar süre görünür, sonra yavaşça kaybolur (Clash of Clans gibi). */
+const LABEL_FLASH_MS = 2800;
 
 function mat(color: string | number, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) {
   return stdMat(color, { flatShading: false, ...extra });
@@ -285,6 +286,9 @@ export class ThreeCityScene {
   private down = { x: 0, y: 0, time: 0, active: false };
   private hoverKey = '';
   private selectedKey = '';
+  /** Adı şu an gösterilen (dokunulan) bina ve ne zamana kadar */
+  private flashKey = '';
+  private flashUntil = 0;
   private lastHoverCheck = 0;
   private raycaster = new THREE.Raycaster();
   private pointer = new THREE.Vector2();
@@ -745,10 +749,15 @@ export class ThreeCityScene {
       root.userData.pick = { kind, id };
       const labelEl = document.createElement('div');
       labelEl.setAttribute('data-testid', `city3d-label-${id}`);
+      // İsimler varsayılan olarak gizli; dokununca belirir, birkaç saniye sonra söner.
+      labelEl.style.opacity = '0';
+      labelEl.style.transition = 'opacity 260ms ease';
+      labelEl.style.pointerEvents = 'none';
       const label = new CSS2DObject(labelEl);
+      label.visible = false;
       root.add(label);
       this.scene.add(root);
-      e = { kind, id, modelSig: '', labelSig: '', root, model: null, label, labelEl, orb: null, radius: 6, top: 8, labelShown: true };
+      e = { kind, id, modelSig: '', labelSig: '', root, model: null, label, labelEl, orb: null, radius: 6, top: 8, labelShown: false };
       this.entities.set(key, e);
     }
     if (e.modelSig !== modelSig) {
@@ -1074,6 +1083,7 @@ export class ThreeCityScene {
     const moved = Math.hypot(e.clientX - this.down.x, e.clientY - this.down.y);
     if (moved > 6 || performance.now() - this.down.time > 600) return;
     const hit = this.pick(e.clientX, e.clientY);
+    if (hit) this.flashLabel(`${hit.kind}:${hit.id}`);
     if (!hit) {
       this.handlers.onPickNothing();
     } else if (hit.kind === 'core') {
@@ -1082,6 +1092,13 @@ export class ThreeCityScene {
       this.handlers.onPickBlock(hit.id);
     }
   };
+
+  /** Dokunulan binanın adını kısa süre göster. */
+  private flashLabel(key: string): void {
+    this.flashKey = key;
+    this.flashUntil = performance.now() + LABEL_FLASH_MS;
+    this.labelsDirty = true;
+  }
 
   private onPointerMove = (e: PointerEvent): void => {
     if (e.pointerType === 'touch') return; // dokunmatikte üzerine gelme yok, kaydırma akıcı kalsın
@@ -1106,6 +1123,7 @@ export class ThreeCityScene {
 
   private onPointerLeave = (): void => {
     this.hoverRing.visible = false;
+    if (this.hoverKey) this.labelsDirty = true;
     this.hoverKey = '';
   };
 
@@ -1175,7 +1193,11 @@ export class ThreeCityScene {
     }
     this.moveVehicles();
     this.moveWalkers(this.paused ? 0 : dt);
-    const near = this.camera.position.distanceTo(this.controls.target) < LABEL_NEAR;
+    const nowMs = performance.now();
+    if (this.flashKey && nowMs >= this.flashUntil) {
+      this.flashKey = '';
+      this.labelsDirty = true;
+    }
     const vw = this.container.clientWidth;
     const vh = this.container.clientHeight;
     const camKey = `${this.camera.position.x.toFixed(2)},${this.camera.position.y.toFixed(2)},${this.camera.position.z.toFixed(2)},${vw},${vh}`;
@@ -1192,11 +1214,24 @@ export class ThreeCityScene {
         ((e.smoke as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.7 * (1 - s);
       }
       if (!labelsNeedLayout) continue;
-      if (e.kind === 'block') {
-        const show = near || SHOP_SLOT_IDS.has(e.id) || key === this.selectedKey || key === this.hoverKey;
-        if (show !== e.labelShown) {
-          e.labelShown = show;
-          e.label.visible = show;
+      const show = key === this.flashKey || key === this.hoverKey;
+      if (show !== e.labelShown) {
+        e.labelShown = show;
+        const ent = e;
+        if (show) {
+          ent.label.visible = true;
+          requestAnimationFrame(() => {
+            if (ent.labelShown) ent.labelEl.style.opacity = '1';
+          });
+        } else {
+          ent.labelEl.style.opacity = '0';
+          // Söndükten sonra tamamen kapat: görünmeyen yazı her kamera hareketinde yer hesaplamasın.
+          window.setTimeout(() => {
+            if (!ent.labelShown) {
+              ent.label.visible = false;
+              this.labelsDirty = true;
+            }
+          }, 300);
         }
       }
       // Etiket, ekrandaki düğmelerin (sağ alt hız düğmeleri, üst bar) altına düşerse gizlenir.

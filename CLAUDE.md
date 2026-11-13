@@ -210,7 +210,7 @@ Kurallar ve notlar:
   `ROADWAYS`, `ZONES`, `ROUTES` sabitlerinde; yolu oynatırsan rotaları da güncelle.
 - Dükkân türüne göre model: MARKET, KAFE, BUFE, MANAV, GIYIM_MAGAZASI, ELEKTRONIK_MAGAZASI, MOBILYA_MAGAZASI, OTOMOBIL_GALERISI hepsinin 3D modeli var.
   Boş dükkân arsası "DÜKKÂN AÇ" çimenlik arsa olarak görünür; boş `urban-ticaret-otel-5` Butik Otel olur.
-- Etiketler kalabalık olmasın diye yakınlaşınca (kamera mesafesi < `LABEL_NEAR`) blok etiketleri görünür; ana binalar, dükkânlar, seçili ve üzerine gelinen her zaman gösterilir.
+- **İsim etiketleri varsayılan olarak gizli (Clash of Clans gibi):** bir binaya/bloğa dokununca adı belirir, `LABEL_FLASH_MS` (2,8 sn) sonra yavaşça söner (`flashLabel`, `flashKey`); bilgisayarda fare üzerine gelince de görünür. Sönen etiket ayrıca `visible=false` yapılır ki görünmeyen yazılar kamera hareketinde yer hesaplamasın. Ana binaya dokununca paneli de açılır (etiket panelin arkasında kalır).
 - Kilitli binalar çitli inşaat arsası + vinç olarak görünür.
 - Gündüz/gece geçişinde ışık, gökyüzü ve çimen rengi yumuşakça değişir (`stepLook`); gece yıldızlar çıkar. Dönem değerleri `LOOKS` içinde.
 - Hepsi açık hâli denemek için: `stageUnlocks`'u açık, şirketi kurulmuş bir kayıtla aç (Fabrika ve Ar-Ge şirket kurulunca, Holding 4. aşama ile açılır).

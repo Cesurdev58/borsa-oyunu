@@ -38,6 +38,9 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   onAcceptCommercialContract,
   onDeliverCommercialContract,
   onIncorporateShopsIntoCompany,
+  onHireShopManager,
+  onFireShopManager,
+  onSetShopManagerSweep,
 }) => {
   const [managing, setManaging] = useState<{ shopId: string | null } | null>(
     null
@@ -108,6 +111,9 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             onAcceptCommercialContract={onAcceptCommercialContract}
             onDeliverCommercialContract={onDeliverCommercialContract}
             onIncorporateShopsIntoCompany={onIncorporateShopsIntoCompany}
+            onHireShopManager={onHireShopManager}
+            onFireShopManager={onFireShopManager}
+            onSetShopManagerSweep={onSetShopManagerSweep}
           />
         )}
 

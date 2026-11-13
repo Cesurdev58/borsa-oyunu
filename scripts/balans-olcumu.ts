@@ -54,6 +54,44 @@ for (const type of Object.keys(SHOP_TEMPLATES)) {
   );
 }
 
+console.log('\n=== MÜDÜR (2. seviye dükkân, 90 gün): elle yönetim vs müdür ===');
+for (const type of Object.keys(SHOP_TEMPLATES)) {
+  const run = (withManager: boolean) => {
+    const eng = new SimulationEngine(20261104, 8_000_000);
+    const r = eng.openShop({ shopType: type as never });
+    if (!r.success) return null;
+    const shopId = eng.getState().tradeState!.shops[0].shopId;
+    eng.upgradeShopLevel(shopId);
+    if (withManager) {
+      const h = eng.hireShopManager(shopId);
+      if (!h.success) return null;
+      eng.setShopManagerSweep(shopId, false); // ölçümde kâr kasada kalsın
+    }
+    const profits: number[] = [];
+    for (let d = 1; d <= 90; d++) {
+      if (!withManager) restockShops(eng);
+      eng.advanceDaysWithoutPlayerDecisions(1, true);
+      const shop = eng.getState().tradeState!.shops[0];
+      if (d > 20) profits.push(shop.todayNetProfit);
+    }
+    return profits.reduce((a, b) => a + b, 0) / profits.length;
+  };
+  const manual = run(false);
+  const managed = run(true);
+  if (manual === null || managed === null) {
+    console.log(type.padEnd(20), 'ölçülemedi');
+    continue;
+  }
+  const ratio = manual > 0 ? Math.round((managed / manual) * 100) : 0;
+  console.log(
+    type.padEnd(20),
+    'elle kâr/gün', fmt(manual).padStart(8),
+    'müdürlü kâr/gün', fmt(managed).padStart(8),
+    `oran %${ratio}`,
+    '(hedef %70–85)'
+  );
+}
+
 console.log('\n=== BORSA (365 gün, oyuncu işlem yapmadan) ===');
 for (const seed of [20261104, 1, 2, 3, 4]) {
   const eng = new SimulationEngine(seed, 100_000);

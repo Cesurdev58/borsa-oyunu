@@ -250,7 +250,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
         <div
           ref={containerRef}
           data-testid="city3d-viewport"
-          className="relative isolate w-full h-[540px] sm:h-[600px] lg:h-[640px] overflow-hidden rounded-3xl border border-slate-200/90 select-none cursor-grab active:cursor-grabbing"
+          className="relative isolate w-full h-[calc(100dvh-236px)] min-h-[440px] max-h-[860px] overflow-hidden rounded-3xl border border-slate-200/90 select-none cursor-grab active:cursor-grabbing"
         />
 
         {/* Klavye ve ekran okuyucu kullanıcıları için 8 ana bina düğmesi */}

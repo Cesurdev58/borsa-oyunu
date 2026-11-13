@@ -12,7 +12,7 @@
  */
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { SimulationStage } from '../../../models/simulation';
 import { GraphicsQualityLevel } from '../../../state/uiSettingsStore';
@@ -87,6 +87,8 @@ interface Entity {
   radius: number;
   top: number;
   labelShown: boolean;
+  /** Duman parçası (her karede aranmasın diye bir kez bulunur) */
+  smoke?: THREE.Object3D | null;
 }
 
 interface RouteKey {
@@ -209,9 +211,10 @@ const LOOKS: Record<string, PhaseLook> = {
   NIGHT: { sky: '#1b2a44', hemiSky: '#6f8ac7', hemiGround: '#243a2e', hemi: 0.55, sun: '#8fa8e8', sunI: 0.75, sunPos: [-70, 120, 60], grass: '#2c4a36', glow: 1, lamps: 1, exposure: 0.95 },
 };
 
-const ZOOM_DISTANCE: Record<CityZoomPreset, number> = { CLOSER: 150, NORMAL: 205, OVERVIEW: 270 };
+const ZOOM_DISTANCE: Record<CityZoomPreset, number> = { CLOSER: 130, NORMAL: 185, OVERVIEW: 245 };
 // Harita eski görünümdeki gibi neredeyse düz karşıdan bakılır (hafif sağdan).
-const VIEW_DIR = new THREE.Vector3(0.22, 0.6, 0.78).normalize();
+// Sabit açı (Clash of Clans / Hay Day gibi): ~50° yukarıdan, hafif çapraz. Kamera dönmez.
+const VIEW_DIR = new THREE.Vector3(0.32, 0.98, 0.72).normalize();
 /** Bu mesafeden yakında bütün blok etiketleri açılır. */
 const LABEL_NEAR = 165;
 
@@ -227,7 +230,18 @@ export class ThreeCityScene {
   private labelPos = new THREE.Vector3();
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
-  private controls: OrbitControls;
+  private controls: MapControls;
+  /** Gölge haritası yalnızca sahne değişince yeniden çizilir */
+  private shadowDirty = true;
+  private lastSunPos = new THREE.Vector3();
+  /** Kamera ya da etiketler değişmediyse etiketler yeniden yerleştirilmez */
+  private lastCamKey = '';
+  private labelsDirty = true;
+  /** Uyarlanır çözünürlük */
+  private frameMsAvg = 16;
+  private frameCount = 0;
+  private maxPixelRatio = 1.5;
+  private curPixelRatio = 1.5;
   private hemi: THREE.HemisphereLight;
   private sun: THREE.DirectionalLight;
   private grassMat: THREE.MeshStandardMaterial;
@@ -283,9 +297,12 @@ export class ThreeCityScene {
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: false });
+    // Yüksek yoğunluklu (retina) ekranlarda kenar yumuşatma gereksizdir ve pahalıdır.
+    const hiDpi = typeof window !== 'undefined' && (window.devicePixelRatio || 1) >= 2;
+    this.renderer = new THREE.WebGLRenderer({ antialias: !hiDpi, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+    this.renderer.shadowMap.autoUpdate = false;
     this.renderer.setSize(w, h);
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const canvas = this.renderer.domElement;
     canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block;';
@@ -299,11 +316,17 @@ export class ThreeCityScene {
     container.appendChild(le);
 
     this.camera = new THREE.PerspectiveCamera(32, w / h, 1, 1500);
-    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls = new MapControls(this.camera, canvas);
     this.controls.enableDamping = true;
-    this.controls.maxPolarAngle = Math.PI * 0.46;
-    this.controls.minDistance = 55;
-    this.controls.maxDistance = 400;
+    this.controls.dampingFactor = 0.12;
+    this.controls.enableRotate = false; // sabit açı: döndürme ve eğme yok
+    this.controls.screenSpacePanning = false; // zeminde kaydır
+    this.controls.zoomToCursor = true;
+    this.controls.panSpeed = 1.1;
+    this.controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+    this.controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+    this.controls.minDistance = 90;
+    this.controls.maxDistance = 290;
     this.controls.target.set(0, 2, 6);
     this.camera.position.copy(this.controls.target).addScaledVector(VIEW_DIR, ZOOM_DISTANCE.NORMAL);
     this.controls.update();
@@ -351,7 +374,7 @@ export class ThreeCityScene {
       this.stars.visible = false;
       this.scene.add(this.stars);
       this.scene.background = new THREE.Color('#bfdcf5');
-      this.scene.fog = new THREE.Fog('#bfdcf5', 330, 720);
+      this.scene.fog = new THREE.Fog('#bfdcf5', 300, 560);
     }
 
     const ringMat = (color: string, opacity: number) =>
@@ -480,6 +503,7 @@ export class ThreeCityScene {
   private rebuildDecorations(stage: number): void {
     if (stage === this.decoStage) return;
     this.decoStage = stage;
+    this.shadowDirty = true;
     this.decoGroup.children.slice().forEach((c) => {
       disposeObject(c);
       this.decoGroup.remove(c);
@@ -651,9 +675,12 @@ export class ThreeCityScene {
     if (q === this.quality) return;
     this.quality = q;
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    this.renderer.setPixelRatio(q === 'LOW' ? 1 : Math.min(dpr, q === 'HIGH' ? 2 : 1.5));
+    this.maxPixelRatio = q === 'LOW' ? 1 : Math.min(dpr, q === 'HIGH' ? 2 : 1.5);
+    this.curPixelRatio = this.maxPixelRatio;
+    this.renderer.setPixelRatio(this.curPixelRatio);
     this.renderer.shadowMap.enabled = q !== 'LOW';
-    const size = q === 'HIGH' ? 4096 : 2048;
+    this.shadowDirty = true;
+    const size = q === 'HIGH' ? 2048 : 1024;
     this.sun.castShadow = q !== 'LOW';
     this.sun.shadow.mapSize.set(size, size);
     this.sun.shadow.map?.dispose();
@@ -695,6 +722,7 @@ export class ThreeCityScene {
 
     this.updateSelection(inp);
     this.updateTraffic(inp);
+    this.labelsDirty = true;
   }
 
   private syncEntity(
@@ -738,6 +766,9 @@ export class ThreeCityScene {
       mark(model);
       e.root.add(model);
       e.model = model;
+      e.smoke = undefined;
+      this.shadowDirty = true;
+      this.labelsDirty = true;
       e.modelSig = modelSig;
       const bb = new THREE.Box3().setFromObject(model);
       const size = bb.getSize(new THREE.Vector3());
@@ -759,10 +790,13 @@ export class ThreeCityScene {
     if (e.labelSig !== labelSig) {
       e.labelSig = labelSig;
       fillLabel(e.labelEl);
+      this.labelsDirty = true;
     }
   }
 
   private removeEntity(key: string, e: Entity): void {
+    this.shadowDirty = true;
+    this.labelsDirty = true;
     this.scene.remove(e.root);
     disposeObject(e.root);
     e.label.element.remove();
@@ -859,7 +893,7 @@ export class ThreeCityScene {
     };
     for (const v of fleet.vehicles) {
       const heavy = v.vehicleType === 'DELIVERY_TRUCK' || v.vehicleType === 'BUS' || v.isFactoryTruck;
-      const obj = mark(heavy ? makeTruck(colors[v.vehicleType] ?? '#e6a23a') : makeCar(colors[v.vehicleType] ?? '#3a79c9'));
+      const obj = mark(heavy ? makeTruck(colors[v.vehicleType] ?? '#e6a23a') : makeCar(colors[v.vehicleType] ?? '#3a79c9'), false, false);
       obj.scale.setScalar(heavy ? 0.8 : 0.85);
       this.vehicleGroup.add(obj);
       this.vehicles.push({ obj, route: v.routeId, duration: Math.max(8, v.durationSec), delay: v.delaySec });
@@ -894,7 +928,7 @@ export class ThreeCityScene {
     WALK_PATHS.forEach((path, pi) => {
       const count = pi === 0 ? 7 : pi === 1 ? 6 : 5;
       for (let i = 0; i < count; i++) {
-        const obj = mark(makePerson(shirts[Math.floor(rng() * shirts.length)]));
+        const obj = mark(makePerson(shirts[Math.floor(rng() * shirts.length)]), false, false);
         obj.scale.setScalar(0.95);
         this.walkerGroup.add(obj);
         this.walkers.push({
@@ -1050,12 +1084,14 @@ export class ThreeCityScene {
   };
 
   private onPointerMove = (e: PointerEvent): void => {
+    if (e.pointerType === 'touch') return; // dokunmatikte üzerine gelme yok, kaydırma akıcı kalsın
     const now = performance.now();
     if (now - this.lastHoverCheck < 60 || this.down.active) return;
     this.lastHoverCheck = now;
     const hit = this.pick(e.clientX, e.clientY);
     const key = hit ? `${hit.kind}:${hit.id}` : '';
     if (key === this.hoverKey) return;
+    if (this.hoverKey !== key) this.labelsDirty = true;
     this.hoverKey = key;
     this.renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
     const ent = hit ? this.entities.get(key) : undefined;
@@ -1102,7 +1138,9 @@ export class ThreeCityScene {
   private loop = (): void => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.loop);
-    const dt = Math.min(this.clock.getDelta(), 0.05);
+    const rawDt = this.clock.getDelta();
+    const dt = Math.min(rawDt, 0.05);
+    this.adaptResolution(rawDt * 1000);
     if (!this.paused) this.elapsed += dt;
     const time = performance.now() / 1000;
 
@@ -1122,17 +1160,38 @@ export class ThreeCityScene {
       }
       if (f >= 1) this.tween = null;
     }
-    this.controls.target.x = Math.max(-85, Math.min(85, this.controls.target.x));
-    this.controls.target.z = Math.max(-66, Math.min(66, this.controls.target.z));
+    this.controls.target.x = Math.max(-72, Math.min(72, this.controls.target.x));
+    this.controls.target.z = Math.max(-52, Math.min(58, this.controls.target.z));
     this.controls.update();
 
     this.stepLook(dt);
+    if (this.sun.position.distanceToSquared(this.lastSunPos) > 0.01) {
+      this.lastSunPos.copy(this.sun.position);
+      this.shadowDirty = true;
+    }
+    if (this.shadowDirty && this.renderer.shadowMap.enabled) {
+      this.renderer.shadowMap.needsUpdate = true;
+      this.shadowDirty = false;
+    }
     this.moveVehicles();
     this.moveWalkers(this.paused ? 0 : dt);
     const near = this.camera.position.distanceTo(this.controls.target) < LABEL_NEAR;
     const vw = this.container.clientWidth;
     const vh = this.container.clientHeight;
+    const camKey = `${this.camera.position.x.toFixed(2)},${this.camera.position.y.toFixed(2)},${this.camera.position.z.toFixed(2)},${vw},${vh}`;
+    const labelsNeedLayout = this.labelsDirty || camKey !== this.lastCamKey;
+    this.lastCamKey = camKey;
+    this.labelsDirty = false;
     for (const [key, e] of this.entities) {
+      if (e.orb) e.orb.position.y = e.top + 3.2 + Math.sin(time * 2 + e.root.position.x) * 0.35;
+      if (e.smoke === undefined) e.smoke = e.model?.getObjectByName('smoke') ?? null;
+      if (e.smoke) {
+        const s = (time * 0.6) % 1;
+        e.smoke.position.y = e.top - 4 + s * 5;
+        e.smoke.scale.setScalar(0.6 + s * 0.8);
+        ((e.smoke as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.7 * (1 - s);
+      }
+      if (!labelsNeedLayout) continue;
       if (e.kind === 'block') {
         const show = near || SHOP_SLOT_IDS.has(e.id) || key === this.selectedKey || key === this.hoverKey;
         if (show !== e.labelShown) {
@@ -1149,18 +1208,28 @@ export class ThreeCityScene {
         e.labelCovered = covered;
         e.label.element.style.visibility = covered ? 'hidden' : 'visible';
       }
-      if (e.orb) e.orb.position.y = e.top + 3.2 + Math.sin(time * 2 + e.root.position.x) * 0.35;
-      const smoke = e.model?.getObjectByName('smoke');
-      if (smoke) {
-        const s = (time * 0.6) % 1;
-        smoke.position.y = e.top - 4 + s * 5;
-        smoke.scale.setScalar(0.6 + s * 0.8);
-        ((smoke as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.7 * (1 - s);
-      }
     }
     this.renderer.render(this.scene, this.camera);
-    this.labelRenderer.render(this.scene, this.camera);
+    if (labelsNeedLayout) this.labelRenderer.render(this.scene, this.camera);
   };
+
+  /** Kare süresi uzun kalırsa çözünürlüğü kademeli düşürür, rahatlayınca geri yükseltir. */
+  private adaptResolution(frameMs: number): void {
+    if (!Number.isFinite(frameMs) || frameMs <= 0 || frameMs > 250) return;
+    this.frameMsAvg = this.frameMsAvg * 0.9 + frameMs * 0.1;
+    this.frameCount += frameMs;
+    if (this.frameCount < 1200) return; // ~1,2 saniyede bir karar ver
+    this.frameCount = 0;
+    if (this.frameMsAvg > 22 && this.curPixelRatio > 1) {
+      this.curPixelRatio = Math.max(1, this.curPixelRatio - 0.25);
+      this.renderer.setPixelRatio(this.curPixelRatio);
+      this.labelsDirty = true;
+    } else if (this.frameMsAvg < 14 && this.curPixelRatio < this.maxPixelRatio) {
+      this.curPixelRatio = Math.min(this.maxPixelRatio, this.curPixelRatio + 0.25);
+      this.renderer.setPixelRatio(this.curPixelRatio);
+      this.labelsDirty = true;
+    }
+  }
 
   dispose(): void {
     if (this.disposed) return;

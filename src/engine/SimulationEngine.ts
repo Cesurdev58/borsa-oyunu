@@ -10,6 +10,7 @@
  */
 
 import * as DecisionEventEngine from './DecisionEventEngine';
+import * as ShopManager from './ShopManager';
 import {
   createInitialNpcFunds,
 } from '../data/npcCompanies';
@@ -1619,6 +1620,21 @@ export class SimulationEngine {
       message: res.message,
       shop: res.shop ?? undefined,
     };
+  }
+
+  /** Dükkâna müdür tutar (seviye kapısı ve işe alma ücreti ShopManager'da). */
+  public hireShopManager(shopId: string): { success: boolean; message: string } {
+    const res = ShopManager.hireManager(this.state, shopId, this.getReservedCash());
+    if (res.success) this.recalculateFinancialsAndStages();
+    return res;
+  }
+
+  public fireShopManager(shopId: string): { success: boolean; message: string } {
+    return ShopManager.fireManager(this.state, shopId);
+  }
+
+  public setShopManagerSweep(shopId: string, on: boolean): { success: boolean; message: string } {
+    return ShopManager.setManagerSweep(this.state, shopId, on);
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */

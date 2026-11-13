@@ -6,7 +6,7 @@
  * Ayrıntılı yönetim (sipariş, fiyat, personel...) "Yönet" ile eski panelde açılır.
  */
 
-import { Check, Plus } from 'lucide-react';
+import { Check, Plus, UserCog } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
@@ -88,7 +88,8 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
   }
 
   // Bugünün görevleri: kayıt tutmadan, dükkânların anlık durumundan türetilir.
-  const fills = trade.shops.map((sh) => {
+  // Müdürlü dükkânların rafını müdür doldurur; görev yalnızca oyuncunun yönettiği dükkânlara bakar.
+  const fills = trade.shops.filter((sh) => !sh.manager).map((sh) => {
     const used = sh.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
     return used / Math.max(1, sh.shelfCapacity);
   });
@@ -176,6 +177,14 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                   {tpl?.nameTR ?? shop.shopType} · Seviye {shop.level}
                 </div>
               </div>
+              {shop.manager && (
+                <span
+                  data-testid={`shop-card-manager-badge-${shop.shopId}`}
+                  className="g-pill shrink-0 bg-[var(--g-gold)] text-[#5a3a00]"
+                >
+                  <UserCog className="w-3.5 h-3.5" /> Müdür
+                </span>
+              )}
             </div>
 
             <div className="p-3 space-y-3">
@@ -214,6 +223,20 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                   />
                 </div>
               </div>
+
+              {shop.manager && (
+                <div
+                  className={`rounded-xl px-3 py-2 text-[13px] font-bold ${
+                    shop.manager.lowCash
+                      ? 'bg-[#ffe9e8] text-[var(--g-red-dark)]'
+                      : 'bg-[var(--g-surface-2)] text-[var(--g-muted)]'
+                  }`}
+                >
+                  {shop.manager.lowCash
+                    ? 'Kasa boş, müdür mal alamıyor. Kasaya para koy.'
+                    : `Müdür: ${shop.manager.lastActionTR}`}
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2">
                 <button

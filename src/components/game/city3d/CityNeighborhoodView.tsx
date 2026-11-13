@@ -59,7 +59,7 @@ export const CityNeighborhoodView: React.FC<CityViewProps> = (props) => {
       fallback={
         <div
           data-testid="city3d-loading"
-          className="flex w-full h-[540px] sm:h-[600px] lg:h-[640px] items-center justify-center rounded-3xl border border-slate-200 bg-emerald-50 text-sm font-semibold text-emerald-800"
+          className="flex w-full h-[calc(100dvh-236px)] min-h-[440px] max-h-[860px] items-center justify-center rounded-3xl border border-slate-200 bg-emerald-50 text-sm font-semibold text-emerald-800"
         >
           Şehir yükleniyor…
         </div>

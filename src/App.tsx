@@ -832,6 +832,26 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleShopManagerResult = useCallback(
+    (res: { success: boolean; message: string }) => {
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [persistAndRefreshUI]
+  );
+  const handleHireShopManager = useCallback(
+    (shopId: string) => handleShopManagerResult(engine.hireShopManager(shopId)),
+    [engine, handleShopManagerResult]
+  );
+  const handleFireShopManager = useCallback(
+    (shopId: string) => handleShopManagerResult(engine.fireShopManager(shopId)),
+    [engine, handleShopManagerResult]
+  );
+  const handleSetShopManagerSweep = useCallback(
+    (shopId: string, on: boolean) => handleShopManagerResult(engine.setShopManagerSweep(shopId, on)),
+    [engine, handleShopManagerResult]
+  );
+
   const handleUpgradeShopLevel = useCallback(
     (shopId: string) => {
       const res = engine.upgradeShopLevel(shopId);
@@ -1170,6 +1190,9 @@ export default function App() {
         onAcceptCommercialContract={handleAcceptCommercialContract}
         onDeliverCommercialContract={handleDeliverCommercialContract}
         onIncorporateShopsIntoCompany={handleIncorporateShops}
+        onHireShopManager={handleHireShopManager}
+        onFireShopManager={handleFireShopManager}
+        onSetShopManagerSweep={handleSetShopManagerSweep}
         spendableCash={engine.getSpendableCash()}
         reservedCash={engine.getReservedCash()}
         getReservedShares={(t) => engine.getReservedShares(t)}

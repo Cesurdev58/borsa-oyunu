@@ -28,6 +28,7 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **İlk dükkân kapısı:** Net değer `FIRST_SHOP_MIN_NET_WORTH` (`src/data/gameBalance.ts`, şu an 120.000 TL) olmadan ilk dükkân açılamaz. Amaç borsa aşamasının atlanmamasıdır. Yalnızca bu sayıyı değiştirerek başlangıcı kolaylaştırıp zorlaştırabilirsin.
 - **Dükkân cirosu:** Müşteri başına sepet tutarı `avgBasketValueTL` (`src/data/tradeCatalog.ts`, her dükkân şablonunda). Eskiden her müşteri bir koli (~435 TL) alıyordu, büfe günde ~40.000 TL ciro yapıp kendini ~5 günde çıkarıyordu. Hedef geri dönüş süreleri: büfe 45, manav 60, kafe 80, giyim 100, elektronik 130, mobilya 130, market 120, galeri 180 gün (`scripts/balans-olcumu.ts`).
 - **Haber dengesi:** Her sektörde olumlu ve olumsuz haber şablonlarının toplam etkisi (`baseImpact / decayRate`) eşit olmalı; aksi hâlde borsa tek yönlü yükselir. Yeni haber eklersen `src/tests/balance/balance.test.ts` dengeyi denetler.
+- **Müdür dengesi:** `npm run balans` "MÜDÜR" bölümü her dükkân türünü 2. seviyede elle (her gün rafları doldurarak) ve müdürle 90 gün oynatır. Hedef: müdürlü kâr, elle kârın %70–85'i (şu an %71–86). Ayar sayıları `gameBalance.ts` içinde `MANAGER_*`.
 - **Bilinen:** Borsa nominal olarak yılda ortalama +%65–85 (ekonomide enflasyon %28). Büfe/manav ROI'si hâlâ borsadan yüksek; bu bilinçli, ilk dükkân kapısı dengeyi sağlar.
 
 ## Oyun süresi ve arayüz tasarımı (mobil tycoon yönü)
@@ -77,6 +78,15 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Tutarlar ölçeklidir: dükkân olaylarında günlük cironun ~%30'u (800–30.000 ₺), kişisel olaylarda net varlığın ~%2'si (1.000–40.000 ₺). Parası yetmeyen seçenek seçilemez.
 - Arayüz: `components/game/DecisionCard.tsx` (lacivert kart, iki büyük seçenek, "Sonra karar ver" ile sağ altta altın "Karar bekliyor" kapsülüne küçülür). `SimulationEngine.resolveDecisionEvent('A'|'B')` → `App.tsx handleResolveDecision` → `TycoonGameView onResolveDecision`. Testi `src/tests/decisions/decisionEvents.test.ts`.
 - `npm run balans` karar kartlarını seçmez (kartlar süresi dolup etkisiz kapanır), bu yüzden denge ölçümü değişmez.
+
+## Dükkân müdürü (otomatik yönetim)
+
+- Motor: `engine/ShopManager.ts`; kayıtta `ShopInstance.manager` (eski kayıtlarda yoktur, alan yoksa müdür yok demektir). Ayarlar `data/gameBalance.ts`: `MANAGER_MIN_SHOP_LEVEL` (2), `MANAGER_WAGE_MULTIPLIER` (sabit maaş = çalışan maaşı × 0,2), `MANAGER_PROFIT_SHARE` (müdürden önceki günlük kârın %15'i prim, zarar gününde prim yok), `MANAGER_HIRE_FEE_DAYS` (işe alma = 30 günlük sabit maaş), `MANAGER_CASH_RESERVE_DAYS`, `MANAGER_SWEEP_TRIGGER_MULT`.
+- İşe alırken (`hireManager`) kişisel nakitten işe alma ücreti düşer; dükkân kasası önerilen işletme parasının (`recommendedWorkingCash`: birkaç günlük gider + rafları bir kez doldurma) altındaysa eksik kısım cepten kasaya konur. Şirket şubelerine müdür tutulmaz (onlar zaten depodan beslenir).
+- Maaş + prim dükkânın günlük personel giderine eklenir (`TradeAndShopEngine`, `todayPayrollCost`, `manager.todayBonus`).
+- Gün kapanışında (`DayCloseProcessor`, ticaret adımından sonra, karar kartlarından önce) `runManagers`: rafları `planShopRestock` ile YALNIZCA dükkân kasasındaki parayla doldurur (kasada `MANAGER_CASH_RESERVE_DAYS` günlük gider bırakır, oyuncunun cebine dokunmaz); `sweepProfits` açıksa kasa ayrılan payın 3 katını geçince fazlasını oyuncuya aktarır. Kasa boş ve raflar azsa `manager.lowCash` olur, kartta kırmızı uyarı çıkar.
+- Arayüz: dükkân kartında altın "Müdür" rozeti ve "Müdür: …" satırı (`ShopDashboard.tsx`); "Yönet → Çalışanlar" ekranının başında müdür kartı (`shop-manager-box`, `shop-manager-hire-btn`, `shop-manager-sweep-toggle`, `shop-manager-fire-btn`). Müdürlü dükkânlar "Bugünün görevleri" raf görevine sayılmaz. Akış: `SimulationEngine.hireShopManager / fireShopManager / setShopManagerSweep` → `App.tsx` → `TycoonGameView` → `OyuncuOfisiPanel` → `EsnafAndTradePanel`.
+- Testi `src/tests/decisions/shopManager.test.ts`.
 
 ## Tekrar hoş geldin penceresi
 
@@ -154,12 +164,14 @@ Klasörü: `src/components/game/city3d/`
 |---|---|
 | `CityNeighborhoodView.tsx` | Sarmalayıcı: tarayıcı 3D çizemiyorsa ya da oyuncu "Klasik görünüme geç" dediyse eski izometrik görünümü gösterir. Seçim `localStorage` içinde `city_view_mode` anahtarında (`klasik` / `3d`). 3D kütüphanesi yalnızca bu sekme açılınca yüklenir. |
 | `ThreeNeighborhoodView.tsx` | 3D ekranın React kısmı: tıklama, seçim paneli, yakınlaştırma düğmeleri, etiketler. Oyun verisini eski görünümle aynı fonksiyonlardan (`cityLayout.ts`) alır. |
-| `ThreeCityScene.ts` | Sahne: kamera, ışık (sabah/gün/akşam/gece), yollar, araçlar, ağaçlar, tıklama ve üzerine gelme. |
+| `ThreeCityScene.ts` | Sahne: kamera, ışık (sabah/gün/akşam/gece), yollar, araçlar, ağaçlar, tıklama ve üzerine gelme. Kamera sabit açılıdır (aşağıya bak). |
 | `models.ts` | Binaların 3D modelleri (8 ana bina, dükkân türleri, şehir blokları, kilitli/inşaat arsaları). |
 | `kit.ts` | Ortak yapı taşları: malzeme, pencere dokuları, ağaç, araba, lamba. |
 | `webgl.ts` | Tarayıcı 3D destekliyor mu kontrolü. Testler ve sunucu tarafı için hep "hayır" döner, yani testler eski görünümü kullanır. |
 
 Kurallar ve notlar:
+- **Kamera sabit açılı (Clash of Clans / Hay Day gibi):** `MapControls`, döndürme ve eğme kapalı; tek parmak/sol tık sürükleyince zeminde kayar, iki parmak/tekerlek yakınlaştırır (imlece doğru). Açı `VIEW_DIR` (~50° yukarıdan, hafif çapraz), uzaklık 90–290, kaydırma sınırı hedef x ±72, z −52..58. Şehir kutusu ekranı doldurur (`h-[calc(100dvh-236px)]`).
+- **Performans:** gölge haritası her karede değil yalnızca sahne değişince yeniden çizilir (`shadowDirty`; bina eklenip çıkınca, dekor değişince, güneş yer değiştirince). Araç ve yayalar gölge düşürmez. Etiketler (CSS2D) yalnızca kamera ya da etiket değişince yeniden yerleştirilir (`labelsDirty`). Kare süresi uzun kalırsa çözünürlük kademeli düşer, rahatlayınca geri çıkar (`adaptResolution`). Retina ekranda kenar yumuşatma kapalı, gölge PCF ve en çok 2048. Dokunmatikte üzerine gelme (hover) taraması yapılmaz. Ölçüm: yazılımsal grafik motorunda 390×844, DPR 2 ekranda eski sürüm ~4 kare/sn, yeni ~11 kare/sn.
 - 3D modeller kodla üretilir (düşük poligonlu). Eski "bina kodla çizilmez / PNG iste" kuralı yalnızca eski izometrik görünüm içindir;
   PNG bina görselleri (`public/buildings/`, `buildingSprites.ts`) ve zemin/yol notları da sadece eski görünümü etkiler.
 - Harita koordinatları eski görünümle aynıdır (1600×1200 birim → 3D dünyada ×0,1). Yollar ve araç rotaları `ThreeCityScene.ts` içindeki

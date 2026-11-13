@@ -357,6 +357,21 @@ export interface ShopTemplate {
   levelUpgradeCosts: [number, number, number, number]; // Lv1->2, Lv2->3, Lv3->4, Lv4->5
 }
 
+export interface ShopManagerInfo {
+  hiredDay: number;
+  dailyWage: number;
+  /** Kasada biriken fazla kârı oyuncuya aktarsın mı */
+  sweepProfits: boolean;
+  /** Son gün yaptığı işlerin kısa özeti */
+  lastActionTR: string;
+  totalSweptToPlayer: number;
+  totalRestockSpent: number;
+  /** Kasa boş olduğu için mal alamıyor */
+  lowCash?: boolean;
+  /** Bugünkü kâr primi */
+  todayBonus?: number;
+}
+
 export interface ShopInstance {
   shopId: string;
   shopType: ShopType;
@@ -379,6 +394,8 @@ export interface ShopInstance {
   autoReplenishEnabled: boolean;
   customerSatisfaction: number; // 0 - 100
   reputationScore: number; // 0 - 100
+  /** Dükkân müdürü (eski kayıtlarda yoktur) */
+  manager?: ShopManagerInfo;
   /** Karar kartından gelen geçici müşteri çarpanı (eski kayıtlarda yoktur) */
   demandBoost?: { multiplier: number; untilDay: number };
   todayWalkInCustomers: number;

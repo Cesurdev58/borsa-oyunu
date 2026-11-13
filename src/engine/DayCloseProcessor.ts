@@ -7,6 +7,7 @@
  */
 
 import * as DecisionEventEngine from './DecisionEventEngine';
+import * as ShopManager from './ShopManager';
 import {
   DailyLogEntry,
   OfflineProgressSummary,
@@ -268,6 +269,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.rng,
       engine.getReservedCash()
     );
+    // 5B-2. Dükkân müdürleri: rafları dükkân kasasından doldur, fazla kârı oyuncuya aktar
+    for (const msg of ShopManager.runManagers(engine.state, engine.getReservedCash())) {
+      engine.pendingDailyActions.push(`[Müdür] ${msg}`);
+    }
+
     // 5C. Karar kartları: ertelenmiş ödemeler, süresi geçen kart, yeni olay
     for (const msg of DecisionEventEngine.onDayClosed(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Karar] ${msg}`);

@@ -36,7 +36,7 @@ import {
 import { SectorId } from '../../models/market';
 import { SimulationState } from '../../models/simulation';
 import { HelpTip } from './ui/HelpTip';
-import { SHOP_EMOJI } from './buildings/ShopDashboard';
+import { SHOP_EMOJI } from './ui/shopEmoji';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
 import {

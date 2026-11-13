@@ -14,17 +14,9 @@ import { SHOP_TEMPLATES, TradeAndShopEngine } from '../../../engine/TradeAndShop
 import { planShopRestock } from '../../../engine/ShopRestockPlanner';
 import { FIRST_SHOP_MIN_NET_WORTH } from '../../../data/gameBalance';
 import type { EsnafAndTradeActionsProps } from '../EsnafAndTradePanel';
+import { SHOP_EMOJI } from '../ui/shopEmoji';
+export { SHOP_EMOJI };
 
-export const SHOP_EMOJI: Record<ShopType, string> = {
-  BUFE: '🥪',
-  MANAV: '🥦',
-  KAFE: '☕',
-  GIYIM_MAGAZASI: '👗',
-  ELEKTRONIK_MAGAZASI: '📱',
-  MOBILYA_MAGAZASI: '🛋️',
-  MARKET: '🛒',
-  OTOMOBIL_GALERISI: '🚗',
-};
 
 const CARD_TONES = [
   'from-orange-400 to-rose-400',

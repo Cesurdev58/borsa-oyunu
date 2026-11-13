@@ -820,6 +820,18 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleResolveDecision = useCallback(
+    (choiceId: 'A' | 'B') => {
+      const res = engine.resolveDecisionEvent(choiceId);
+      setStatusBanner({
+        type: res.success ? 'success' : 'error',
+        text: res.message,
+      });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleUpgradeShopLevel = useCallback(
     (shopId: string) => {
       const res = engine.upgradeShopLevel(shopId);
@@ -1115,6 +1127,7 @@ export default function App() {
         ipoEligibility={engine.checkIPOEligibility()}
         nextEvent={engine.getNextScheduledEvent()}
         notifications={notifications}
+        onResolveDecision={handleResolveDecision}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}

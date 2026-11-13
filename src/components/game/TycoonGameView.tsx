@@ -46,6 +46,7 @@ import { CityQuestStrip } from './CityQuestStrip';
 import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
 import { GameTopBar } from './GameTopBar';
+import { DecisionCard } from './DecisionCard';
 import { play, setFeedbackSettings, vibrate } from './ui/feedback';
 import {
   CityBuildingId,
@@ -55,6 +56,7 @@ import {
 import { OfflineProgressModal } from './OfflineProgressModal';
 
 interface TycoonGameViewProps extends BuildingDetailActions {
+  onResolveDecision?: (choiceId: 'A' | 'B') => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -81,6 +83,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   ipoEligibility,
   nextEvent,
   notifications,
+  onResolveDecision,
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
@@ -375,6 +378,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       <CelebrationOverlay
         shopCount={state.tradeState?.shops.length ?? 0}
         stage={state.stage}
+      />
+      <DecisionCard
+        state={state}
+        reservedCash={Math.max(0, state.cash - spendableCash)}
+        onResolve={onResolveDecision}
       />
       <FirstRunGuide
         day={state.day}

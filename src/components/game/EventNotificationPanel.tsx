@@ -115,7 +115,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
             }}
             className={`${
               toastVisible ? 'g-toast-in' : 'hidden'
-            } fixed left-1/2 -translate-x-1/2 bottom-[88px] z-40 w-[min(92vw,420px)] rounded-2xl px-3 py-2.5 flex items-center gap-3 cursor-pointer text-white`}
+            } fixed left-1/2 bottom-[88px] z-40 w-[min(92vw,420px)] rounded-2xl px-3 py-2.5 flex items-center gap-3 cursor-pointer text-white`}
             style={{ background: 'rgba(18,28,68,.94)', boxShadow: '0 12px 30px -10px rgba(18,28,68,.7)' }}
           >
             <span className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center ${latestStyle.chip}`}>

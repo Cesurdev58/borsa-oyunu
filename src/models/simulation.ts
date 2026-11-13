@@ -199,6 +199,8 @@ export interface CitySavedState {
 }
 
 export interface SimulationState {
+  /** Karar kartları (eski kayıtlarda yoktur; motor gerektiğinde oluşturur) */
+  decisionEvents?: import('./decisions').DecisionEventsState;
   schemaVersion: number;
   seed: number;
   randomState: number;

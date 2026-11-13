@@ -6,6 +6,7 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
+import * as DecisionEventEngine from './DecisionEventEngine';
 import {
   DailyLogEntry,
   OfflineProgressSummary,
@@ -267,6 +268,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.rng,
       engine.getReservedCash()
     );
+    // 5C. Karar kartları: ertelenmiş ödemeler, süresi geçen kart, yeni olay
+    for (const msg of DecisionEventEngine.onDayClosed(engine.state, engine.getReservedCash())) {
+      engine.pendingDailyActions.push(`[Karar] ${msg}`);
+    }
+
     const todayTradeSummary = engine.state.tradeState?.todaySummary;
     if (todayTradeSummary) {
       engine.intradayTracking.revenueGenerated +=

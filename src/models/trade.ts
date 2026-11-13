@@ -379,6 +379,8 @@ export interface ShopInstance {
   autoReplenishEnabled: boolean;
   customerSatisfaction: number; // 0 - 100
   reputationScore: number; // 0 - 100
+  /** Karar kartından gelen geçici müşteri çarpanı (eski kayıtlarda yoktur) */
+  demandBoost?: { multiplier: number; untilDay: number };
   todayWalkInCustomers: number;
   todayServedCustomers: number;
   todayUnmetCustomerDemand: number;

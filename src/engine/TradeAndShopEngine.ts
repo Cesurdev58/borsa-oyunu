@@ -422,7 +422,10 @@ export class TradeAndShopEngine {
             reputationFactor *
             macroFactor *
             eventDemandMultiplier(eventDemandMult) *
-            mechanicDemandMultiplier
+            mechanicDemandMultiplier *
+            (shop.demandBoost && shop.demandBoost.untilDay >= state.day
+              ? shop.demandBoost.multiplier
+              : 1)
         )
       );
       shop.todayWalkInCustomers = rawDailyCustomers;

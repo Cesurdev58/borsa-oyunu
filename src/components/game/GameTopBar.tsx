@@ -159,7 +159,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               key={floatDelta.id}
               aria-hidden="true"
               data-testid="cash-float-delta"
-              className={`g-display pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 px-3 py-1 rounded-full text-sm font-extrabold shadow-lg float-up ${
+              className={`g-display pointer-events-none absolute left-1/2 top-full mt-1 px-3 py-1 rounded-full text-sm font-extrabold shadow-lg float-up ${
                 floatDelta.amount > 0 ? 'bg-[var(--g-green)] text-white' : 'bg-[var(--g-red)] text-white'
               }`}
             >

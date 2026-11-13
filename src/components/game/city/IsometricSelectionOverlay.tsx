@@ -27,6 +27,9 @@ export interface SelectedShopInfo {
   fillPct: number;
   restockCost: number;
   canRestock: boolean;
+  /** "Açık · 23:00'e kadar" gibi (eski çağrılarda olmayabilir) */
+  hoursLabel?: string;
+  openNow?: boolean;
 }
 
 interface IsometricSelectionOverlayProps {
@@ -158,15 +161,26 @@ export const IsometricSelectionOverlay: React.FC<IsometricSelectionOverlayProps>
               </div>
             ) : shopInfo && formatCurrency ? (
               <div data-testid="selection-shop-card" className="mt-2 space-y-2">
+                {shopInfo.hoursLabel && (
+                  <div
+                    data-testid="selection-shop-hours"
+                    className={`text-[13px] font-bold inline-flex items-center gap-1.5 ${
+                      shopInfo.openNow ? 'text-emerald-700' : 'text-slate-500'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${shopInfo.openNow ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                    {shopInfo.hoursLabel}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-slate-50 p-2">
-                    <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                    <div className="text-[13px] text-slate-500">Dünkü satış</div>
                     <div className="text-sm font-extrabold text-slate-900 tabular-nums">
                       {formatCurrency(shopInfo.sales)}
                     </div>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-2">
-                    <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
+                    <div className="text-[13px] text-slate-500">Dünkü kâr</div>
                     <div
                       className={`text-sm font-extrabold tabular-nums ${
                         shopInfo.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'

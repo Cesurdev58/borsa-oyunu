@@ -8,6 +8,13 @@
 
 import { MarketSession, SimulationState } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
+import { FIRST_SHOP_MIN_NET_WORTH } from '../../../data/gameBalance';
+import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
+
+function formatGoalTL(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} milyon ₺`;
+  return `${Math.round(v / 1000).toLocaleString('tr-TR')} bin ₺`;
+}
 
 export interface FormattedHudCurrency {
   /** Kısa gösterim: 106.328 TL, 7,64 Mn TL, 33,24 Mn TL, 1,20 Mr TL */
@@ -136,7 +143,15 @@ export function deriveCityQuestStripModel(
   );
   const netWorth2mPct = Math.min(
     100,
-    Math.floor((state.netWorth / 2_000_000) * 100)
+    Math.floor((state.netWorth / PROGRESSION_RULES.entrepreneurNetWorth) * 100)
+  );
+  const shopsList = state.tradeState?.shops ?? [];
+  const hasShopProfit = shopsList.some(
+    (sh) => (sh.cumulativeNetProfit ?? 0) > 0 || (sh.todayNetProfit ?? 0) > 0
+  );
+  const firstShopGatePct = Math.min(
+    100,
+    Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100)
   );
 
   const allQuests: CityQuestItem[] = [
@@ -163,59 +178,53 @@ export function deriveCityQuestStripModel(
       completed: hasAnyTradeOrOrder,
     },
     {
-      id: 'quest-03-first-limit-fill',
+      id: 'quest-03-two-sectors',
       stepNumber: 3,
-      title: 'İlk limit emrini tamamla',
-      progressText:
-        filledLimitOrdersCount > 0 || state.transactions.length > 0
-          ? '1 / 1'
-          : '0 / 1',
-      progressPct:
-        filledLimitOrdersCount > 0 || state.transactions.length > 0 ? 100 : 0,
-      rewardLabel: '+200 İtibar · Meydan Çiçekliği',
+      title: 'İki farklı sektörden hisse al',
+      progressText: `${Math.min(2, distinctSectorsCount)} / 2`,
+      progressPct: Math.min(100, distinctSectorsCount * 50),
+      rewardLabel: '+200 İtibar · Sektör Uzmanı',
       reputationPoints: 200,
       targetBuildingId: 'BORSA',
-      completed: filledLimitOrdersCount > 0 || state.transactions.length > 0,
+      completed: distinctSectorsCount >= 2 || shopsList.length > 0 || state.stage >= 2,
     },
     {
-      id: 'quest-04-portfolio-125k',
+      id: 'quest-04-first-shop-gate',
       stepNumber: 4,
-      title: "Portföy değerini 125.000 TL'ye çıkar",
-      progressText: `%${portfolioPct}`,
-      progressPct: portfolioPct,
-      rewardLabel: '+250 İtibar · Analist Rozeti',
+      title: `Net varlığını ${formatGoalTL(FIRST_SHOP_MIN_NET_WORTH)} yap`,
+      progressText: `%${firstShopGatePct}`,
+      progressPct: firstShopGatePct,
+      rewardLabel: '+250 İtibar · Dükkân izni',
       reputationPoints: 250,
       targetBuildingId: 'BORSA',
-      completed:
-        state.portfolioValue >= portfolioTarget ||
-        state.netWorth >= portfolioTarget,
+      completed: state.netWorth >= FIRST_SHOP_MIN_NET_WORTH || shopsList.length > 0,
     },
     {
-      id: 'quest-05-two-sectors',
+      id: 'quest-05-open-first-shop',
       stepNumber: 5,
-      title: 'İki farklı sektörden hisse al',
-      progressText: `${Math.min(2, distinctSectorsCount)} / 2 Sektör`,
-      progressPct: Math.min(100, distinctSectorsCount * 50),
-      rewardLabel: '+300 İtibar · Sektör Uzmanı',
+      title: 'İlk dükkânını aç',
+      progressText: shopsList.length > 0 ? '1 / 1' : '0 / 1',
+      progressPct: shopsList.length > 0 ? 100 : 0,
+      rewardLabel: '+300 İtibar · Esnaf Rozeti',
       reputationPoints: 300,
-      targetBuildingId: 'BORSA',
-      completed: distinctSectorsCount >= 2 || state.stage >= 2,
+      targetBuildingId: 'OYUNCU_OFISI',
+      completed: shopsList.length > 0 || state.playerCompany !== null,
     },
     {
-      id: 'quest-06-first-dividend',
+      id: 'quest-06-first-shop-profit',
       stepNumber: 6,
-      title: 'İlk temettünü kazan',
-      progressText: state.totalDividendsEarned > 0 ? 'Tamamlandı' : 'Bekleniyor',
-      progressPct: state.totalDividendsEarned > 0 ? 100 : 0,
-      rewardLabel: '+350 İtibar · Temettü Rozeti',
+      title: 'Dükkânından ilk kârını al',
+      progressText: hasShopProfit ? '1 / 1' : '0 / 1',
+      progressPct: hasShopProfit ? 100 : 0,
+      rewardLabel: '+350 İtibar · Kasa Rozeti',
       reputationPoints: 350,
       targetBuildingId: 'OYUNCU_OFISI',
-      completed: state.totalDividendsEarned > 0,
+      completed: hasShopProfit || state.playerCompany !== null,
     },
     {
       id: 'quest-07-networth-250k',
       stepNumber: 7,
-      title: "Net varlığını 250.000 TL'ye çıkar",
+      title: `Net varlığını ${formatGoalTL(250_000)} yap`,
       progressText: `%${netWorth250kPct}`,
       progressPct: netWorth250kPct,
       rewardLabel: '+400 İtibar · Prestij Peyzajı',
@@ -226,7 +235,7 @@ export function deriveCityQuestStripModel(
     {
       id: 'quest-08-company-2m',
       stepNumber: 8,
-      title: 'Şirket kurma hedefi: 2.000.000 TL',
+      title: `Şirket kur (${formatGoalTL(PROGRESSION_RULES.entrepreneurNetWorth)})`,
       progressText: `%${netWorth2mPct}`,
       progressPct: netWorth2mPct,
       rewardLabel: '+500 İtibar · Girişimci Plaketi',
@@ -235,7 +244,7 @@ export function deriveCityQuestStripModel(
       completed:
         state.stageUnlocks.stage2Entrepreneur ||
         state.playerCompany !== null ||
-        state.netWorth >= 2_000_000,
+        state.netWorth >= PROGRESSION_RULES.entrepreneurNetWorth,
     },
   ];
 

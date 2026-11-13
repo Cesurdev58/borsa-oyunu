@@ -31,7 +31,7 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-violet-600" />
             <h3 className="text-sm font-bold text-slate-900">
-              🔒 Ar-Ge Merkezi kilitli
+              Ar-Ge Merkezi kilitli
             </h3>
           </div>
           <p className="text-slate-600 leading-relaxed">
@@ -52,25 +52,24 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-ARGE_MERKEZI-active"
     >
-      <div className="rounded-3xl bg-gradient-to-br from-violet-100 to-fuchsia-100 p-5 text-center space-y-2">
-        <div className="text-sm font-bold text-violet-800">⭐ Ürün kalitesi</div>
-        <div className="text-5xl font-extrabold text-violet-900 tabular-nums">
+      <div className="g-hero p-5 text-center space-y-2">
+        <div className="text-sm font-bold text-white/65">Ürün kalitesi</div>
+        <div className="text-5xl font-extrabold tabular-nums g-hero-value">
           x{pc.techQualityMultiplier.toFixed(2)}
         </div>
-        <div className="h-4 rounded-full bg-white/70 overflow-hidden">
+        <div className="g-track h-3">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500"
+            className="g-fill"
             style={{ width: `${qualityProgressPct}%` }}
           />
         </div>
-        <div className="text-sm font-bold text-violet-800 tabular-nums">
-          🔬 Her gün {formatCurrency(pc.dailyRdBudget)}
+        <div className="text-sm font-bold text-white/65 tabular-nums">
+          Her gün {formatCurrency(pc.dailyRdBudget)}
         </div>
       </div>
 
-      <div className="flex items-start gap-2 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900">
-        <span>💡</span>
-        <span>
+      <div className="g-tip">
+                <span>
           Ar-Ge'ye her gün para ayırırsan ürünlerin zamanla daha kaliteli olur
           ve daha pahalıya satılır.
         </span>
@@ -85,9 +84,9 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               dailyRdBudget: pc.dailyRdBudget + 10_000,
             })
           }
-          className="min-h-[52px] px-3 py-2 rounded-2xl bg-gradient-to-b from-violet-400 to-violet-600 text-white font-extrabold shadow active:scale-95"
+          className="g-btn g-btn-navy px-3"
         >
-          ➕ Ar-Ge parasını artır (+₺10.000)
+          Ar-Ge parasını artır (+₺10.000)
         </button>
         <button
           type="button"
@@ -96,9 +95,9 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               dailyRdBudget: Math.max(0, pc.dailyRdBudget - 5_000),
             })
           }
-          className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+          className="g-btn g-btn-secondary px-3"
         >
-          ➖ Azalt (−₺5.000)
+          Azalt (−₺5.000)
         </button>
       </div>
     </div>

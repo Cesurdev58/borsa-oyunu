@@ -16,20 +16,10 @@ import {
 import {
   SectorId,
 } from '../../../models/market';
+import { SectorIcon, sectorLabel } from '../ui/SectorIcon';
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
-
-const SECTOR_EMOJI: Record<string, string> = {
-  TEKNOLOJI: '💻',
-  ENERJI: '⚡',
-  FINANS: '🏦',
-  BIYOTEKNOLOJI: '🧬',
-  SAVUNMA: '🛡️',
-  PERAKENDE: '🛒',
-  LOJISTIK: '🚚',
-  MADENCILIK: '⛏️',
-};
 
 export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -115,47 +105,46 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   return (
     <div className="space-y-4 text-xs" data-testid="sheet-content-BORSA">
       {/* Üst kart: nakit + piyasa durumu */}
-      <div className="rounded-3xl p-4 text-white shadow-lg bg-gradient-to-br from-emerald-500 via-teal-500 to-sky-500">
+      <div className="g-hero p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm font-extrabold">
-            <span className="text-2xl">📈</span> Borsa
-          </div>
+          <div className="g-hero-label whitespace-nowrap">Toplam paran</div>
           <span
             className={`px-2.5 py-1 rounded-full text-[13px] font-bold ${
               state.marketSession === 'MARKET_OPEN'
-                ? 'bg-white text-emerald-700'
-                : 'bg-black/25 text-white'
+                ? 'bg-[var(--g-green)] text-white'
+                : 'bg-white/10 text-white/80'
             }`}
           >
             {state.marketSession === 'MARKET_OPEN'
-              ? '🟢 Borsa açık'
-              : '🌙 Borsa kapalı · 10:00\'da açılır'}
+              ? 'Açık'
+              : 'Kapalı · 10:00\'da açılır'}
           </span>
         </div>
+        <div className="g-hero-value text-[34px] mt-1">
+          {formatCurrency(spendableCash + portfolioValue)}
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[13px] opacity-90">Cebimdeki para</div>
+          <div className="g-hero-tile p-2.5">
+            <div className="text-[13px] font-bold text-white/60">Cebimdeki para</div>
             <div className="text-base font-extrabold tabular-nums tabular-nums">
               {formatCurrency(spendableCash)}
             </div>
           </div>
-          <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[13px] opacity-90">Hisselerimin değeri</div>
+          <div className="g-hero-tile p-2.5">
+            <div className="text-[13px] font-bold text-white/60">Hisselerimin değeri</div>
             <div className="text-base font-extrabold tabular-nums tabular-nums">
               {formatCurrency(portfolioValue)}
             </div>
           </div>
         </div>
-        <div className="mt-2 text-[13px] opacity-90">
-          Saat {formattedTime} · Ucuza al, pahalıya sat!
-        </div>
+
       </div>
 
       {/* Hızlı al/sat kartı */}
-      <div className="rounded-3xl p-4 bg-white border-2 border-emerald-200 shadow-md space-y-3">
+      <div className="g-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-3xl">{SECTOR_EMOJI[selectedStock.sector] ?? '🏢'}</span>
+            <SectorIcon sector={selectedStock.sector} size="lg" />
             <div className="min-w-0">
               <div className="font-extrabold text-slate-900 text-sm">
                 {selectedStock.ticker}
@@ -166,7 +155,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
           </div>
           <div className="text-right tabular-nums tabular-nums">
-            <div className="text-lg font-extrabold text-slate-900">
+            <div className="g-section-title">
               <span className="whitespace-nowrap">{selectedStock.price.toFixed(2)} ₺</span>
             </div>
             <div className="text-[13px] text-slate-500">
@@ -216,7 +205,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               key={n}
               type="button"
               onClick={() => setLotAmount(n)}
-              className="flex-1 min-h-[44px] rounded-xl bg-slate-100 text-slate-700 text-sm font-bold active:scale-95"
+              className="g-btn g-btn-secondary flex-1"
             >
               {n}
             </button>
@@ -227,7 +216,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             onClick={() => setLotAmount(Math.max(1, maxAffordableLots))}
             className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-emerald-100 text-emerald-800 text-sm font-extrabold active:scale-95"
           >
-            💵 Hepsini al
+            Hepsini al
           </button>
           <button
             type="button"
@@ -236,7 +225,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             onClick={() => setLotAmount(Math.max(1, availableSharesToSell))}
             className="flex-[1_1_45%] min-h-[48px] rounded-xl bg-rose-100 text-rose-800 disabled:bg-slate-100 disabled:text-slate-400 text-sm font-extrabold active:scale-95"
           >
-            💰 Hepsini sat
+            Hepsini sat
           </button>
         </div>
 
@@ -245,7 +234,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             data-testid="tycoon-quick-buy-btn"
             onClick={() => quickTrade('BUY')}
-            className="min-h-[52px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold text-base shadow-md active:scale-95"
+            className="g-btn g-btn-primary"
           >
             AL
           </button>
@@ -254,7 +243,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             data-testid="tycoon-quick-sell-btn"
             disabled={availableSharesToSell <= 0}
             onClick={() => quickTrade('SELL')}
-            className="min-h-[52px] rounded-2xl bg-gradient-to-b from-rose-400 to-rose-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold text-base shadow-md active:scale-95"
+            className="g-btn g-btn-danger"
           >
             SAT
           </button>
@@ -270,7 +259,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <h3 className="text-sm font-extrabold text-slate-900">Hisseler</h3>
           <input
             type="search"
-            placeholder="🔍 Ara..."
+            placeholder="Ara..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="min-h-[36px] w-32 px-3 rounded-full bg-slate-100 text-xs text-slate-900"
@@ -281,7 +270,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             onClick={() => setSectorFilter('ALL')}
             className={`min-h-[36px] px-3 rounded-full text-[13px] font-bold shrink-0 ${
-              sectorFilter === 'ALL' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
+              sectorFilter === 'ALL' ? 'bg-emerald-500 text-white' : 'g-choice'
             }`}
           >
             Hepsi
@@ -292,10 +281,10 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               type="button"
               onClick={() => setSectorFilter(sec)}
               className={`min-h-[36px] px-3 rounded-full text-[13px] font-bold shrink-0 ${
-                sectorFilter === sec ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
+                sectorFilter === sec ? 'bg-emerald-500 text-white' : 'g-choice'
               }`}
             >
-              {SECTOR_EMOJI[sec] ?? '🏢'} {sec.charAt(0) + sec.slice(1).toLowerCase()}
+              {sectorLabel(sec)}
             </button>
           ))}
         </div>
@@ -315,13 +304,11 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                 onClick={() => onSelectTicker(st.ticker)}
                 className={`w-full p-3 rounded-2xl border-2 text-left flex items-center gap-3 min-h-[64px] active:scale-[0.99] ${
                   isSelected
-                    ? 'bg-emerald-50 border-emerald-400 shadow-md'
-                    : 'bg-white border-slate-100 shadow-sm'
+                    ? 'bg-white border-[var(--g-navy-400)] shadow-md'
+                    : 'bg-white border-[var(--g-line)] shadow-sm'
                 }`}
               >
-                <span className="text-2xl w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                  {SECTOR_EMOJI[st.sector] ?? '🏢'}
-                </span>
+                <SectorIcon sector={st.sector} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-slate-900 text-sm">{st.ticker}</span>
@@ -353,14 +340,14 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
         type="button"
         data-testid="tycoon-advanced-toggle"
         onClick={() => setAdvanced((v) => !v)}
-        className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs"
+        className="g-btn g-btn-secondary w-full"
       >
         {advanced ? '▲ Gelişmiş emirleri gizle' : '▼ Gelişmiş emirler (limit emri, emir defteri)'}
       </button>
       {advanced && (
         <div className="space-y-4">
       {/* Seçili Hisse Emir Verme Kartı */}
-      <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-3">
+      <div className="p-3.5 g-card-soft space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-1.5">
@@ -394,7 +381,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             onClick={() => setOrderMode('LIMIT')}
             className={`min-h-[40px] rounded-lg font-semibold transition-colors ${
               orderMode === 'LIMIT'
-                ? 'bg-slate-900 text-white'
+                ? 'g-choice is-active'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -406,7 +393,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             onClick={() => setOrderMode('MARKET')}
             className={`min-h-[40px] rounded-lg font-semibold transition-colors ${
               orderMode === 'MARKET'
-                ? 'bg-slate-900 text-white'
+                ? 'g-choice is-active'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -512,7 +499,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   orderMode === 'LIMIT' ? limitPriceInput : undefined,
               })
             }
-            className="min-h-[44px] px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors"
+            className="g-btn g-btn-primary px-3"
           >
             {orderMode === 'LIMIT' ? 'Limit Alış Emri Ver' : 'Piyasa Alış Emri Ver'} (
             {selectedStock.ticker})
@@ -532,7 +519,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                   orderMode === 'LIMIT' ? limitPriceInput : undefined,
               })
             }
-            className="min-h-[44px] px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs transition-colors"
+            className="g-btn g-btn-danger px-3"
           >
             {orderMode === 'LIMIT'
               ? 'Limit Satış Emri Ver'

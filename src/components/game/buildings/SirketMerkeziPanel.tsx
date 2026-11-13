@@ -12,8 +12,7 @@ import React, {
   useState,
 } from 'react';
 import {
-  Lock,
-} from 'lucide-react';
+  Lock, Briefcase } from 'lucide-react';
 import {
   SECTOR_CONFIGS,
 } from '../../../data/sectors';
@@ -122,7 +121,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         className="space-y-4 text-xs"
         data-testid="sheet-content-SIRKET_MERKEZI-locked"
       >
-        <div className="p-4 rounded-3xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-400 text-white shadow-lg space-y-3">
+        <div className="g-hero p-4 shadow-lg space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/25 flex items-center justify-center text-2xl shrink-0">
               🔒
@@ -146,14 +145,14 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="space-y-1.5">
             <div className="w-full h-4 bg-white/30 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-amber-300 to-yellow-400 rounded-full transition-all"
+                className="g-fill"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
             <div className="flex justify-between tabular-nums text-[13px] font-bold">
               <span>{formatCurrency(state.netWorth)}</span>
               <span>%{progressPct}</span>
-              <span>🎯 {formatCurrency(PROGRESSION_RULES.entrepreneurNetWorth)}</span>
+              <span>{formatCurrency(PROGRESSION_RULES.entrepreneurNetWorth)}</span>
             </div>
             <div className="text-[13px] opacity-95">
               Kalan: <strong className="tabular-nums">{formatCurrency(remainingNeeded)}</strong>
@@ -166,7 +165,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               onClick={() => onOpenBuilding('BORSA')}
               className="w-full min-h-[48px] rounded-2xl bg-white text-violet-700 font-extrabold text-sm shadow-md active:scale-95"
             >
-              📈 Borsaya git, parayı büyüt
+              Borsaya git, parayı büyüt
             </button>
           )}
         </div>
@@ -180,9 +179,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         className="space-y-4 text-xs"
         data-testid="sheet-content-SIRKET_MERKEZI-founding"
       >
-        <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
+        <div className="p-3.5 g-card-soft space-y-3">
           <h3 className="text-sm font-bold text-teal-950">
-            🏢 Kendi şirketini kur!
+            Kendi şirketini kur!
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
@@ -257,7 +256,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 }
               )
             }
-            className="w-full min-h-[44px] rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs"
+            className="g-btn g-btn-primary w-full"
           >
             Şirketi Kur ({formatCurrency(compCapital)})
           </button>
@@ -572,28 +571,31 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       data-testid="sheet-content-SIRKET_MERKEZI-active"
     >
       {/* Şirket Başlık Özeti */}
-      <div className="p-4 rounded-3xl bg-gradient-to-br from-violet-500 via-indigo-500 to-sky-500 text-white shadow-lg space-y-3">
+      <div className="g-hero p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-white/25 flex items-center justify-center text-2xl shrink-0">
-            🏢
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(180deg,#ffe08a,var(--g-gold))', boxShadow: '0 3px 0 var(--g-gold-dark)' }}
+          >
+            <Briefcase className="w-6 h-6 text-[#6b4500]" strokeWidth={2.4} />
           </div>
           <div className="min-w-0">
-            <div className="text-base font-extrabold truncate">{pc.name}</div>
-            <div className="text-sm opacity-95">
+            <div className="g-display text-lg font-extrabold leading-tight truncate">{pc.name}</div>
+            <div className="text-[13px] font-semibold text-white/65">
               {pc.ticker} · {pc.operatingDays}. gün
             </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[13px] opacity-90">Şirket değeri</div>
-            <div className="font-extrabold tabular-nums">
+          <div className="g-hero-tile p-2.5">
+            <div className="text-[13px] font-bold text-white/60">Şirket değeri</div>
+            <div className="g-display text-lg font-extrabold tabular-nums text-[var(--g-gold)]">
               {formatCurrency(pc.equityValue)}
             </div>
           </div>
-          <div className="rounded-2xl bg-white/20 p-2.5">
-            <div className="text-[13px] opacity-90">Şirket kasası</div>
-            <div className="font-extrabold tabular-nums">
+          <div className="g-hero-tile p-2.5">
+            <div className="text-[13px] font-bold text-white/60">Şirket kasası</div>
+            <div className="g-display text-lg font-extrabold tabular-nums text-white">
               {formatCurrency(pc.financials.cash)}
             </div>
           </div>
@@ -605,15 +607,15 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         role="tablist"
         aria-label="Şirket Yönetimi Bölümleri"
         data-testid="company-5-section-nav"
-        className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-white border border-slate-200 shadow-sm"
+        className="g-card grid grid-cols-5 gap-1 p-1"
       >
         {(
           [
-            { id: 'OZET', label: '🏠 Özet' },
-            { id: 'URETIM', label: '🏭 Üretim' },
-            { id: 'CALISANLAR', label: '👥 Ekip' },
-            { id: 'FINANS', label: '💰 Para' },
-            { id: 'GELISIM', label: '🚀 Gelişim' },
+            { id: 'OZET', label: 'Özet' },
+            { id: 'URETIM', label: 'Üretim' },
+            { id: 'CALISANLAR', label: 'Ekip' },
+            { id: 'FINANS', label: 'Para' },
+            { id: 'GELISIM', label: 'Gelişim' },
           ] as const
         ).map((tab) => (
           <button
@@ -623,16 +625,13 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             aria-selected={companySubTab === tab.id}
             data-testid={`company-subtab-${tab.id}`}
             onClick={() => setCompanySubTab(tab.id)}
-            className={`min-h-[52px] px-0.5 py-1 rounded-xl text-[12px] leading-tight font-bold text-center transition-colors ${
+            className={`min-h-[44px] px-0.5 py-1 rounded-xl text-[13px] leading-tight font-extrabold text-center transition-colors ${
               companySubTab === tab.id
-                ? 'bg-gradient-to-b from-violet-500 to-indigo-600 text-white shadow-md'
-                : 'text-slate-700 hover:bg-white'
+                ? 'bg-[var(--g-navy-800)] text-white shadow-md'
+                : 'text-[var(--g-muted)]'
             }`}
           >
-            <span className="block text-lg leading-none">
-              {tab.label.split(' ')[0]}
-            </span>
-            <span className="block mt-0.5">{tab.label.split(' ')[1]}</span>
+            {tab.label}
           </button>
         ))}
       </div>
@@ -648,49 +647,41 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             data-testid="company-summary-5-cards"
           >
             <div
-              className={`p-3 rounded-2xl ${
-                dailyNetProfit >= 0 ? 'bg-emerald-50' : 'bg-rose-50'
-              }`}
+              className="g-card p-3"
             >
-              <div className="text-[13px] text-slate-600">💵 Bugünkü kâr</div>
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">Bugünkü kâr</div>
               <div
-                className={`text-base font-extrabold ${
-                  dailyNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'
+                className={`g-display text-xl font-extrabold ${
+                  dailyNetProfit >= 0 ? 'text-[var(--g-green-dark)]' : 'text-[var(--g-red)]'
                 }`}
               >
                 {dailyNetProfit >= 0 ? '+' : ''}
                 {formatCurrency(dailyNetProfit)}
               </div>
             </div>
-            <div className="p-3 rounded-2xl bg-sky-50">
-              <div className="text-[13px] text-slate-600">🏭 Bugünkü üretim</div>
-              <div className="text-base font-extrabold text-slate-900">
+            <div className="g-card p-3">
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">Bugünkü üretim</div>
+              <div className="g-display text-xl font-extrabold text-slate-900">
                 {actualProd.toFixed(0)} birim
               </div>
             </div>
-            <div className="p-3 rounded-2xl bg-amber-50">
-              <div className="text-[13px] text-slate-600">🛍️ Bugünkü satış</div>
-              <div className="text-base font-extrabold text-slate-900">
+            <div className="g-card p-3">
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">Bugünkü satış</div>
+              <div className="g-display text-xl font-extrabold text-slate-900">
                 {ops.actualSalesUnits.toFixed(0)} birim
               </div>
             </div>
             <div
-              className={`p-3 rounded-2xl ${
-                companyHealthLabel.startsWith('Kritik')
-                  ? 'bg-rose-50'
-                  : companyHealthLabel === 'Sağlıklı'
-                  ? 'bg-emerald-50'
-                  : 'bg-amber-50'
-              }`}
+              className="g-card p-3"
             >
-              <div className="text-[13px] text-slate-600">❤️ Şirket durumu</div>
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">Şirket durumu</div>
               <div
-                className={`text-base font-extrabold ${
+                className={`g-display text-xl font-extrabold ${
                   companyHealthLabel.startsWith('Kritik')
-                    ? 'text-rose-700'
+                    ? 'text-[var(--g-red)]'
                     : companyHealthLabel === 'Sağlıklı'
-                    ? 'text-emerald-700'
-                    : 'text-amber-700'
+                    ? 'text-[var(--g-green-dark)]'
+                    : 'text-[var(--g-gold-dark)]'
                 }`}
               >
                 {companyHealthLabel}
@@ -703,9 +694,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             data-testid="company-summary-more-toggle"
             onClick={() => setShowSummaryMore((v) => !v)}
-            className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm active:scale-95"
+            className="g-btn g-btn-secondary w-full"
           >
-            {showSummaryMore ? '▲ Durum ve önerileri gizle' : '📋 Durum özeti ve öneriler'}
+            {showSummaryMore ? '▲ Durum ve önerileri gizle' : 'Durum özeti ve öneriler'}
           </button>
           <div
             className={`p-3 rounded-2xl bg-white border border-slate-200 space-y-2 ${showSummaryMore ? '' : 'hidden'}`}
@@ -760,7 +751,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     type="button"
                     data-testid={`recommended-nav-${rec.targetTab}`}
                     onClick={() => setCompanySubTab(rec.targetTab)}
-                    className="min-h-[36px] px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[13px] shrink-0"
+                    className="g-btn g-btn-navy px-3 shrink-0"
                   >
                     {rec.ctaLabel}
                   </button>
@@ -776,17 +767,17 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'URETIM' && (
         <div className="space-y-3" data-testid="company-section-URETIM">
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 p-5 space-y-3">
+          <div className="g-hero p-5 space-y-3">
             <div className="text-center">
-              <div className="text-sm font-bold text-teal-800">🏭 Bugünkü üretim</div>
-              <div className="text-5xl font-extrabold text-teal-900 tabular-nums">
+              <div className="text-sm font-bold text-white/65">Bugünkü üretim</div>
+              <div className="text-5xl font-extrabold tabular-nums g-hero-value">
                 {actualProd.toFixed(0)}
-                <span className="text-2xl text-teal-700"> / {installedCap}</span>
+                <span className="text-2xl text-white/65"> / {installedCap}</span>
               </div>
             </div>
-            <div className="h-4 rounded-full bg-white/70 overflow-hidden">
+            <div className="g-track h-3">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                className="g-fill"
                 style={{ width: `${Math.min(100, Number(capacityUtilizationPct) || 0)}%` }}
               />
             </div>
@@ -798,25 +789,25 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   : 'text-amber-700'
               }`}
             >
-              {mainBottleneckTR.startsWith('Darboğaz yok') ? '✅ Her şey yolunda' : `⚠️ ${mainBottleneckTR}`}
+              {mainBottleneckTR.startsWith('Darboğaz yok') ? 'Her şey yolunda' : `${mainBottleneckTR}`}
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">🛍️ Satılan</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Satılan</div>
               <div className="font-extrabold text-emerald-700 tabular-nums">
                 {ops.actualSalesUnits.toFixed(0)}
               </div>
             </div>
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">📦 Stok</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Stok</div>
               <div className="font-extrabold text-slate-900 tabular-nums">
                 {ops.inventoryUnits.toFixed(0)}
               </div>
             </div>
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">💰 Birim fiyat</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Birim fiyat</div>
               <div className="font-extrabold text-slate-900 tabular-nums">
                 {formatCurrency(ops.salePrice)}
               </div>
@@ -824,18 +815,18 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           {/* Ana Aksiyon Düğmesi: "Üretimi Artır" */}
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <div className="g-card p-3.5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="text-lg font-extrabold text-slate-900">
-                  🚀 Daha çok üret
+                <div className="g-section-title">
+                  Daha çok üret
                 </div>
               </div>
               <button
                 type="button"
                 data-testid="toggle-increase-production-btn"
                 onClick={() => setShowProductionGuide((prev) => !prev)}
-                className="min-h-[48px] px-5 rounded-2xl bg-gradient-to-b from-teal-400 to-teal-600 text-white font-extrabold shadow shrink-0 active:scale-95"
+                className="g-btn g-btn-primary px-5 shrink-0"
               >
                 Başla
               </button>
@@ -866,7 +857,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       onClick={() => setProdGuideTargetMode(opt.id)}
                       className={`min-h-[34px] px-2.5 py-1 rounded-lg text-[13px] font-semibold ${
                         prodGuideTargetMode === opt.id
-                          ? 'bg-slate-900 text-white'
+                          ? 'g-choice is-active'
                           : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
@@ -940,7 +931,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
 
                 {capacityUtilizationPct < 70 && (
-                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[13px]">
+                  <div className="p-2.5 g-card-soft text-amber-900 text-[13px]">
                     Mevcut En Fazla Üretim kapasitenizin yalnızca %
                     {capacityUtilizationPct.toString().replace('.', ',')}’i
                     kullanılıyor. Yeni tesis yatırımı yerine önce mevcut
@@ -956,7 +947,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                         plannedProductionUnits: guideBoundedUnits,
                       })
                     }
-                    className="min-h-[38px] px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                    className="g-btn g-btn-navy px-3.5"
                   >
                     Üretim Hedefini Uygula ({guideBoundedUnits} birim/gün)
                   </button>
@@ -967,7 +958,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                         setHireCountInput(guideNewWorkersNeeded);
                         setCompanySubTab('CALISANLAR');
                       }}
-                      className="min-h-[38px] px-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold"
+                      className="g-btn g-btn-primary px-3.5"
                     >
                       Gerekli Çalışanı Almak İçin Çalışanlar’a Git (+
                       {guideNewWorkersNeeded})
@@ -997,7 +988,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     unitSalePrice: customSalePrice || ops.salePrice,
                   })
                 }
-                className="min-h-[40px] px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                className="g-btn g-btn-navy px-3.5"
               >
                 Satış Fiyatını Güncelle
               </button>
@@ -1011,7 +1002,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     0.2
                   )
                 }
-                className="min-h-[40px] px-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-slate-200 text-white font-bold"
+                className="g-btn g-btn-gold px-3.5"
               >
                 Stoğun %50’sini İndirimli Sat (%20 İndirim)
               </button>
@@ -1025,36 +1016,36 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'CALISANLAR' && (
         <div className="space-y-3" data-testid="company-section-CALISANLAR">
-          <div className="rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 p-5 text-center">
+          <div className="g-hero p-5 text-center">
             <div
               data-testid="company-total-staff-count"
-              className="text-5xl font-extrabold text-indigo-900 tabular-nums"
+              className="text-5xl font-extrabold tabular-nums g-hero-value"
             >
               {pc.staffCount}
             </div>
-            <div className="text-sm font-bold text-indigo-800 mt-1">
-              çalışan {workersShortfall > 0 ? `· ${workersShortfall} kişi eksik ⚠️` : '· yeterli ✅'}
+            <div className="text-sm font-bold text-white/65 mt-1">
+              çalışan {workersShortfall > 0 ? `· ${workersShortfall} kişi eksik` : '· yeterli'}
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3 text-sm font-bold">
-              <div className="rounded-2xl bg-white/70 p-2">
-                <div className="text-[13px] text-slate-500">💸 Günlük maaş</div>
-                <div className="text-rose-700 tabular-nums">{formatCurrency(dailyTotalPayroll)}</div>
+              <div className="rounded-2xl g-hero-tile p-2">
+                <div className="text-[13px] text-white/65">Günlük maaş</div>
+                <div className="text-[#ffb4b2] tabular-nums">{formatCurrency(dailyTotalPayroll)}</div>
               </div>
-              <div className="rounded-2xl bg-white/70 p-2">
-                <div className="text-[13px] text-slate-500">😊 Memnuniyet</div>
-                <div className="text-emerald-700 tabular-nums">%{workerSatisfactionPct}</div>
+              <div className="rounded-2xl g-hero-tile p-2">
+                <div className="text-[13px] text-white/65">Memnuniyet</div>
+                <div className="text-white/65 tabular-nums">%{workerSatisfactionPct}</div>
               </div>
             </div>
           </div>
 
           {/* ÇALIŞAN AL (İŞÇİ ALIMI) PANELİ */}
           <div
-            className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+            className="g-card p-4 space-y-4"
             data-testid="worker-hire-panel"
           >
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h4 className="text-lg font-extrabold text-slate-900">👥 Çalışan al</h4>
+                <h4 className="g-section-title">Çalışan al</h4>
               </div>
               <span className="tabular-nums text-[13px] text-slate-700">
                 Kasa: <strong>{formatCurrency(pc.financials.cash)}</strong>
@@ -1079,7 +1070,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   }}
                   className={`min-h-[52px] px-3 py-1 rounded-2xl tabular-nums font-extrabold text-base active:scale-95 ${
                     hireCountInput === preset.count
-                      ? 'bg-slate-900 text-white'
+                      ? 'g-choice is-active'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
                   }`}
                 >
@@ -1094,9 +1085,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   setHireCountInput(Math.max(1, workersShortfall || 5));
                   setHireFeedback(null);
                 }}
-                className="min-h-[52px] px-2 py-1 rounded-2xl bg-teal-50 border border-teal-200 text-teal-900 font-extrabold text-sm active:scale-95"
+                className="min-h-[52px] px-2 py-1 g-card-soft text-teal-900 font-extrabold text-sm active:scale-95"
               >
-                ✨ Yeter kadar (+{Math.max(1, workersShortfall || 5)})
+                Yeter kadar (+{Math.max(1, workersShortfall || 5)})
               </button>
 
               <div className="hidden">
@@ -1144,9 +1135,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             {!canAffordHire && cleanHireCount > 0 && (
               <div
                 data-testid="hire-insufficient-cash-warning"
-                className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px] font-semibold"
+                className="p-2.5 g-card-soft text-rose-800 text-[13px] font-semibold"
               >
-                💸 Şirket kasası yetmiyor. Önce "Para" sekmesinden şirkete para aktar.
+                Şirket kasası yetmiyor. Önce "Para" sekmesinden şirkete para aktar.
               </div>
             )}
 
@@ -1189,15 +1180,15 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   text: `+${cleanHireCount} yeni çalışan işe alındı. Toplam çalışan: ${targetTotal} kişi.`,
                 });
               }}
-              className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
+              className="g-btn g-btn-primary w-full"
             >
-              ✅ Çalışan al
+              Çalışan al
             </button>
           </div>
 
           {/* Vardiya Düzeni ve Maaş Politikası */}
-          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="text-lg font-extrabold text-slate-900">🕒 Çalışma düzeni</div>
+          <div className="g-card p-4 space-y-4">
+            <div className="g-section-title">Çalışma düzeni</div>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
@@ -1213,8 +1204,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   onClick={() => onConfigureOperations({ shiftCount: item.sh })}
                   className={`p-3 rounded-3xl text-center active:scale-95 ${
                     wf.shifts === item.sh
-                      ? 'bg-slate-900 text-white shadow'
-                      : 'bg-slate-50 text-slate-800'
+                      ? 'g-choice is-active'
+                      : 'g-choice'
                   }`}
                 >
                   <div className="text-3xl">{item.emoji}</div>
@@ -1226,13 +1217,13 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               ))}
             </div>
 
-            <div className="text-sm font-bold text-slate-700">💵 Maaş</div>
+            <div className="text-sm font-bold text-slate-700">Maaş</div>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  { id: 'ECONOMY' as SalaryTier, label: '💵 Düşük' },
-                  { id: 'STANDARD' as SalaryTier, label: '⚖️ Normal' },
-                  { id: 'COMPETITIVE' as SalaryTier, label: '💎 Yüksek' },
+                  { id: 'ECONOMY' as SalaryTier, label: 'Düşük' },
+                  { id: 'STANDARD' as SalaryTier, label: 'Normal' },
+                  { id: 'COMPETITIVE' as SalaryTier, label: 'Yüksek' },
                 ] as const
               ).map((tier) => (
                 <button
@@ -1241,8 +1232,8 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   onClick={() => onConfigureOperations({ salaryTier: tier.id })}
                   className={`min-h-[52px] rounded-2xl font-extrabold text-sm active:scale-95 ${
                     wf.salaryTier === tier.id
-                      ? 'bg-teal-700 text-white shadow'
-                      : 'bg-slate-100 text-slate-700'
+                      ? 'g-choice is-active'
+                      : 'g-choice'
                   }`}
                 >
                   {tier.label}
@@ -1261,29 +1252,29 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
          ===================================================================== */}
       {companySubTab === 'FINANS' && (
         <div className="space-y-3" data-testid="company-section-FINANS">
-          <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-yellow-100 p-5 text-center">
-            <div className="text-sm font-bold text-amber-800">💰 Şirket kasası</div>
-            <div className="text-4xl font-extrabold text-amber-900 tabular-nums">
+          <div className="g-hero p-5 text-center">
+            <div className="text-sm font-bold text-white/65">Şirket kasası</div>
+            <div className="text-4xl font-extrabold tabular-nums g-hero-value">
               {formatCurrency(pc.financials.cash)}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">📈 Gelir</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Gelir</div>
               <div className="font-extrabold text-emerald-700">{formatCurrency(dailyRevenue)}</div>
             </div>
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">📉 Gider</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Gider</div>
               <div className="font-extrabold text-rose-700">{formatCurrency(dailyExpenses)}</div>
             </div>
-            <div className="rounded-2xl bg-white border border-slate-200 p-3">
-              <div className="text-[13px] text-slate-500">💳 Borç</div>
+            <div className="g-card p-3">
+              <div className="text-[13px] text-slate-500">Borç</div>
               <div className="font-extrabold text-slate-900">{formatCurrency(pc.financials.totalLiabilities)}</div>
             </div>
           </div>
           {nextCompanyLoan && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200 px-3 py-2 text-sm font-bold text-amber-900 text-center">
-              ⏰ Sıradaki ödeme: {formatCurrency(nextCompanyLoan.installmentAmount)} (Gün {nextCompanyLoan.nextPaymentGameDay})
+            <div className="g-card-soft px-3 py-2 text-sm font-bold text-amber-900 text-center">
+              Sıradaki ödeme: {formatCurrency(nextCompanyLoan.installmentAmount)} (Gün {nextCompanyLoan.nextPaymentGameDay})
             </div>
           )}
 
@@ -1293,9 +1284,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
               type="button"
               data-testid="finance-action-transfer-btn"
               onClick={() => setShowInlineTransferPanel((prev) => !prev)}
-              className="min-h-[52px] px-3 py-2 rounded-2xl bg-gradient-to-b from-teal-400 to-teal-600 text-white font-extrabold shadow active:scale-95"
+              className="g-btn g-btn-primary px-3"
             >
-              💸 Para aktar
+              Para aktar
             </button>
 
             <button
@@ -1308,18 +1299,18 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   setShowCompanyLoansPanel(true);
                 }
               }}
-              className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
+              className="g-btn g-btn-navy px-3"
             >
-              🏦 Kredi çek
+              Kredi çek
             </button>
 
             <button
               type="button"
               data-testid="finance-action-debts-btn"
               onClick={() => setShowCompanyLoansPanel((prev) => !prev)}
-              className="min-h-[52px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+              className="g-btn g-btn-secondary px-3"
             >
-              📒 Borçlar ({companyLoans.length})
+              Borçlar ({companyLoans.length})
             </button>
 
             <button
@@ -1333,16 +1324,16 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300'
               }`}
             >
-              📊 Rapor
+              Rapor
             </button>
           </div>
 
           {/* Para Aktar Paneli */}
           {showInlineTransferPanel && (
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
+            <div className="g-card p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="font-bold text-slate-900">
-                  💸 Şirkete para aktar
+                  Şirkete para aktar
                 </div>
                 {onOpenBuilding && (
                   <button
@@ -1370,7 +1361,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 <button
                   type="button"
                   onClick={() => onTransferCapital(injectAmount)}
-                  className="min-h-[40px] px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold"
+                  className="g-btn g-btn-primary px-4"
                 >
                   Aktar ({formatCurrency(injectAmount)})
                 </button>
@@ -1381,7 +1372,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           {/* Borçları Gör Paneli */}
           {showCompanyLoansPanel && (
             <div
-              className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5"
+              className="g-card p-3.5 space-y-2.5"
               data-testid="company-debts-panel"
             >
               <div className="font-bold text-slate-900">
@@ -1434,7 +1425,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                         <button
                           type="button"
                           onClick={() => onPayLoanInstallment(ln.loanId)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-sans font-bold text-[13px]"
+                          className="g-btn g-btn-navy px-2.5"
                         >
                           Taksit Öde
                         </button>
@@ -1449,7 +1440,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           {/* Ayrıntılı Rapor (Varsayılan olarak kapalıdır!) */}
           {showDetailedFinanceReport && inc && (
             <div
-              className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3"
+              className="g-card p-3.5 space-y-3"
               data-testid="detailed-finance-report-panel"
             >
               <div className="flex items-center justify-between">
@@ -1603,24 +1594,24 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           {capacityUtilizationPct < 70 && (
             <div
               data-testid="low-capacity-utilization-warning"
-              className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-[13px] font-medium leading-relaxed"
+              className="p-3 g-card-soft text-amber-950 text-[13px] font-medium leading-relaxed"
             >
-              ⚠️ Fabrikanın yalnızca %
+              Fabrikanın yalnızca %
               {capacityUtilizationPct.toString().replace('.', ',')}’i dolu.
               Yeni tesisten önce çalışan ekle.
             </div>
           )}
 
           {/* Yeni Yatırım Kartı (Tek Yatırım Merkezi) */}
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <div className="g-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-extrabold text-slate-900">
-                  🏗️ Büyüme yatırımı
+                <h4 className="g-section-title">
+                  Büyüme yatırımı
                 </h4>
               </div>
               <span className="tabular-nums text-sm font-bold text-teal-800">
-                💰 {formatCurrency(invQuote.safeAvailableBudget)}
+                {formatCurrency(invQuote.safeAvailableBudget)}
               </span>
             </div>
 
@@ -1676,20 +1667,20 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  { label: '🔧 Küçük büyüme', pkg: 'SMALL_EXPANSION' as const },
-                  { label: '🏗️ Orta büyüme', pkg: 'MEDIUM_EXPANSION' as const },
-                  { label: '🏢 Büyük büyüme', pkg: 'LARGE_EXPANSION' as const },
+                  { label: 'Küçük büyüme', pkg: 'SMALL_EXPANSION' as const },
+                  { label: 'Orta büyüme', pkg: 'MEDIUM_EXPANSION' as const },
+                  { label: 'Büyük büyüme', pkg: 'LARGE_EXPANSION' as const },
                   {
-                    label: '⚙️ Yeni üretim hattı',
+                    label: 'Yeni üretim hattı',
                     pkg: 'NEW_PRODUCTION_LINE' as const,
                   },
-                  { label: '🏭 Yeni fabrika', pkg: 'NEW_FACTORY' as const },
+                  { label: 'Yeni fabrika', pkg: 'NEW_FACTORY' as const },
                   {
-                    label: '🚚 Depo & lojistik',
+                    label: 'Depo & lojistik',
                     pkg: 'CUSTOM_TARGET' as const,
                   },
                   {
-                    label: '🤖 Otomasyon',
+                    label: 'Otomasyon',
                     pkg: 'BUDGET_MAX' as const,
                   },
                 ] as const
@@ -1700,7 +1691,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   onClick={() => setSelectedInvPkg(b.pkg)}
                   className={`min-h-[52px] px-2 py-1 rounded-2xl text-sm font-extrabold active:scale-95 ${
                     selectedInvPkg === b.pkg
-                      ? 'bg-slate-900 text-white'
+                      ? 'g-choice is-active'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
                   }`}
                 >
@@ -1782,7 +1773,7 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   });
                 }
               }}
-              className="w-full min-h-[44px] rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs"
+              className="g-btn g-btn-primary w-full"
             >
               Üretim Tesisi Yatırımını Başlat (+{invQuote.capacityGainUnits}{' '}
               birim/gün · {formatCurrency(invQuote.totalCost)})
@@ -1829,15 +1820,15 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           {/* Ar-Ge ve Teknoloji Geliştirme Kartı */}
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
+          <div className="g-card p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-slate-900">
-                  🔬 Ürün kalitesi (Ar-Ge)
+                  Ürün kalitesi (Ar-Ge)
                 </h4>
               </div>
               <span className="tabular-nums font-bold text-slate-900">
-                ⭐ x{pc.techQualityMultiplier.toFixed(2)}
+                x{pc.techQualityMultiplier.toFixed(2)}
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1853,9 +1844,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       dailyRdBudget: Math.max(0, pc.dailyRdBudget - 5_000),
                     })
                   }
-                  className="min-h-[48px] px-4 rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+                  className="g-btn g-btn-secondary px-4"
                 >
-                  ➖ ₺5.000
+                  ₺5.000
                 </button>
                 <button
                   type="button"
@@ -1864,9 +1855,9 @@ export const SirketMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       dailyRdBudget: pc.dailyRdBudget + 10_000,
                     })
                   }
-                  className="min-h-[48px] px-4 rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
+                  className="g-btn g-btn-navy px-4"
                 >
-                  ➕ ₺10.000
+                  ₺10.000
                 </button>
               </div>
             </div>

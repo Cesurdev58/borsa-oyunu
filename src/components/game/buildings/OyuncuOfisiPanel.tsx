@@ -67,7 +67,7 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             data-testid="shop-manage-back"
             onClick={() => setManaging(null)}
-            className="min-h-[44px] px-4 rounded-2xl bg-slate-100 text-slate-800 font-extrabold text-sm active:scale-95"
+            className="g-btn g-btn-secondary px-4"
           >
             ← Dükkânlarıma dön
           </button>
@@ -126,16 +126,16 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
         type="button"
         data-testid="assets-toggle"
         onClick={() => setShowAssets((v) => !v)}
-        className="w-full min-h-[48px] rounded-2xl bg-sky-100 text-sky-900 font-extrabold text-sm active:scale-95"
+        className="g-btn g-btn-ghost w-full"
       >
-        {showAssets ? '▲ Varlıklarımı gizle' : '📊 Varlıklarım ve işlem geçmişi'}
+        {showAssets ? '▲ Varlıklarımı gizle' : 'Varlıklarım ve işlem geçmişi'}
       </button>
       {(
         <div className={showAssets ? 'space-y-4' : 'hidden'}>
       {/* Net Varlık Denklemi Özeti */}
-      <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
+      <div className="g-card p-3.5 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="font-bold text-sky-950">
+          <span className="font-extrabold text-[var(--g-ink)]">
             Toplam Net Varlık Bilançosu
           </span>
           <span className="text-base font-bold tabular-nums tabular-nums text-emerald-700">
@@ -143,25 +143,25 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[13px] tabular-nums tabular-nums">
-          <div className="p-2 rounded-xl bg-white border border-slate-200">
+          <div className="g-card-soft p-2">
             <div className="text-slate-500">Nakit</div>
             <div className="font-bold text-slate-900">
               {formatCurrency(state.cash)}
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-white border border-slate-200">
+          <div className="g-card-soft p-2">
             <div className="text-slate-500">Portföy Değeri</div>
             <div className="font-bold text-sky-700">
               {formatCurrency(state.portfolioValue)}
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-white border border-slate-200">
+          <div className="g-card-soft p-2">
             <div className="text-slate-500">İşletme & Şirket</div>
             <div className="font-bold text-teal-700">
               {formatCurrency(privateCompanyEquity)}
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-white border border-slate-200">
+          <div className="g-card-soft p-2">
             <div className="text-slate-500">Temettü + Sinerji</div>
             <div className="font-bold text-amber-700">
               {formatCurrency(
@@ -251,7 +251,7 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
                 <div
                   key={pos.ticker}
                   data-testid={`portfolio-pos-${pos.ticker}`}
-                  className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-2"
+                  className="g-card p-3 flex items-center justify-between gap-2"
                 >
                   <div>
                     <div className="tabular-nums font-bold text-slate-900">

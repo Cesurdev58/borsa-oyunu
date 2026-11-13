@@ -309,7 +309,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       <div className="rounded-2xl flex flex-wrap items-center justify-between gap-2">
         <div className="hidden">
           <div className="text-[13px] font-bold uppercase tracking-wider text-amber-800">
-            🚀 Kariyerin
+            Kariyerin
           </div>
           <div
             data-testid="career-stage-badge"
@@ -337,7 +337,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             }`}
           >
             <Store className="w-3.5 h-3.5" />
-            <span>🏪 Dükkânlarım ({trade.shops.length})</span>
+            <span>Dükkânlarım ({trade.shops.length})</span>
           </button>
           <button
             type="button"
@@ -350,7 +350,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
-            <span>🏭 Toptan & Üretim</span>
+            <span>Toptan & Üretim</span>
           </button>
         </div>
       </div>
@@ -394,7 +394,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               type="button"
               data-testid="shop-action-open-branch-shortcut"
               onClick={() => setShopActionTab('OPEN_BRANCH')}
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs"
+              className="g-btn g-btn-primary px-3 flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Yeni Şube / İlk Dükkân Aç</span>
@@ -404,7 +404,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {activeShop && (
             <div className="hidden p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="font-extrabold text-sm">🛒 Rafları doldur</div>
+                <div className="font-extrabold text-sm">Rafları doldur</div>
                 <div className="text-[13px] opacity-95">
                   {restockPlan.orders.length === 0
                     ? 'Raflar zaten dolu ya da paran yetmiyor.'
@@ -438,15 +438,15 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {activeShop ? (
             <div
               data-testid="active-shop-summary-card"
-              className="rounded-3xl bg-white border border-slate-200 shadow-md overflow-hidden"
+              className="g-card overflow-hidden"
             >
-              <div className="p-3 bg-gradient-to-r from-orange-400 to-rose-400 text-white flex items-center gap-3">
-                <span className="text-4xl">{SHOP_EMOJI[activeShop.shopType] ?? '🏪'}</span>
+              <div className="g-hero rounded-none rounded-t-[17px] p-3 flex items-center gap-3">
+                <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[28px]">{SHOP_EMOJI[activeShop.shopType] ?? '🏪'}</span>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-base font-extrabold truncate">
+                  <h4 className="g-display text-[17px] font-extrabold leading-tight truncate">
                     {activeShop.nameTR}
                   </h4>
-                  <div className="text-sm opacity-95">
+                  <div className="text-[13px] font-semibold text-white/65">
                     {activeShopTemplate?.nameTR || activeShop.shopType} · Seviye{' '}
                     {activeShop.level}/5
                     {activeShop.isCompanyBranch ? ' · Şirket şubesi' : ''}
@@ -457,8 +457,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               <div className="p-3 space-y-3">
                 {/* 3 büyük sayı: Kasa / Raf / Yolda */}
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-2xl bg-sky-50 p-2.5">
-                    <div className="text-[13px] text-sky-800 font-semibold">💰 Kasa</div>
+                  <div className="g-card-soft p-2.5">
+                    <div className="text-[13px] text-sky-800 font-semibold">Kasa</div>
                     <div
                       data-testid="shop-metric-cash"
                       className="text-sm tabular-nums font-extrabold text-slate-900"
@@ -475,7 +475,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         : 'bg-emerald-50'
                     }`}
                   >
-                    <div className="text-[13px] text-slate-700 font-semibold">📦 Raf</div>
+                    <div className="text-[13px] text-slate-700 font-semibold">Raf</div>
                     <div
                       data-testid="shop-metric-critical-stock"
                       className={`text-sm tabular-nums font-extrabold ${
@@ -489,8 +489,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       {activeShopUsedUnits.toFixed(0)}/{activeShopTotalCap}
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-indigo-50 p-2.5">
-                    <div className="text-[13px] text-indigo-800 font-semibold">🚚 Yolda</div>
+                  <div className="g-card-soft p-2.5">
+                    <div className="text-[13px] text-indigo-800 font-semibold">Yolda</div>
                     <div
                       data-testid="shop-metric-pending-deliveries"
                       className="text-sm tabular-nums font-extrabold text-slate-900"
@@ -512,9 +512,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         amount: shopTransferAmount,
                       })
                     }
-                    className="flex-1 min-h-[48px] rounded-2xl bg-sky-100 text-sky-900 text-sm font-extrabold active:scale-95"
+                    className="g-btn g-btn-secondary flex-1 !px-2 text-sm"
                   >
-                    ⬇️ Kasaya {formatCurrency(shopTransferAmount)} koy
+                    Kasaya {formatCurrency(shopTransferAmount)} koy
                   </button>
                   <button
                     type="button"
@@ -526,9 +526,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         amount: shopTransferAmount,
                       })
                     }
-                    className="flex-1 min-h-[48px] rounded-2xl bg-amber-100 text-amber-900 text-sm font-extrabold active:scale-95"
+                    className="g-btn g-btn-gold flex-1 !px-2 text-sm"
                   >
-                    ⬆️ Kâr al
+                    Kâr al
                   </button>
                 </div>
                 <div className="flex items-center justify-between gap-2 text-[13px] text-slate-500">
@@ -544,8 +544,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         onClick={() => setShopTransferAmount(amt)}
                         className={`min-h-[36px] px-2.5 rounded-xl text-[13px] font-bold ${
                           shopTransferAmount === amt
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'g-choice is-active'
+                            : 'g-choice'
                         }`}
                       >
                         {amt >= 1000 ? `${amt / 1000}B` : amt}
@@ -560,7 +560,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   className="rounded-2xl bg-indigo-50 border border-indigo-100 p-2.5 space-y-1.5"
                 >
                   <div className="text-sm font-extrabold text-indigo-900">
-                    🚚 Yoldaki siparişler
+                    Yoldaki siparişler
                     <HelpTip text="Sipariş verdiğin mallar toptancıdan dükkâna yola çıkar. Vardığında otomatik olarak rafa dizilir ve satışa başlar." />
                   </div>
                   {inboundShipments.length === 0 ? (
@@ -586,7 +586,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   )}
                   {recentDeliveredShipments.length > 0 && (
                     <div className="pt-1 text-[13px] text-emerald-800 font-semibold">
-                      ✅ Son gelen:{' '}
+                      Son gelen:{' '}
                       {recentDeliveredShipments
                         .map((sh) => `${sh.resourceNameTR} (${sh.quantity})`)
                         .join(', ')}
@@ -598,9 +598,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   type="button"
                   data-testid="shop-summary-details-toggle"
                   onClick={() => setShowSummaryDetails((v) => !v)}
-                  className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm active:scale-95"
+                  className="g-btn g-btn-secondary w-full"
                 >
-                  {showSummaryDetails ? '▲ Özeti gizle' : '📊 Bugünün özeti ve ipucu'}
+                  {showSummaryDetails ? '▲ Özeti gizle' : 'Bugünün özeti ve ipucu'}
                 </button>
                 <div className={showSummaryDetails ? 'space-y-3' : 'hidden'}>
                 {/* Bugünün özeti */}
@@ -639,7 +639,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
                 <div className="flex items-center justify-between gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm">
                   <span className="font-semibold text-slate-700">
-                    😊 Müşteri memnuniyeti
+                    Müşteri memnuniyeti
                     <HelpTip text="Müşteriler raflar doluysa, fiyatlar makulse ve dükkân gelişmişse memnun olur. Memnuniyet yüksekse daha çok müşteri gelir." />
                   </span>
                   <strong
@@ -652,8 +652,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 {/* İpucu: ana sorun + önerilen işlem tek kutuda */}
-                <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 space-y-1">
-                  <div className="text-sm font-extrabold text-amber-900">💡 İpucu</div>
+                <div className="g-card-soft p-3 space-y-1">
+                  <div className="text-sm font-extrabold text-amber-900">İpucu</div>
                   <div
                     data-testid="shop-metric-main-issue"
                     className="text-[13px] font-semibold text-slate-800"
@@ -674,11 +674,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      { id: 'ORDER_PRODUCT', label: '🛒 Mal al' },
-                      { id: 'EDIT_PRICES', label: '🏷️ Fiyatlar' },
-                      { id: 'MANAGE_STAFF', label: '👥 Çalışanlar' },
-                      { id: 'UPGRADE_SHOP', label: '⬆️ Geliştir' },
-                      { id: 'OPEN_BRANCH', label: '➕ Yeni şube' },
+                      { id: 'ORDER_PRODUCT', label: 'Mal al' },
+                      { id: 'EDIT_PRICES', label: 'Fiyatlar' },
+                      { id: 'MANAGE_STAFF', label: 'Çalışanlar' },
+                      { id: 'UPGRADE_SHOP', label: 'Geliştir' },
+                      { id: 'OPEN_BRANCH', label: 'Yeni şube' },
                     ] as const
                   ).map((btn) => (
                     <button
@@ -703,7 +703,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           ) : (
             <div
               data-testid="first-shop-progress"
-              className="p-4 rounded-3xl bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 text-amber-950 shadow-md space-y-2"
+              className="g-hero p-5 space-y-2"
             >
               <div className="flex items-center gap-2 font-extrabold text-sm">
                 <span className="text-2xl">🏪</span>
@@ -713,7 +713,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
               <div className="w-full h-4 bg-white/60 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all"
+                  className="g-fill"
                   style={{
                     width: `${Math.min(100, Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100))}%`,
                   }}
@@ -721,7 +721,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
               <div className="flex justify-between text-[13px] font-bold tabular-nums">
                 <span>{formatCurrency(state.netWorth)}</span>
-                <span>🎯 {formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
+                <span>{formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
               </div>
               {state.netWorth < FIRST_SHOP_MIN_NET_WORTH && (
                 <p className="text-[13px] font-semibold">
@@ -735,12 +735,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'ORDER_PRODUCT' && activeShop && (
             <div
               data-testid="shop-order-product-box"
-              className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3"
+              className="g-card p-4 space-y-3"
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  🛒 Mal al — {activeShop.nameTR}
-                </h5>
+                <h5 className="g-section-title">Mal al</h5>
                 <span className="text-[13px] tabular-nums text-slate-600">
                   Kasa: {formatCurrency(activeShop.cashAccountBalance)} · Cebin:{' '}
                   {formatCurrency(spendableCash)}
@@ -766,7 +764,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   return (
                     <div
                       key={prodId}
-                      className="rounded-2xl bg-slate-50 border border-slate-200 p-3 space-y-2"
+                      className="g-card-soft p-3 space-y-2"
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-extrabold text-slate-900 truncate">
@@ -809,10 +807,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                                     paymentTermType: 'CASH',
                                   })
                                 }
-                                className="min-h-[52px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold text-sm shadow active:scale-95 leading-tight"
+                                className="g-btn g-btn-primary flex-col !gap-0 !px-1 min-h-[56px]"
                               >
-                                +{q}
-                                <span className="block text-[13px] font-semibold opacity-95">
+                                <span className="g-display text-lg leading-none">+{q}</span>
+                                <span className="block text-[12px] font-bold opacity-90 tabular-nums">
                                   {formatCurrency(q * unit)}
                                 </span>
                               </button>
@@ -833,7 +831,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 type="button"
                 data-testid="shop-advanced-order-toggle"
                 onClick={() => setShowAdvancedOrder((v) => !v)}
-                className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 text-sm font-bold"
+                className="g-btn g-btn-secondary w-full"
               >
                 {showAdvancedOrder
                   ? '▲ Gelişmiş siparişi gizle'
@@ -981,7 +979,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         paymentTermType: orderPaymentTerm,
                       })
                     }
-                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer"
+                    className="g-btn g-btn-gold px-4"
                   >
                     Siparişi Onayla ve Sevk Et
                   </button>
@@ -994,10 +992,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'EDIT_PRICES' && activeShop && (
             <div
               data-testid="shop-edit-prices-box"
-              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+              className="g-card p-4 space-y-4"
             >
-              <div className="text-lg font-extrabold text-slate-900">
-                🏷️ Fiyatlar
+              <div className="g-section-title">
+                Fiyatlar
               </div>
               <div className="space-y-3">
                 {(activeShopTemplate?.allowedResourceIds ?? []).map(
@@ -1029,9 +1027,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           {[
-                            { label: '🏷️ Ucuz', val: 0.9 },
-                            { label: '⚖️ Normal', val: 1.0 },
-                            { label: '💎 Pahalı', val: 1.18 },
+                            { label: 'Ucuz', val: 0.9 },
+                            { label: 'Normal', val: 1.0 },
+                            { label: 'Pahalı', val: 1.18 },
                           ].map((preset) => (
                             <button
                               key={preset.label}
@@ -1044,8 +1042,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                               }
                               className={`min-h-[48px] rounded-2xl text-sm font-extrabold active:scale-95 ${
                                 Math.abs(currentMult - preset.val) < 0.04
-                                  ? 'bg-slate-900 text-white shadow'
-                                  : 'bg-white text-slate-700 border border-slate-200'
+                                  ? 'g-choice is-active'
+                                  : 'g-choice'
                               }`}
                             >
                               {preset.label}
@@ -1066,24 +1064,24 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'MANAGE_STAFF' && activeShop && (
             <div
               data-testid="shop-manage-staff-box"
-              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+              className="g-card p-4 space-y-4"
             >
-              <div className="text-lg font-extrabold text-slate-900">
-                👥 Çalışanlar
+              <div className="g-section-title">
+                Çalışanlar
               </div>
-              <div className="rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 p-5 text-center">
-                <div className="text-5xl font-extrabold text-indigo-900 tabular-nums">
+              <div className="g-hero p-5 text-center">
+                <div className="text-5xl font-extrabold tabular-nums g-hero-value">
                   {activeShop.staffCount}
                 </div>
-                <div className="text-sm font-bold text-indigo-800 mt-1">
+                <div className="text-sm font-bold text-white/65 mt-1">
                   çalışan · en az {activeShop.minStaffRequired} gerekli
                 </div>
               </div>
               <div
                 data-testid="shop-staff-wage-card"
-                className="rounded-3xl bg-rose-50 border border-rose-200 p-4 text-center tabular-nums"
+                className="g-card-soft p-4 text-center tabular-nums"
               >
-                <div className="text-sm font-bold text-rose-800">💸 Günlük maaş</div>
+                <div className="text-sm font-bold text-rose-800">Günlük maaş</div>
                 <div className="text-3xl font-extrabold text-rose-700">
                   {formatCurrency(activeShop.staffCount * activeShop.staffDailyWagePerPerson)}
                 </div>
@@ -1098,9 +1096,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onClick={() =>
                     onConfigureShop({ shopId: activeShop.shopId, staffDelta: 1 })
                   }
-                  className="min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow active:scale-95"
+                  className="g-btn g-btn-primary"
                 >
-                  ➕ 1 kişi al
+                  1 kişi al
                 </button>
                 <button
                   type="button"
@@ -1108,9 +1106,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onClick={() =>
                     onConfigureShop({ shopId: activeShop.shopId, staffDelta: 3 })
                   }
-                  className="min-h-[56px] rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 text-white font-extrabold shadow active:scale-95"
+                  className="g-btn g-btn-navy"
                 >
-                  ➕ 3 kişi al
+                  3 kişi al
                 </button>
               </div>
               <button
@@ -1119,9 +1117,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 onClick={() =>
                   onConfigureShop({ shopId: activeShop.shopId, staffDelta: -1 })
                 }
-                className="w-full min-h-[48px] rounded-2xl bg-slate-100 text-slate-700 font-bold active:scale-95"
+                className="g-btn g-btn-secondary w-full"
               >
-                ➖ 1 kişiyi çıkar
+                1 kişiyi çıkar
               </button>
               <div className="text-[13px] text-slate-500 text-center">
                 Çok çalışan = hızlı satış, ama maaş gideri de artar.
@@ -1132,19 +1130,19 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'UPGRADE_SHOP' && activeShop && (
             <div
               data-testid="shop-upgrade-box"
-              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+              className="g-card p-4 space-y-4"
             >
-              <div className="text-lg font-extrabold text-slate-900">
-                ⬆️ Dükkânı geliştir
+              <div className="g-section-title">
+                Dükkânı geliştir
               </div>
-              <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-5 text-center">
-                <div className="text-4xl font-extrabold text-amber-900">
+              <div className="g-hero p-5 text-center">
+                <div className="text-4xl font-extrabold g-hero-value">
                   Seviye {activeShop.level}
                   {activeShop.level < 5 && (
-                    <span className="text-amber-600"> → {activeShop.level + 1}</span>
+                    <span className="text-white/65"> → {activeShop.level + 1}</span>
                   )}
                 </div>
-                <div className="text-sm font-bold text-amber-800 mt-2">
+                <div className="text-sm font-bold text-white/65 mt-2">
                   Daha büyük raf, %45 daha çok müşteri
                 </div>
               </div>
@@ -1153,11 +1151,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 data-testid="shop-upgrade-confirm-btn"
                 disabled={activeShop.level >= 5}
                 onClick={() => onUpgradeShopLevel(activeShop.shopId)}
-                className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
+                className="g-btn g-btn-gold w-full"
               >
                 {activeShop.level >= 5
-                  ? '🏆 En üst seviye'
-                  : `⬆️ Seviye ${activeShop.level + 1}'e yükselt`}
+                  ? 'En üst seviye'
+                  : `Seviye ${activeShop.level + 1}'e yükselt`}
               </button>
             </div>
           )}
@@ -1165,14 +1163,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {shopActionTab === 'OPEN_BRANCH' && (
             <div
               data-testid="shop-open-branch-box"
-              className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+              className="g-card p-4 space-y-4"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="text-lg font-extrabold text-slate-900">
-                  ➕ Yeni dükkân
+                <div className="g-section-title">
+                  Yeni dükkân
                 </div>
                 <span className="text-sm tabular-nums font-bold text-emerald-700">
-                  💰 {formatCurrency(spendableCash)}
+                  {formatCurrency(spendableCash)}
                 </span>
               </div>
 
@@ -1190,7 +1188,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       className={`p-3 rounded-3xl border-2 text-center cursor-pointer active:scale-95 ${
                         selected
                           ? 'bg-amber-50 border-amber-500 shadow'
-                          : 'bg-slate-50 border-transparent'
+                          : 'g-choice'
                       }`}
                     >
                       <div className="text-4xl">{SHOP_EMOJI[tpl.shopType] ?? '🏪'}</div>
@@ -1211,7 +1209,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 })}
               </div>
 
-              <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 p-4 space-y-3">
+              <div className="rounded-3xl bg-[var(--g-surface-2)] p-4 space-y-3">
                 <div className="font-extrabold text-slate-900 text-base">
                   {SHOP_EMOJI[selectedShopTemplateForNew.shopType] ?? '🏪'}{' '}
                   {selectedShopTemplateForNew.nameTR}
@@ -1235,7 +1233,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   placeholder={`Dükkân adı (örn: Merkez ${selectedShopTemplateForNew.nameTR})`}
                   value={newShopCustomName}
                   onChange={(e) => setNewShopCustomName(e.target.value)}
-                  className="w-full min-h-[48px] px-3 rounded-2xl bg-white border border-slate-200 text-sm font-semibold"
+                  className="w-full g-input text-sm"
                 />
                 <label className="block text-[13px] font-semibold text-slate-600">
                   Kasaya başlangıç parası
@@ -1249,7 +1247,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     onChange={(e) =>
                       setNewShopCashFloat(Math.max(0, Number(e.target.value) || 0))
                     }
-                    className="mt-1 w-full min-h-[48px] px-3 rounded-2xl bg-white border border-slate-200 text-sm tabular-nums font-bold"
+                    className="g-card mt-1 w-full min-h-[48px] px-3 text-sm tabular-nums font-bold"
                   />
                 </label>
                 <button
@@ -1262,9 +1260,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       initialCashFloat: newShopCashFloat,
                     })
                   }
-                  className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow active:scale-95"
+                  className="g-btn g-btn-primary w-full"
                 >
-                  🏪 {selectedShopTemplateForNew.nameTR} aç
+                  {selectedShopTemplateForNew.nameTR} aç
                 </button>
               </div>
             </div>
@@ -1274,7 +1272,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           {!state.playerCompany && (
             <div
               data-testid="incorporation-transition-card"
-              className="p-3 rounded-3xl bg-gradient-to-br from-teal-50 via-white to-emerald-50 border border-teal-300 space-y-3"
+              className="p-3 rounded-3xl bg-[var(--g-surface-2)] border border-teal-300 space-y-3"
             >
               <button
                 type="button"
@@ -1282,7 +1280,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 onClick={() => setShowIncorp((v) => !v)}
                 className="w-full min-h-[48px] flex items-center justify-between gap-2 text-left font-extrabold text-slate-900"
               >
-                <span>🏢 Şirket kur</span>
+                <span>Şirket kur</span>
                 <span className="text-sm text-teal-700">
                   {incorporationEligibility.eligible ? 'Hazırsın!' : 'Koşullar var'}{' '}
                   {showIncorp ? '▲' : '▼'}
@@ -1416,7 +1414,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       additionalCashCapital: incorpExtraCash,
                     })
                   }
-                  className="px-3 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 disabled:bg-slate-300 text-white text-xs font-bold cursor-pointer"
+                  className="g-btn g-btn-primary px-3"
                 >
                   İşletmeni Kurumsal Şirkete Dönüştür
                 </button>
@@ -1430,28 +1428,28 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
         <div className="space-y-4">
           <div
             data-testid="trade-center-intro"
-            className="rounded-2xl bg-sky-50 border border-sky-200 p-3 text-[13px] text-sky-900"
+            className="g-card-soft p-3 text-[13px] text-sky-900"
           >
             <strong>İleri seviye.</strong> Tek dükkânda buraya girmen gerekmez,
-            <strong> 🛒 Mal al</strong> yeter.
+            <strong> Mal al</strong> yeter.
           </div>
           <div className="grid grid-cols-2 gap-2">
             {(
               [
-                { id: 'TEDARIK', label: '📦 Depo ve alım', icon: Package },
+                { id: 'TEDARIK', label: 'Depo ve alım', icon: Package },
                 {
                   id: 'TESLIMATLAR',
-                  label: '🚚 Kargo ve araç',
+                  label: 'Kargo ve araç',
                   icon: Truck,
                 },
                 {
                   id: 'SATIS_KANALLARI',
-                  label: '🏭 Üretim',
+                  label: 'Üretim',
                   icon: Factory,
                 },
                 {
                   id: 'SOZLESMELER',
-                  label: '📝 Anlaşmalar',
+                  label: 'Anlaşmalar',
                   icon: FileText,
                 },
               ] as const
@@ -1465,8 +1463,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onClick={() => setTradeTab(tb.id)}
                   className={`min-h-[56px] py-2 px-2.5 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     tradeTab === tb.id
-                      ? 'bg-slate-900 text-white shadow'
-                      : 'bg-slate-100 text-slate-700'
+                      ? 'g-choice is-active'
+                      : 'g-choice'
                   }`}
                 >
                   <Icon className="hidden" />
@@ -1478,8 +1476,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'TEDARIK' && (
             <div className="space-y-3">
-              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Depo: toptan mal sakladığın yer.
+              <div className="g-tip">
+                Depo: toptan mal sakladığın yer.
               </div>
               {/* 3 Depo Stok Özeti (Hammadde / Mamul / Dağıtım) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -1487,7 +1485,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <div
                     key={wh.warehouseId}
                     data-testid={`warehouse-card-${wh.warehouseId}`}
-                    className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-2"
+                    className="g-card p-4 space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-900">
@@ -1527,9 +1525,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
 
               {/* Tedarikçi Sipariş ve Düzenli Alım Sözleşmesi */}
-              <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <div className="g-card p-4 space-y-3">
                 <h5 className="text-base font-extrabold text-slate-900">
-                  🛒 Toptan sipariş ver
+                  Toptan sipariş ver
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                   <select
@@ -1543,7 +1541,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       );
                       if (firstSup) setSelectedSupplierId(firstSup.supplierId);
                     }}
-                    className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                    className="g-input text-sm font-semibold"
                   >
                     {ALL_RESOURCES.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -1557,7 +1555,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     data-testid="trade-supplier-select"
                     value={activeOffer?.supplierId ?? ''}
                     onChange={(e) => setSelectedSupplierId(e.target.value)}
-                    className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                    className="g-input text-sm font-semibold"
                   >
                     {supplierOffers.map((o) => (
                       <option key={o.supplierId} value={o.supplierId}>
@@ -1579,7 +1577,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(5, Number(e.target.value) || 20)
                       )
                     }
-                    className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm tabular-nums font-bold"
+                    className="g-input text-sm tabular-nums font-bold"
                   />
 
                   <select
@@ -1589,7 +1587,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       setOrderDestType('WAREHOUSE');
                       setOrderWarehouseId(e.target.value);
                     }}
-                    className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                    className="g-input text-sm font-semibold"
                   >
                     {trade.warehouses.map((w) => (
                       <option key={w.warehouseId} value={w.warehouseId}>
@@ -1627,9 +1625,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             paymentTermType: orderPaymentTerm,
                           })
                         }
-                        className="min-h-[52px] px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-extrabold cursor-pointer shadow active:scale-95"
+                        className="g-btn g-btn-navy px-4"
                       >
-                        ✅ Şimdi sipariş ver
+                        Şimdi sipariş ver
                       </button>
                       <button
                         type="button"
@@ -1644,9 +1642,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             destinationId: orderWarehouseId,
                           })
                         }
-                        className="min-h-[52px] px-4 py-2 rounded-2xl bg-teal-700 hover:bg-teal-600 text-white text-sm font-extrabold cursor-pointer shadow active:scale-95"
+                        className="g-btn g-btn-primary px-4"
                       >
-                        📅 30 gün düzenli al
+                        30 gün düzenli al
                       </button>
                     </div>
                   </div>
@@ -1657,14 +1655,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'TESLIMATLAR' && (
             <div className="space-y-3">
-              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Siparişlerin kargo durumu.
+              <div className="g-tip">
+                Siparişlerin kargo durumu.
               </div>
               {/* Lojistik Filo & Araç Satın Alma */}
-              <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-2.5">
+              <div className="g-card p-4 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h5 className="text-base font-extrabold text-slate-900">
-                    🚚 Kendi araçların ({trade.vehicles.length} Araç)
+                    Kendi araçların ({trade.vehicles.length} Araç)
                   </h5>
                   <span className="text-[13px] text-slate-500">
                     Kargo masrafını düşürür
@@ -1695,7 +1693,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
               {/* Depodan Şubeye Sevkiyat */}
               {trade.shops.length > 0 && (
-                <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-2.5">
+                <div className="g-card p-4 space-y-2.5">
                   <h5 className="text-base font-extrabold text-slate-900">
                     Merkezi Depodan Mağaza Şubesine Ürün Sevk Et
                   </h5>
@@ -1703,7 +1701,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     <select
                       value={dispatchWarehouseId}
                       onChange={(e) => setDispatchWarehouseId(e.target.value)}
-                      className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                      className="g-input text-sm font-semibold"
                     >
                       {trade.warehouses.map((w) => (
                         <option key={w.warehouseId} value={w.warehouseId}>
@@ -1714,7 +1712,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     <select
                       value={dispatchResourceId}
                       onChange={(e) => setDispatchResourceId(e.target.value)}
-                      className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                      className="g-input text-sm font-semibold"
                     >
                       {ALL_RESOURCES.map((r) => (
                         <option key={r.id} value={r.id}>
@@ -1732,7 +1730,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           Math.max(1, Number(e.target.value) || 20)
                         )
                       }
-                      className="min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm tabular-nums font-bold"
+                      className="g-input text-sm tabular-nums font-bold"
                     />
                     <button
                       type="button"
@@ -1757,7 +1755,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               )}
 
               {/* Aktif Sevkiyatlar Listesi */}
-              <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-2">
+              <div className="g-card p-4 space-y-2">
                 <h5 className="text-base font-extrabold text-slate-900">
                   Yoldaki ve Tamamlanan Teslimatlar ({trade.shipments.length})
                 </h5>
@@ -1801,20 +1799,20 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'SATIS_KANALLARI' && (
             <div className="space-y-3">
-              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Üretim: hammaddeyi daha pahalı ürüne çevirir.
+              <div className="g-tip">
+                Üretim: hammaddeyi daha pahalı ürüne çevirir.
               </div>
               {/* Reçeteli Üretim Zinciri */}
-              <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <div className="g-card p-4 space-y-3">
                 <h5 className="text-base font-extrabold text-slate-900">
-                  🏭 Üretim: hammaddeden ürüne
+                  Üretim: hammaddeden ürüne
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <select
                     data-testid="recipe-select"
                     value={selectedRecipeId}
                     onChange={(e) => setSelectedRecipeId(e.target.value)}
-                    className="sm:col-span-2 min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                    className="sm:col-span-2 g-input text-sm font-semibold"
                   >
                     {ALL_RECIPES.map((rec) => (
                       <option key={rec.recipeId} value={rec.recipeId}>
@@ -1835,7 +1833,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           Math.max(1, Number(e.target.value) || 1)
                         )
                       }
-                      className="w-20 min-h-[48px] px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm tabular-nums font-bold"
+                      className="w-20 g-input text-sm tabular-nums font-bold"
                     />
                     <button
                       type="button"
@@ -1846,7 +1844,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           batchesCount: recipeBatches,
                         })
                       }
-                      className="flex-1 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                      className="g-btn g-btn-primary flex-1 px-3"
                     >
                       Üretimi Başlat
                     </button>
@@ -1859,7 +1857,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 {trade.salesChannels.map((ch) => (
                   <div
                     key={ch.channelId}
-                    className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center justify-between"
+                    className="g-card p-3 flex items-center justify-between"
                   >
                     <div>
                       <div className="text-sm font-extrabold text-slate-900">
@@ -1867,8 +1865,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       </div>
                       <div className="text-[13px] text-slate-500">
                         {ch.paymentTermDays === 0
-                          ? '💵 Parası hemen gelir'
-                          : `⏳ Parası ${ch.paymentTermDays} günde gelir`}
+                          ? 'Parası hemen gelir'
+                          : `Parası ${ch.paymentTermDays} günde gelir`}
                       </div>
                     </div>
                     <div className="text-right tabular-nums text-xs font-bold text-emerald-700">
@@ -1882,10 +1880,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
           {tradeTab === 'SOZLESMELER' && (
             <div className="space-y-3">
-              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
-                💡 Toptan anlaşma: önceden sabit fiyatla mal satma sözü.
+              <div className="g-tip">
+                Toptan anlaşma: önceden sabit fiyatla mal satma sözü.
               </div>
-              <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-2.5">
+              <div className="g-card p-4 space-y-2.5">
                 <h5 className="text-base font-extrabold text-slate-900">
                   Kurumsal ve Kamu Tedarik Sözleşmeleri (
                   {trade.commercialContracts.length})
@@ -1932,7 +1930,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                                 sourceId: 'WH_FIN_MAIN',
                               })
                             }
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                            className="g-btn g-btn-primary px-3"
                           >
                             Depodan Teslim Et ({ct.remainingUnits} br)
                           </button>

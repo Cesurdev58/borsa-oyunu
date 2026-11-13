@@ -104,7 +104,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
             type="button"
             data-testid="first-run-skip"
             onClick={() => finish(false)}
-            className="min-h-[52px] rounded-2xl bg-slate-100 text-slate-700 font-bold active:scale-95"
+            className="g-btn g-btn-secondary"
           >
             Atla
           </button>
@@ -112,7 +112,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
             type="button"
             data-testid="first-run-next"
             onClick={() => (last ? finish(true) : setStep(step + 1))}
-            className="min-h-[52px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow-md active:scale-95"
+            className="g-btn g-btn-primary"
           >
             {last ? 'Borsaya git' : 'İleri'}
           </button>

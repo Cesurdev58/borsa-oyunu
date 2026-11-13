@@ -57,6 +57,17 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - **Maaşlar:** dükkân çalışanlarının maaşı her gün dükkân kasasından otomatik düşer (`TradeAndShopEngine`, `todayPayrollCost`); şirket maaşları gün kapanışında ödenir (`DayCloseProcessor`). Dükkân "Çalışanlar" ekranında `shop-staff-wage-card` günlük maaşı gösterir, şirket "Ekip" sekmesinde günlük maaş kartı vardır.
 - Alt menü adları: Şehir, Borsa, Şirket, Haberler, Dükkân (kimlikler değişmedi: `bottom-nav-city/market/company/news/portfolio`).
 
+## Tasarım sistemi (her yeni ekran buna uyar)
+
+- **Renk dili tektir:** lacivert = yönetim/başlık, altın = para, yeşil = kazanç ve ana eylem, kırmızı = kayıp/tehlike. Değişkenler `src/index.css` başındaki `:root` (`--g-navy-*`, `--g-gold`, `--g-green`, `--g-red`, `--g-bg`, `--g-ink`, `--g-muted`, `--g-line`).
+- **Hazır sınıflar** (`src/index.css`, `@layer components`): `g-card` (beyaz kart), `g-card-soft` (açık gri kutu), `g-hero` (her ekranın lacivert ana kartı) + `g-hero-label` / `g-hero-value` (altın büyük rakam) / `g-hero-tile`, `g-track` + `g-fill` (`g-fill-danger`) ilerleme çubuğu, `g-btn` + `g-btn-primary|gold|navy|danger|secondary|ghost` (basılınca çöken oyun düğmesi), `g-choice` (+ `is-active` ya da `data-active="true"`), `g-section-title`, `g-input`, `g-pill`, `g-tip` (ampul ikonlu ipucu), `g-display` (başlık/rakam yazısı), `g-rise` (ekrana giriş animasyonu).
+- **Yasak:** her ekrana ayrı pastel gradyan, emojili düğme yazısı, `rounded-3xl bg-gradient-to-br from-x-100…` gibi tek seferlik renkler. Emoji yalnızca "ürün resmi" olarak kalır (dükkân türleri `SHOP_EMOJI`, ilk oyun rehberi, vardiya seçimi). Arayüz ikonları `lucide-react`; borsa sektörleri `ui/SectorIcon.tsx`.
+- **Yazı tipleri pakete gömülü** (`@fontsource-variable/nunito` gövde, `@fontsource/baloo-2` başlık/rakam); internetten yüklenmez.
+- **Kabuk:** üst çubuk lacivert, para kapsülü sayarak artar (`ui/useCountUp.ts`); alt menü lacivert, etkin sekme altın; sekme ekranlarında beyaz çerçeve yok, büyük başlık var. Bildirimler kalıcı şerit değil, 4 sn'lik alttan çıkan "toast" (`EventNotificationPanel.tsx`, `active-event-banner` testid'i DOM'da hep durur). Ayarlarda geliştirici araçları katlanır "Geliştirici araçları" bölümündedir; müzik kaydırıcısı gizli (müzik yok).
+- **Ses ve titreşim** (`ui/feedback.ts`): dosyasız, tarayıcıda üretilen kısa sesler (`tap`, `coin`, `success`, `levelup`, `error`) + `navigator.vibrate`. Ayarlardaki Genel/Efekt düzeyi ve Sessiz'e uyar. `TycoonGameView` her düğmede `tap`, `g-btn-primary/gold` düğmelerde `coin` çalar; kutlama `levelup`, hata bildirimi `error`.
+- **Sıradaki hedef şeridi** (`CityQuestStrip.tsx` + `city/questAndHudLogic.ts`): halka sayaç, tam hedef adı, ilerleme çubuğu ve "Git" düğmesi (hedef binanın panelini açar); bütün hedefler bitince gizlenir. Hedef zinciri kariyeri izler: Borsa'yı aç → ilk emir → iki sektör → `FIRST_SHOP_MIN_NET_WORTH` → ilk dükkân → ilk dükkân kârı → 250 bin → şirket (`PROGRESSION_RULES.entrepreneurNetWorth`). Borsa sekmesine girmek de 1. hedefi tamamlar. Testi `src/tests/ui/designSystem.test.ts`.
+- Toplu yeniden stil için kullanılan dönüştürücü depoda değildir; yeni kodda doğrudan yukarıdaki sınıfları yaz.
+
 ## Klasörler
 
 - `src/engine/` — oyun mantığı. `SimulationEngine.ts` ana döngü; `TradeAndShopEngine.ts` dükkân/ticaret ön yüzü ve günlük döngü; `MarketEngine.ts` borsa; `CentralLedgerEngine.ts` ve `AccountingEngine.ts` para hareketleri;

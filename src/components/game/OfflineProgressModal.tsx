@@ -49,12 +49,12 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="g-card w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Başlık */}
-          <div className="px-5 py-4 bg-gradient-to-r from-sky-50 to-emerald-50 border-b border-slate-200 flex items-center justify-between gap-2">
+          <div className="px-5 py-4 bg-[var(--g-surface-2)] border-b border-slate-200 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+              <div className="g-card w-9 h-9 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-sky-600" />
               </div>
               <div>
@@ -193,7 +193,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
               type="button"
               data-testid="offline-modal-continue-btn"
               onClick={onDismiss}
-              className="w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="g-btn g-btn-primary w-full inline-flex items-center justify-center gap-1.5"
             >
               <Sparkles className="w-4 h-4" />
               <span>Devam Et</span>

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { play } from './ui/feedback';
 import {
   AlertTriangle,
   Bell,
@@ -30,6 +31,7 @@ function getSeverityStyle(severity: GameNotificationItem['severity']) {
         badge: 'bg-emerald-600 text-white',
         Icon: CheckCircle2,
         iconColor: 'text-emerald-600',
+        chip: 'bg-[var(--g-green)] text-white',
       };
     case 'warning':
       return {
@@ -37,6 +39,7 @@ function getSeverityStyle(severity: GameNotificationItem['severity']) {
         badge: 'bg-amber-600 text-white',
         Icon: AlertTriangle,
         iconColor: 'text-amber-600',
+        chip: 'bg-[var(--g-gold)] text-[#5a3a00]',
       };
     case 'error':
       return {
@@ -44,6 +47,7 @@ function getSeverityStyle(severity: GameNotificationItem['severity']) {
         badge: 'bg-rose-600 text-white',
         Icon: XCircle,
         iconColor: 'text-rose-600',
+        chip: 'bg-[var(--g-red)] text-white',
       };
     case 'info':
     default:
@@ -52,6 +56,7 @@ function getSeverityStyle(severity: GameNotificationItem['severity']) {
         badge: 'bg-sky-600 text-white',
         Icon: Info,
         iconColor: 'text-sky-600',
+        chip: 'bg-[var(--g-navy-400)] text-white',
       };
   }
 }
@@ -66,6 +71,19 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
       onMarkAllRead,
     }) => {
       const latest = notifications[0] || null;
+
+      // Yeni bildirim gelince altta birkaç saniyelik bir "toast" belirir, sonra kaybolur.
+      const [toastId, setToastId] = useState<string | null>(null);
+      const seenRef = useRef<string | null>(latest?.id ?? null);
+      useEffect(() => {
+        if (!latest || latest.id === seenRef.current) return;
+        seenRef.current = latest.id;
+        setToastId(latest.id);
+        if (latest.severity === 'error') play('error');
+        else if (latest.severity === 'success' && latest.important) play('success');
+        const t = window.setTimeout(() => setToastId(null), 4200);
+        return () => window.clearTimeout(t);
+      }, [latest]);
 
       useEffect(() => {
         if (!isDrawerOpen) return;
@@ -82,45 +100,35 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
         ? getSeverityStyle(latest.severity)
         : getSeverityStyle('info');
       const LatestIcon = latestStyle.Icon;
+      const toastVisible = !!latest && toastId === latest.id;
 
       return (
         <>
-          {/* Aktif Olay / Bildirim Şeridi */}
+          {/* Yeni olay bildirimi (geçici) */}
           <section
             aria-label="Aktif Olay ve Bildirim Alanı"
+            aria-live="polite"
             data-testid="active-event-banner"
-            className={`rounded-2xl border px-3 py-2 flex items-center justify-between gap-2 shadow-2xs transition-colors duration-200 ${latestStyle.bg}`}
+            onClick={() => {
+              setToastId(null);
+              onOpenDrawer();
+            }}
+            className={`${
+              toastVisible ? 'g-toast-in' : 'hidden'
+            } fixed left-1/2 -translate-x-1/2 bottom-[88px] z-40 w-[min(92vw,420px)] rounded-2xl px-3 py-2.5 flex items-center gap-3 cursor-pointer text-white`}
+            style={{ background: 'rgba(18,28,68,.94)', boxShadow: '0 12px 30px -10px rgba(18,28,68,.7)' }}
           >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <LatestIcon
-                className={`w-4 h-4 shrink-0 ${latestStyle.iconColor}`}
-              />
-              <div className="min-w-0 flex-1 text-xs">
-                {latest ? (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold">{latest.title}:</span>
-                    <span className="font-medium truncate">
-                      {latest.message}
-                    </span>
-                    <span className="text-[13px] tabular-nums opacity-75 shrink-0">
-                      (Gün {latest.day} · {latest.gameTime})
-                    </span>
-                  </div>
-                ) : (
-                  <span className="font-medium text-slate-700">
-                    Finans şehri aktif. Binalara dokunarak işlem yapabilirsiniz.
-                  </span>
-                )}
-              </div>
+            <span className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center ${latestStyle.chip}`}>
+              <LatestIcon className="w-5 h-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              {latest && (
+                <>
+                  <div className="text-sm font-extrabold leading-tight truncate">{latest.title}</div>
+                  <div className="text-[13px] text-white/75 leading-snug line-clamp-2">{latest.message}</div>
+                </>
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={onOpenDrawer}
-              className="min-h-[36px] px-2.5 py-1 rounded-xl bg-white/90 hover:bg-white border border-slate-200/90 text-[13px] font-semibold text-slate-800 shrink-0 transition-colors"
-            >
-              Geçmiş ({notifications.length})
-            </button>
           </section>
 
           {/* Bildirim Merkezi Modal / Drawer */}
@@ -130,35 +138,35 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
               aria-modal="true"
               aria-label="Oyun Bildirim Merkezi"
               data-testid="notification-center-modal"
-              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 p-0 sm:p-4"
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(18,28,68,.55)] p-0 sm:p-4"
               onClick={onCloseDrawer}
             >
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-lg max-h-[82vh] bg-white rounded-t-3xl sm:rounded-3xl border border-slate-200 shadow-xl flex flex-col overflow-hidden"
+                className="g-rise w-full max-w-lg max-h-[82vh] bg-[var(--g-bg)] rounded-t-[24px] sm:rounded-[24px] shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+                <div className="g-hero rounded-none px-4 py-3.5 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Bell className="w-4 h-4 text-sky-600" />
-                    <h2 className="text-sm font-bold text-slate-900">
-                      Oyun Olayları & Bildirim Merkezi
+                    <Bell className="w-5 h-5 text-[var(--g-gold)]" />
+                    <h2 className="g-display text-lg font-extrabold text-white">
+                      Bildirimler
                     </h2>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={onMarkAllRead}
-                      className="min-h-[44px] px-3 text-xs font-semibold text-sky-700 hover:bg-sky-50 rounded-xl"
+                      className="min-h-[40px] px-3 text-[13px] font-extrabold text-white/80 bg-white/10 rounded-full"
                     >
-                      Tümünü Okundu İşaretle
+                      Tümü okundu
                     </button>
                     <button
                       type="button"
                       aria-label="Bildirim Merkezini Kapat"
                       onClick={onCloseDrawer}
-                      className="min-w-[44px] min-h-[44px] rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-600"
+                      className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -166,7 +174,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
                 <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
                   {notifications.length === 0 ? (
                     <p className="text-xs text-slate-500 text-center py-8">
-                      Henüz kayıtlı bir bildirim bulunmuyor.
+                      Henüz bildirim yok.
                     </p>
                   ) : (
                     notifications.map((item) => {
@@ -175,19 +183,19 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
                       return (
                         <div
                           key={item.id}
-                          className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 ${st.bg}`}
+                          className="g-card p-3 text-sm flex items-start gap-3"
                         >
-                          <ItemIcon
-                            className={`w-4 h-4 mt-0.5 shrink-0 ${st.iconColor}`}
-                          />
+                          <span className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center ${st.chip}`}>
+                            <ItemIcon className="w-4 h-4" />
+                          </span>
                           <div className="min-w-0 flex-1 space-y-0.5">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-bold">{item.title}</span>
-                              <span className="text-[13px] tabular-nums opacity-80 shrink-0">
+                              <span className="font-extrabold text-[var(--g-ink)]">{item.title}</span>
+                              <span className="text-[13px] tabular-nums text-[var(--g-muted)] font-bold shrink-0">
                                 Gün {item.day} · {item.gameTime}
                               </span>
                             </div>
-                            <p className="text-slate-700 leading-relaxed">
+                            <p className="text-[var(--g-muted)] leading-snug text-[13px] font-semibold">
                               {item.message}
                             </p>
                           </div>

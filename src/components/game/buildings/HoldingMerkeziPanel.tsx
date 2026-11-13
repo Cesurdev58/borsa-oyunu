@@ -39,11 +39,11 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       data-testid="sheet-content-HOLDING_MERKEZI"
     >
       {!state.stageUnlocks.stage4Holding && (
-        <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start gap-2.5">
+        <div className="p-3.5 g-card-soft flex items-start gap-2.5">
           <Lock className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
           <div>
             <div className="font-extrabold text-amber-950 text-base">
-              🔒 Holding kilitli
+              Holding kilitli
             </div>
             <p className="text-amber-900 text-[13px] mt-0.5">
               Bir şirketin %5'ini al ya da şirketini halka arz et.
@@ -52,19 +52,19 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
       )}
 
-      <div className="rounded-3xl bg-gradient-to-br from-rose-100 to-orange-100 p-5 text-center space-y-2 tabular-nums">
-        <div className="text-sm font-bold text-rose-800">🏛️ Bağlı şirketlerin</div>
-        <div className="text-5xl font-extrabold text-rose-900">
+      <div className="g-hero p-5 text-center space-y-2 tabular-nums">
+        <div className="text-sm font-bold text-[#ffb4b2]">Bağlı şirketlerin</div>
+        <div className="text-5xl font-extrabold g-hero-value">
           {state.controlledSubsidiaries.length}
         </div>
-        <div className="text-sm font-bold text-emerald-700">
-          💰 Holding geliri: {formatCurrency(state.totalSynergyEarned)}
+        <div className="text-sm font-bold text-white/65">
+          Holding geliri: {formatCurrency(state.totalSynergyEarned)}
         </div>
       </div>
 
       {/* Devralma İşlem Kartı */}
       {selectedTarget && (
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
+        <div className="g-card p-3.5 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div>
               <label className="block text-[13px] font-semibold text-slate-600 mb-1">
@@ -85,7 +85,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
             <div className="text-right tabular-nums">
               <div className="text-xs font-bold text-slate-900">
-                💎 {formatCurrency(selectedTarget.equityValue)}
+                {formatCurrency(selectedTarget.equityValue)}
               </div>
               <div className="text-[13px] text-slate-500">
                 Payın: %{selectedTarget.playerOwnershipPct.toFixed(1)}
@@ -114,9 +114,9 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   Math.max(10, Math.ceil(selectedTarget.totalShares * 0.05))
                 )
               }
-              className="min-h-[56px] px-3 py-2 rounded-2xl bg-slate-100 text-slate-900 font-extrabold active:scale-95"
+              className="g-btn g-btn-secondary px-3"
             >
-              📈 %5 pay al ({selectedTarget.ticker})
+              %5 pay al ({selectedTarget.ticker})
             </button>
             <button
               type="button"
@@ -127,11 +127,11 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                   useDebtFinancing: useDebtForTakeover,
                 })
               }
-              className="min-h-[56px] px-3 py-2 rounded-2xl bg-gradient-to-b from-rose-400 to-rose-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
+              className="g-btn g-btn-danger px-3"
             >
               {selectedTarget.isControlledByPlayer
-                ? '✅ Şirket senin'
-                : `🏛️ Şirketi devral (${selectedTarget.ticker})`}
+                ? 'Şirket senin'
+                : `Şirketi devral (${selectedTarget.ticker})`}
             </button>
           </div>
         </div>
@@ -140,7 +140,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       {/* İştirakler ve Sahiplik Tablosu */}
       <div className="space-y-1.5">
         <h3 className="font-bold text-slate-900">
-          📋 Paylarım
+          Paylarım
         </h3>
         <div className="space-y-1.5 max-h-52 overflow-y-auto">
           {npcStocks.map((s) => (

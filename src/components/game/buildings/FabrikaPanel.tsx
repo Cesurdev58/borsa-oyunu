@@ -62,7 +62,7 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
             <button
               type="button"
               onClick={() => onOpenBuilding('SIRKET_MERKEZI')}
-              className="min-h-[44px] px-4 rounded-xl bg-teal-600 text-white font-bold"
+              className="g-btn g-btn-primary px-4"
             >
               Şirket Arsası Durumunu Gör
             </button>
@@ -91,30 +91,30 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-4 text-xs"
       data-testid="sheet-content-FABRIKA-active"
     >
-      <div className="rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-5 text-center space-y-2">
-        <div className="text-sm font-bold text-amber-800">🏭 Bugünkü üretim</div>
-        <div className="text-5xl font-extrabold text-amber-900 tabular-nums">
+      <div className="g-hero p-5 text-center space-y-2">
+        <div className="text-sm font-bold text-white/65">Bugünkü üretim</div>
+        <div className="text-5xl font-extrabold tabular-nums g-hero-value">
           {actualProd.toFixed(0)}
-          <span className="text-2xl text-amber-700"> / {installedCap}</span>
+          <span className="text-2xl text-white/65"> / {installedCap}</span>
         </div>
-        <div className="h-4 rounded-full bg-white/70 overflow-hidden">
+        <div className="g-track h-3">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+            className="g-fill"
             style={{ width: `${Math.min(100, capUtilPct)}%` }}
           />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
-        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-          <div className="text-[13px] text-slate-500">🛍️ Satılan</div>
+        <div className="g-card p-3">
+          <div className="text-[13px] text-slate-500">Satılan</div>
           <div className="font-extrabold text-emerald-700">{ops.actualSalesUnits.toFixed(0)}</div>
         </div>
-        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-          <div className="text-[13px] text-slate-500">📦 Stok</div>
+        <div className="g-card p-3">
+          <div className="text-[13px] text-slate-500">Stok</div>
           <div className="font-extrabold text-slate-900">{ops.inventoryUnits.toFixed(0)}</div>
         </div>
-        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-          <div className="text-[13px] text-slate-500">👥 Çalışan</div>
+        <div className="g-card p-3">
+          <div className="text-[13px] text-slate-500">Çalışan</div>
           <div className="font-extrabold text-slate-900">{pc.staffCount}</div>
         </div>
       </div>
@@ -126,9 +126,9 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
         type="button"
         data-testid="factory-trade-toggle"
         onClick={() => setShowTrade((v) => !v)}
-        className="w-full min-h-[52px] rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+        className="g-btn g-btn-secondary w-full"
       >
-        {showTrade ? '▲ Depoyu gizle' : '📦 Depo, toptan alım ve üretim'}
+        {showTrade ? '▲ Depoyu gizle' : 'Depo, toptan alım ve üretim'}
       </button>
 
       {/* Merkezi Depolar, Reçete Üretimi, Lojistik Filo ve Tedarik Zinciri */}
@@ -173,9 +173,9 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
         <button
           type="button"
           onClick={() => onOpenBuilding('SIRKET_MERKEZI')}
-          className="w-full min-h-[52px] rounded-2xl bg-slate-900 text-white font-extrabold shadow active:scale-95"
+          className="g-btn g-btn-navy w-full"
         >
-          🏢 Çalışan ve yatırım: Şirket Merkezi
+          Çalışan ve yatırım: Şirket Merkezi
         </button>
       )}
     </div>

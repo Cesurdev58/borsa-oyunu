@@ -6,7 +6,7 @@
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { FirstRunGuide } from './FirstRunGuide';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Clock,
   Code2,
@@ -46,6 +46,7 @@ import { CityQuestStrip } from './CityQuestStrip';
 import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
 import { GameTopBar } from './GameTopBar';
+import { play, setFeedbackSettings, vibrate } from './ui/feedback';
 import {
   CityBuildingId,
   GameBottomTab,
@@ -145,6 +146,32 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [uiSettings, setUiSettings] = useState<UISettingsState>(() =>
     UISettingsStore.loadSettings()
   );
+
+  // Borsa sekmesine girmek de "Borsa binasını aç" hedefini tamamlar.
+  useEffect(() => {
+    if (activeBottomTab === 'market' && !uiSettings.hasOpenedBorsaBuilding) {
+      setUiSettings(UISettingsStore.markBorsaBuildingOpened());
+    }
+  }, [activeBottomTab, uiSettings.hasOpenedBorsaBuilding]);
+
+  // Ses/titreşim ayarlarını uygula; oyun düğmelerine basınca kısa "tık" sesi çal.
+  useEffect(() => {
+    setFeedbackSettings(uiSettings.audio);
+  }, [uiSettings.audio]);
+  useEffect(() => {
+    const onPointer = (e: PointerEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest?.('button, [role="button"]');
+      if (!el || (el as HTMLButtonElement).disabled) return;
+      if (el.classList.contains('g-btn-primary') || el.classList.contains('g-btn-gold')) {
+        play('coin');
+      } else {
+        play('tap');
+      }
+      vibrate(6);
+    };
+    window.addEventListener('pointerdown', onPointer, { passive: true });
+    return () => window.removeEventListener('pointerdown', onPointer);
+  }, []);
 
   // Kamera konumu sekme değişimlerinde ve sayfa yenilemelerinde korunur, ekonomik state'i değiştirmez
   const [cameraState, setCameraState] = useState<CityCameraState>(() => ({
@@ -343,7 +370,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   return (
     <div
       data-testid="tycoon-game-view"
-      className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-50 text-slate-900 flex flex-col justify-between"
+      className="min-h-screen w-full overflow-x-hidden bg-[var(--g-bg)] text-[var(--g-ink)] flex flex-col justify-between"
     >
       <CelebrationOverlay
         shopCount={state.tradeState?.shops.length ?? 0}
@@ -372,7 +399,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       />
 
       {/* 2. ORTA ANA OYUN ALANI (Tek Hedefli Görev Şeridi + İzometrik 2.5D Mahalle veya Seçili Sekme) */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-2 sm:px-4 py-2 space-y-2">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 pt-3 pb-4 space-y-3">
         {/* Tek Hedefli Görev / İlerleme Şeridi */}
         <CityQuestStrip
           state={state}
@@ -403,27 +430,16 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           />
         ) : (
           <section
+            key={activeBottomTab}
             aria-label={`Aktif Sekme: ${activeBottomTab}`}
-            className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs space-y-3"
+            className="g-rise space-y-3"
           >
-            <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                {activeBottomTab === 'market' && '📈 Borsa'}
-                {activeBottomTab === 'company' &&
-                  '🏢 Şirketim'}
-                {activeBottomTab === 'news' && '📰 Haberler'}
-                {activeBottomTab === 'portfolio' &&
-                  '🏪 Dükkânlarım & Varlıklarım'}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setActiveBottomTab('city')}
-                className="min-h-[38px] px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold inline-flex items-center gap-1.5"
-              >
-                <Compass className="w-3.5 h-3.5 text-sky-600" />
-                <span>Şehre dön</span>
-              </button>
-            </div>
+            <h2 className="g-display text-[26px] font-extrabold leading-none text-[var(--g-ink)] px-1 pt-1">
+              {activeBottomTab === 'market' && 'Borsa'}
+              {activeBottomTab === 'company' && 'Şirketim'}
+              {activeBottomTab === 'news' && 'Haberler'}
+              {activeBottomTab === 'portfolio' && 'Dükkânlarım'}
+            </h2>
 
             {activeBottomTab === 'market' && (
               <BuildingDetailContent
@@ -449,16 +465,16 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                       type="button"
                       data-testid="company-factory-toggle"
                       onClick={() => setShowFactoryDetails((v) => !v)}
-                      className="w-full min-h-[52px] rounded-2xl bg-gradient-to-r from-slate-700 to-slate-600 text-white font-extrabold text-sm shadow-md active:scale-95"
+                      className="g-btn g-btn-secondary w-full"
                     >
                       {showFactoryDetails
                         ? '▲ Fabrika ve Ar-Ge ayrıntılarını gizle'
-                        : '🏭 Fabrika, Depo ve Ar-Ge ayrıntıları'}
+                        : 'Fabrika, depo ve Ar-Ge'}
                     </button>
                     <div className={showFactoryDetails ? 'space-y-4' : 'hidden'}>
                       <div className="pt-3 border-t border-slate-200">
-                        <h3 className="text-base font-extrabold text-slate-900 mb-2">
-                          🏭 Fabrika Üretim Durumu
+                        <h3 className="g-section-title mb-2">
+                          Fabrika
                         </h3>
                         <BuildingDetailContent
                           {...sharedActions}
@@ -467,8 +483,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                         />
                       </div>
                       <div className="pt-3 border-t border-slate-200">
-                        <h3 className="text-base font-extrabold text-slate-900 mb-2">
-                          🔬 Ar-Ge & Teknoloji Kalitesi
+                        <h3 className="g-section-title mb-2">
+                          Ar-Ge
                         </h3>
                         <BuildingDetailContent
                           {...sharedActions}
@@ -549,42 +565,40 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md max-h-[88vh] overflow-y-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-4 sm:p-5 space-y-4 text-xs"
+            className="g-rise w-full max-w-md max-h-[88vh] overflow-y-auto bg-white rounded-[24px] shadow-2xl p-4 sm:p-5 space-y-5 text-sm"
           >
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-slate-700" />
-                <h2 className="text-sm font-bold text-slate-900">
-                  Oyun Ayarları
+                <Settings className="w-5 h-5 text-[var(--g-navy-600)]" />
+                <h2 className="g-section-title">
+                  Ayarlar
                 </h2>
               </div>
               <button
                 type="button"
                 aria-label="Ayarları Kapat"
                 onClick={() => setIsSettingsModalOpen(false)}
-                className="min-w-[40px] min-h-[40px] rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-600"
+                className="w-10 h-10 rounded-full bg-[var(--g-surface-2)] flex items-center justify-center text-[var(--g-muted)]"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Grafik Kalitesi (Performans Modu) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="font-semibold text-slate-800 inline-flex items-center gap-1.5">
+                <label className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
                   <Gauge className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Grafik Kalitesi (Performans Modu)</span>
+                  <span>Grafik</span>
                 </label>
-                <span className="text-[13px] tabular-nums text-slate-500">
-                  Varsayılan: Orta
-                </span>
+
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
-                    { id: 'LOW', label: 'Düşük', sub: 'Maks 6 Araç · 0 Yaya' },
-                    { id: 'MEDIUM', label: 'Orta', sub: 'Maks 12 Araç · 2 Yaya' },
-                    { id: 'HIGH', label: 'Yüksek', sub: 'Maks 18 Araç · 4 Yaya' },
+                    { id: 'LOW', label: 'Düşük', sub: 'Pil dostu' },
+                    { id: 'MEDIUM', label: 'Orta', sub: 'Dengeli' },
+                    { id: 'HIGH', label: 'Yüksek', sub: 'En canlı' },
                   ] as const
                 ).map((item) => {
                   const active = uiSettings.graphicsQuality === item.id;
@@ -595,17 +609,12 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                       data-testid={`graphics-quality-${item.id}`}
                       aria-pressed={active}
                       onClick={() => handleSetGraphicsQuality(item.id)}
-                      className={`min-h-[46px] p-2 rounded-xl border text-center transition-colors ${
-                        active
-                          ? 'bg-sky-600 text-white border-sky-700'
-                          : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
-                      }`}
+                      data-active={active ? 'true' : 'false'}
+                      className="g-choice p-2 text-center"
                     >
                       <div className="font-bold">{item.label}</div>
                       <div
-                        className={`text-[13px] tabular-nums ${
-                          active ? 'text-sky-100' : 'text-slate-500'
-                        }`}
+                        className="text-[13px] font-semibold opacity-75"
                       >
                         {item.sub}
                       </div>
@@ -618,13 +627,13 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             {/* Ses Yöneticisi (UI Audio Infrastructure) */}
             <div className="space-y-2.5 pt-2.5 border-t border-slate-200">
               <div className="flex items-center justify-between">
-                <div className="font-semibold text-slate-800 inline-flex items-center gap-1.5">
+                <div className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
                   {uiSettings.audio.isMuted ? (
                     <VolumeX className="w-3.5 h-3.5 text-rose-600" />
                   ) : (
                     <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
                   )}
-                  <span>Ses Ayarları</span>
+                  <span>Ses ve titreşim</span>
                 </div>
                 <button
                   type="button"
@@ -645,13 +654,13 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80">
+              <div className="space-y-3 g-card-soft p-3">
                 <div className="flex items-center justify-between gap-2">
                   <label
                     htmlFor="audio-master-volume"
                     className="text-[13px] text-slate-700 font-medium w-24"
                   >
-                    Ana Ses (%{uiSettings.audio.masterVolume})
+                    Genel (%{uiSettings.audio.masterVolume})
                   </label>
                   <input
                     id="audio-master-volume"
@@ -665,7 +674,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                         masterVolume: Number(e.target.value),
                       })
                     }
-                    className="flex-1 accent-emerald-600"
+                    className="flex-1 accent-[var(--g-green)]"
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2">
@@ -673,7 +682,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                     htmlFor="audio-effects-volume"
                     className="text-[13px] text-slate-700 font-medium w-24"
                   >
-                    Efekt Sesi (%{uiSettings.audio.effectsVolume})
+                    Efektler (%{uiSettings.audio.effectsVolume})
                   </label>
                   <input
                     id="audio-effects-volume"
@@ -687,10 +696,10 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                         effectsVolume: Number(e.target.value),
                       })
                     }
-                    className="flex-1 accent-emerald-600"
+                    className="flex-1 accent-[var(--g-green)]"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="hidden">
                   <label
                     htmlFor="audio-music-volume"
                     className="text-[13px] text-slate-700 font-medium w-24"
@@ -709,35 +718,25 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                         musicVolume: Number(e.target.value),
                       })
                     }
-                    className="flex-1 accent-emerald-600"
+                    className="flex-1 accent-[var(--g-green)]"
                   />
                 </div>
-                <div
-                  data-testid="audio-asset-status-note"
-                  className="text-[13px] text-slate-500 pt-1 border-t border-slate-200/70"
-                >
-                  Durum: Ses yöneticisi altyapısı aktif — ses dosyaları daha sonra
-                  eklenecek.
-                </div>
-              </div>
+                              </div>
             </div>
 
             {/* 1 Oyun Günü Gerçek Süre Karşılığı */}
             <div className="space-y-2 pt-2 border-t border-slate-200">
-              <label className="block font-semibold text-slate-800">
-                1 Oyun Günü Gerçek Süre Karşılığı
+              <label className="block font-extrabold text-[var(--g-ink)]">
+                Bir oyun günü ne kadar sürsün?
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {([15, 30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
                   <button
                     key={`day-duration-${mins}m`}
                     type="button"
                     onClick={() => onSetRealMinutesPerDay(mins)}
-                    className={`min-h-[40px] rounded-xl tabular-nums font-bold border ${
-                      state.realMinutesPerGameDay === mins
-                        ? 'bg-emerald-600 text-white border-emerald-700'
-                        : 'bg-slate-50 text-slate-800 border-slate-200'
-                    }`}
+                    data-active={state.realMinutesPerGameDay === mins ? 'true' : 'false'}
+                    className="g-choice tabular-nums"
                   >
                     {mins} dk
                   </button>
@@ -748,7 +747,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             {/* Bina Paneli Açıkken Otomatik Duraklatma Seçeneği */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
               <div>
-                <div className="font-semibold text-slate-800">
+                <div className="font-extrabold text-[var(--g-ink)]">
                   Panel Açıkken Otomatik Duraklat
                 </div>
                 <div className="text-[13px] text-slate-500">
@@ -771,21 +770,28 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             </div>
 
             <div className="space-y-2 pt-2 border-t border-slate-200">
-              <div className="font-semibold text-slate-800">
-                Kayıt ve Geliştirici Araçları
+              <div className="font-extrabold text-[var(--g-ink)]">
+                Kayıt
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     onManualSave();
                     setIsSettingsModalOpen(false);
                   }}
-                  className="min-h-[42px] px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold inline-flex items-center justify-center gap-1.5"
+                  className="g-btn g-btn-secondary w-full"
                 >
                   <Save className="w-4 h-4" />
                   <span>Oyunu Kaydet</span>
                 </button>
+              </div>
+              <details className="group rounded-2xl bg-[var(--g-surface-2)] px-3 py-2">
+                <summary className="cursor-pointer list-none min-h-[40px] flex items-center justify-between text-[13px] font-extrabold text-[var(--g-muted)]">
+                  Geliştirici araçları
+                  <span className="transition-transform group-open:rotate-180">⌄</span>
+                </summary>
+                <div className="space-y-2 pb-1">
                 <button
                   type="button"
                   data-testid="tycoon-simulate-offline-btn"
@@ -793,12 +799,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                     onSimulateOfflineProgress();
                     setIsSettingsModalOpen(false);
                   }}
-                  className="min-h-[42px] px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 font-semibold inline-flex items-center justify-center gap-1.5"
+                  className="g-btn g-btn-secondary g-btn-sm w-full"
                 >
                   <Clock className="w-4 h-4" />
-                  <span>Çevrimdışı Simüle Et</span>
+                  <span>Çevrimdışı ilerlemeyi dene</span>
                 </button>
-              </div>
 
               <button
                 type="button"
@@ -807,11 +812,13 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   setIsSettingsModalOpen(false);
                   onSwitchToDeveloperDashboard();
                 }}
-                className="w-full min-h-[42px] px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold inline-flex items-center justify-center gap-2"
+                className="g-btn g-btn-secondary g-btn-sm w-full"
               >
-                <Code2 className="w-4 h-4 text-emerald-400" />
-                <span>Geliştirici Araçları (Ayrıntılı Geliştirici Paneli)</span>
+                <Code2 className="w-4 h-4" />
+                <span>Geliştirici paneli</span>
               </button>
+                </div>
+              </details>
 
               <button
                 type="button"
@@ -820,7 +827,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   onResetSimulation();
                   setIsSettingsModalOpen(false);
                 }}
-                className="w-full min-h-[42px] px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold inline-flex items-center justify-center gap-1.5"
+                className="w-full min-h-[48px] px-3 rounded-2xl text-[var(--g-red)] font-extrabold inline-flex items-center justify-center gap-1.5"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Oyunu Sıfırla (Yeni Oyun: ₺100.000)</span>

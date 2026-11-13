@@ -213,7 +213,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
         aria-modal="true"
         aria-label={header.title}
         data-testid={`building-detail-sheet-${buildingId}`}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/35 p-0 sm:p-4"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(18,28,68,.5)] p-0 sm:p-4"
         onClick={onClose}
       >
         <div
@@ -221,7 +221,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
           style={{
             transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
           }}
-          className={`w-full max-w-3xl max-h-[76vh] sm:max-h-[84vh] bg-white rounded-t-3xl sm:rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden transition-transform duration-150 ${header.accentClass}`}
+          className={`w-full max-w-3xl max-h-[76vh] sm:max-h-[84vh] bg-[var(--g-bg)] rounded-t-[26px] sm:rounded-[26px] shadow-2xl flex flex-col overflow-hidden transition-transform duration-150`}
         >
           {/* Aşağı Sürüklenebilir Bottom Sheet Tutamağı ve Başlık Çubuğu */}
           <div
@@ -230,19 +230,19 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
             onPointerCancel={handleDragEnd}
-            className="touch-none select-none cursor-grab active:cursor-grabbing bg-white/95 sticky top-0 z-10"
+            className="touch-none select-none cursor-grab active:cursor-grabbing bg-white sticky top-0 z-10 border-b border-[var(--g-line)]"
           >
             <div className="w-10 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 sm:hidden" />
 
-            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+            <div className="px-4 py-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className={`w-9 h-9 rounded-2xl border flex items-center justify-center shrink-0 ${header.iconBoxClass}`}
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 text-white" style={{ background: 'linear-gradient(160deg,var(--g-navy-600),var(--g-navy-800))' }}
                 >
-                  <HeaderIcon className="w-4 h-4" />
+                  <HeaderIcon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  <h2 className="g-display text-lg font-extrabold leading-tight text-[var(--g-ink)] truncate">
                     {header.title}
                   </h2>
                   <p className="text-[13px] text-slate-500 truncate">
@@ -256,7 +256,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
                 data-testid="close-building-sheet-btn"
                 aria-label="Bina Detay Penceresini Kapat"
                 onClick={onClose}
-                className="min-w-[44px] min-h-[44px] rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-600 shrink-0"
+                className="w-10 h-10 rounded-full bg-[var(--g-surface-2)] flex items-center justify-center text-[var(--g-muted)] shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>

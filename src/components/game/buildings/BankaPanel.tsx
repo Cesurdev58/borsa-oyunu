@@ -105,11 +105,11 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
     <div className="space-y-4 text-xs" data-testid="sheet-content-BANKA">
       {/* Hesap Bakiyeleri Üst Özeti */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums tabular-nums">
-        <div className="p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-          <div className="text-[13px] text-emerald-800 font-sans font-semibold">
-            💼 Yatırım hesabın
+        <div className="p-2.5 g-card-soft">
+          <div className="text-[13px] text-[var(--g-muted)] font-sans font-semibold">
+            Yatırım hesabın
           </div>
-          <div className="text-sm font-bold text-emerald-950 mt-0.5">
+          <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(spendableCash)}
           </div>
           <div className="text-[13px] text-amber-700 mt-0.5">
@@ -117,11 +117,11 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-sky-50/70 border border-sky-200">
-          <div className="text-[13px] text-sky-800 font-sans font-semibold">
-            👛 Cebindeki para
+        <div className="p-2.5 g-card-soft">
+          <div className="text-[13px] text-[var(--g-muted)] font-sans font-semibold">
+            Cebindeki para
           </div>
-          <div className="text-sm font-bold text-sky-950 mt-0.5">
+          <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(state.personalCash || 0)}
           </div>
           <div className="text-[13px] text-slate-500 mt-0.5">
@@ -129,11 +129,11 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-teal-50/70 border border-teal-200">
-          <div className="text-[13px] text-teal-800 font-sans font-semibold">
-            🏢 Şirket kasası
+        <div className="p-2.5 g-card-soft">
+          <div className="text-[13px] text-[var(--g-muted)] font-sans font-semibold">
+            Şirket kasası
           </div>
-          <div className="text-sm font-bold text-teal-950 mt-0.5">
+          <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(pc ? pc.financials.cash : 0)}
           </div>
           <div className="text-[13px] text-slate-500 mt-0.5">
@@ -141,11 +141,11 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-rose-50/70 border border-rose-200">
-          <div className="text-[13px] text-rose-800 font-sans font-semibold">
-            💳 Borcun ve kredi notun
+        <div className="p-2.5 g-card-soft">
+          <div className="text-[13px] text-[var(--g-muted)] font-sans font-semibold">
+            Borcun ve kredi notun
           </div>
-          <div className="text-sm font-bold text-rose-950 mt-0.5">
+          <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(
               state.totalDebt + (pc ? pc.financials.totalLiabilities : 0)
             )}
@@ -156,9 +156,8 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900">
-        <span>💡</span>
-        <span>
+      <div className="g-tip">
+                <span>
           Banka paranı hesaplar arasında taşır ve ihtiyaç olursa kredi verir.
           Kredi aldığın parayı faiziyle geri ödersin.
         </span>
@@ -169,12 +168,12 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
       <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
         {(
           [
-            { id: 'TRANSFER', label: '🔁 Para taşı' },
+            { id: 'TRANSFER', label: 'Para taşı' },
             {
               id: 'LOANS',
-              label: `💳 Krediler (${activeLoansList.length})`,
+              label: `Krediler (${activeLoansList.length})`,
             },
-            { id: 'LEDGER', label: '📒 Hesaplar' },
+            { id: 'LEDGER', label: 'Hesaplar' },
           ] as const
         ).map((t) => (
           <button
@@ -184,7 +183,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             onClick={() => setBankTab(t.id)}
             className={`flex-1 min-h-[44px] px-2.5 py-1 rounded-xl text-[13px] font-bold transition-colors ${
               bankTab === t.id
-                ? 'bg-slate-900 text-white'
+                ? 'g-choice is-active'
                 : 'text-slate-700 hover:bg-white'
             }`}
           >
@@ -195,18 +194,18 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
       {/* 1. PARA TRANSFERİ EKRANI (Aşama 3) */}
       {bankTab === 'TRANSFER' && (
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
+        <div className="g-card p-3.5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-slate-900">
-              🔁 Hesaplar arası para taşı
+              Hesaplar arası para taşı
             </h3>
             <span className="text-[13px] tabular-nums text-emerald-700">
               En fazla: {formatCurrency(safeMaxInfo.maxSafeTransferable)}
             </span>
           </div>
 
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 p-4 text-center space-y-2">
-            <div className="text-sm font-bold text-emerald-800">💸 Ne kadar taşıyalım?</div>
+          <div className="g-hero p-4 text-center space-y-2">
+            <div className="text-sm font-bold text-white/65">Ne kadar taşıyalım?</div>
             <NumberInput
               data-testid="xfer-amount-input"
               
@@ -216,7 +215,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               onChange={(e) =>
                 setXferAmount(Math.max(0, Number(e.target.value) || 0))
               }
-              className="w-full min-h-[56px] px-3 rounded-2xl bg-white/80 text-center text-3xl font-extrabold tabular-nums text-emerald-900"
+              className="w-full min-h-[56px] px-3 rounded-2xl g-hero-tile text-center text-3xl font-extrabold tabular-nums g-hero-value"
             />
           </div>
 
@@ -224,9 +223,9 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             data-testid="xfer-advanced-toggle"
             onClick={() => setShowXferAdv((v) => !v)}
-            className="w-full min-h-[44px] rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm active:scale-95"
+            className="g-btn g-btn-secondary w-full"
           >
-            {showXferAdv ? '▲ Hesapları gizle' : '⚙️ Hangi hesaptan hangisine?'}
+            {showXferAdv ? '▲ Hesapları gizle' : 'Hangi hesaptan hangisine?'}
           </button>
 
           <div className={showXferAdv ? 'grid grid-cols-1 gap-2.5' : 'hidden'}>
@@ -312,7 +311,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                     )
                   )
                 }
-                className="min-h-[48px] px-1 rounded-2xl bg-slate-100 text-slate-800 tabular-nums text-[13px] font-extrabold active:scale-95"
+                className="g-btn g-btn-secondary px-1 tabular-nums"
               >
                 {btn.label}
               </button>
@@ -340,7 +339,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
             <div>
               <div className="text-slate-500">Korunan Tampon/Bloke</div>
-              <div className="font-bold text-amber-800">
+              <div className="font-bold text-[var(--g-muted)]">
                 {formatCurrency(
                   safeMaxInfo.reservedAmount +
                     safeMaxInfo.minWorkingCapitalBuffer +
@@ -381,9 +380,9 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 onTransferCapital(xferAmount);
               }
             }}
-            className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-extrabold shadow active:scale-95"
+            className="g-btn g-btn-primary w-full"
           >
-            ✅ Taşı
+            Taşı
 
           </button>
         </div>
@@ -392,10 +391,10 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
       {/* 2. BANKA VE KREDİ MASASI EKRANI (Aşama 7) */}
       {bankTab === 'LOANS' && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <div className="g-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-slate-900">
-                💳 Kredi al
+              <h3 className="g-section-title">
+                Kredi al
               </h3>
               <span
                 className={`px-2 py-0.5 rounded tabular-nums font-bold text-[13px] ${
@@ -404,7 +403,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                     : 'bg-rose-100 text-rose-800'
                 }`}
               >
-                {loanQuote.approved ? '✅ Alabilirsin' : '❌ Şimdilik olmaz'}
+                {loanQuote.approved ? 'Alabilirsin' : 'Şimdilik olmaz'}
               </span>
             </div>
 
@@ -472,8 +471,8 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
 
             <div className="rounded-3xl bg-amber-50 p-4 text-center tabular-nums space-y-1">
-              <div className="text-[13px] text-amber-800">Her {loanQuote.installmentFrequency} günde bir ödeyeceğin</div>
-              <div className="text-3xl font-extrabold text-amber-900">{formatCurrency(loanQuote.installmentAmount)}</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Her {loanQuote.installmentFrequency} günde bir ödeyeceğin</div>
+              <div className="text-3xl font-extrabold text-[var(--g-ink)]">{formatCurrency(loanQuote.installmentAmount)}</div>
               <div className="text-sm font-bold text-rose-700">
                 Toplam geri ödeme: {formatCurrency(loanQuote.totalRepayment)}
               </div>
@@ -498,7 +497,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 <div className="text-slate-500">
                   Toplam Geri Ödeme & Masraf
                 </div>
-                <div className="font-bold text-rose-800">
+                <div className="font-bold text-[var(--g-muted)]">
                   {formatCurrency(loanQuote.totalRepayment)} (Masraf:{' '}
                   {formatCurrency(loanQuote.originationFee)})
                 </div>
@@ -507,14 +506,14 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 <div className="text-slate-500">
                   Borç/Özkaynak & Risk
                 </div>
-                <div className="font-bold text-indigo-900">
+                <div className="font-bold text-[var(--g-ink)]">
                   {loanQuote.postLoanDebtToEquity}x · {loanQuote.riskLevel}
                 </div>
               </div>
             </div>
 
             {!loanQuote.approved && loanQuote.rejectionReason && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px]">
+              <div className="p-2.5 g-card-soft text-[var(--g-muted)] text-[13px]">
                 {loanQuote.rejectionReason}
               </div>
             )}
@@ -532,27 +531,27 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                   });
                 }
               }}
-              className="w-full min-h-[56px] rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
+              className="g-btn g-btn-gold w-full"
             >
-              ✅ Krediyi al ({formatCurrency(loanPrincipalInput)})
+              Krediyi al ({formatCurrency(loanPrincipalInput)})
             </button>
           </div>
 
           {/* Aktif Krediler ve Ödeme Yönetimi */}
           <div className="space-y-2">
             <h4 className="font-bold text-slate-900">
-              📒 Aktif kredilerin ({activeLoansList.length})
+              Aktif kredilerin ({activeLoansList.length})
             </h4>
             {activeLoansList.length === 0 ? (
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-center">
-                Hiç borcun yok 🎉
+                Hiç borcun yok
               </div>
             ) : (
               activeLoansList.map((loan) => (
                 <div
                   key={loan.loanId}
                   data-testid={`active-loan-row-${loan.loanId}`}
-                  className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2"
+                  className="g-card p-3 space-y-2"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -602,7 +601,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                         onPayLoanInstallment &&
                         onPayLoanInstallment(loan.loanId)
                       }
-                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[13px]"
+                      className="g-btn g-btn-primary flex-1 px-3"
                     >
                       Taksit Öde ({formatCurrency(loan.installmentAmount)})
                     </button>
@@ -611,7 +610,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                       onClick={() =>
                         onPayOffLoanEarly && onPayOffLoanEarly(loan.loanId)
                       }
-                      className="flex-1 min-h-[38px] px-3 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[13px]"
+                      className="g-btn g-btn-navy flex-1 px-3"
                     >
                       Erken Kapat (Teminatı Çöz)
                     </button>

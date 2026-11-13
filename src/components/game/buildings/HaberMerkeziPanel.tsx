@@ -20,16 +20,9 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       className="space-y-3 text-xs"
       data-testid="sheet-content-HABER_MERKEZI"
     >
-      <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between gap-2">
-        <div>
-          <div className="font-bold text-amber-950">
-            📰 Son Dakika
-          </div>
-          <div className="text-[13px] text-amber-800">
-            Haberler hisseleri oynatır. Eski haberlerin etkisi zamanla azalır.
-          </div>
-        </div>
-        <span className="tabular-nums font-bold text-amber-900 shrink-0 flex items-center gap-1">
+      <div className="g-tip items-center">
+        <span className="flex-1">Yeşil haber hisseyi yükseltir, kırmızı düşürür.</span>
+        <span className="tabular-nums font-extrabold shrink-0 flex items-center gap-1">
           {state.newsFeed.length} haber
           <HelpTip text="Yeşil haber o sektörün hisselerini yükseltir, kırmızı haber düşürür. Etki günler geçtikçe zayıflar." />
         </span>
@@ -43,7 +36,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
           return (
             <div
               key={news.id}
-              className="p-3 rounded-2xl bg-white border border-slate-200 space-y-1.5"
+              className="g-card p-3 space-y-1.5"
             >
               <div className="flex flex-wrap items-center justify-between gap-1.5 text-[13px]">
                 <div className="flex items-center gap-1.5 tabular-nums">
@@ -70,7 +63,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                       : 'bg-rose-50 text-rose-700'
                   }`}
                 >
-                  {currentImpactPct >= 0 ? '🟢 Yükseltir' : '🔴 Düşürür'}{' '}
+                  {currentImpactPct >= 0 ? 'Yükseltir' : 'Düşürür'}{' '}
                   {currentImpactPct >= 0 ? '+' : ''}
                   {currentImpactPct.toFixed(1)}%
                 </span>

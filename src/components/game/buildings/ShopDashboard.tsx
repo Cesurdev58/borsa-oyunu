@@ -6,6 +6,7 @@
  * Ayrıntılı yönetim (sipariş, fiyat, personel...) "Yönet" ile eski panelde açılır.
  */
 
+import { Check, Plus } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
@@ -61,32 +62,32 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     return (
       <div
         data-testid="first-shop-progress"
-        className="p-4 rounded-3xl bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 text-amber-950 shadow-md space-y-3"
+        className="g-hero p-5 space-y-3"
       >
-        <div className="flex items-center gap-2 font-extrabold text-base">
-          <span className="text-3xl">🏪</span>
+        <div className="g-display flex items-center gap-3 font-extrabold text-xl leading-tight">
+          <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 flex items-center justify-center text-[28px]">🏪</span>
           {ready ? 'Hazırsın! İlk dükkânını aç' : 'İlk dükkânına ne kadar kaldı?'}
         </div>
-        <div className="w-full h-4 bg-white/60 rounded-full overflow-hidden">
+        <div className="g-track h-4">
           <div
-            className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+            className="g-fill"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <div className="flex justify-between text-sm font-bold tabular-nums">
-          <span>{formatCurrency(state.netWorth)}</span>
-          <span>🎯 {formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
+        <div className="flex justify-between text-sm font-bold tabular-nums text-white/70">
+          <span className="text-[var(--g-gold)]">{formatCurrency(state.netWorth)}</span>
+          <span>{formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
         </div>
         {ready ? (
           <button
             type="button"
             onClick={() => onManage(null)}
-            className="w-full min-h-[48px] rounded-2xl bg-white text-orange-700 font-extrabold shadow active:scale-95"
+            className="g-btn g-btn-gold w-full"
           >
-            🏪 Dükkân türünü seç
+            Dükkân türünü seç
           </button>
         ) : (
-          <p className="text-sm font-semibold">
+          <p className="text-sm font-semibold text-white/70">
             Borsada hisse al-sat, parayı büyüt. Hedefe ulaşınca dükkân kurabilirsin!
           </p>
         )}
@@ -124,11 +125,11 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     <div className="space-y-3" data-testid="shop-dashboard">
       <div
         data-testid="daily-tasks-card"
-        className="rounded-3xl bg-gradient-to-r from-violet-100 to-sky-100 border border-violet-200 p-3 space-y-2"
+        className="g-card p-3 space-y-2"
       >
-        <div className="flex items-center justify-between font-extrabold text-slate-900">
-          <span>📅 Bugünün görevleri</span>
-          <span className="text-sm tabular-nums text-violet-700">
+        <div className="flex items-center justify-between">
+          <span className="g-section-title text-base">Bugünün görevleri</span>
+          <span className="g-pill bg-[#e8ecfb] text-[var(--g-navy-600)] tabular-nums">
             {doneCount}/{dailyTasks.length}
           </span>
         </div>
@@ -137,11 +138,17 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
             key={t.id}
             data-testid={`daily-task-${t.id}`}
             data-done={t.done ? 'true' : 'false'}
-            className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold ${
-              t.done ? 'bg-emerald-100 text-emerald-900' : 'bg-white text-slate-800'
+            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold ${
+              t.done ? 'bg-[#ecfaf3] text-[var(--g-green-dark)]' : 'bg-[var(--g-surface-2)] text-[var(--g-ink)]'
             }`}
           >
-            <span className="text-lg">{t.done ? '✅' : t.emoji}</span>
+            <span
+              className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center ${
+                t.done ? 'bg-[var(--g-green)] text-white' : 'border-2 border-[#c8cfdf]'
+              }`}
+            >
+              {t.done && <Check className="w-4 h-4" strokeWidth={3.2} />}
+            </span>
             <span>{t.text}</span>
           </div>
         ))}
@@ -165,15 +172,15 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
           <div
             key={shop.shopId}
             data-testid={`shop-card-${shop.shopId}`}
-            className="rounded-3xl overflow-hidden shadow-md bg-white border border-slate-100"
+            className="g-card overflow-hidden"
           >
             <div
-              className={`p-3 bg-gradient-to-r ${CARD_TONES[i % CARD_TONES.length]} text-white flex items-center gap-3`}
+              className="g-hero rounded-none rounded-t-[17px] p-3 flex items-center gap-3"
             >
-              <span className="text-4xl">{SHOP_EMOJI[shop.shopType] ?? '🏪'}</span>
+              <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[28px]">{SHOP_EMOJI[shop.shopType] ?? '🏪'}</span>
               <div className="min-w-0 flex-1">
-                <div className="font-extrabold text-base truncate">{shop.nameTR}</div>
-                <div className="text-sm opacity-95">
+                <div className="g-display font-extrabold text-[17px] leading-tight truncate">{shop.nameTR}</div>
+                <div className="text-[13px] font-semibold text-white/65">
                   {tpl?.nameTR ?? shop.shopType} · Seviye {shop.level}
                 </div>
               </div>
@@ -181,13 +188,13 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
 
             <div className="p-3 space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-2xl bg-slate-50 p-2.5">
+                <div className="g-card-soft p-2.5">
                   <div className="text-[13px] text-slate-500">Bugünkü satış</div>
                   <div className="font-extrabold text-slate-900 tabular-nums">
                     {formatCurrency(shop.todaySalesRevenue)}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-2.5">
+                <div className="g-card-soft p-2.5">
                   <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
                   <div
                     className={`font-extrabold tabular-nums ${
@@ -202,19 +209,15 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
 
               <div>
                 <div className="flex justify-between text-sm font-semibold text-slate-700">
-                  <span>📦 Raf doluluğu</span>
+                  <span>Raf doluluğu</span>
                   <span className={low ? 'text-rose-600' : ''}>
                     %{fillPct}
                     {low ? ' · Azalıyor!' : ''}
                   </span>
                 </div>
-                <div className="mt-1 h-3 rounded-full bg-slate-100 overflow-hidden">
+                <div className="mt-1.5 g-track h-3">
                   <div
-                    className={`h-full rounded-full ${
-                      low
-                        ? 'bg-gradient-to-r from-rose-400 to-rose-500'
-                        : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
-                    }`}
+                    className={low ? 'g-fill g-fill-danger' : 'g-fill'}
                     style={{ width: `${fillPct}%` }}
                   />
                 </div>
@@ -237,17 +240,17 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                       });
                     }
                   }}
-                  className="min-h-[48px] rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white font-extrabold shadow active:scale-95"
+                  className="g-btn g-btn-primary"
                 >
-                  🛒 Rafları doldur
+                  Rafları doldur
                 </button>
                 <button
                   type="button"
                   data-testid={`shop-card-manage-${shop.shopId}`}
                   onClick={() => onManage(shop.shopId)}
-                  className="min-h-[48px] rounded-2xl bg-slate-100 text-slate-800 font-extrabold active:scale-95"
+                  className="g-btn g-btn-secondary"
                 >
-                  ⚙️ Yönet
+                  Yönet
                 </button>
               </div>
               {plan.orders.length > 0 && (
@@ -264,9 +267,9 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
         type="button"
         data-testid="shop-dashboard-add"
         onClick={() => onManage(null)}
-        className="w-full min-h-[52px] rounded-3xl border-2 border-dashed border-emerald-400 bg-emerald-50 text-emerald-700 font-extrabold active:scale-95"
+        className="w-full min-h-[56px] rounded-[18px] border-2 border-dashed border-[#c8cfdf] bg-white/60 text-[var(--g-navy-600)] font-extrabold active:scale-[.98] inline-flex items-center justify-center gap-2"
       >
-        ➕ Yeni dükkân aç
+        <Plus className="w-5 h-5" strokeWidth={3} /> Yeni dükkân aç
       </button>
     </div>
   );

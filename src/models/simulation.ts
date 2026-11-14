@@ -240,6 +240,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Olağanüstü olaylar (savaş, salgın…; eski kayıtlarda yoktur) */
+  worldEvents?: import('./worldEvents').WorldEventState;
   /** Son biten günün raporu (gün sonu raporu; eski kayıtlarda yoktur) */
   lastDayReport?: DayReport;
   /** Denge sürümü: eski kayıtları yeni dengeye taşıyan göç bir kez çalışsın diye (yoksa 1 sayılır) */

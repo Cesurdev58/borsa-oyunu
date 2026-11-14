@@ -19,15 +19,10 @@ import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance, ShopLiveDay, TradeUniverseState } from '../models/trade';
 import { TradeInventory } from './TradeInventory';
+import { worldEventShopDemandMultiplier } from './WorldEventEffects';
 
 const r2 = (v: number) => Number(v.toFixed(2));
 
-/** Dışarıdan (ör. olağanüstü olaylar) dükkân talebine eklenecek çarpan. */
-export type ShopDemandHook = (state: SimulationState, shop: ShopInstance) => number;
-let extraDemandHook: ShopDemandHook | null = null;
-export function setShopDemandHook(hook: ShopDemandHook | null): void {
-  extraDemandHook = hook;
-}
 
 export function emptyLiveDay(day: number): ShopLiveDay {
   return {
@@ -113,7 +108,6 @@ export function computeShopDailyDemand(
 
   const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
   const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
-  const hookMult = extraDemandHook ? extraDemandHook(state, shop) : 1;
   const customers = Math.max(
     1,
     Math.round(
@@ -126,10 +120,13 @@ export function computeShopDailyDemand(
         macroFactor *
         eventDemandMult *
         mechanicDemandMultiplier *
-        (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1) *
-        (Number.isFinite(hookMult) && hookMult > 0 ? hookMult : 1)
+        (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )
   );
+  // Olağanüstü olay (savaş, salgın, faiz…) çarpanı yuvarlamadan SONRA uygulanır ve küsuratlı kalır;
+  // küsurat günden güne taşınır. Böylece günde 1–2 satan dükkânda (galeri) yuvarlama olayı büyütmez.
+  const ev = worldEventShopDemandMultiplier(state, shop.shopType);
+  const eventMult = Number.isFinite(ev) && ev > 0 ? ev : 1;
 
   const items: DailyDemand['items'] = [];
   for (const resId of stockedResourceIds) {
@@ -149,9 +146,9 @@ export function computeShopDailyDemand(
       1,
       Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity)
     );
-    items.push({ resId, units, price: actualSellPrice });
+    items.push({ resId, units: units * eventMult, price: actualSellPrice });
   }
-  return { customers, items };
+  return { customers: customers * eventMult, items };
 }
 
 /**
@@ -260,7 +257,10 @@ export function finishShopDay(
     cogs: r2(live.cogs),
     uncreditedRevenue: r2(live.revenue - live.creditedRevenue),
   };
-  shop.live = emptyLiveDay(state.day);
+  // Küsurat birimler ertesi güne taşınır (olay çarpanı ortalamada tam etkisini versin)
+  const next = emptyLiveDay(state.day);
+  next.carry = live.carry;
+  shop.live = next;
   return totals;
 }
 

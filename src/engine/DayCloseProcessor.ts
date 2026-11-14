@@ -57,6 +57,7 @@ import type {
 } from './SimulationEngine';
 import { CompanyWallet } from './CompanyWallet';
 import { buildDayReport } from './DayReportEngine';
+import { stepWorldEvents } from './WorldEventEngine';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
     if (
@@ -127,6 +128,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     );
     engine.state.newsFeed = [newNewsEvent, ...decayedFeed.slice(0, 39)];
     engine.intradayTracking.newsGenerated += 1;
+    // 3B. Olağanüstü olay (savaş, salgın, faiz kararı…): "SON DAKİKA" haberleri + toptancı/dükkân etkisi
+    const worldEvent = stepWorldEvents(engine.state, currentDay);
+    if (worldEvent) {
+      engine.pendingDailyActions.push(`[Son dakika] ${worldEvent.title}`);
+    }
     NewsEngine.updateStockSentimentsFromNews(
       engine.state.stocks,
       engine.state.newsFeed,

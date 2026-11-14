@@ -49,6 +49,7 @@ import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
 import { DecisionCard } from './DecisionCard';
 import { DayReportCard } from './DayReportCard';
+import { WorldEventCard } from './WorldEventCard';
 import { play, setFeedbackSettings, vibrate } from './ui/feedback';
 import {
   CityBuildingId,
@@ -405,6 +406,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         state={state}
         reservedCash={Math.max(0, state.cash - spendableCash)}
         onResolve={onResolveDecision}
+      />
+      <WorldEventCard
+        worldEvents={state.worldEvents}
+        day={state.day}
+        onOpenNews={() => setActiveBottomTab('news')}
       />
       <DayReportCard
         report={state.lastDayReport}

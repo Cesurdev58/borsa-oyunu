@@ -541,7 +541,8 @@ export type TradeEventType =
   | 'ENERGY_HIKE'
   | 'QUALITY_INSPECTION'
   | 'COMPETITOR_DISCOUNT'
-  | 'BULK_CONTRACT_OFFER';
+  | 'BULK_CONTRACT_OFFER'
+  | 'WORLD_EVENT';
 
 export interface TradeEvent {
   eventId: string;

@@ -152,6 +152,11 @@ export const NEWS_TEMPLATES: readonly NewsTemplate[] = [
   },
 ];
 
+/** Haberin "piyasa zaten bekliyordu" olma olasılığı (etki %20'ye iner) */
+export const NEWS_PRICED_IN_CHANCE = 0.25;
+/** Haberin ters tepki verme olasılığı (etki ters yönde, yarı büyüklükte) */
+export const NEWS_REVERSAL_CHANCE = 0.12;
+
 export class NewsEngine {
   /**
    * Mevcut haberlerin etkisini yaşlarına göre üstel olarak azaltır:
@@ -180,7 +185,19 @@ export class NewsEngine {
   ): NewsEvent {
     const template = rng.choose(NEWS_TEMPLATES);
     const jitter = (rng.uniform() - 0.5) * 0.004;
-    const initialImpact = Number((template.baseImpact + jitter).toFixed(5));
+    const expectedImpact = Number((template.baseImpact + jitter).toFixed(5));
+    // Haber her zaman beklendiği gibi çalışmaz: bazen piyasa zaten bekliyordur (etki küçük),
+    // bazen ters tepki verir. Olumlu ve olumsuz haberlere eşit uygulandığı için denge bozulmaz.
+    const reactionRoll = rng.uniform();
+    let reaction: NewsEvent['reaction'];
+    let initialImpact = expectedImpact;
+    if (reactionRoll < NEWS_PRICED_IN_CHANCE) {
+      reaction = 'PRICED_IN';
+      initialImpact = Number((expectedImpact * 0.2).toFixed(5));
+    } else if (reactionRoll < NEWS_PRICED_IN_CHANCE + NEWS_REVERSAL_CHANCE) {
+      reaction = 'REVERSAL';
+      initialImpact = Number((-expectedImpact * 0.5).toFixed(5));
+    }
 
     // %30 ihtimalle ilgili sektördeki spesifik bir şirketi de hedef al
     let targetTicker: string | undefined;
@@ -201,6 +218,8 @@ export class NewsEngine {
       initialImpact,
       sentimentImpact: initialImpact,
       decayRate: template.decayRate,
+      expectedImpact,
+      ...(reaction ? { reaction } : {}),
     };
   }
 

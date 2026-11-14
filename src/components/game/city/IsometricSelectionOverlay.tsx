@@ -174,13 +174,13 @@ export const IsometricSelectionOverlay: React.FC<IsometricSelectionOverlayProps>
                 )}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-slate-50 p-2">
-                    <div className="text-[13px] text-slate-500">Dünkü satış</div>
+                    <div className="text-[13px] text-slate-500">Bugünkü satış</div>
                     <div className="text-sm font-extrabold text-slate-900 tabular-nums">
                       {formatCurrency(shopInfo.sales)}
                     </div>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-2">
-                    <div className="text-[13px] text-slate-500">Dünkü kâr</div>
+                    <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
                     <div
                       className={`text-sm font-extrabold tabular-nums ${
                         shopInfo.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'

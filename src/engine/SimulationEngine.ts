@@ -9,6 +9,7 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { stepShopsIntraday } from './ShopSales';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
@@ -952,6 +953,9 @@ export class SimulationEngine {
       // 3. Yeni oluşan fiyatlarla tetiklenen limit emirleri çalıştır
       this.processPendingOrders();
     }
+
+    // 3B. Dükkânlar açık saatlerinde parça parça satış yapar, para kasaya gün içinde girer
+    stepShopsIntraday(this.state, this.state.minutesIntoCurrentDay);
 
     // 4. Oyuncu Şirketi Gün İçi Operasyonları (Üretim, Satış, Personel, Ar-Ge, Pazarlama)
     SectorMarket.refreshPlayerMarketContext(this.state);

@@ -4,9 +4,9 @@
  *
  * Dükkân çalışma saatleri (dükkân türüne göre, oyun saatiyle).
  *
- * Dükkân satışları gün kapanışında o günün toplamı olarak hesaplanır; saatler bu toplamı
- * açık saatlere yayar. Bu yüzden saatler günlük ciroyu değiştirmez (denge aynı kalır),
- * yalnızca dükkânın ne zaman açık olduğunu gösterir. Şirket şubeleri de aynı saatleri izler.
+ * Dükkân satışları gün içinde bu saatlere yayılarak parça parça yapılır (engine/ShopSales.ts).
+ * Günlük toplam talep değişmez; yalnızca saatlere bölünür (denge aynı kalır).
+ * Şirket şubeleri de aynı saatleri izler.
  */
 import type { ShopType } from '../models/trade';
 

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { liveShopToday } from '../../../engine/ShopSales';
 import { shopOpenStatus } from '../../../data/shopHours';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CityBuildingId } from '../gameTypes';
@@ -123,8 +124,8 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
       );
       return {
         shopId: shop.shopId,
-        sales: shop.todaySalesRevenue,
-        profit: shop.todayNetProfit,
+        sales: liveShopToday(shop, state.day, state.minutesIntoCurrentDay ?? 0).revenue,
+        profit: liveShopToday(shop, state.day, state.minutesIntoCurrentDay ?? 0).profit,
         fillPct: Math.min(
           100,
           Math.round((used / Math.max(1, shop.shelfCapacity)) * 100)

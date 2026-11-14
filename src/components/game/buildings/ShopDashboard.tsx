@@ -6,6 +6,7 @@
  * Ayrıntılı yönetim (sipariş, fiyat, personel...) "Yönet" ile eski panelde açılır.
  */
 
+import { liveShopToday } from '../../../engine/ShopSales';
 import { shopOpenStatus } from '../../../data/shopHours';
 import { Check, Plus, UserCog } from 'lucide-react';
 import React, { useMemo } from 'react';
@@ -96,7 +97,10 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
   });
   const shelvesOk = fills.every((f) => f >= 0.5);
   const lowCount = fills.filter((f) => f < 0.5).length;
-  const profitOk = trade.shops.some((sh) => sh.todayNetProfit > 0);
+  const nowMin = state.minutesIntoCurrentDay ?? 0;
+  const profitOk = trade.shops.some(
+    (sh) => liveShopToday(sh, state.day, nowMin).profit > 0
+  );
   const dailyTasks = [
     {
       id: 'shelves',
@@ -109,7 +113,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     {
       id: 'profit',
       done: profitOk,
-      text: profitOk ? 'Dün kâr ettin' : 'Kâra geç: raflar dolu olsun, sonuç gece yarısı gelir',
+      text: profitOk ? 'Bugün kâra geçtin' : 'Bugün kâra geç: raflar dolu olsun, satış gelsin',
       emoji: '💰',
     },
   ];
@@ -160,7 +164,8 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
           shop.shopId,
           spendableCash + shop.cashAccountBalance
         );
-        const profit = shop.todayNetProfit;
+        const today = liveShopToday(shop, state.day, nowMin);
+        const profit = today.profit;
         const openNow = shopOpenStatus(shop.shopType, state.minutesIntoCurrentDay ?? 0);
         return (
           <div
@@ -199,13 +204,16 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
             <div className="p-3 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Dünkü satış</div>
-                  <div className="font-extrabold text-slate-900 tabular-nums">
-                    {formatCurrency(shop.todaySalesRevenue)}
+                  <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                  <div
+                    data-testid={`shop-card-live-revenue-${shop.shopId}`}
+                    className="font-extrabold text-slate-900 tabular-nums"
+                  >
+                    {formatCurrency(today.revenue)}
                   </div>
                 </div>
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Dünkü kâr</div>
+                  <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
                   <div
                     className={`font-extrabold tabular-nums ${
                       profit >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -215,6 +223,16 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                     {formatCurrency(profit)}
                   </div>
                 </div>
+              </div>
+              <div
+                data-testid={`shop-card-yesterday-${shop.shopId}`}
+                className="-mt-1 text-[13px] text-slate-500 tabular-nums"
+              >
+                Dün: {formatCurrency(shop.todaySalesRevenue)} satış ·{' '}
+                <span className={shop.todayNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}>
+                  {shop.todayNetProfit >= 0 ? '+' : ''}
+                  {formatCurrency(shop.todayNetProfit)} kâr
+                </span>
               </div>
 
               <div>

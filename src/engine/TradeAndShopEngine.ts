@@ -49,6 +49,7 @@ import {
 import {
   TradeAudit,
 } from './TradeAudit';
+import { finishShopDay } from './ShopSales';
 import {
   RESOURCE_CATALOG,
   RECIPE_CATALOG,
@@ -358,167 +359,27 @@ export class TradeAndShopEngine {
         (b) => b.quantity > 0
       );
 
-      // 4c. Kategori çeşitliliği ve türe özgü talep çarpanı
-      const stockedResourceIds = Array.from(
-        new Set(
-          shop.inventoryBatches
-            .filter((b) => b.availableQuantity > 0)
-            .map((b) => b.resourceId)
-        )
-      );
-      shop.specificState.activeCategoryCount = stockedResourceIds.length;
-
-      const staffAdequacyRatio = Math.min(
-        1.25,
-        shop.staffCount / Math.max(1, shop.minStaffRequired)
-      );
-      const satisfactionFactor = 0.65 + (shop.customerSatisfaction / 100) * 0.55;
-      const reputationFactor = 0.75 + (ts.tradeReputationScore / 100) * 0.45;
-      const macroFactor = Math.max(
-        0.75,
-        Math.min(1.25, 0.95 + (state.macro.gdpGrowthRate - 0.025) * 1.5)
-      );
-
-      let eventDemandMult = 1.0;
-      for (const ev of ts.activeTradeEvents) {
-        if (ev.isActive) {
-          eventDemandMult *= ev.demandImpactMultiplier;
-        }
-      }
-
-      // Türe özgü mekanik bonusu
-      let mechanicDemandMultiplier = 1.0;
-      if (shop.shopType === 'MARKET') {
-        // Çoklu kategori bonusu
-        mechanicDemandMultiplier =
-          0.85 + Math.min(5, stockedResourceIds.length) * 0.12;
-      } else if (shop.shopType === 'KAFE') {
-        const tableFactor = Math.min(
-          1.6,
-          (shop.specificState.tableCount || 12) / 12
-        );
-        mechanicDemandMultiplier = 0.9 * tableFactor;
-      } else if (shop.shopType === 'GIYIM_MAGAZASI') {
-        // Sezonluk dalgalanma
-        const isHighSeason = state.day % 14 < 8;
-        shop.specificState.seasonalCollectionActive = isHighSeason;
-        mechanicDemandMultiplier = isHighSeason ? 1.22 : 0.92;
-      } else if (shop.shopType === 'ELEKTRONIK_MAGAZASI') {
-        mechanicDemandMultiplier =
-          1.0 + (shop.specificState.warrantySatisfactionBonus || 8) * 0.015;
-      } else if (shop.shopType === 'MOBILYA_MAGAZASI') {
-        mechanicDemandMultiplier =
-          0.95 + (shop.specificState.deliveryServiceCapacity || 10) * 0.02;
-      } else if (shop.shopType === 'OTOMOBIL_GALERISI') {
-        mechanicDemandMultiplier =
-          0.85 + (shop.specificState.showroomSlots || 6) * 0.04;
-      }
-
-      // Aynı türden çok dükkân aynı mahallenin müşterisini paylaşır
-      const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
-      const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
-      const rawDailyCustomers = Math.max(
-        1,
-        Math.round(
-          shop.maxCustomerCapacity *
-            0.68 *
-            crowdingFactor *
-            staffAdequacyRatio *
-            satisfactionFactor *
-            reputationFactor *
-            macroFactor *
-            eventDemandMultiplier(eventDemandMult) *
-            mechanicDemandMultiplier *
-            (shop.demandBoost && shop.demandBoost.untilDay >= state.day
-              ? shop.demandBoost.multiplier
-              : 1)
-        )
-      );
-      shop.todayWalkInCustomers = rawDailyCustomers;
-
-      // 4d. Stoktaki her ürün için fiyat elastikiyeti ve gerçek stoktan satış (`actualSold <= availableStock`)
-      if (stockedResourceIds.length === 0) {
-        shop.todayUnmetCustomerDemand = rawDailyCustomers;
+      // 4c–4d. Satış gün içinde açık saatlere yayılarak yapıldı (ShopSales.stepShopsIntraday);
+      // burada günün kalan kısmı tamamlanır ve toplam alınır. Hızlı ilerletmede bütün gün burada satılır.
+      const dayTotals = finishShopDay(state, ts, shop, state.day - 1);
+      shop.todayWalkInCustomers = dayTotals.walkIn;
+      shop.todayServedCustomers = dayTotals.served;
+      shop.todayUnmetCustomerDemand = dayTotals.unmet;
+      shop.todayUnitsSold = dayTotals.units;
+      shop.todaySalesRevenue = dayTotals.revenue;
+      shop.todayCogs = dayTotals.cogs;
+      if (shop.todayUnitsSold === 0 && shop.todayUnmetCustomerDemand > 0 && shop.inventoryBatches.every((bt) => bt.availableQuantity <= 0)) {
         shop.customerSatisfaction = Number(
           Math.max(35, shop.customerSatisfaction - 1.5).toFixed(1)
         );
-      } else {
-        for (const resId of stockedResourceIds) {
-          const resDef = RESOURCE_CATALOG[resId];
-          if (!resDef) continue;
-
-          const fairRetailPrice = Number(
-            (
-              resDef.baseMarketPrice *
-              (1 + tpl.defaultGrossMarginPct / 100)
-            ).toFixed(2)
-          );
-          const actualSellPrice =
-            shop.sellingPrices[resId] ?? fairRetailPrice;
-          const priceRatio = actualSellPrice / Math.max(1, fairRetailPrice);
-
-          // Fiyat elastikiyeti: aşırı pahalı fiyat talebi hızla düşürür
-          const priceElasticity =
-            priceRatio <= 1.0
-              ? Math.min(1.35, 1 + (1 - priceRatio) * 0.8)
-              : Math.max(0.08, Math.pow(1 / priceRatio, 2.3));
-
-          const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
-          // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür; birim sayısı = sepet payı / satış fiyatı.
-          // (Eskiden her müşteri bir "koli" alıyordu; bu yüzden büfe günde ~40.000 TL ciro yapıyordu.)
-          const unitsPerCustomer =
-            tpl.avgBasketValueTL / Math.max(1, fairRetailPrice);
-
-          const demandedUnits = Math.max(
-            1,
-            Math.round(
-              rawDailyCustomers *
-                shareOfCustomers *
-                unitsPerCustomer *
-                priceElasticity
-            )
-          );
-
-          const availUnits = TradeInventory.getAvailableResourceUnits(
-            shop.inventoryBatches,
-            resId
-          );
-          const actualSold = Math.min(availUnits, demandedUnits);
-          const unmet = Math.max(0, demandedUnits - actualSold);
-          shop.todayUnmetCustomerDemand += unmet;
-
-          if (actualSold > 0) {
-            const consumed = TradeInventory.consumeFromInventoryBatches(
-              shop.inventoryBatches,
-              resId,
-              actualSold
-            );
-            const salesRev = Number(
-              (consumed.consumedUnits * actualSellPrice).toFixed(2)
-            );
-            shop.todayUnitsSold += consumed.consumedUnits;
-            shop.todayServedCustomers += Math.min(
-              rawDailyCustomers,
-              consumed.consumedUnits
-            );
-            shop.todaySalesRevenue = Number(
-              (shop.todaySalesRevenue + salesRev).toFixed(2)
-            );
-            shop.todayCogs = Number(
-              (shop.todayCogs + consumed.totalCostBasis).toFixed(2)
-            );
-          }
-        }
-
-        if (shop.todayUnmetCustomerDemand === 0 && shop.todayUnitsSold > 0) {
-          shop.customerSatisfaction = Number(
-            Math.min(98, shop.customerSatisfaction + 0.8).toFixed(1)
-          );
-        } else if (shop.todayUnmetCustomerDemand > shop.todayUnitsSold) {
-          shop.customerSatisfaction = Number(
-            Math.max(40, shop.customerSatisfaction - 1.0).toFixed(1)
-          );
-        }
+      } else if (shop.todayUnmetCustomerDemand === 0 && shop.todayUnitsSold > 0) {
+        shop.customerSatisfaction = Number(
+          Math.min(98, shop.customerSatisfaction + 0.8).toFixed(1)
+        );
+      } else if (shop.todayUnmetCustomerDemand > shop.todayUnitsSold) {
+        shop.customerSatisfaction = Number(
+          Math.max(40, shop.customerSatisfaction - 1.0).toFixed(1)
+        );
       }
 
       // 4e. Günlük kira, personel ve işletme giderleri
@@ -566,9 +427,9 @@ export class TradeAndShopEngine {
         shop.dailyProfitHistory30.shift();
       }
 
-      // 4f. Nakit ve Bilanço Yansıması
+      // 4f. Nakit ve Bilanço Yansıması (gün içinde kasaya giren satış tekrar yazılmaz)
       const netCashFlowToday = Number(
-        (shop.todaySalesRevenue - totalDailyExpenses).toFixed(2)
+        (dayTotals.uncreditedRevenue - totalDailyExpenses).toFixed(2)
       );
       const inventoryReductionTotal = Number(
         (shop.todayCogs + shop.todaySpoilageCost).toFixed(2)
@@ -837,8 +698,4 @@ export class TradeAndShopEngine {
   // 13. STOK, TİCARET VE MUHASEBE TUTARLILIK DENETİMİ (`runTradeIntegrityAudit`)
   // ============================================================================
 
-}
-
-function eventDemandMultiplier(val: number): number {
-  return Number.isFinite(val) && val > 0 ? val : 1.0;
 }

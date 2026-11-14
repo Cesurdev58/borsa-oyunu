@@ -27,7 +27,7 @@ test('Açık/kapalı durumu ve Türkçe saat yazısı doğru', () => {
   assert.equal(shopHoursLabel('KAFE'), '08:00–24:00');
 });
 
-test('Dükkân kartında açık/kapalı yazısı ve "Dünkü satış" görünür', () => {
+test('Dükkân kartında açık/kapalı yazısı, "Bugünkü satış" ve dünkü sonuç görünür', () => {
   const eng = new SimulationEngine(20261113, 3_000_000);
   assert.equal(eng.openShop({ shopType: 'BUFE' }).success, true);
   const st = eng.getState();
@@ -43,5 +43,6 @@ test('Dükkân kartında açık/kapalı yazısı ve "Dünkü satış" görünür
   );
   assert.ok(html.includes(`data-testid="shop-card-hours-${shop.shopId}"`));
   assert.ok(html.includes(shopOpenStatus('BUFE', st.minutesIntoCurrentDay).label.replace("'", '&#x27;')));
-  assert.ok(html.includes('Dünkü satış'));
+  assert.ok(html.includes('Bugünkü satış'));
+  assert.ok(html.includes(`data-testid="shop-card-yesterday-${shop.shopId}"`));
 });

@@ -372,6 +372,23 @@ export interface ShopManagerInfo {
   todayBonus?: number;
 }
 
+/** Bir dükkânın o gün (henüz kapanmamış gün) içinde parça parça yaptığı satış. */
+export interface ShopLiveDay {
+  day: number;
+  /** Açık saatlerin ne kadarı işlendi (0–1) */
+  processedFrac: number;
+  walkIn: number;
+  served: number;
+  unmet: number;
+  units: number;
+  revenue: number;
+  cogs: number;
+  /** Dükkân kasasına gün içinde zaten aktarılan satış */
+  creditedRevenue: number;
+  /** Yuvarlama artıkları (ürün başına küsurat birim; en yakına yuvarlanır, gün toplamı kaybolmaz) */
+  carry: Record<string, number>;
+}
+
 export interface ShopInstance {
   shopId: string;
   shopType: ShopType;
@@ -398,6 +415,8 @@ export interface ShopInstance {
   manager?: ShopManagerInfo;
   /** Karar kartından gelen geçici müşteri çarpanı (eski kayıtlarda yoktur) */
   demandBoost?: { multiplier: number; untilDay: number };
+  /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
+  live?: ShopLiveDay;
   todayWalkInCustomers: number;
   todayServedCustomers: number;
   todayUnmetCustomerDemand: number;

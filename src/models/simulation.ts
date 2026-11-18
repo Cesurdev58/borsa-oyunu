@@ -140,6 +140,8 @@ export interface AccountingAuditResult {
 export interface DayReport {
   /** Biten gün */
   day: number;
+  /** Günün kazancı önceki rekoru en az %15 geçti (DayReportEngine.markRecordDay) */
+  isRecord?: boolean;
   netWorthStart: number;
   netWorthEnd: number;
   cashEnd: number;
@@ -240,6 +242,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Rekorlar (en kârlı gün; eski kayıtlarda yoktur) */
+  records?: { bestDayGain: number; bestDay: number };
   /** Portföy yöneticisi (engine/AutoInvestEngine.ts; eski kayıtlarda yoktur) */
   autoInvest?: { hired: boolean; enabled: boolean; reserve: number; totalInvested: number };
   /** Gösteriş harcamaları (engine/LifestyleEngine.ts; eski kayıtlarda yoktur) */

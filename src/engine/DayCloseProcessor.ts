@@ -58,7 +58,7 @@ import type {
   SimulationEngine,
 } from './SimulationEngine';
 import { CompanyWallet } from './CompanyWallet';
-import { buildDayReport } from './DayReportEngine';
+import { buildDayReport, markRecordDay } from './DayReportEngine';
 import { stepWorldEvents } from './WorldEventEngine';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
@@ -664,6 +664,7 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       netWorthBeforeClose,
       portfolioBeforeClose,
     });
+    markRecordDay(engine.state, engine.state.lastDayReport);
 
     engine.state.dailyLogs.push(entry);
     if (engine.state.dailyLogs.length > 400) {

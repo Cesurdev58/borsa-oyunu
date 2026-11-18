@@ -7,7 +7,7 @@
  * Kendiliğinden açılmaz; oyunu bölmez. Ayarlardan kapatılabilir.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { BarChart3, Building2, CandlestickChart, Store, X } from 'lucide-react';
+import { BarChart3, Building2, CandlestickChart, Store, Trophy, X } from 'lucide-react';
 import type { DayReport } from '../../models/simulation';
 import { SHOP_EMOJI } from './ui/shopEmoji';
 import { play } from './ui/feedback';
@@ -252,7 +252,7 @@ export const DayReportCard: React.FC<DayReportCardProps> = ({ report, enabled, f
     seenDayRef.current = report.day;
     if (!enabled) return;
     setReadyDay(report.day);
-    play('coin');
+    play(report.isRecord ? 'levelup' : 'coin');
   }, [report?.day, enabled]);
 
   if (!enabled || !report) return null;
@@ -279,8 +279,10 @@ export const DayReportCard: React.FC<DayReportCardProps> = ({ report, enabled, f
       onClick={() => setOpen(true)}
       className="g-btn g-btn-gold g-btn-sm fixed left-3 bottom-[92px] z-40 shadow-lg g-rise"
     >
-      <BarChart3 className="w-4 h-4" />
-      <span>{report.day}. gün raporu</span>
+      {report.isRecord ? <Trophy className="w-4 h-4" /> : <BarChart3 className="w-4 h-4" />}
+      <span data-testid={report.isRecord ? 'day-report-record' : undefined}>
+        {report.isRecord ? 'Rekor gün!' : `${report.day}. gün raporu`}
+      </span>
       <span className="tabular-nums">{delta >= 0 ? '+' : '−'}{formatCurrency(Math.abs(delta))}</span>
     </button>
   );

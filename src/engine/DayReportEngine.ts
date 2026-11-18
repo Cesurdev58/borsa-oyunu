@@ -111,3 +111,21 @@ export function buildDayReport(
     wealthTax,
   };
 }
+
+/** Rekor sayılması için önceki en iyi günü en az bu oranda geçmek gerekir (sık sık "rekor" çıkmasın) */
+export const RECORD_DAY_MARGIN = 1.15;
+/** İlk günler rekor sayılmaz (başlangıç gürültüsü) */
+export const RECORD_DAY_MIN_DAY = 5;
+
+/**
+ * Günün toplam varlık artışı rekorsa raporu işaretler ve rekoru günceller.
+ * Önceki rekoru az farkla geçen gün işaretlenmez ama rekor yine güncellenir.
+ */
+export function markRecordDay(state: SimulationState, report: DayReport): void {
+  const gain = report.netWorthEnd - report.netWorthStart;
+  if (!(gain > 0) || !Number.isFinite(gain)) return;
+  const best = state.records?.bestDayGain ?? 0;
+  if (gain <= best) return;
+  if (report.day >= RECORD_DAY_MIN_DAY && best > 0 && gain >= best * RECORD_DAY_MARGIN) report.isRecord = true;
+  state.records = { bestDayGain: Math.round(gain * 100) / 100, bestDay: report.day };
+}

@@ -625,6 +625,7 @@ export class SimulationStore {
         careerGoals: st.careerGoals,
         lifestyle: st.lifestyle,
         autoInvest: st.autoInvest,
+        records: st.records,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,

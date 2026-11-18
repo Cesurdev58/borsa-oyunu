@@ -137,6 +137,8 @@ import {
   GameClockEngine,
 } from './GameClockEngine';
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
+import * as CareerGoals from './CareerGoals';
+import { PROGRESSION_RULES } from './ProgressionRules';
 import {
   IPOEngine,
 } from './IPOEngine';
@@ -409,6 +411,7 @@ export class SimulationEngine {
       realMinutesPerGameDay:
         GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
       fastStartTempo: true,
+      careerGoals: { claimed: [], totalRewards: 0 },
       timeScale: 1,
       isPaused: false,
       marketSession: initialClock.marketSession,
@@ -714,6 +717,7 @@ export class SimulationEngine {
       lastFinancialIntegrityReport: cloned.lastFinancialIntegrityReport ?? null,
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
+      careerGoals: cloned.careerGoals,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -740,6 +744,10 @@ export class SimulationEngine {
       this.migrationNotices.push(msg);
     }
     this.recalculateFinancialsAndStages();
+    // Kariyer hedefleri eski kayıtta yoktur: zaten tamamlanmış hedefler ödülsüz alınmış sayılır
+    CareerGoals.migrateCareerGoalsForLegacySave(this.state, {
+      companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth,
+    });
   }
 
   public getNextScheduledEvent(): {
@@ -1677,6 +1685,24 @@ export class SimulationEngine {
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */
+  public claimCareerGoal(
+    goalId: string,
+    ctx: { hasOpenedBorsa?: boolean } = {}
+  ): { success: boolean; message: string; reward: number } {
+    const res = CareerGoals.claimCareerGoal(
+      this.state,
+      goalId,
+      { ...ctx, companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth },
+      this.getReservedCash()
+    );
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Hedef] ${res.message}`);
+    }
+    return res;
+  }
+
   public resolveDecisionEvent(choiceId: 'A' | 'B'): { success: boolean; message: string } {
     const res = DecisionEventEngine.resolveDecision(this.state, choiceId, this.getReservedCash());
     if (res.success) {

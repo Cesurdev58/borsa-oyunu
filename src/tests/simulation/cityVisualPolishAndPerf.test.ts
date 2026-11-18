@@ -377,19 +377,21 @@ describe('İzometrik Şehir Görsel Kalite, HUD, Görev Şeridi ve Performans Te
     const engine = new SimulationEngine(2026);
     const questModel0 = deriveCityQuestStripModel(engine.getState(), false);
 
-    // Yalnızca tek bir activeQuest nesnesi döner ve ilk görev "Borsa Binasını aç"tır
+    // Yalnızca tek bir activeQuest nesnesi döner ve ilk görev "Borsa binasını aç"tır
     assert.ok(questModel0.activeQuest);
     assert.equal(questModel0.activeQuest.id, 'quest-01-open-borsa');
-    assert.equal(questModel0.activeQuest.title, 'Borsa Binasını aç');
-    assert.equal(questModel0.allQuests.length, 8);
+    assert.equal(questModel0.activeQuest.title, 'Borsa binasını aç');
+    assert.equal(questModel0.allQuests.length, 27);
+    assert.equal(questModel0.activeReadyToClaim, false);
 
-    // Borsa binası açıldığında sıradaki tek aktif görev "İlk hisse emrini oluştur" olur
+    // Borsa binası açılınca hedef tamamlanır, ödül alınmayı bekler; ödül alınınca sıradaki hedefe geçilir
     const questModel1 = deriveCityQuestStripModel(engine.getState(), true);
-    assert.equal(questModel1.activeQuest.id, 'quest-02-first-order');
-    assert.equal(
-      questModel1.activeQuest.title,
-      'İlk hisse emrini oluştur'
-    );
+    assert.equal(questModel1.activeQuest.id, 'quest-01-open-borsa');
+    assert.equal(questModel1.activeReadyToClaim, true);
+    assert.equal(engine.claimCareerGoal('quest-01-open-borsa', { hasOpenedBorsa: true }).success, true);
+    const questModel2 = deriveCityQuestStripModel(engine.getState(), true);
+    assert.equal(questModel2.activeQuest.id, 'quest-02-first-order');
+    assert.equal(questModel2.activeQuest.title, 'İlk hisseni al');
   });
 
   it('17. Grafik kalitesi Düşük / Orta / Yüksek seçimi kaydedilir ve uygulanır', () => {

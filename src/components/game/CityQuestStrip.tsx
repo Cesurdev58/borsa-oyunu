@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Award, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { Award, CheckCircle2, ChevronRight, Gift, Trophy, X } from 'lucide-react';
 import { SimulationState } from '../../models/simulation';
 import { CityBuildingId } from './gameTypes';
 import {
@@ -18,12 +18,17 @@ interface CityQuestStripProps {
   hasOpenedBorsaBuilding?: boolean;
   onFocusBuilding?: (buildingId: CityBuildingId) => void;
   onOpenBuilding?: (buildingId: CityBuildingId) => void;
+  /** Tamamlanan hedefin ödülünü al */
+  onClaimQuest?: (questId: string) => void;
+  /** Zenginler listesini aç */
+  onOpenRichList?: () => void;
 }
 
 /**
  * Ana şehir görünümünde oyuncunun sıradaki TEK ana hedefini gösteren kompakt görev şeridi.
  * - Aynı anda yalnızca 1 aktif görev gösterir.
- * - Ödüller yalnızca itibar puanı, profil rozeti ve kozmetik şehir unvanıdır; ekonomik nakit dengesini bozmaz.
+ * - Hedef tamamlanınca "Ödülü al" düğmesi çıkar; ödül gerçek paradır (engine/CareerGoals.ts).
+ *   Tutarlar kariyer hızına göre ölçüldü (`npm run kariyer`).
  */
 export const CityQuestStrip: React.FC<CityQuestStripProps> = (
   {
@@ -32,6 +37,8 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
     hasOpenedBorsaBuilding = false,
     onFocusBuilding,
     onOpenBuilding,
+    onClaimQuest,
+    onOpenRichList,
   }) => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -50,8 +57,10 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
       allQuests,
       completedCount,
       totalCount,
-      earnedReputationPoints,
+      totalRewardsEarned,
+      activeReadyToClaim,
     } = resolvedModel;
+    const tl = (v: number) => `₺${Math.round(v).toLocaleString('tr-TR')}`;
 
     // Bütün hedefler bittiyse şerit yer kaplamasın; listeye ayarlardan/rozetten ulaşılır.
     const allDone = completedCount >= totalCount;
@@ -89,7 +98,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
             </button>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-extrabold uppercase tracking-wide text-[var(--g-navy-400)] leading-none">
-                Sıradaki hedef
+                {activeReadyToClaim ? 'Hedef tamam! Ödülün hazır' : `Sıradaki hedef · Ödül ${tl(activeQuest.reward)}`}
               </div>
               <div className="text-[15px] font-extrabold text-[var(--g-ink)] leading-snug line-clamp-2 mt-0.5">
                 {activeQuest.title}
@@ -111,20 +120,31 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
             <span className="g-pill bg-[#ecfaf3] text-[var(--g-green-dark)] shrink-0">
               <CheckCircle2 className="w-4 h-4" /> Hepsi tamam
             </span>
+          ) : activeReadyToClaim && onClaimQuest ? (
+            <button
+              type="button"
+              data-testid="quest-claim-btn"
+              onClick={() => onClaimQuest(activeQuest.id)}
+              aria-label={`Ödülü al: ${tl(activeQuest.reward)}`}
+              className="g-btn g-btn-gold g-btn-sm shrink-0 px-3 quest-claim-pulse"
+            >
+              <Gift className="w-4 h-4" strokeWidth={2.6} />
+              <span className="tabular-nums">{tl(activeQuest.reward)}</span>
+            </button>
           ) : (
-          <button
-            type="button"
-            onClick={() =>
-              onOpenBuilding
-                ? onOpenBuilding(activeQuest.targetBuildingId)
-                : handleBuildingClick(activeQuest.targetBuildingId)
-            }
-            aria-label={`Hedefe git: ${activeQuest.title}`}
-            className="g-btn g-btn-primary g-btn-sm shrink-0 px-3.5"
-          >
-            Git
-            <ChevronRight className="w-4 h-4 -mr-1" strokeWidth={3} />
-          </button>
+            <button
+              type="button"
+              onClick={() =>
+                onOpenBuilding
+                  ? onOpenBuilding(activeQuest.targetBuildingId)
+                  : handleBuildingClick(activeQuest.targetBuildingId)
+              }
+              aria-label={`Hedefe git: ${activeQuest.title}`}
+              className="g-btn g-btn-primary g-btn-sm shrink-0 px-3.5"
+            >
+              Git
+              <ChevronRight className="w-4 h-4 -mr-1" strokeWidth={3} />
+            </button>
           )}
         </section>
 
@@ -150,9 +170,9 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                       Hedefler
                     </h2>
                     <p className="text-[13px] text-white/70 font-semibold">
-                      {completedCount}/{totalCount} tamam · İtibar:{' '}
-                      <strong className="tabular-nums text-[var(--g-gold)]">
-                        {earnedReputationPoints} Puan
+                      {completedCount}/{totalCount} tamam · Kazanılan ödül:{' '}
+                      <strong data-testid="quest-total-rewards" className="tabular-nums text-[var(--g-gold)]">
+                        {tl(totalRewardsEarned)}
                       </strong>
                     </p>
                   </div>
@@ -168,14 +188,27 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
               </div>
 
               <div className="p-4 overflow-y-auto space-y-2 flex-1">
+                {onOpenRichList && (
+                  <button
+                    type="button"
+                    data-testid="quest-open-rich-list-btn"
+                    onClick={() => {
+                      setIsPanelOpen(false);
+                      onOpenRichList();
+                    }}
+                    className="g-btn g-btn-navy w-full mb-1"
+                  >
+                    <Trophy className="w-4 h-4" /> Zenginler listesi
+                  </button>
+                )}
                 {allQuests.map((q) => {
-                  const isCurrent = q.id === activeQuest.id && !q.completed;
+                  const isCurrent = q.id === activeQuest.id && !q.claimed;
                   return (
                     <div
                       key={q.id}
                       data-testid={`quest-modal-row-${q.id}`}
                       className={`p-3 rounded-2xl border-[1.5px] flex items-center justify-between gap-2.5 ${
-                        q.completed
+                        q.claimed
                           ? 'bg-[#ecfaf3] border-transparent text-[var(--g-ink)]'
                           : isCurrent
                           ? 'bg-white border-[var(--g-navy-400)] text-[var(--g-ink)] shadow-sm'
@@ -186,7 +219,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                         <div className="flex items-center gap-1.5 font-bold">
                           <CheckCircle2
                             className={`w-5 h-5 shrink-0 ${
-                              q.completed
+                              q.claimed
                                 ? 'text-[var(--g-green)]'
                                 : isCurrent
                                 ? 'text-[var(--g-navy-400)]'
@@ -203,9 +236,20 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="tabular-nums font-bold text-[13px]">
-                          {q.completed ? '✓' : q.progressText}
-                        </span>
+                        {isCurrent && q.completed && onClaimQuest ? (
+                          <button
+                            type="button"
+                            data-testid={`quest-modal-claim-${q.id}`}
+                            onClick={() => onClaimQuest(q.id)}
+                            className="g-btn g-btn-gold g-btn-sm px-3"
+                          >
+                            Al
+                          </button>
+                        ) : (
+                          <span className="tabular-nums font-bold text-[13px]">
+                            {q.claimed ? '✓' : q.progressText}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );

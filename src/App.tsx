@@ -862,6 +862,18 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleClaimCareerGoal = useCallback(
+    (goalId: string, hasOpenedBorsa: boolean) => {
+      const res = engine.claimCareerGoal(goalId, { hasOpenedBorsa });
+      setStatusBanner({
+        type: res.success ? 'success' : 'error',
+        text: res.message,
+      });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleShopManagerResult = useCallback(
     (res: { success: boolean; message: string }) => {
       setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
@@ -1178,6 +1190,7 @@ export default function App() {
         nextEvent={engine.getNextScheduledEvent()}
         notifications={notifications}
         onResolveDecision={handleResolveDecision}
+        onClaimCareerGoal={handleClaimCareerGoal}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}

@@ -622,6 +622,7 @@ export class SimulationStore {
         cityState: SimulationStore.deriveOrMigrateCityState(st, day),
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
+        careerGoals: st.careerGoals,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,

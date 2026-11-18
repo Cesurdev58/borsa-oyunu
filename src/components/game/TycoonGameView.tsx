@@ -7,6 +7,8 @@ import { effectiveRealMinutesPerGameDay, isFastStartOn } from '../../engine/Temp
 import { TEMPO_COMPANY_MINUTES, TEMPO_EARLY_MINUTES } from '../../data/gameBalance';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
+import { RichListModal } from './RichListModal';
+import { buildRichList } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -64,6 +66,8 @@ import { WEALTH_TAX_ANNUAL_RATE, WEALTH_TAX_FREE_AMOUNT } from '../../data/gameB
 
 interface TycoonGameViewProps extends BuildingDetailActions {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
+  /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
+  onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -93,6 +97,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   nextEvent,
   notifications,
   onResolveDecision,
+  onClaimCareerGoal,
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
@@ -158,6 +163,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
     useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isRichListOpen, setIsRichListOpen] = useState(false);
+  // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
+  const richRank = buildRichList(state).playerRank;
 
   // Kalıcı UI Ayarları (Grafik Kalitesi, Ses Yöneticisi, Kamera Konumu ve İlk Görev Takibi — ekonomik state'ten bağımsız)
   const [uiSettings, setUiSettings] = useState<UISettingsState>(() =>
@@ -406,6 +414,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       <CelebrationOverlay
         shopCount={state.tradeState?.shops.length ?? 0}
         stage={state.stage}
+        richRank={richRank}
       />
       <DecisionCard
         state={state}
@@ -441,6 +450,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         wealthTaxNote={wealthTaxNote}
         onOpenNotifications={handleOpenNotifications}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        richRank={richRank}
+        onOpenRichList={() => setIsRichListOpen(true)}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}
         formatCurrency={formatCurrency}
       />
@@ -452,7 +463,17 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           state={state}
           hasOpenedBorsaBuilding={uiSettings.hasOpenedBorsaBuilding}
           onOpenBuilding={handleOpenBuildingDetailSheet}
+          onClaimQuest={
+            onClaimCareerGoal
+              ? (id) => {
+                  play('coin');
+                  onClaimCareerGoal(id, Boolean(uiSettings.hasOpenedBorsaBuilding));
+                }
+              : undefined
+          }
+          onOpenRichList={() => setIsRichListOpen(true)}
         />
+        <RichListModal open={isRichListOpen} state={state} onClose={() => setIsRichListOpen(false)} />
 
         {activeBottomTab === 'city' ? (
           <CityNeighborhoodView

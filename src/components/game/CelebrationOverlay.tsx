@@ -15,14 +15,19 @@ const CONFETTI_COLORS = ['#ffc23d', '#22b573', '#5b70d6', '#ef4f4c', '#ffffff', 
 interface CelebrationOverlayProps {
   shopCount: number;
   stage: number;
+  /** Zenginler listesindeki sıra; oturumda en iyi sıra geçilince kutlanır */
+  richRank?: number;
 }
 
 
 export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
   shopCount,
   stage,
+  richRank,
 }) => {
   const prev = useRef({ shopCount, stage });
+  // Sıra hisse fiyatlarıyla bir aşağı bir yukarı oynayabilir; yalnızca oturumdaki en iyi sıra geçilince kutla
+  const bestRank = useRef<number | undefined>(richRank);
   const [message, setMessage] = useState<{ title: string; sub: string } | null>(
     null
   );
@@ -39,12 +44,22 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
           ? { title: 'İlk dükkânın açıldı!', sub: 'Şimdi rafları doldur, satış başlasın.' }
           : { title: 'Yeni dükkân!', sub: 'İmparatorluğun büyüyor.' };
     }
+    if (!next && richRank !== undefined) {
+      if (bestRank.current === undefined) bestRank.current = richRank;
+      else if (richRank < bestRank.current) {
+        bestRank.current = richRank;
+        next =
+          richRank === 1
+            ? { title: 'Şehrin en zengini sensin!', sub: 'Zenginler listesinde 1. sıradasın.' }
+            : { title: `Zenginler listesinde ${richRank}. sıra!`, sub: 'Bir zengini daha geride bıraktın.' };
+      }
+    }
     if (!next) return;
     setMessage(next);
     play('levelup');
     const t = window.setTimeout(() => setMessage(null), 2800);
     return () => window.clearTimeout(t);
-  }, [shopCount, stage]);
+  }, [shopCount, stage, richRank]);
 
   if (!message) return null;
 

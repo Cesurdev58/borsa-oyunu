@@ -73,7 +73,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       points: [
         `${fc(PROGRESSION_RULES.defaultNetWorth)} ile başlarsın. Amacın küçük parayı büyütüp bir holding patronu olmak.`,
         `Yol şöyle: Borsayı tanı (bir hisse al, başka sektörden de al, bir hisseni sat) → dükkân aç → toplam varlığın ${companyAt} olunca şirket kur → rakip şirketleri satın alıp holding ol.`,
-        'Ekranın üstündeki "Sıradaki hedef" şeridi o an ne yapman gerektiğini söyler. "Git" düğmesi seni oraya götürür.',
+        'Ekranın üstündeki "Sıradaki hedef" şeridi o an ne yapman gerektiğini söyler. "Git" düğmesi seni oraya götürür. Hedefi bitirince altın düğmeye dokun, ödül parası cebine girer.',
+        'Üstteki para kutusuna dokununca "Zenginler listesi"ni açabilirsin. Şehrin en zenginleri arasında kaçıncı olduğunu ve bir üsttekine ne kadar kaldığını gösterir. Birini geçince kutlama çıkar.',
         `Başlangıç hızlıdır: şirket kurana kadar bir oyun günü ${TEMPO_EARLY_MINUTES} gerçek dakika, şirketin halka açılana kadar ${TEMPO_COMPANY_MINUTES} dakika sürer. Sonra Ayarlar'da seçtiğin uzunluk (15 dk) geçerli olur. Sağ alttaki düğmeyle zamanı 2 kat hızlandırabilirsin. Uygulama kapalıyken oyun en fazla yaklaşık 2 gerçek saat ilerler.`,
         'Üstteki para kutusuna dokununca toplam varlığını görürsün. Zil bildirimleri, yıldız ise hangi aşamada olduğunu gösterir.',
         'Gün gece 00:00\'da döner. O an sol altta altın "Gün raporu" çıkar: dokununca şirketin, dükkânların ve borsanın o gün ne kazandırdığını görürsün.',

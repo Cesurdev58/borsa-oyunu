@@ -8,13 +8,9 @@
 
 import { MarketSession, SimulationState } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
-import { firstShopGateStatus } from '../../../engine/FirstShopGate';
+import { buildCareerGoals } from '../../../engine/CareerGoals';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 
-function formatGoalTL(v: number): string {
-  if (v >= 1_000_000) return `${(v / 1_000_000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} milyon ₺`;
-  return `${Math.round(v / 1000).toLocaleString('tr-TR')} bin ₺`;
-}
 
 export interface FormattedHudCurrency {
   /** Kısa gösterim: 106.328 TL, 7,64 Mn TL, 33,24 Mn TL, 1,20 Mr TL */
@@ -81,183 +77,64 @@ export interface CityQuestItem {
   title: string;
   progressText: string;
   progressPct: number;
+  /** Ödül yazısı, ör. "Ödül: ₺5.000" */
   rewardLabel: string;
-  reputationPoints: number;
+  /** Gerçek para ödülü (TL); "Ödülü al" ile kişisel nakde girer */
+  reward: number;
   targetBuildingId: CityBuildingId;
+  /** Hedef tamamlandı mı (ödül alınmış ya da alınmaya hazır) */
   completed: boolean;
+  /** Ödülü alındı mı */
+  claimed: boolean;
 }
 
 export interface CityQuestStripModel {
-  /** Görev şeridinde aynı anda gösterilecek TEK ana hedef */
+  /** Görev şeridinde aynı anda gösterilecek TEK ana hedef (ödülü alınmamış ilk hedef) */
   activeQuest: CityQuestItem;
   /** Görev panelinde listelenecek tüm görevler */
   allQuests: CityQuestItem[];
+  /** Ödülü alınan hedef sayısı */
   completedCount: number;
   totalCount: number;
-  earnedReputationPoints: number;
+  /** Bugüne kadar alınan toplam hedef ödülü (TL) */
+  totalRewardsEarned: number;
+  /** Sıradaki hedef tamamlandı, ödül alınmayı bekliyor */
+  activeReadyToClaim: boolean;
 }
 
 /**
- * Ekonomik dengeyi bozacak para ödülü vermeden, oyuncunun sıradaki tek ana hedefini
- * gerçek SimulationState üzerinden deterministik olarak türetir.
+ * Hedef şeridi modeli. Hedefler ve ödüller motorda tanımlıdır (engine/CareerGoals.ts);
+ * burası yalnızca arayüz için biçimlendirir. Motor durumu yerinde değiştirdiği için önbellek tutulmaz.
  */
 export function deriveCityQuestStripModel(
   state: SimulationState,
   hasOpenedBorsaBuilding: boolean = false
 ): CityQuestStripModel {
-  const totalOrdersCount = state.pendingOrders.length;
-  const filledLimitOrdersCount = state.pendingOrders.filter(
-    (o) =>
-      o.status === 'FILLED' &&
-      (o.orderType === 'LIMIT_BUY' || o.orderType === 'LIMIT_SELL')
-  ).length;
-  const hasAnyTradeOrOrder =
-    totalOrdersCount > 0 || state.transactions.length > 0;
-  const hasBorsaOpened = hasOpenedBorsaBuilding || hasAnyTradeOrOrder;
-
-  const activePositions = Object.values(state.portfolio).filter(
-    (p) => p.shares > 0
-  );
-  const ownedSectors = new Set<string>();
-  for (const pos of activePositions) {
-    const st = state.stocks.find((s) => s.ticker === pos.ticker);
-    if (st) {
-      ownedSectors.add(st.sector);
-    }
-  }
-  const distinctSectorsCount = ownedSectors.size;
-
-  const portfolioTarget = 125_000;
-  const currentPortfolioAndCashProgress = Math.max(
-    state.portfolioValue,
-    state.netWorth > 100_000 ? state.netWorth : state.portfolioValue
-  );
-  const portfolioPct = Math.min(
-    100,
-    Math.floor((currentPortfolioAndCashProgress / portfolioTarget) * 100)
-  );
-
-  const netWorth250kPct = Math.min(
-    100,
-    Math.floor((state.netWorth / 250_000) * 100)
-  );
-  const netWorth2mPct = Math.min(
-    100,
-    Math.floor((state.netWorth / PROGRESSION_RULES.entrepreneurNetWorth) * 100)
-  );
-  const shopsList = state.tradeState?.shops ?? [];
-  const hasShopProfit = shopsList.some(
-    (sh) => (sh.cumulativeNetProfit ?? 0) > 0 || (sh.todayNetProfit ?? 0) > 0
-  );
-  const firstShopGate = firstShopGateStatus(state);
-
-  const allQuests: CityQuestItem[] = [
-    {
-      id: 'quest-01-open-borsa',
-      stepNumber: 1,
-      title: 'Borsa Binasını aç',
-      progressText: hasBorsaOpened ? '1 / 1' : '0 / 1',
-      progressPct: hasBorsaOpened ? 100 : 0,
-      rewardLabel: '+100 İtibar · Borsa Rozeti',
-      reputationPoints: 100,
-      targetBuildingId: 'BORSA',
-      completed: hasBorsaOpened,
-    },
-    {
-      id: 'quest-02-first-order',
-      stepNumber: 2,
-      title: 'İlk hisse emrini oluştur',
-      progressText: hasAnyTradeOrOrder ? '1 / 1' : '0 / 1',
-      progressPct: hasAnyTradeOrOrder ? 100 : 0,
-      rewardLabel: '+150 İtibar · Yatırımcı Rozeti',
-      reputationPoints: 150,
-      targetBuildingId: 'BORSA',
-      completed: hasAnyTradeOrOrder,
-    },
-    {
-      id: 'quest-03-two-sectors',
-      stepNumber: 3,
-      title: 'İki farklı sektörden hisse al',
-      progressText: `${Math.min(2, distinctSectorsCount)} / 2`,
-      progressPct: Math.min(100, distinctSectorsCount * 50),
-      rewardLabel: '+200 İtibar · Sektör Uzmanı',
-      reputationPoints: 200,
-      targetBuildingId: 'BORSA',
-      completed: distinctSectorsCount >= 2 || shopsList.length > 0 || state.stage >= 2,
-    },
-    {
-      id: 'quest-04-first-shop-gate',
-      stepNumber: 4,
-      title: 'Bir hisseni sat (dükkân izni)',
-      progressText: `${firstShopGate.doneCount} / ${firstShopGate.steps.length}`,
-      progressPct: firstShopGate.pct,
-      rewardLabel: '+250 İtibar · Dükkân izni',
-      reputationPoints: 250,
-      targetBuildingId: 'BORSA',
-      completed: firstShopGate.open,
-    },
-    {
-      id: 'quest-05-open-first-shop',
-      stepNumber: 5,
-      title: 'İlk dükkânını aç',
-      progressText: shopsList.length > 0 ? '1 / 1' : '0 / 1',
-      progressPct: shopsList.length > 0 ? 100 : 0,
-      rewardLabel: '+300 İtibar · Esnaf Rozeti',
-      reputationPoints: 300,
-      targetBuildingId: 'OYUNCU_OFISI',
-      completed: shopsList.length > 0 || state.playerCompany !== null,
-    },
-    {
-      id: 'quest-06-first-shop-profit',
-      stepNumber: 6,
-      title: 'Dükkânından ilk kârını al',
-      progressText: hasShopProfit ? '1 / 1' : '0 / 1',
-      progressPct: hasShopProfit ? 100 : 0,
-      rewardLabel: '+350 İtibar · Kasa Rozeti',
-      reputationPoints: 350,
-      targetBuildingId: 'OYUNCU_OFISI',
-      completed: hasShopProfit || state.playerCompany !== null,
-    },
-    {
-      id: 'quest-07-networth-250k',
-      stepNumber: 7,
-      title: `Net varlığını ${formatGoalTL(250_000)} yap`,
-      progressText: `%${netWorth250kPct}`,
-      progressPct: netWorth250kPct,
-      rewardLabel: '+400 İtibar · Prestij Peyzajı',
-      reputationPoints: 400,
-      targetBuildingId: 'OYUNCU_OFISI',
-      completed: state.netWorth >= 250_000,
-    },
-    {
-      id: 'quest-08-company-2m',
-      stepNumber: 8,
-      title: `Şirket kur (${formatGoalTL(PROGRESSION_RULES.entrepreneurNetWorth)})`,
-      progressText: `%${netWorth2mPct}`,
-      progressPct: netWorth2mPct,
-      rewardLabel: '+500 İtibar · Girişimci Plaketi',
-      reputationPoints: 500,
-      targetBuildingId: 'SIRKET_MERKEZI',
-      completed:
-        state.stageUnlocks.stage2Entrepreneur ||
-        state.playerCompany !== null ||
-        state.netWorth >= PROGRESSION_RULES.entrepreneurNetWorth,
-    },
-  ];
-
-  const firstIncomplete =
-    allQuests.find((q) => !q.completed) || allQuests[allQuests.length - 1];
-  const completedCount = allQuests.filter((q) => q.completed).length;
-  const earnedReputationPoints = allQuests
-    .filter((q) => q.completed)
-    .reduce((sum, q) => sum + q.reputationPoints, 0);
-
+  const model = buildCareerGoals(state, {
+    hasOpenedBorsa: hasOpenedBorsaBuilding,
+    companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth,
+  });
+  const allQuests: CityQuestItem[] = model.goals.map((g) => ({
+    id: g.def.id,
+    stepNumber: g.stepNumber,
+    title: g.def.title,
+    progressText: g.progress.text,
+    progressPct: g.progress.pct,
+    rewardLabel: `Ödül: ₺${g.def.reward.toLocaleString('tr-TR')}`,
+    reward: g.def.reward,
+    targetBuildingId: g.def.target as CityBuildingId,
+    completed: g.claimed || g.progress.done,
+    claimed: g.claimed,
+  }));
+  const activeQuest =
+    allQuests.find((q) => !q.claimed) ?? allQuests[allQuests.length - 1];
   return {
-    activeQuest: firstIncomplete,
+    activeQuest,
     allQuests,
-    completedCount,
-    totalCount: allQuests.length,
-    earnedReputationPoints,
+    completedCount: model.claimedCount,
+    totalCount: model.total,
+    totalRewardsEarned: model.totalRewards,
+    activeReadyToClaim: !activeQuest.claimed && activeQuest.completed,
   };
 }
 

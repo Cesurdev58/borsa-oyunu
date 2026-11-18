@@ -29,6 +29,15 @@ export const FIRST_SHOP_MIN_NET_WORTH = 120_000;
  */
 export const TEMPO_EARLY_MINUTES = 2;
 export const TEMPO_COMPANY_MINUTES = 5;
+/**
+ * PORTFÖY YÖNETİCİSİ (borsa otomasyonu, engine/AutoInvestEngine.ts)
+ * Bir kez işe alma ücreti; her gün sonunda kenardaki paranın fazlası eşit sepete yatırılır.
+ */
+export const AUTO_INVEST_HIRE_FEE = 50_000;
+export const AUTO_INVEST_DEFAULT_RESERVE = 100_000;
+/** Bundan küçük fazlalar yatırılmaz (komisyon boşa gitmesin) */
+export const AUTO_INVEST_MIN_CHUNK = 5_000;
+
 /** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
 export const OFFLINE_MAX_REAL_MINUTES = 120;
 export const OFFLINE_MAX_GAME_DAYS_CAP = 60;

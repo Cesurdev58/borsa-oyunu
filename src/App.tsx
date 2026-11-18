@@ -894,6 +894,21 @@ export default function App() {
     [engine, handleShopManagerResult]
   );
 
+  const handleHirePortfolioManager = useCallback(() => {
+    const res = engine.hirePortfolioManager();
+    setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+    persistAndRefreshUI();
+  }, [engine, persistAndRefreshUI]);
+
+  const handleConfigureAutoInvest = useCallback(
+    (params: { enabled?: boolean; reserve?: number }) => {
+      const res = engine.configureAutoInvest(params);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleBuyLifestyleItem = useCallback(
     (itemId: string) => {
       const res = engine.buyLifestyleItem(itemId);
@@ -1255,6 +1270,8 @@ export default function App() {
         onIncorporateShopsIntoCompany={handleIncorporateShops}
         onHireShopManager={handleHireShopManager}
         onBuyShopUpgrade={handleBuyShopUpgrade}
+        onHirePortfolioManager={handleHirePortfolioManager}
+        onConfigureAutoInvest={handleConfigureAutoInvest}
         onFireShopManager={handleFireShopManager}
         onSetShopManagerSweep={handleSetShopManagerSweep}
         spendableCash={engine.getSpendableCash()}

@@ -95,6 +95,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Ayda bir kadar "SON DAKİKA" olayı çıkar: savaş, salgın, faiz kararı, petrol krizi gibi. Bazı sektörleri günlerce yükseltir, bazılarını düşürür. Kartta hangisinin yükseleceği yazar.',
         'Bazı şirketler temettü öder: hissen varsa 10 günde bir hesabına para gelir.',
         'Paranı tek hisseye yatırma; farklı sektörlere dağıtırsan bir düşüş seni batırmaz.',
+        '"Portföy yöneticisi" tutarsan, kenarda tutmak istediğin paranın fazlasını her gün sonunda bütün şirketlere eşit yatırır. Boşta duran para da çalışır.',
         `Bir şirketin en fazla %${MARKET_BUY_MAX_OWNERSHIP_PCT}'unu borsadan alabilirsin. Fazlası için Holding'den devralma teklifi gerekir.`,
       ],
       go: { label: 'Borsaya git', tab: 'market' },

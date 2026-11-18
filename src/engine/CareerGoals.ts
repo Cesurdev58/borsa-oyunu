@@ -5,7 +5,7 @@
  * KARİYER HEDEFLERİ (CareerGoals)
  * Oyunun başından sonuna kadar uzanan sıralı hedef zinciri ve gerçek para ödülleri.
  * Eskiden 8 hedef vardı, şirket kurulunca bitiyordu ve ödüller yalnızca yazıydı ("+100 İtibar").
- * Şimdi 30 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
+ * Şimdi 31 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
  * "Ödülü al" düğmesiyle alınan bir para ödülü vardır.
  *
  * Kurallar:
@@ -260,6 +260,13 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 50_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => money(s.netWorth, 1_000_000),
+  },
+  {
+    id: 'goal-portfolio-manager',
+    title: 'Borsada portföy yöneticisi tut',
+    reward: 25_000,
+    target: 'BORSA',
+    progress: (s) => flag(Boolean(s.autoInvest?.hired)),
   },
   // --- Şirket ---
   {

@@ -8,6 +8,7 @@
 
 import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
+import * as AutoInvestEngine from './AutoInvestEngine';
 import * as ShopManager from './ShopManager';
 import * as SectorMarket from './SectorMarket';
 import * as WealthTaxEngine from './WealthTaxEngine';
@@ -290,6 +291,10 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     for (const msg of ShopManager.runManagers(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Müdür] ${msg}`);
     }
+
+    // 5B-2b. Portföy yöneticisi: kenardaki paranın fazlasını borsaya yatır
+    const autoMsg = AutoInvestEngine.runAutoInvest(engine);
+    if (autoMsg) engine.pendingDailyActions.push(`[Borsa] ${autoMsg}`);
 
     // 5B-3. Servet vergisi (her 30 günde bir, büyük nakit + hisse birikiminden)
     const wealthMsg = WealthTaxEngine.chargeWealthTaxIfDue(engine.state, engine.getReservedCash());

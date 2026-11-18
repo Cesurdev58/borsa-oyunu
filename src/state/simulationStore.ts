@@ -624,6 +624,7 @@ export class SimulationStore {
         decisionEvents: st.decisionEvents,
         careerGoals: st.careerGoals,
         lifestyle: st.lifestyle,
+        autoInvest: st.autoInvest,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,

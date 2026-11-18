@@ -185,3 +185,34 @@ for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
   rows.forEach((r) => console.log(r));
   notes.forEach((n) => console.log('  ' + n));
 }
+
+console.log('\n=== ŞEHİR HİZMETLERİ (Belediye projeleri, 4 dükkânlı oyuncu, 120 gün) ===');
+{
+  const { CITY_PROJECTS } = await import('../src/data/cityServices');
+  const run = (projects: string[]) => {
+    const eng = new SimulationEngine(20261104, 8_000_000);
+    for (const t of ['BUFE', 'MANAV', 'KAFE', 'GIYIM_MAGAZASI']) eng.openShop({ shopType: t as never });
+    eng.getState().tradeState!.cityProjects = projects;
+    let total = 0;
+    for (let d = 1; d <= 120; d++) {
+      restockShops(eng);
+      answerDecisionSensibly(eng);
+      eng.advanceDaysWithoutPlayerDecisions(1, true);
+      if (d > 20) total += eng.getState().tradeState!.shops.reduce((s, x) => s + x.todayNetProfit, 0);
+    }
+    return total / 100;
+  };
+  const base = run([]);
+  console.log('  projesiz dükkân kârı/gün', fmt(base));
+  const done: string[] = [];
+  let prev = base;
+  for (const p of CITY_PROJECTS) {
+    done.push(p.id);
+    const v = run([...done]);
+    const gain = v - prev;
+    console.log(
+      `  ${p.name.padEnd(20)} ₺${fmt(p.price).padStart(10)} → +₺${fmt(gain).padStart(7)}/gün · geri dönüş ${gain > 0 ? Math.round(p.price / gain) : '∞'} gün`
+    );
+    prev = v;
+  }
+}

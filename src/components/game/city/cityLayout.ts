@@ -24,6 +24,7 @@ import {
   CityAtmosphereTheme,
   CityCameraState,
   CityDecorationNode,
+  CityServiceId,
   CityDiagnosticsSummary,
   CityDistrictId,
   CityDistrictInfo,
@@ -636,7 +637,7 @@ export function deriveCityUrbanBlocks(
   state: SimulationState
 ): CityUrbanBlockNode[] {
   const shops = state.tradeState?.shops ?? [];
-  return withShopBubbles(state, deriveCityUrbanBlocksWithSlots(state, shops));
+  return withCityServices(state, withShopBubbles(state, deriveCityUrbanBlocksWithSlots(state, shops)));
 }
 
 /** Dükkân kasasında bırakılan işletme parası; fazlası şehirde "para baloncuğu" ile toplanır */
@@ -657,6 +658,48 @@ function withShopBubbles(state: SimulationState, blocks: CityUrbanBlockNode[]): 
       collectableCash: extra >= SHOP_COLLECT_MIN ? extra : 0,
       shelvesEmpty: stock <= 0 && (shop.pendingDeliveriesCount ?? 0) === 0,
       hasManager: Boolean(shop.manager),
+    };
+  });
+}
+
+/** Şehir hizmeti binaları: blok kimliği → hizmet, görünen ad ve kısa açıklama */
+export const CITY_SERVICE_BLOCKS: Record<string, { service: CityServiceId; nameTR: string; shortTagTR: string; summaryTR: string }> = {
+  'urban-finans- clearing-7': {
+    service: 'IKINCI_EL',
+    nameTR: 'İkinci El Pazarı',
+    shortTagTR: '2. El Pazarı',
+    summaryTR: 'Fazla malını hemen sat, ucuz ikinci el eşya al',
+  },
+  'urban-yasam-belediye-20': {
+    service: 'BELEDIYE',
+    nameTR: 'Belediye',
+    shortTagTR: 'Belediye',
+    summaryTR: 'Mahalle projelerine katkı ver: bütün dükkânlarına müşteri',
+  },
+  'urban-sanayi-enerji-11': {
+    service: 'ENERJI',
+    nameTR: 'Trafo ve Enerji Merkezi',
+    shortTagTR: 'Trafo',
+    summaryTR: 'Dükkânlarına güneş paneli kur: günlük gider azalır',
+  },
+};
+
+function withCityServices(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {
+  const open = (state.tradeState?.shops ?? []).some((s) => !s.isCompanyBranch);
+  return blocks.map((b) => {
+    const svc = CITY_SERVICE_BLOCKS[b.id];
+    if (!svc) return b;
+    return {
+      ...b,
+      nameTR: svc.nameTR,
+      shortTagTR: svc.shortTagTR,
+      cityService: svc.service,
+      isUnlocked: open,
+      statusClassification: open ? 'ACTIVE' : 'LOCKED',
+      statusSummaryTR: svc.summaryTR,
+      unlockConditionTR: 'İlk dükkânını açınca kullanılır',
+      unlockStageLabelTR: 'Aşama 1 · İlk dükkân',
+      requiredCapitalTR: 'İlk dükkân',
     };
   });
 }

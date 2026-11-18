@@ -260,6 +260,8 @@ export interface CityUrbanBlockNode {
   collectableCash?: number;
   /** Şehirde baloncuk: raflarda hiç mal yok */
   shelvesEmpty?: boolean;
+  /** Şehir hizmeti binası (İkinci El Pazarı, Belediye, Trafo); dokununca kendi penceresi açılır */
+  cityService?: CityServiceId;
   /** Dükkânın müdürü var (müdür rafları kendisi doldurur, parayı kendisi gönderir) */
   hasManager?: boolean;
 }
@@ -383,3 +385,6 @@ export interface CityDiagnosticsSummary {
     targetScreen: string;
   }>;
 }
+
+/** Şehirde kendi işi olan binalar (engine/CityServices.ts) */
+export type CityServiceId = 'IKINCI_EL' | 'BELEDIYE' | 'ENERJI';

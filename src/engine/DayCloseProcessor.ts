@@ -9,6 +9,7 @@
 import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as AutoInvestEngine from './AutoInvestEngine';
+import * as CityServices from './CityServices';
 import * as ShopManager from './ShopManager';
 import * as SectorMarket from './SectorMarket';
 import * as WealthTaxEngine from './WealthTaxEngine';
@@ -290,6 +291,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     // 5B-2. Dükkân müdürleri: rafları dükkân kasasından doldur, fazla kârı oyuncuya aktar
     for (const msg of ShopManager.runManagers(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Müdür] ${msg}`);
+    }
+
+    // 5B-2a. Şehir hizmetleri: süresi biten ikinci el eşyalar
+    for (const msg of CityServices.stepCityServicesDayClose(engine.state)) {
+      engine.pendingDailyActions.push(`[İkinci el] ${msg}`);
     }
 
     // 5B-2b. Portföy yöneticisi: kenardaki paranın fazlasını borsaya yatır

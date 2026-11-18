@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CityBuildingId } from '../gameTypes';
 import {
+  CityServiceId,
   CityUrbanBlockNode,
   CompanySubTabRoute,
   IsometricBuildingNode,
@@ -43,6 +44,8 @@ interface IsometricSelectionOverlayProps {
     companySubTab?: CompanySubTabRoute
   ) => void;
   onClearSelection: () => void;
+  /** Şehir hizmeti binasının (İkinci El Pazarı, Belediye, Trafo) penceresini açar */
+  onOpenCityService?: (service: CityServiceId) => void;
 }
 
 /**
@@ -63,6 +66,7 @@ export const IsometricSelectionOverlay: React.FC<IsometricSelectionOverlayProps>
       formatCurrency,
       onOpenDetailSheet,
       onClearSelection,
+      onOpenCityService,
     }) => {
       if (selectedUrbanBlock) {
         const classification =
@@ -242,14 +246,16 @@ export const IsometricSelectionOverlay: React.FC<IsometricSelectionOverlayProps>
                   type="button"
                   data-testid="selection-card-primary-action-btn"
                   onClick={() =>
-                    onOpenDetailSheet(
-                      selectedUrbanBlock.linkedBuildingId,
-                      selectedUrbanBlock.linkedCompanySubTab
-                    )
+                    selectedUrbanBlock.cityService && onOpenCityService
+                      ? onOpenCityService(selectedUrbanBlock.cityService)
+                      : onOpenDetailSheet(
+                          selectedUrbanBlock.linkedBuildingId,
+                          selectedUrbanBlock.linkedCompanySubTab
+                        )
                   }
                   className="g-btn g-btn-primary flex-1 px-3 inline-flex items-center justify-center gap-1.5"
                 >
-                  <span>Yönet</span>
+                  <span>{selectedUrbanBlock.cityService ? 'Aç' : 'Yönet'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

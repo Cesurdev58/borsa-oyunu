@@ -55,6 +55,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
     onSwitchClassic,
     onRestockShop,
     onCollectShopCash,
+    onOpenCityService,
   }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const sceneRef = useRef<ThreeCityScene | null>(null);
@@ -160,6 +161,12 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
       (blockId: string) => {
         const block: CityUrbanBlockNode | undefined = urbanBlocks.find((b) => b.id === blockId);
         if (!block) return;
+        if (block.cityService && block.isUnlocked && onOpenCityService) {
+          setSelectedUrbanBlockId(null);
+          sceneRef.current?.focusMap(block.x, block.y);
+          onOpenCityService(block.cityService);
+          return;
+        }
         setSelectedUrbanBlockId(block.id);
         sceneRef.current?.focusMap(block.x, block.y);
         onSelectBuildingOnMap(block.linkedBuildingId, block.linkedCompanySubTab);
@@ -172,7 +179,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
           onOpenBuildingDetailSheet(block.linkedBuildingId, block.linkedCompanySubTab);
         }
       },
-      [urbanBlocks, onSelectBuildingOnMap, onOpenBuildingDetailSheet]
+      [urbanBlocks, onSelectBuildingOnMap, onOpenBuildingDetailSheet, onOpenCityService]
     );
 
     const handleClearSelection = useCallback(() => {
@@ -285,6 +292,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
           onRestockShop={onRestockShop}
           formatCurrency={formatCurrency}
           onOpenDetailSheet={onOpenBuildingDetailSheet}
+          onOpenCityService={onOpenCityService}
           onClearSelection={handleClearSelection}
         />
 

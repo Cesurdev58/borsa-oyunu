@@ -22,10 +22,12 @@ export function shopUpgradeCost(shop: Pick<ShopInstance, 'shopType'>, def: ShopU
 }
 
 /** Dükkânın yükseltmelerden gelen müşteri ve sepet çarpanları (yükseltme yoksa 1). */
-export function shopUpgradeMultipliers(shop: Pick<ShopInstance, 'upgrades'>): { customers: number; basket: number } {
+export function shopUpgradeMultipliers(shop: Pick<ShopInstance, 'upgrades' | 'usedUpgrades'>): { customers: number; basket: number } {
   let customers = 1;
   let basket = 1;
-  for (const id of shop.upgrades ?? []) {
+  // Kalıcı yükseltmeler + ikinci el pazarından alınan süreli eşyalar (süresi bitince gün kapanışında silinir)
+  const ids = new Set([...(shop.upgrades ?? []), ...Object.keys(shop.usedUpgrades ?? {})]);
+  for (const id of ids) {
     const def = SHOP_UPGRADES.find((u) => u.id === id);
     if (!def) continue;
     customers *= 1 + def.customersPct / 100;
@@ -40,6 +42,8 @@ export interface ShopUpgradeView {
   def: ShopUpgradeDef;
   cost: number;
   status: ShopUpgradeStatus;
+  /** İkinci el olarak varsa son geçerli gün (yenisi alınabilir) */
+  usedUntilDay?: number;
 }
 
 export function listShopUpgrades(shop: ShopInstance): ShopUpgradeView[] {
@@ -48,6 +52,7 @@ export function listShopUpgrades(shop: ShopInstance): ShopUpgradeView[] {
     def,
     cost: shopUpgradeCost(shop, def),
     status: owned.has(def.id) ? 'OWNED' : shop.level >= def.minLevel ? 'AVAILABLE' : 'LOCKED',
+    usedUntilDay: owned.has(def.id) ? undefined : shop.usedUpgrades?.[def.id],
   }));
 }
 
@@ -77,5 +82,11 @@ export function buyShopUpgrade(
   if (fromPlayer > 0) WalletEngine.spend(state, fromPlayer);
   shop.totalInvestedCapital = Math.round((shop.totalInvestedCapital + cost) * 100) / 100;
   shop.upgrades = [...(shop.upgrades ?? []), def.id];
+  // Yenisi gelince ikinci el olan atılır
+  if (shop.usedUpgrades?.[def.id] !== undefined) {
+    const rest = { ...shop.usedUpgrades };
+    delete rest[def.id];
+    shop.usedUpgrades = rest;
+  }
   return { success: true, message: `${shop.nameTR}: ${def.name} kuruldu (${def.effectLabel}).`, cost };
 }

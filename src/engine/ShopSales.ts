@@ -16,6 +16,7 @@
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
+import { cityProjectCustomerMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
@@ -125,6 +126,7 @@ export function computeShopDailyDemand(
         eventDemandMult *
         mechanicDemandMultiplier *
         upgradeMult.customers *
+        cityProjectCustomerMultiplier(ts.cityProjects) *
         prestigeCustomerMult *
         (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )

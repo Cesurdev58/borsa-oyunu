@@ -54,6 +54,7 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
     nextEventFormattedRemaining,
     onSwitchClassic,
     onRestockShop,
+    onCollectShopCash,
   }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const sceneRef = useRef<ThreeCityScene | null>(null);
@@ -180,8 +181,8 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
     }, [onClearHighlightedBuilding]);
 
     // Sahne tıklamaları her zaman en güncel geri çağrıları kullanır.
-    const handlersRef = useRef({ handleBuildingTap, handleBlockTap, handleClearSelection });
-    handlersRef.current = { handleBuildingTap, handleBlockTap, handleClearSelection };
+    const handlersRef = useRef({ handleBuildingTap, handleBlockTap, handleClearSelection, onRestockShop, onCollectShopCash });
+    handlersRef.current = { handleBuildingTap, handleBlockTap, handleClearSelection, onRestockShop, onCollectShopCash };
 
     useEffect(() => {
       const container = containerRef.current;
@@ -190,6 +191,10 @@ export const ThreeNeighborhoodView: React.FC<ThreeViewProps> = React.memo(
         onPickBuilding: (id) => handlersRef.current.handleBuildingTap(id),
         onPickBlock: (id) => handlersRef.current.handleBlockTap(id),
         onPickNothing: () => handlersRef.current.handleClearSelection(),
+        onBubble: (kind, shopId, amount) => {
+          if (kind === 'coin') handlersRef.current.onCollectShopCash?.(shopId, amount);
+          else handlersRef.current.onRestockShop?.(shopId);
+        },
       });
       sceneRef.current = scene;
       return () => {

@@ -256,6 +256,12 @@ export interface CityUrbanBlockNode {
   shopLot?: boolean;
   /** Bu bloktaki dükkânın sırası (1 = ilk dükkân) */
   shopSlotNumber?: number;
+  /** Şehirde baloncuk: dükkân kasasından cebe alınabilecek para (işletme payı bırakılır) */
+  collectableCash?: number;
+  /** Şehirde baloncuk: raflarda hiç mal yok */
+  shelvesEmpty?: boolean;
+  /** Dükkânın müdürü var (müdür rafları kendisi doldurur, parayı kendisi gönderir) */
+  hasManager?: boolean;
 }
 
 export interface CityAtmosphereTheme {

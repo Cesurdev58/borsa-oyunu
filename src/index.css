@@ -287,3 +287,46 @@ input[type='number'] {
 @keyframes quest-claim-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 4px 0 var(--g-gold-dark), 0 0 0 0 rgba(255,194,61,.55); } 50% { transform: scale(1.05); box-shadow: 0 4px 0 var(--g-gold-dark), 0 0 0 8px rgba(255,194,61,0); } }
 .quest-claim-pulse { animation: quest-claim-pulse 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .quest-claim-pulse { animation: none; } }
+
+/* 3D şehirde dükkân baloncukları (Hay Day tarzı: dokun, topla). ThreeCityScene.syncBubble */
+.city-bubble {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px 0 3px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: linear-gradient(180deg, #ffe08a, var(--g-gold));
+  box-shadow: 0 4px 0 var(--g-gold-dark), 0 6px 14px rgba(15, 23, 42, 0.35);
+  color: #3a2600;
+  font: 800 13px 'Baloo 2', system-ui, sans-serif;
+  cursor: pointer;
+  transform-origin: 50% 100%;
+  animation: city-bubble-bob 1.6s ease-in-out infinite;
+  touch-action: manipulation;
+}
+.city-bubble[data-variant='box'] {
+  padding: 0;
+  width: 34px;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffffff, #e7ecf5);
+  box-shadow: 0 4px 0 #b6c0d4, 0 6px 14px rgba(15, 23, 42, 0.35);
+}
+.city-bubble-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 17px;
+  line-height: 1;
+}
+.city-bubble[data-variant='box'] .city-bubble-icon { background: transparent; font-size: 20px; }
+.city-bubble-pop { animation: city-bubble-pop 0.25s ease-out forwards; }
+@keyframes city-bubble-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes city-bubble-pop { to { scale: 1.4; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .city-bubble { animation: none; } }

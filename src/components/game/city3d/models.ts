@@ -30,6 +30,78 @@ import {
   stdMat,
   stripeTexture,
 } from './kit';
+import { type CityAssets, fitModel } from './assets';
+
+// ---------- Hazır modeller (KayKit / Kenney, CC0) ----------
+
+/** Şehir modelleri yüklenince ThreeCityScene burayı doldurur; boşsa eski kodla çizim kullanılır. */
+let ASSETS: CityAssets | null = null;
+export function setCityAssets(a: CityAssets | null): void {
+  ASSETS = a;
+}
+export function hasCityAssets(): boolean {
+  return ASSETS !== null;
+}
+
+/** Dükkân türü → KayKit binası (her türün kendi rengi ve şekli olur) */
+const SHOP_ASSET: Record<string, string> = {
+  BUFE: 'building_A',
+  MANAV: 'building_B',
+  KAFE: 'building_E',
+  GIYIM_MAGAZASI: 'building_F',
+  ELEKTRONIK_MAGAZASI: 'building_C',
+  MOBILYA_MAGAZASI: 'building_D',
+  MARKET: 'building_G',
+  OTOMOBIL_GALERISI: 'building_H',
+};
+const SHOP_SIGN: Record<string, [string, string]> = {
+  BUFE: ['BÜFE', '#d94a3a'],
+  MANAV: ['MANAV', '#2f8a3a'],
+  KAFE: ['KAFE', '#2f6b3a'],
+  GIYIM_MAGAZASI: ['GİYİM', '#8a3fa0'],
+  ELEKTRONIK_MAGAZASI: ['ELEKTRONİK', '#2a5d8f'],
+  MOBILYA_MAGAZASI: ['MOBİLYA', '#8a5a2e'],
+  MARKET: ['MARKET', '#c53a32'],
+  OTOMOBIL_GALERISI: ['GALERİ', '#333a44'],
+};
+/** KayKit binalarının ön yüzü +z'ye bakar; kamera da +z tarafındadır. */
+const KAYKIT_FRONT = 0;
+
+/** Çatıda tabela (Hay Day'deki gibi uzaktan okunur) */
+function roofSign(g: THREE.Group, text: string, bg: string, w: number, top: number, depthHalf: number): void {
+  const board = sign(text, bg, '#ffffff', Math.min(w * 0.8, 8), 1.7, 320);
+  board.position.set(0, top + 1.1, depthHalf * 0.55);
+  g.add(board);
+  const post = stdMat('#5b6670');
+  g.add(box(0.18, 1.2, 0.18, post, -Math.min(w * 0.3, 3), top + 0.4, depthHalf * 0.5));
+  g.add(box(0.18, 1.2, 0.18, post, Math.min(w * 0.3, 3), top + 0.4, depthHalf * 0.5));
+}
+
+function modelTop(obj: THREE.Object3D): number {
+  return new THREE.Box3().setFromObject(obj).max.y;
+}
+
+/** Hazır modelli dükkân; model yoksa null döner (eski çizim kullanılır). */
+function assetShop(type: string, w: number, lvl: number): THREE.Group | null {
+  const name = SHOP_ASSET[type];
+  if (!ASSETS || !name || !ASSETS.has(name)) return null;
+  const g = new THREE.Group();
+  const m = fitModel(ASSETS, name, w * 0.98, 1 + Math.min(4, lvl - 1) * 0.08, KAYKIT_FRONT);
+  g.add(m);
+  const [label, color] = SHOP_SIGN[type] ?? ['DÜKKÂN', '#2a5d8f'];
+  roofSign(g, label, color, w, modelTop(m), w / 2);
+  return g;
+}
+
+/** Hazır modelli bina + çatı tabelası (ana binalar ve bazı şehir blokları için) */
+function assetBuilding(name: string, footprint: number, heightScale: number, label?: [string, string]): THREE.Group | null {
+  if (!ASSETS || !ASSETS.has(name)) return null;
+  const g = new THREE.Group();
+  const m = fitModel(ASSETS, name, footprint, heightScale);
+  g.add(m);
+  if (label) roofSign(g, label[0], label[1], footprint, modelTop(m), footprint / 2);
+  return g;
+}
 
 /** Harita birimi → dünya birimi (bina ayak izi için küçültme payıyla). */
 const FOOT = 0.085;
@@ -317,8 +389,24 @@ export function buildCore(node: IsometricBuildingNode): THREE.Group {
   const g = new THREE.Group();
 
   if (!node.isUnlocked && LOT_LABEL[node.id]) {
-    g.add(makeLot(w, d, LOT_LABEL[node.id], rng));
+    g.add(makeLot(w, d, LOT_LABEL[node.id], rng, true, true));
     return g;
+  }
+
+  // Hazır modelli ana binalar (gökdelenler ve ofis); Borsa, Merkez Bankası, Fabrika ve Ar-Ge kendi çizimini korur
+  if (ASSETS) {
+    const tall = (base: number) => base + Math.min(4, lvl - 1) * 0.07;
+    let a: THREE.Group | null = null;
+    if (node.id === 'HOLDING_MERKEZI') a = assetBuilding('building-skyscraper-d', w * 0.62, tall(1.25), ['HOLDİNG', '#7c3aed']);
+    else if (node.id === 'SIRKET_MERKEZI')
+      a = assetBuilding('building-skyscraper-b', w * 0.62, tall(1.1), [node.visualMeta.companyTicker || 'ŞİRKET', '#2a5d8f']);
+    else if (node.id === 'HABER_MERKEZI') a = assetBuilding('building-skyscraper-a', w * 0.6, tall(1.15), ['HABER', '#c4422f']);
+    else if (node.id === 'OYUNCU_OFISI') a = assetBuilding('building-n', w * 0.8, tall(1.2), ['OFİS', '#2f6b8f']);
+    if (a) {
+      g.add(a);
+      addCoreDetails(g, node, w, d, lvl, rng);
+      return g;
+    }
   }
 
   switch (node.id) {
@@ -581,7 +669,7 @@ export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
 
   // Oyuncunun dükkânı (ilk üç yer ya da büyüdükçe dükkâna dönüşen diğer bloklar)
   if (block.activeShopType && block.activeShopId) {
-    g.add(shopModel(block.activeShopType, w, d, lvl, rng));
+    g.add(assetShop(block.activeShopType, Math.min(w, d * 1.1), lvl) ?? shopModel(block.activeShopType, w, d, lvl, rng));
     g.add(ownerFlag(w, d, lvl));
     return g;
   }
@@ -592,14 +680,28 @@ export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
 
   if (SHOP_SLOT_IDS.has(block.id)) {
     if (block.activeShopType) {
-      g.add(shopModel(block.activeShopType, w, d, lvl, rng));
+      g.add(assetShop(block.activeShopType, Math.min(w, d * 1.1), lvl) ?? shopModel(block.activeShopType, w, d, lvl, rng));
     } else if (block.id === 'urban-ticaret-otel-5') {
-      g.add(makeHotel(w * 0.9, d * 0.9, 13, rng));
+      g.add(assetBuilding('building_H', Math.min(w, d) * 0.95, 1.05, ['OTEL', '#8a5a2e']) ?? makeHotel(w * 0.9, d * 0.9, 13, rng));
     } else {
       const lot = makeLot(w, d, 'DÜKKÂN AÇ', rng, true, false);
       g.add(lot);
     }
     return g;
+  }
+
+  // Hazır modelli şehir blokları
+  if (ASSETS) {
+    const f = Math.min(w, d);
+    let a: THREE.Group | null = null;
+    if (block.category === 'RESIDENTIAL_APARTMENT') a = assetBuilding(block.id.endsWith('17') ? 'building_D' : 'building_C', f, 1.1);
+    else if (block.category === 'TECH_OFFICE') a = assetBuilding('building-skyscraper-c', f * 0.7, 0.9, ['YAZILIM', '#2a5d8f']);
+    else if (block.id.includes('audit')) a = assetBuilding('building-skyscraper-e', f * 0.7, 0.85, ['DENETİM', '#4a5568']);
+    else if (block.id === 'urban-ticaret-merkezi-3') a = assetBuilding('building-k', w * 0.95, 1.4, ['TİCARET HANI', '#35506b']);
+    if (a) {
+      g.add(a);
+      return g;
+    }
   }
 
   switch (block.category) {

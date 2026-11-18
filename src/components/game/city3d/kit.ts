@@ -35,6 +35,11 @@ const textureCache = new Map<string, THREE.CanvasTexture>();
 const glowMaterials = new Set<THREE.MeshStandardMaterial>();
 const lampMaterials = new Set<THREE.MeshStandardMaterial>();
 
+/** Gece yanan pencere ve lamba malzemesi mi? (Birleştirmede kimliği korunmalı) */
+export function isGlowMaterial(m: THREE.Material): boolean {
+  return glowMaterials.has(m as THREE.MeshStandardMaterial) || lampMaterials.has(m as THREE.MeshStandardMaterial);
+}
+
 /** Gece pencere ışığını ayarlar (0 = kapalı, 1 = tam). */
 export function setWindowGlow(v: number): void {
   glowMaterials.forEach((m) => {

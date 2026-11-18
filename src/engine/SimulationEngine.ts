@@ -140,6 +140,7 @@ import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
 import * as ShopUpgrades from './ShopUpgrades';
 import * as LifestyleEngine from './LifestyleEngine';
+import * as CityServices from './CityServices';
 import * as AutoInvestEngine from './AutoInvestEngine';
 import { PROGRESSION_RULES } from './ProgressionRules';
 import {
@@ -1713,6 +1714,46 @@ export class SimulationEngine {
     if (res.success) {
       this.recalculateFinancialsAndStages();
       this.pendingDailyActions.push(`[Lüks] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** İkinci el pazarı: dükkândaki bir malı alış maliyetinin altında hemen satar (engine/CityServices.ts). */
+  public sellStockSecondHand(shopId: string, resourceId: string, units?: number): { success: boolean; message: string } {
+    const res = CityServices.sellShopStockSecondHand(this.state, shopId, resourceId, units);
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[İkinci el] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** İkinci el pazarı: bugünkü bir eşya ilanını alır. */
+  public buyUsedUpgrade(offerKey: string): { success: boolean; message: string } {
+    const res = CityServices.buyUsedUpgrade(this.state, offerKey, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[İkinci el] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Belediye: sıradaki mahalle projesine katkı verir. */
+  public fundCityProject(projectId: string): { success: boolean; message: string } {
+    const res = CityServices.fundCityProject(this.state, projectId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Belediye] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Trafo: dükkâna güneş paneli kurar. */
+  public buySolarPanel(shopId: string): { success: boolean; message: string } {
+    const res = CityServices.buySolarPanel(this.state, shopId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Enerji] ${res.message}`);
     }
     return res;
   }

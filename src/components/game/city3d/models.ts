@@ -707,7 +707,20 @@ export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
   switch (block.category) {
     case 'TRADE_CENTER': {
       if (block.id.includes('clearing')) {
-        g.add(makeClassical(w * 0.85, d * 0.7, 8, '#e9e2cf', '#ffffff', 'TAKAS', '#35506b', rng));
+        // İkinci El Pazarı: tuğla pazar binası, önünde tenteli tezgâhlar ve kasalar
+        const h = 7;
+        g.add(makeBody({ w: w * 0.8, h, d: d * 0.55, wall: '#b8643f', frame: '#f2e3c4', glass: '#6f93ae', brick: true, units: 2, roof: '#6b6258' }, rng));
+        const board = sign('2. EL PAZARI', '#d9822b', '#ffffff', Math.min(w * 0.75, 7.4), 1.6, 360);
+        board.position.set(0, h - 1, d * 0.275 + 0.2);
+        g.add(board);
+        const stallColors = ['#2f9e6b', '#d9822b', '#3a7bd5'];
+        for (let i = 0; i < 3; i++) {
+          const sx = -w * 0.3 + i * w * 0.3;
+          const sz = d * 0.36;
+          g.add(awning(w * 0.24, stallColors[i], '#f4f1e6', sx, 2.4, sz));
+          g.add(box(w * 0.22, 0.9, 1.2, stdMat('#8b5a2b'), sx, 0.6, sz));
+          g.add(box(0.9, 0.7, 0.9, stdMat(i % 2 ? '#c9b98e' : '#a65a3a'), sx + w * 0.07, 1.4, sz));
+        }
       } else if (block.id.includes('audit')) {
         g.add(makeTower(w * 0.7, d * 0.7, 18, '#7b8794', '#a8cfe8', '#dfe6ec', 'DENETİM', '#4a5568', rng, 2));
       } else {

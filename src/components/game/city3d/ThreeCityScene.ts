@@ -118,8 +118,7 @@ const ROUTES: Record<CityTrafficRouteId, RouteKey[]> = {
   ],
   TICARET_BULVARI_ROTASI: [
     { t: 0, x: 215, y: 385 },
-    { t: 0.35, x: 215, y: 885 },
-    { t: 0.65, x: 510, y: 605 },
+    { t: 0.5, x: 215, y: 885 },
     { t: 1, x: 215, y: 385 },
   ],
   KUZEY_GUNEY_ANAYOL_ROTASI: [
@@ -164,16 +163,16 @@ const ROADWAYS: Roadway[] = [
   { x1: 1090, y1: 780, x2: 510, y2: 780, w: 5.6 },
   { x1: 510, y1: 780, x2: 510, y2: 380, w: 5.6 },
   { x1: 210, y1: 380, x2: 1390, y2: 380, w: 5.2 },
-  { x1: 795, y1: 250, x2: 795, y2: 380, w: 5 },
+  { x1: 795, y1: 330, x2: 795, y2: 380, w: 5 },
   { x1: 355, y1: 320, x2: 535, y2: 415, w: 4.8 },
   { x1: 1240, y1: 330, x2: 1065, y2: 415, w: 4.8 },
   { x1: 215, y1: 380, x2: 215, y2: 895, w: 4.6 },
-  { x1: 135, y1: 605, x2: 510, y2: 605, w: 5 },
-  { x1: 1090, y1: 595, x2: 1465, y2: 595, w: 5 },
+  { x1: -80, y1: 605, x2: 215, y2: 605, w: 5 },
+  { x1: 1375, y1: 595, x2: 1680, y2: 595, w: 5 },
   { x1: 1375, y1: 380, x2: 1375, y2: 895, w: 4.6 },
   { x1: 145, y1: 895, x2: 1465, y2: 895, w: 5.6 },
   { x1: 365, y1: 895, x2: 530, y2: 780, w: 4.8 },
-  { x1: 805, y1: 1100, x2: 805, y2: 780, w: 4.8 },
+  { x1: 925, y1: 1100, x2: 925, y2: 780, w: 4.8 },
   { x1: 1255, y1: 885, x2: 1070, y2: 780, w: 4.8 },
 ];
 
@@ -196,9 +195,71 @@ const SUBURB_ROADS: { x1: number; z1: number; x2: number; z2: number; w: number 
   { x1: 59, z1: -22, x2: RING2.x, z2: -22, w: 5 },
   { x1: -RING2.x, z1: 29.5, x2: -65.5, z2: 29.5, w: 5 },
   { x1: 66.5, z1: 29.5, x2: RING2.x, z2: 29.5, w: 5 },
-  { x1: -0.5, z1: RING2.zN, x2: -0.5, z2: -35, w: 5 },
-  { x1: 0.5, z1: 50, x2: 0.5, z2: RING2.zS, w: 5 },
+  { x1: -0.5, z1: RING2.zN, x2: -0.5, z2: -52, w: 5 },
+  { x1: 12.5, z1: 50, x2: 12.5, z2: RING2.zS, w: 5 },
 ];
+/** Bütün yollar dünya biriminde (bina yerleşimi denetimi için) */
+const ALL_ROAD_SEGS = [
+  // Borsa'nın önündeki kısa giriş yolu binaya kadar gelir; bilerek sayılmaz
+  ...ROADWAYS.filter((r) => !(r.x1 === 795 && r.x2 === 795)).map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w })),
+  ...SUBURB_ROADS,
+];
+
+/**
+ * Hazır modeller eski arsalardan biraz büyük gelebilir; bina yola taşıyorsa yoldan uzağa
+ * kaydırılır ve gerekirse biraz küçültülür. (x, z) binanın dünya konumu.
+ */
+function fitClearOfRoads(model: THREE.Object3D, x: number, z: number): void {
+  model.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  model.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    const b = m.geometry.boundingBox!.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    minX = Math.min(minX, b.min.x);
+    maxX = Math.max(maxX, b.max.x);
+    minZ = Math.min(minZ, b.min.z);
+    maxZ = Math.max(maxZ, b.max.z);
+  });
+  if (!Number.isFinite(minX)) return;
+  let ox = 0, oz = 0, sc = 1;
+  for (let it = 0; it < 24; it++) {
+    const rx0 = x + ox + minX * sc, rx1 = x + ox + maxX * sc, rz0 = z + oz + minZ * sc, rz1 = z + oz + maxZ * sc;
+    const cx = (rx0 + rx1) / 2, cz = (rz0 + rz1) / 2;
+    let px = 0, pz = 0, hit = false;
+    for (const r of ALL_ROAD_SEGS) {
+      const clear = r.w / 2 + 0.5;
+      let best = Infinity, bx = 0, bz = 0;
+      for (let i = 0; i <= 48; i++) {
+        const sx = r.x1 + ((r.x2 - r.x1) * i) / 48, sz = r.z1 + ((r.z2 - r.z1) * i) / 48;
+        const qx = Math.min(rx1, Math.max(rx0, sx)), qz = Math.min(rz1, Math.max(rz0, sz));
+        const d = Math.hypot(qx - sx, qz - sz);
+        if (d < best) {
+          best = d;
+          // Yoldan binaya doğru itme yönü (yol binanın içindeyse binanın merkezine doğru)
+          if (d > 1e-3) { bx = (qx - sx) / d; bz = (qz - sz) / d; }
+          else { const l = Math.hypot(cx - sx, cz - sz) || 1; bx = (cx - sx) / l; bz = (cz - sz) / l; }
+        }
+      }
+      if (best < clear) {
+        hit = true;
+        px += bx * (clear - best);
+        pz += bz * (clear - best);
+      }
+    }
+    if (!hit) break;
+    ox += px * 0.55;
+    oz += pz * 0.55;
+    sc = Math.max(0.62, sc * 0.96);
+  }
+  if (ox === 0 && oz === 0 && sc === 1) return;
+  model.position.x += ox;
+  model.position.z += oz;
+  model.scale.multiplyScalar(sc);
+}
+
 /** Çevre yollarında kendi kendine dolaşan arabaların halkaları (dünya birimi) */
 const AMBIENT_LOOPS: [number, number][][] = [
   [[-RING1.x, RING1.zN], [RING1.x, RING1.zN], [RING1.x, RING1.zS], [-RING1.x, RING1.zS], [-RING1.x, RING1.zN]],
@@ -1059,6 +1120,7 @@ export class ThreeCityScene {
       // Kodla çizilmiş ve hazır modelli binalardaki parçaları görünüşe göre birleştir (duman ayrı kalır)
       const model = mergeByLook(built, (o) => o.name === 'smoke');
       e.root.add(model);
+      fitClearOfRoads(model, x, z);
       e.model = model;
       e.smoke = undefined;
       this.shadowDirty = true;

@@ -417,6 +417,10 @@ export interface ShopInstance {
   demandBoost?: { multiplier: number; untilDay: number };
   /** Alınan küçük yükseltmeler (data/shopUpgrades.ts kimlikleri; eski kayıtlarda yoktur) */
   upgrades?: string[];
+  /** İkinci el pazarından alınan süreli eşyalar: yükseltme kimliği → son geçerli gün (eski kayıtlarda yoktur) */
+  usedUpgrades?: Record<string, number>;
+  /** Trafo'dan alınan güneş paneli: kira + işletme gideri düşer (eski kayıtlarda yoktur) */
+  solarPanel?: boolean;
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
   live?: ShopLiveDay;
   todayWalkInCustomers: number;
@@ -600,6 +604,8 @@ export interface TradeUniverseState {
   logisticsMode: LogisticsMode;
   autoProcurementEnabled: boolean;
   autoShopReplenishEnabled: boolean;
+  /** Belediyeye katkı verilen mahalle projeleri (data/cityServices.ts; eski kayıtlarda yoktur) */
+  cityProjects?: string[];
   shops: ShopInstance[];
   warehouses: Warehouse[];
   suppliers: Supplier[];

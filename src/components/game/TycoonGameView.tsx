@@ -9,6 +9,8 @@ import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
 import { LifestyleModal } from './LifestyleModal';
+import { CityServicesModal, type CityServiceHandlers } from './CityServicesModal';
+import type { CityServiceId } from './city/cityVisualTypes';
 import { PrestigeModal } from './PrestigeModal';
 import { buildRichList, founderNameForTicker } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
@@ -66,7 +68,7 @@ import { OfflineProgressModal } from './OfflineProgressModal';
 import { wealthTaxBase } from '../../engine/TaxRules';
 import { WEALTH_TAX_ANNUAL_RATE, WEALTH_TAX_FREE_AMOUNT } from '../../data/gameBalance';
 
-interface TycoonGameViewProps extends BuildingDetailActions {
+interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
   /** Gösteriş harcaması (engine/LifestyleEngine.ts) */
   onBuyLifestyleItem?: (itemId: string) => void;
@@ -105,6 +107,10 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onResolveDecision,
   onClaimCareerGoal,
   onBuyLifestyleItem,
+  onSellShopStock,
+  onBuyUsedUpgrade,
+  onFundProject,
+  onBuySolar,
   onStartNewCity,
   onMarkNotificationsRead,
   onSetTimeScale,
@@ -176,6 +182,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRichListOpen, setIsRichListOpen] = useState(false);
   const [isLifestyleOpen, setIsLifestyleOpen] = useState(false);
+  const [openCityService, setOpenCityService] = useState<CityServiceId | null>(null);
   const [isPrestigeOpen, setIsPrestigeOpen] = useState(false);
   // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
   const richRank = buildRichList(state).playerRank;
@@ -516,6 +523,17 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onStartNewCity={onStartNewCity}
           onClose={() => setIsPrestigeOpen(false)}
         />
+        <CityServicesModal
+          service={openCityService}
+          state={state}
+          spendableCash={spendableCash}
+          formatCurrency={formatCurrency}
+          onSellShopStock={onSellShopStock}
+          onBuyUsedUpgrade={onBuyUsedUpgrade}
+          onFundProject={onFundProject}
+          onBuySolar={onBuySolar}
+          onClose={() => setOpenCityService(null)}
+        />
         <LifestyleModal
           open={isLifestyleOpen}
           state={state}
@@ -545,6 +563,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             nextEventLabelTR={nextEvent.eventLabelTR}
             nextEventFormattedRemaining={nextEvent.formattedRemaining}
             onRestockShop={handleRestockShop}
+            onOpenCityService={setOpenCityService}
             onCollectShopCash={(shopId, amount) => {
               if (!onTransferShopCash || amount <= 0) return;
               play('coin');

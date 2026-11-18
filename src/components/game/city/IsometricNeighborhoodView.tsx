@@ -21,6 +21,7 @@ import {
 } from './cityLayout';
 import {
   CityCameraState,
+  CityServiceId,
   CityUrbanBlockNode,
   CityZoomPreset,
   CompanySubTabRoute,
@@ -62,6 +63,8 @@ interface IsometricNeighborhoodViewProps {
   onRestockShop?: (shopId: string) => void;
   /** 3D şehirde dükkânın üstündeki para baloncuğuna dokununca kasadaki fazlayı cebe al (isteğe bağlı). */
   onCollectShopCash?: (shopId: string, amount: number) => void;
+  /** Şehir hizmeti binasına (İkinci El Pazarı, Belediye, Trafo) dokununca penceresini aç (isteğe bağlı). */
+  onOpenCityService?: (service: CityServiceId) => void;
 }
 
 /**
@@ -88,6 +91,7 @@ export const IsometricNeighborhoodView: React.FC<IsometricNeighborhoodViewProps>
       onTickDay,
       nextEventLabelTR,
       nextEventFormattedRemaining,
+      onOpenCityService,
     }) => {
       const visualTrackerRef = useRef<CityVisualEventTrackerState | null>(null);
       if (!visualTrackerRef.current) {
@@ -264,6 +268,11 @@ export const IsometricNeighborhoodView: React.FC<IsometricNeighborhoodViewProps>
 
       const handleUrbanBlockTap = useCallback(
         (block: CityUrbanBlockNode) => {
+          if (block.cityService && block.isUnlocked && onOpenCityService) {
+            setSelectedUrbanBlockId(null);
+            onOpenCityService(block.cityService);
+            return;
+          }
           setSelectedUrbanBlockId(block.id);
           const focusPan = getCameraFocusPanForBuilding(
             block.linkedBuildingId,
@@ -295,6 +304,7 @@ export const IsometricNeighborhoodView: React.FC<IsometricNeighborhoodViewProps>
           onChangeCamera,
           onSelectBuildingOnMap,
           onOpenBuildingDetailSheet,
+          onOpenCityService,
         ]
       );
 
@@ -336,6 +346,7 @@ export const IsometricNeighborhoodView: React.FC<IsometricNeighborhoodViewProps>
             selectedBuilding={highlightedBuilding}
             selectedUrbanBlock={selectedUrbanBlock}
             onOpenDetailSheet={onOpenBuildingDetailSheet}
+            onOpenCityService={onOpenCityService}
             onClearSelection={handleClearOverlaySelection}
           />
 

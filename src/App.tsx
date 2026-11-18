@@ -919,6 +919,42 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleSellShopStock = useCallback(
+    (shopId: string, resourceId: string) => {
+      const res = engine.sellStockSecondHand(shopId, resourceId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleBuyUsedUpgrade = useCallback(
+    (offerKey: string) => {
+      const res = engine.buyUsedUpgrade(offerKey);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleFundCityProject = useCallback(
+    (projectId: string) => {
+      const res = engine.fundCityProject(projectId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleBuySolar = useCallback(
+    (shopId: string) => {
+      const res = engine.buySolarPanel(shopId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleBuyShopUpgrade = useCallback(
     (shopId: string, upgradeId: string) => {
       const res = engine.buyShopUpgrade(shopId, upgradeId);
@@ -1254,6 +1290,10 @@ export default function App() {
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
         onBuyLifestyleItem={handleBuyLifestyleItem}
+        onSellShopStock={handleSellShopStock}
+        onBuyUsedUpgrade={handleBuyUsedUpgrade}
+        onFundProject={handleFundCityProject}
+        onBuySolar={handleBuySolar}
         onStartNewCity={handleStartNewCity}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}

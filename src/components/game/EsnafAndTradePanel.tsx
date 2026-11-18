@@ -1283,6 +1283,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         <div className="min-w-0 flex-1">
                           <div className="font-extrabold text-[var(--g-ink)] leading-tight">{u.def.name}</div>
                           <div className="text-[13px] font-bold text-[var(--g-green-dark)]">{u.def.effectLabel}</div>
+                          {u.usedUntilDay !== undefined && (
+                            <div data-testid={`shop-small-upgrade-used-${u.def.id}`} className="text-[13px] font-bold text-[var(--g-gold-dark,#b7791f)]">
+                              İkinci el · {Math.max(0, u.usedUntilDay - state.day + 1)} gün kaldı
+                            </div>
+                          )}
                         </div>
                         {u.status === 'OWNED' ? (
                           <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">

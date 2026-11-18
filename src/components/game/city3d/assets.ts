@@ -164,11 +164,16 @@ export function mergeStatic(objects: THREE.Object3D[], castShadow = true, chunk 
     return out;
   }
   const byMat = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  const multi: THREE.Mesh[] = [];
   for (const root of objects) {
     root.updateMatrixWorld(true);
     root.traverse((o) => {
       const m = o as THREE.Mesh;
-      if (!m.isMesh || Array.isArray(m.material)) return;
+      if (!m.isMesh) return;
+      if (Array.isArray(m.material)) {
+        multi.push(m);
+        return;
+      }
       const g = m.geometry.clone();
       g.applyMatrix4(m.matrixWorld);
       for (const key of Object.keys(g.attributes)) {
@@ -198,6 +203,14 @@ export function mergeStatic(objects: THREE.Object3D[], castShadow = true, chunk 
     mesh.receiveShadow = true;
     mesh.matrixAutoUpdate = false;
     out.add(mesh);
+  }
+  // Çok malzemeli parçalar birleştirilmeden, dünya konumunda eklenir
+  for (const m of multi) {
+    const c = new THREE.Mesh(m.geometry, m.material);
+    m.matrixWorld.decompose(c.position, c.quaternion, c.scale);
+    c.castShadow = castShadow;
+    c.receiveShadow = true;
+    out.add(c);
   }
   return out;
 }
@@ -234,11 +247,13 @@ export function mergeByLook(root: THREE.Object3D, keep: (o: THREE.Object3D) => b
   const groups = new Map<string, { mat: THREE.Material; geos: THREE.BufferGeometry[]; shadow: boolean }>();
   const kept: THREE.Object3D[] = [];
   const visit = (o: THREE.Object3D) => {
-    if (o !== root && keep(o)) {
+    const m = o as THREE.Mesh;
+    // Çok malzemeli parçalar (ör. yüzleri farklı dokulu bina gövdesi) birleştirilemez: olduğu gibi kalır.
+    // Eskiden atlanıyordu; Ar-Ge, laboratuvar gibi binaların gövdesi görünmüyordu.
+    if (o !== root && (keep(o) || (m.isMesh && Array.isArray(m.material)))) {
       kept.push(o);
       return;
     }
-    const m = o as THREE.Mesh;
     if (m.isMesh && !Array.isArray(m.material) && m.visible) {
       const g = m.geometry.clone();
       g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));

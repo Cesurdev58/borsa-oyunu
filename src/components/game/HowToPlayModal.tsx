@@ -117,6 +117,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Yönet → Geliştir ekranında seviye yükseltmenin yanında 6 küçük yükseltme var (tabela, vitrin, ikinci kasa, reklam…). Her biri "+%3 müşteri" gibi etkisini yazar; pahalı olanlar dükkân seviyesi yükselince açılır.',
         `${MANAGER_MIN_SHOP_LEVEL}. seviyeye gelen dükkâna müdür tutabilirsin. Rafları kendisi doldurur, kârı sana gönderir; karşılığında kârın biraz azalır.`,
         'Aynı türden çok dükkân açma, müşteriyi paylaşırlar. Farklı türler açmak daha kârlı.',
+        'Şehirdeki İkinci El Pazarı\'nda fazla malını hemen satabilirsin (alış fiyatının altında) ve ucuz ikinci el eşya alabilirsin: yenisinin yarı fiyatı, ama 60 gün sonra eskir.',
+        'Belediye\'de mahalle projelerine katkı verirsen bütün dükkânlarına kalıcı müşteri ve itibar gelir. Trafo\'dan dükkânına güneş paneli kurarsan günlük giderin %20 azalır.',
         `Ara sıra bir karar kartı çıkar (festival, denetim gibi). ${DECISION_LIFETIME_DAYS} gün içinde seçmezsen ikinci seçenek seçilmiş sayılır.`,
       ],
       go: { label: 'Dükkânlarıma git', tab: 'portfolio' },

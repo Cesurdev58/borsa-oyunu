@@ -5,7 +5,7 @@
  * Zenginler listesi penceresi (veri: engine/RichListEngine.ts). Kişiler uydurmadır.
  * Oyuncunun satırı vurgulanır, bir üstündeki kişiye ne kadar kaldığı yazar.
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Trophy, X } from 'lucide-react';
 import { buildRichList } from '../../engine/RichListEngine';
 import type { SimulationState } from '../../models/simulation';
@@ -16,6 +16,11 @@ export const RichListModal: React.FC<{
   state: SimulationState;
   onClose: () => void;
 }> = ({ open, state, onClose }) => {
+  const playerRowRef = useRef<HTMLLIElement | null>(null);
+  // Açılınca listeyi oyuncunun satırına kaydır (yeni oyuncu en altta başlar)
+  useEffect(() => {
+    if (open) playerRowRef.current?.scrollIntoView?.({ block: 'center' });
+  }, [open]);
   if (!open) return null;
   const list = buildRichList(state);
   const short = (v: number) => formatHudCurrencyTR(v).compactText.replace(' TL', ' ₺');
@@ -33,7 +38,7 @@ export const RichListModal: React.FC<{
         onClick={(e) => e.stopPropagation()}
         className="g-rise w-full max-w-md max-h-[85vh] bg-white rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
       >
-        <div className="g-hero rounded-none px-4 py-4 space-y-3">
+        <div className="g-hero rounded-none px-4 py-4 space-y-3 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Trophy className="w-6 h-6 text-[var(--g-gold)]" />
@@ -72,6 +77,7 @@ export const RichListModal: React.FC<{
           {list.entries.map((e, i) => (
             <li
               key={e.id}
+              ref={e.isPlayer ? playerRowRef : undefined}
               data-testid={e.isPlayer ? 'rich-list-row-player' : undefined}
               className={`flex items-center gap-3 px-3 py-2 rounded-2xl ${
                 e.isPlayer
@@ -94,7 +100,7 @@ export const RichListModal: React.FC<{
             </li>
           ))}
         </ol>
-        <p className="px-4 pb-3 text-[13px] text-[var(--g-muted)]">Listedeki kişiler ve servetleri uydurmadır. Kurucuların serveti şirketlerinin hisse fiyatıyla değişir.</p>
+        <p className="px-4 py-2 text-[13px] text-[var(--g-muted)] shrink-0 border-t border-[var(--g-line)]">Listedeki kişiler ve servetleri uydurmadır. Kurucuların serveti şirketlerinin hisse fiyatıyla değişir.</p>
       </div>
     </div>
   );

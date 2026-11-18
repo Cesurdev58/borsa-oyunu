@@ -613,7 +613,74 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
   },
 ];
 
+/**
+ * Oyuncunun dükkânlarının şehirdeki yerleri, açılış sırasıyla.
+ * İlk üçü eskiden beri dükkân yeridir. 4. dükkândan itibaren şehirdeki başka binalar
+ * (Ticaret Hanı, konutlar, genişleme arsaları) sırayla oyuncunun dükkânına dönüşür;
+ * böylece imparatorluk büyüdükçe şehir de görünür biçimde değişir.
+ * Sıradaki boş yer "DÜKKÂN AÇ" arsası olur (`shopLot`).
+ */
+export const SHOP_SLOT_ORDER: readonly string[] = [
+  'urban-ticaret-magaza-1',
+  'urban-ticaret-kafe-2',
+  'urban-ticaret-otel-5',
+  'urban-ticaret-merkezi-3',
+  'urban-yasam-konut-17',
+  'urban-yasam-konut-18',
+  'urban-genisleme-kuzeybati-21',
+  'urban-genisleme-guneydogu-22',
+];
+const ORIGINAL_SHOP_SLOTS = 3;
+
 export function deriveCityUrbanBlocks(
+  state: SimulationState
+): CityUrbanBlockNode[] {
+  const base = deriveCityUrbanBlocksBase(state);
+  const shops = state.tradeState?.shops ?? [];
+  if (shops.length < ORIGINAL_SHOP_SLOTS) return base;
+  return base.map((block) => {
+    const slot = SHOP_SLOT_ORDER.indexOf(block.id);
+    if (slot < ORIGINAL_SHOP_SLOTS) {
+      return slot >= 0 ? { ...block, shopSlotNumber: slot + 1 } : block;
+    }
+    const shop = shops[slot];
+    if (shop) {
+      const totalStock = shop.inventoryBatches.reduce((sum, b) => sum + b.availableQuantity, 0);
+      return {
+        ...block,
+        isUnlocked: true,
+        level: shop.level,
+        floors: Math.min(4, 1 + Math.floor(shop.level / 2)),
+        shortTagTR: `${shop.nameTR.slice(0, 12)} Sv.${shop.level}`,
+        statusClassification: 'ACTIVE',
+        linkedBuildingId: 'OYUNCU_OFISI',
+        activeShopId: shop.shopId,
+        activeShopType: shop.shopType,
+        stockWarning: totalStock <= 0 || shop.todayUnmetCustomerDemand > 0,
+        pendingDeliveryCount: shop.pendingDeliveriesCount,
+        todayRevenue: shop.todaySalesRevenue,
+        hasStockToSell: totalStock > 0,
+        statusSummaryTR: `${slot + 1}. Dükkân · Sv.${shop.level} · Stok ${totalStock} br`,
+        shopSlotNumber: slot + 1,
+      };
+    }
+    if (slot === shops.length) {
+      return {
+        ...block,
+        isUnlocked: true,
+        shortTagTR: 'Dükkân Aç',
+        linkedBuildingId: 'OYUNCU_OFISI',
+        statusClassification: 'ACTIVE',
+        statusSummaryTR: `${slot + 1}. dükkânın için boş yer`,
+        shopLot: true,
+        shopSlotNumber: slot + 1,
+      };
+    }
+    return block;
+  });
+}
+
+function deriveCityUrbanBlocksBase(
   state: SimulationState
 ): CityUrbanBlockNode[] {
   const districts = deriveCityDistricts(state);

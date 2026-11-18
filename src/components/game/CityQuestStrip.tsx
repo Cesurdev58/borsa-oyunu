@@ -98,7 +98,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
             </button>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-extrabold uppercase tracking-wide text-[var(--g-navy-400)] leading-none">
-                {activeReadyToClaim ? 'Hedef tamam! Ödülün hazır' : `Sıradaki hedef · Ödül ${tl(activeQuest.reward)}`}
+                {activeReadyToClaim ? 'Ödülün hazır!' : 'Sıradaki hedef'}
               </div>
               <div className="text-[15px] font-extrabold text-[var(--g-ink)] leading-snug line-clamp-2 mt-0.5">
                 {activeQuest.title}
@@ -226,7 +226,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                                 : 'text-slate-400'
                             }`}
                           />
-                          <span className="truncate">
+                          <span className="line-clamp-2">
                             {q.stepNumber}. {q.title}
                           </span>
                         </div>

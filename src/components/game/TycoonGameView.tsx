@@ -8,6 +8,7 @@ import { TEMPO_COMPANY_MINUTES, TEMPO_EARLY_MINUTES } from '../../data/gameBalan
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
+import { LifestyleModal } from './LifestyleModal';
 import { buildRichList } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
@@ -66,6 +67,8 @@ import { WEALTH_TAX_ANNUAL_RATE, WEALTH_TAX_FREE_AMOUNT } from '../../data/gameB
 
 interface TycoonGameViewProps extends BuildingDetailActions {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
+  /** Gösteriş harcaması (engine/LifestyleEngine.ts) */
+  onBuyLifestyleItem?: (itemId: string) => void;
   /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
   onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
   state: SimulationState;
@@ -98,6 +101,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   notifications,
   onResolveDecision,
   onClaimCareerGoal,
+  onBuyLifestyleItem,
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
@@ -165,6 +169,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRichListOpen, setIsRichListOpen] = useState(false);
+  const [isLifestyleOpen, setIsLifestyleOpen] = useState(false);
   // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
   const richRank = buildRichList(state).playerRank;
 
@@ -454,6 +459,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         richRank={richRank}
         onOpenRichList={() => setIsRichListOpen(true)}
+        reputation={state.tradeState?.tradeReputationScore}
+        onOpenLifestyle={() => setIsLifestyleOpen(true)}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}
         formatCurrency={formatCurrency}
       />
@@ -464,7 +471,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         <CityQuestStrip
           state={state}
           hasOpenedBorsaBuilding={uiSettings.hasOpenedBorsaBuilding}
-          onOpenBuilding={handleOpenBuildingDetailSheet}
+          onOpenBuilding={(id) =>
+            (id as string) === 'LUKS' ? setIsLifestyleOpen(true) : handleOpenBuildingDetailSheet(id)
+          }
           onClaimQuest={
             onClaimCareerGoal
               ? (id) => {
@@ -476,6 +485,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onOpenRichList={() => setIsRichListOpen(true)}
         />
         <RichListModal open={isRichListOpen} state={state} onClose={() => setIsRichListOpen(false)} />
+        <LifestyleModal
+          open={isLifestyleOpen}
+          state={state}
+          spendableCash={spendableCash}
+          formatCurrency={formatCurrency}
+          onBuy={onBuyLifestyleItem}
+          onClose={() => setIsLifestyleOpen(false)}
+        />
 
         {activeBottomTab === 'city' ? (
           <CityNeighborhoodView

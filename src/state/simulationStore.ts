@@ -623,6 +623,7 @@ export class SimulationStore {
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
         careerGoals: st.careerGoals,
+        lifestyle: st.lifestyle,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,

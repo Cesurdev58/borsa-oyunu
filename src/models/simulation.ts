@@ -240,6 +240,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Gösteriş harcamaları (engine/LifestyleEngine.ts; eski kayıtlarda yoktur) */
+  lifestyle?: { owned: string[]; spent: number };
   /** Kariyer hedeflerinde ödülü alınanlar (engine/CareerGoals.ts; eski kayıtlarda yoktur) */
   careerGoals?: { claimed: string[]; totalRewards: number };
   /** Olağanüstü olaylar (savaş, salgın…; eski kayıtlarda yoktur) */

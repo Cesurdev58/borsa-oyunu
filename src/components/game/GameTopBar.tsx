@@ -5,7 +5,7 @@
 
 import { useCountUp } from './ui/useCountUp';
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronDown, Coins, Settings, Star, Trophy } from 'lucide-react';
+import { Bell, ChevronDown, Coins, Settings, Star, Trophy, Crown } from 'lucide-react';
 import { MarketSession, SimulationStage } from '../../models/simulation';
 import { formatHudCurrencyTR } from './city/questAndHudLogic';
 import { formatDateTR, getMarketSessionBadgeMeta } from './gameTypes';
@@ -28,6 +28,9 @@ interface GameTopBarProps {
   /** Zenginler listesindeki sıra (engine/RichListEngine.ts) */
   richRank?: number;
   onOpenRichList?: () => void;
+  /** Ticari itibar (0–100) ve lüks alışveriş penceresi */
+  reputation?: number;
+  onOpenLifestyle?: () => void;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
@@ -45,6 +48,8 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     onOpenSettings,
     richRank,
     onOpenRichList,
+    reputation,
+    onOpenLifestyle,
   }) => {
     const sessionMeta = getMarketSessionBadgeMeta(marketSession);
     const prevCashRef = useRef(cash);
@@ -253,6 +258,22 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 </span>
                 <span className="g-display font-extrabold text-base text-[var(--g-gold)] tabular-nums">
                   {richRank}. sıra ›
+                </span>
+              </button>
+            )}
+            {reputation !== undefined && onOpenLifestyle && (
+              <button
+                type="button"
+                data-testid="tycoon-top-lifestyle"
+                onClick={onOpenLifestyle}
+                className="col-span-2 rounded-xl bg-white/[0.06] p-2.5 flex items-center justify-between text-left"
+              >
+                <span className="flex items-center gap-2">
+                  <Crown className="w-5 h-5 text-[var(--g-gold)]" />
+                  <span className="text-[13px] text-white/60 font-bold">Lüks alışveriş · itibar</span>
+                </span>
+                <span className="g-display font-extrabold text-base text-[var(--g-gold)] tabular-nums">
+                  {Math.round(reputation)} ›
                 </span>
               </button>
             )}

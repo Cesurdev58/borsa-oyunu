@@ -139,6 +139,7 @@ import {
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
 import * as ShopUpgrades from './ShopUpgrades';
+import * as LifestyleEngine from './LifestyleEngine';
 import { PROGRESSION_RULES } from './ProgressionRules';
 import {
   IPOEngine,
@@ -719,6 +720,7 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       careerGoals: cloned.careerGoals,
+      lifestyle: cloned.lifestyle,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -1686,6 +1688,16 @@ export class SimulationEngine {
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  /** Gösteriş harcaması yapar (engine/LifestyleEngine.ts). */
+  public buyLifestyleItem(itemId: string): { success: boolean; message: string } {
+    const res = LifestyleEngine.buyLifestyleItem(this.state, itemId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Lüks] ${res.message}`);
+    }
+    return res;
+  }
+
   /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
   public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
     const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());

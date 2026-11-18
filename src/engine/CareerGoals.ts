@@ -5,7 +5,7 @@
  * KARİYER HEDEFLERİ (CareerGoals)
  * Oyunun başından sonuna kadar uzanan sıralı hedef zinciri ve gerçek para ödülleri.
  * Eskiden 8 hedef vardı, şirket kurulunca bitiyordu ve ödüller yalnızca yazıydı ("+100 İtibar").
- * Şimdi 29 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
+ * Şimdi 30 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
  * "Ödülü al" düğmesiyle alınan bir para ödülü vardır.
  *
  * Kurallar:
@@ -24,7 +24,7 @@ import { WalletEngine } from './WalletEngine';
 import { buildRichList } from './RichListEngine';
 
 /** Hedefin "Git" düğmesinin açacağı bina (arayüzdeki CityBuildingId ile aynı adlar). */
-export type GoalTarget = 'BORSA' | 'OYUNCU_OFISI' | 'SIRKET_MERKEZI' | 'HOLDING_MERKEZI';
+export type GoalTarget = 'BORSA' | 'OYUNCU_OFISI' | 'SIRKET_MERKEZI' | 'HOLDING_MERKEZI' | 'LUKS';
 
 export interface GoalContext {
   /** Oyuncu Borsa ekranını en az bir kez açtı mı (arayüz bilgisi) */
@@ -218,6 +218,13 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 25_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => money(s.netWorth, 500_000),
+  },
+  {
+    id: 'goal-first-luxury',
+    title: 'İlk lüks alımını yap (itibar)',
+    reward: 20_000,
+    target: 'LUKS',
+    progress: (s) => flag((s.lifestyle?.owned.length ?? 0) > 0),
   },
   {
     id: 'goal-four-shops',

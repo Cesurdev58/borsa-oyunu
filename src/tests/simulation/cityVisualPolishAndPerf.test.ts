@@ -381,7 +381,7 @@ describe('İzometrik Şehir Görsel Kalite, HUD, Görev Şeridi ve Performans Te
     assert.ok(questModel0.activeQuest);
     assert.equal(questModel0.activeQuest.id, 'quest-01-open-borsa');
     assert.equal(questModel0.activeQuest.title, 'Borsa binasını aç');
-    assert.equal(questModel0.allQuests.length, 29);
+    assert.equal(questModel0.allQuests.length, 30);
     assert.equal(questModel0.activeReadyToClaim, false);
 
     // Borsa binası açılınca hedef tamamlanır, ödül alınmayı bekler; ödül alınınca sıradaki hedefe geçilir

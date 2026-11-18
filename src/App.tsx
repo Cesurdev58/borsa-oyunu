@@ -894,6 +894,15 @@ export default function App() {
     [engine, handleShopManagerResult]
   );
 
+  const handleBuyLifestyleItem = useCallback(
+    (itemId: string) => {
+      const res = engine.buyLifestyleItem(itemId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleBuyShopUpgrade = useCallback(
     (shopId: string, upgradeId: string) => {
       const res = engine.buyShopUpgrade(shopId, upgradeId);
@@ -1200,6 +1209,7 @@ export default function App() {
         notifications={notifications}
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
+        onBuyLifestyleItem={handleBuyLifestyleItem}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}

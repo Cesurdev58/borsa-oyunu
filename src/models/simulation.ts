@@ -242,6 +242,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Prestij: yeni şehirde başlayınca taşınan kalıcı yıldızlar (engine/PrestigeEngine.ts; eski kayıtta yok) */
+  prestige?: { stars: number; cities: number; bestNetWorth: number };
   /** Rekorlar (en kârlı gün; eski kayıtlarda yoktur) */
   records?: { bestDayGain: number; bestDay: number };
   /** Portföy yöneticisi (engine/AutoInvestEngine.ts; eski kayıtlarda yoktur) */

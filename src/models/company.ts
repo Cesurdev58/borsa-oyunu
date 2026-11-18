@@ -137,6 +137,8 @@ export interface PlayerCompany {
 
   // v5 Genişletilmiş Talep/Stok, Detaylı Gelir/Gider, Yatırım Projeleri, İK ve Kredi Alanları
   operations?: CompanyOperationsState;
+  /** Geçici satış çarpanı (rakip kartları; `operatingDays` bu değerden küçükken geçerli). Eski kayıtta yok. */
+  demandBoost?: { multiplier: number; untilOperatingDay: number };
   incomeBreakdown?: DetailedIncomeBreakdown;
   investmentProjects?: InvestmentProject[];
   workforcePlan?: WorkforcePlan;

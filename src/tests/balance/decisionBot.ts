@@ -18,6 +18,9 @@ const PICK: Record<string, 'A' | 'B'> = {
   'rival-next-door': 'A',
   'rival-poach': 'A',
   'rival-price-war': 'A',
+  'co-rival-price-cut': 'A',
+  'co-rival-poach': 'A',
+  'co-rival-partnership': 'A',
 };
 
 export function answerDecisionSensibly(eng: SimulationEngine): void {

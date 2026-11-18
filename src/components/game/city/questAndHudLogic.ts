@@ -8,7 +8,7 @@
 
 import { MarketSession, SimulationState } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
-import { buildCareerGoals } from '../../../engine/CareerGoals';
+import { buildCareerGoals, goalReward } from '../../../engine/CareerGoals';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 
 
@@ -120,8 +120,8 @@ export function deriveCityQuestStripModel(
     title: g.def.title,
     progressText: g.progress.text,
     progressPct: g.progress.pct,
-    rewardLabel: `Ödül: ₺${g.def.reward.toLocaleString('tr-TR')}`,
-    reward: g.def.reward,
+    rewardLabel: `Ödül: ₺${goalReward(state, g.def).toLocaleString('tr-TR')}`,
+    reward: goalReward(state, g.def),
     targetBuildingId: g.def.target as CityBuildingId,
     completed: g.claimed || g.progress.done,
     claimed: g.claimed,

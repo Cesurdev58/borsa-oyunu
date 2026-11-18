@@ -626,6 +626,7 @@ export class SimulationStore {
         lifestyle: st.lifestyle,
         autoInvest: st.autoInvest,
         records: st.records,
+        prestige: st.prestige,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,
@@ -780,6 +781,14 @@ export class SimulationStore {
     SimulationStore.sharedEngine = fresh;
     SimulationStore.sharedCreationCount = 1;
     return fresh;
+  }
+
+  /** Yeni şehir (prestij): hazırlanmış motoru ortak motor yapar ve kaydeder. */
+  public static replaceSharedEngine(engine: SimulationEngine): SimulationEngine {
+    SimulationStore.saveToStorage(engine);
+    SimulationStore.sharedEngine = engine;
+    SimulationStore.sharedCreationCount += 1;
+    return engine;
   }
 
   public static getSharedEngineCreationCount(): number {

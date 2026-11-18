@@ -155,6 +155,7 @@ for (const seed of [20261104, 1, 2, 3, 4]) {
 
 console.log('\n=== ŞİRKET (hep büyüyen oyuncu: pazar dolunca temettü çekip rakip devralır) ===');
 console.log('Hedef: şirket önce hızlı büyür, sektör pazarı dolunca kâr düzleşir; daha fazlası için rakip devralmak gerekir.');
+console.log('(Karar kartlarına dikkatli oyuncu gibi cevap verir; şirket dönemi rakip kartları da dahil.)');
 for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
   const eng = new SimulationEngine(20261104, 2_500_000);
   eng.establishCompany('Ölçüm A.Ş.', 'OLCM', sector, 2_000_000, {
@@ -168,6 +169,7 @@ for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
     growCompanyGreedy(eng);
     const t = expandByTakeover(eng);
     if (t) notes.push(`gün ${d}: ${t}`);
+    answerDecisionSensibly(eng);
     eng.advanceDaysWithoutPlayerDecisions(1, true);
     if (d % 300 === 0) {
       const st = eng.getState();

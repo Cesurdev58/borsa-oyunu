@@ -9,7 +9,8 @@ export type DecisionEffect =
   | { kind: 'CASH'; amount: number } // kişisel nakit (+ gelir, − gider)
   | { kind: 'SATISFACTION'; delta: number } // dükkân müşteri memnuniyeti
   | { kind: 'DEMAND_BOOST'; multiplier: number; days: number } // geçici müşteri artışı/azalışı
-  | { kind: 'DELAYED_CASH'; amount: number; inDays: number; chancePct: number }; // ileride gelecek para (şanslı)
+  | { kind: 'DELAYED_CASH'; amount: number; inDays: number; chancePct: number } // ileride gelecek para (şanslı)
+  | { kind: 'COMPANY_DEMAND'; multiplier: number; days: number }; // oyuncu şirketinin satışına geçici çarpan
 
 export interface DecisionChoice {
   id: 'A' | 'B';

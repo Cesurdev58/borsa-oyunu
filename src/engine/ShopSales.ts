@@ -16,6 +16,7 @@
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
+import { prestigeBonuses } from './PrestigeEngine';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance, ShopLiveDay, TradeUniverseState } from '../models/trade';
@@ -108,6 +109,7 @@ export function computeShopDailyDemand(
   }
 
   const upgradeMult = shopUpgradeMultipliers(shop);
+  const prestigeCustomerMult = prestigeBonuses(state.prestige?.stars ?? 0).customerMult;
   const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
   const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
   const customers = Math.max(
@@ -123,6 +125,7 @@ export function computeShopDailyDemand(
         eventDemandMult *
         mechanicDemandMultiplier *
         upgradeMult.customers *
+        prestigeCustomerMult *
         (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )
   );

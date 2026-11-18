@@ -220,13 +220,6 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     progress: (s) => money(s.netWorth, 500_000),
   },
   {
-    id: 'goal-first-luxury',
-    title: 'İlk lüks alımını yap (itibar)',
-    reward: 20_000,
-    target: 'LUKS',
-    progress: (s) => flag((s.lifestyle?.owned.length ?? 0) > 0),
-  },
-  {
     id: 'goal-four-shops',
     title: '4 dükkân sahibi ol',
     reward: 30_000,
@@ -260,6 +253,13 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 50_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => money(s.netWorth, 1_000_000),
+  },
+  {
+    id: 'goal-first-luxury',
+    title: 'İlk lüks alımını yap (itibar)',
+    reward: 20_000,
+    target: 'LUKS',
+    progress: (s) => flag((s.lifestyle?.owned.length ?? 0) > 0),
   },
   {
     id: 'goal-portfolio-manager',

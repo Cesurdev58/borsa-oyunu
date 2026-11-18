@@ -156,6 +156,15 @@ function runCareer(seed: number): {
         }
       }
     }
+    // Lüks alım ve portföy yöneticisi hedefleri (gerçek oyuncu şeridi takip eder)
+    {
+      const m = buildCareerGoals(eng.getState(), { hasOpenedBorsa: true, companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth });
+      if (m.active?.def.id === 'goal-first-luxury' && eng.getSpendableCash() > 150_000 + 20_000) eng.buyLifestyleItem('daire');
+      if (m.active?.def.id === 'goal-portfolio-manager' && eng.getSpendableCash() > 50_000 + 60_000) {
+        eng.hirePortfolioManager();
+        eng.configureAutoInvest({ enabled: false });
+      }
+    }
     // 2. seviye dükkâna müdür tut (hedef zinciri bunu ister; gerçek oyuncu da yapar)
     for (const sh of eng.getState().tradeState?.shops ?? []) {
       if (sh.level >= 2 && !sh.manager && !(eng.getState().tradeState?.shops ?? []).some((x) => x.manager)) {

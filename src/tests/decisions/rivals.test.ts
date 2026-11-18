@@ -10,6 +10,7 @@ test('Rakip hamleleri: dükkân sahibi oyuncuya isimli rakip kartları çıkar',
   for (const id of ['rival-next-door', 'rival-poach', 'rival-price-war']) assert.ok(ids.includes(id), id);
   const eng = new SimulationEngine(20261104, 1_000_000);
   eng.openShop({ shopType: 'BUFE' });
+  eng.openShop({ shopType: 'MANAV' }); // rakipler en az 2 dükkânı olan oyuncuyu fark eder
   const seen: string[] = [];
   for (let d = 0; d < 120 && seen.length < 2; d++) {
     restockShops(eng);

@@ -30,6 +30,8 @@ export const DECISION_MIN_GAP_DAYS = 2;
 export const DECISION_CHANCE = 0.5;
 /** Kart kaç gün açık kalır; sonra kendiliğinden "geçildi" sayılır */
 export const DECISION_LIFETIME_DAYS = 2;
+/** Rakip hamlesi kartları en az bu kadar dükkânı olan oyuncuya çıkar (tek büfeyle başlayana sert gelmesin) */
+export const RIVAL_MIN_SHOPS = 2;
 /** İlk olay en erken bu günde çıkar (ilk gün rehber var) */
 export const DECISION_FIRST_DAY = 3;
 
@@ -86,6 +88,8 @@ interface TemplateContext {
 interface DecisionTemplate {
   id: string;
   needsShop: boolean;
+  /** En az bu kadar dükkân varsa çıkar (rakipler oyuncu büyüyünce fark eder) */
+  minShops?: number;
   build: (ctx: TemplateContext) => Omit<PendingDecision, 'eventId' | 'templateId' | 'day' | 'expiresDay' | 'shopId'>;
 }
 
@@ -213,6 +217,7 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
   {
     id: 'rival-next-door',
     needsShop: true,
+    minShops: RIVAL_MIN_SHOPS,
     build: ({ state, shop, S }) => {
       const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 501));
       return {
@@ -220,8 +225,8 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
         titleTR: `${rival} karşına dükkân açtı`,
         bodyTR: `${rival}, ${shop!.nameTR} dükkânının tam karşısına rakip bir dükkân açtı. Müşterilerin oraya kayabilir.`,
         choices: [
-          choice('A', 'Açılış indirimi yap', [{ kind: 'CASH', amount: -S }, { kind: 'DEMAND_BOOST', multiplier: 1.1, days: 5 }]),
-          choice('B', 'Bekle, gör', [{ kind: 'DEMAND_BOOST', multiplier: 0.85, days: 6 }]),
+          choice('A', 'Açılış indirimi yap', [{ kind: 'CASH', amount: -round100(S * 0.5) }, { kind: 'DEMAND_BOOST', multiplier: 1.12, days: 5 }]),
+          choice('B', 'Bekle, gör', [{ kind: 'DEMAND_BOOST', multiplier: 0.9, days: 5 }]),
         ],
       };
     },
@@ -229,6 +234,7 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
   {
     id: 'rival-poach',
     needsShop: true,
+    minShops: RIVAL_MIN_SHOPS,
     build: ({ state, shop, S }) => {
       const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 502));
       return {
@@ -236,8 +242,8 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
         titleTR: `${rival} çalışanını istiyor`,
         bodyTR: `${rival}, ${shop!.nameTR} dükkânındaki en iyi çalışanına daha yüksek maaş teklif etti.`,
         choices: [
-          choice('A', 'Zam yap, kalsın', [{ kind: 'CASH', amount: -round100(S * 0.6) }, { kind: 'SATISFACTION', delta: 2 }]),
-          choice('B', 'Bırak gitsin', [{ kind: 'SATISFACTION', delta: -6 }, { kind: 'DEMAND_BOOST', multiplier: 0.9, days: 3 }]),
+          choice('A', 'Zam yap, kalsın', [{ kind: 'CASH', amount: -round100(S * 0.3) }, { kind: 'SATISFACTION', delta: 2 }]),
+          choice('B', 'Bırak gitsin', [{ kind: 'SATISFACTION', delta: -5 }]),
         ],
       };
     },
@@ -245,6 +251,7 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
   {
     id: 'rival-price-war',
     needsShop: true,
+    minShops: RIVAL_MIN_SHOPS,
     build: ({ state, shop, S }) => {
       const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 503));
       return {
@@ -252,8 +259,8 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
         titleTR: `${rival} fiyat savaşı başlattı`,
         bodyTR: `${rival} bütün fiyatlarını kırdı. ${shop!.nameTR} müşterileri karşılaştırma yapıyor.`,
         choices: [
-          choice('A', 'Sen de kampanya yap', [{ kind: 'CASH', amount: -round100(S * 0.7) }, { kind: 'DEMAND_BOOST', multiplier: 1.05, days: 4 }]),
-          choice('B', 'Kaliteyle yarış', [{ kind: 'DEMAND_BOOST', multiplier: 0.88, days: 5 }, { kind: 'SATISFACTION', delta: 2 }]),
+          choice('A', 'Sen de kampanya yap', [{ kind: 'CASH', amount: -round100(S * 0.4) }, { kind: 'DEMAND_BOOST', multiplier: 1.06, days: 4 }]),
+          choice('B', 'Kaliteyle yarış', [{ kind: 'DEMAND_BOOST', multiplier: 0.92, days: 4 }, { kind: 'SATISFACTION', delta: 2 }]),
         ],
       };
     },
@@ -395,8 +402,10 @@ export function onDayClosed(state: SimulationState, reservedCash: number): strin
     if (decisionHash(seed, day, 1) < DECISION_CHANCE) {
       const hasShop = (state.tradeState?.shops.length ?? 0) > 0;
       const recent = new Set(ds.history.slice(-3).map((h) => h.templateId));
-      const pool = DECISION_TEMPLATES.filter((t) => (!t.needsShop || hasShop) && !recent.has(t.id));
-      const list = pool.length ? pool : DECISION_TEMPLATES.filter((t) => !t.needsShop || hasShop);
+      const shopCount = state.tradeState?.shops.length ?? 0;
+      const fits = (t: DecisionTemplate) => (!t.needsShop || hasShop) && shopCount >= (t.minShops ?? 0);
+      const pool = DECISION_TEMPLATES.filter((t) => fits(t) && !recent.has(t.id));
+      const list = pool.length ? pool : DECISION_TEMPLATES.filter(fits);
       if (list.length) {
         const tpl = list[Math.floor(decisionHash(seed, day, 2) * list.length) % list.length];
         const shop = tpl.needsShop ? pickShop(state, 3) : null;

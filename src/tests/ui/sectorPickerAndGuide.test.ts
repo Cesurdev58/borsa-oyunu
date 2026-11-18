@@ -7,7 +7,7 @@ import { SECTOR_GUIDE, SECTOR_GUIDE_ORDER } from '../../data/sectorGuide';
 import { HowToPlayModal } from '../../components/game/HowToPlayModal';
 import { SimulationEngine } from '../../engine/SimulationEngine';
 import { growCompanyGreedy } from '../balance/companyBot';
-import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
+import { PROGRESSION_RULES } from '../../engine/ProgressionRules';
 
 test('Her sektörün tanıtımı var ve seçim ekranında hepsi bir kez listelenir', () => {
   const ids = Object.keys(SECTOR_CONFIGS).sort();
@@ -46,6 +46,7 @@ test('"Nasıl oynanır?" rehberi açılınca bölüm sekmelerini ve oyunun gerç
   for (const id of ['start', 'market', 'shop', 'company', 'holding', 'money', 'tips']) {
     assert.ok(html.includes(`how-to-play-tab-${id}`), id);
   }
-  assert.ok(html.includes(`₺${FIRST_SHOP_MIN_NET_WORTH.toLocaleString('tr-TR')}`));
+  assert.ok(html.includes('Borsayı tanı'), 'ilk dükkân kapısı rehberde anlatılmalı');
+  assert.ok(html.includes(`₺${PROGRESSION_RULES.entrepreneurNetWorth.toLocaleString('tr-TR')}`));
   assert.equal(renderToStaticMarkup(React.createElement(HowToPlayModal, { ...props, open: false })), '');
 });

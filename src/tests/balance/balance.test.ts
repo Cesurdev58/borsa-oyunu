@@ -20,17 +20,30 @@ test('Denge: her sektörde olumlu ve olumsuz haberin toplam etkisi dengelidir (b
   }
 });
 
-test('Denge: 100.000 TL ile başlayan oyuncu birikim yapmadan ilk dükkânı açamaz, nakdi değişmez', () => {
+test('Denge: 100.000 TL ile başlayan oyuncu borsayı tanımadan (al, başka sektörden al, sat) ilk dükkânı açamaz, nakdi değişmez', () => {
   const eng = new SimulationEngine(20261104, 100_000);
   const before = eng.getState().cash;
   const r = eng.openShop({ shopType: 'BUFE' });
   assert.equal(r.success, false);
-  assert.match(r.message, /net değer/i);
+  assert.match(r.message, /borsayı tanı/i);
   assert.equal(eng.getState().cash, before);
   assert.equal(eng.getState().tradeState?.shops.length ?? 0, 0);
 });
 
-test('Denge: eşik kadar net değeri olan oyuncu ilk dükkânı açabilir', () => {
+test('Denge: borsada al, başka sektörden al, sat adımlarını bitiren 100.000 TL oyuncu ilk dükkânı açabilir', () => {
+  const eng = new SimulationEngine(20261104, 100_000);
+  const stocks = eng.getState().stocks;
+  const a = stocks[0];
+  const b = stocks.find((s) => s.sector !== a.sector)!;
+  assert.equal(eng.buyStock(a.ticker, 10).success, true);
+  assert.equal(eng.openShop({ shopType: 'BUFE' }).success, false, 'tek adım yetmez');
+  assert.equal(eng.buyStock(b.ticker, 10).success, true);
+  assert.equal(eng.sellStock(a.ticker, 5).success, true);
+  const r = eng.openShop({ shopType: 'BUFE' });
+  assert.equal(r.success, true, r.message);
+});
+
+test('Denge: eşik kadar net değeri olan oyuncu (zengin kısayolu) ilk dükkânı görevsiz açabilir', () => {
   const eng = new SimulationEngine(20261104, FIRST_SHOP_MIN_NET_WORTH + 1);
   const r = eng.openShop({ shopType: 'BUFE' });
   assert.equal(r.success, true, r.message);

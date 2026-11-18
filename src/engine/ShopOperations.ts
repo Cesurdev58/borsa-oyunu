@@ -6,7 +6,7 @@
  * (TradeAndShopEngine dosyasından ayrıldı; dış dünya hâlâ TradeAndShopEngine.* üzerinden erişebilir.)
  */
 
-import { FIRST_SHOP_MIN_NET_WORTH } from '../data/gameBalance';
+import { firstShopGateStatus } from './FirstShopGate';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -64,15 +64,13 @@ export class ShopOperations {
       };
     }
 
-    // İlk dükkân kapısı: borsada yeterli birikim yapılmadan esnaflığa geçilemez (şirket şubeleri hariç).
-    if (
-      ts.shops.length === 0 &&
-      state.playerCompany === null &&
-      state.netWorth < FIRST_SHOP_MIN_NET_WORTH
-    ) {
+    // İlk dükkân kapısı: borsanın temelini öğrenmeden esnaflığa geçilemez (şirket şubeleri hariç).
+    const gate = firstShopGateStatus(state);
+    if (ts.shops.length === 0 && !gate.open) {
+      const left = gate.steps.filter((x) => !x.done).map((x) => x.label.toLowerCase());
       return {
         success: false,
-        message: `İlk dükkânı açmak için net değerin en az ₺${FIRST_SHOP_MIN_NET_WORTH.toLocaleString('tr-TR')} olması gerekir (şu an ₺${Math.round(state.netWorth).toLocaleString('tr-TR')}). Önce borsada birikim yap.`,
+        message: `İlk dükkânı açmak için önce borsayı tanı: ${left.join(', ')}.`,
         shop: null,
         totalCapitalSpent: 0,
       };

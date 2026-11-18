@@ -361,6 +361,7 @@ test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=
 
   // B.8: 1x ve 2x hızlarda 1 tam oyun günü ilerletildiğinde ekonomik sonuçlar eşdeğerdir
   const baseSpeedEngine = new SimulationEngine(20261109, 3_000_000);
+  baseSpeedEngine.setFastStartTempo(false); // hız eşdeğerliği 15 dk/gün ile ölçülür
   baseSpeedEngine.establishCompany('Hız Eşdeğerlik A.Ş.', 'HZES', 'LOJISTIK', 1_200_000, {
     initialStaffCount: 35,
     initialCapacity: 80,

@@ -256,6 +256,8 @@ export interface SimulationState {
   minutesIntoCurrentDay: number;
   totalElapsedGameMinutes: number;
   realMinutesPerGameDay: RealMinutesPerGameDayOption;
+  /** Hızlı başlangıç (kariyerin başında kısa günler, engine/TempoRules.ts). Eski kayıtlarda yoktur → açık. */
+  fastStartTempo?: boolean;
   timeScale: TimeScaleOption;
   isPaused: boolean;
   marketSession: MarketSession;

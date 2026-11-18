@@ -8,6 +8,7 @@ import { SimulationStore } from '../../state/simulationStore';
 
 test('1-6. Oyun Saati: 00:00 başlangıç, 15 dk varsayılan gün, 1x/2x hız dönüşümleri ve duraklatma', () => {
   const engine = new SimulationEngine(20261104);
+engine.setFastStartTempo(false); // saat testi: hızlı başlangıç kapalı, 15 dk/gün
   const st0 = engine.getState();
 
   // 1. Yeni oyun 00.00 saatinde başlıyor
@@ -230,6 +231,7 @@ test('12-15. Emir iptali rezervi serbest bırakır; aynı nakit/hisse iki emirde
 
 test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negatif zamanı reddeder ve aynı aralığı iki kez işlemez', () => {
   const engine = new SimulationEngine(20261104);
+engine.setFastStartTempo(false); // saat testi: hızlı başlangıç kapalı, 15 dk/gün
 
   // 17. Negatif gerçek zaman farkı ilerleme oluşturmaz
   const negSummary = engine.processOfflineProgress(

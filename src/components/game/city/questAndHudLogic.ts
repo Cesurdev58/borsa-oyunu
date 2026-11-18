@@ -8,7 +8,7 @@
 
 import { MarketSession, SimulationState } from '../../../models/simulation';
 import { CityBuildingId } from '../gameTypes';
-import { FIRST_SHOP_MIN_NET_WORTH } from '../../../data/gameBalance';
+import { firstShopGateStatus } from '../../../engine/FirstShopGate';
 import { PROGRESSION_RULES } from '../../../engine/ProgressionRules';
 
 function formatGoalTL(v: number): string {
@@ -149,10 +149,7 @@ export function deriveCityQuestStripModel(
   const hasShopProfit = shopsList.some(
     (sh) => (sh.cumulativeNetProfit ?? 0) > 0 || (sh.todayNetProfit ?? 0) > 0
   );
-  const firstShopGatePct = Math.min(
-    100,
-    Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100)
-  );
+  const firstShopGate = firstShopGateStatus(state);
 
   const allQuests: CityQuestItem[] = [
     {
@@ -191,13 +188,13 @@ export function deriveCityQuestStripModel(
     {
       id: 'quest-04-first-shop-gate',
       stepNumber: 4,
-      title: `Net varlığını ${formatGoalTL(FIRST_SHOP_MIN_NET_WORTH)} yap`,
-      progressText: `%${firstShopGatePct}`,
-      progressPct: firstShopGatePct,
+      title: 'Bir hisseni sat (dükkân izni)',
+      progressText: `${firstShopGate.doneCount} / ${firstShopGate.steps.length}`,
+      progressPct: firstShopGate.pct,
       rewardLabel: '+250 İtibar · Dükkân izni',
       reputationPoints: 250,
       targetBuildingId: 'BORSA',
-      completed: state.netWorth >= FIRST_SHOP_MIN_NET_WORTH || shopsList.length > 0,
+      completed: firstShopGate.open,
     },
     {
       id: 'quest-05-open-first-shop',

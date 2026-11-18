@@ -43,7 +43,7 @@ import { SimulationState } from '../../models/simulation';
 import { HelpTip } from './ui/HelpTip';
 import { SHOP_EMOJI } from './ui/shopEmoji';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
-import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
+import { FirstShopGateCard } from './ui/FirstShopGateCard';
 import {
   LogisticsVehicleType,
   PaymentTermType,
@@ -724,34 +724,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
             </div>
           ) : (
-            <div
-              data-testid="first-shop-progress"
-              className="g-hero p-5 space-y-2"
-            >
-              <div className="flex items-center gap-2 font-extrabold text-sm">
-                <span className="text-2xl">🏪</span>
-                {state.netWorth >= FIRST_SHOP_MIN_NET_WORTH
-                  ? 'Hazırsın! İlk dükkânını aç'
-                  : 'İlk dükkânına ne kadar kaldı?'}
-              </div>
-              <div className="w-full h-4 bg-white/60 rounded-full overflow-hidden">
-                <div
-                  className="g-fill"
-                  style={{
-                    width: `${Math.min(100, Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100))}%`,
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-[13px] font-bold tabular-nums">
-                <span>{formatCurrency(state.netWorth)}</span>
-                <span>{formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
-              </div>
-              {state.netWorth < FIRST_SHOP_MIN_NET_WORTH && (
-                <p className="text-[13px] font-semibold">
-                  Borsada hisse al-sat, parayı büyüt. Hedefe ulaşınca dükkân kurabilirsin!
-                </p>
-              )}
-            </div>
+            <FirstShopGateCard state={state} />
           )}
 
           {/* SEÇİLİ İŞLEM SEKMESİ İÇERİĞİ */}

@@ -469,12 +469,27 @@ export default function App() {
         engine.setTimeScale(scale);
         setStatusBanner({
           type: 'info',
-          text: `Oyun hızı ${scale}x olarak ayarlandı (1 Oyun Günü = ${state.realMinutesPerGameDay} gerçek dk).`,
+          text: `Oyun hızı ${scale}x olarak ayarlandı (1 Oyun Günü = ${engine.getEffectiveMinutesPerGameDay()} gerçek dk).`,
         });
       }
       persistAndRefreshUI();
     },
-    [engine, persistAndRefreshUI, state.day, state.realMinutesPerGameDay]
+    [engine, persistAndRefreshUI, state.day]
+  );
+
+  const handleSetFastStartTempo = useCallback(
+    (on: boolean) => {
+      lastRealTickMsRef.current = Date.now();
+      engine.setFastStartTempo(on);
+      setStatusBanner({
+        type: 'info',
+        text: on
+          ? `Hızlı başlangıç açık: şu an 1 oyun günü ${engine.getEffectiveMinutesPerGameDay()} gerçek dakika.`
+          : `Hızlı başlangıç kapalı: 1 oyun günü ${engine.getEffectiveMinutesPerGameDay()} gerçek dakika.`,
+      });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
   );
 
   const handleSetRealMinutesPerDay = useCallback(
@@ -1166,6 +1181,7 @@ export default function App() {
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}
+        onSetFastStartTempo={handleSetFastStartTempo}
         onAdvanceToMarketOpen={handleAdvanceToMarketOpen}
         onAdvanceOneHour={handleAdvanceOneHour}
         onTickDay={handleTickDay}

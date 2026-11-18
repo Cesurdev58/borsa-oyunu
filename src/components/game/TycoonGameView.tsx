@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { effectiveRealMinutesPerGameDay, isFastStartOn } from '../../engine/TempoRules';
+import { TEMPO_COMPANY_MINUTES, TEMPO_EARLY_MINUTES } from '../../data/gameBalance';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { FirstRunGuide } from './FirstRunGuide';
@@ -73,6 +75,8 @@ interface TycoonGameViewProps extends BuildingDetailActions {
   onMarkNotificationsRead: () => void;
   onSetTimeScale: (scale: TimeScaleOption) => void;
   onSetRealMinutesPerDay: (mins: RealMinutesPerGameDayOption) => void;
+  /** Hızlı başlangıcı aç/kapat (kariyerin başında kısa günler). Verilmezse ayar gizlenir. */
+  onSetFastStartTempo?: (on: boolean) => void;
   onAdvanceToMarketOpen: () => void;
   onAdvanceOneHour: () => void;
   onTickDay: () => void;
@@ -92,6 +96,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
+  onSetFastStartTempo,
   onAdvanceToMarketOpen,
   onAdvanceOneHour,
   onTickDay,
@@ -822,6 +827,29 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 ))}
               </div>
             </div>
+
+            {/* Hızlı başlangıç: kariyerin başında günler kısa */}
+            {onSetFastStartTempo && (
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <div className="font-extrabold text-[var(--g-ink)]">Hızlı başlangıç</div>
+                  <div className="text-[13px] text-slate-500" data-testid="settings-fast-start-note">
+                    {isFastStartOn(state)
+                      ? `Şirket kurana kadar 1 gün ${TEMPO_EARLY_MINUTES} dk, halka arza kadar ${TEMPO_COMPANY_MINUTES} dk. Şu an: ${effectiveRealMinutesPerGameDay(state)} dk`
+                      : `Kapalı: her zaman ${state.realMinutesPerGameDay} dk`}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="settings-fast-start-toggle"
+                  aria-pressed={isFastStartOn(state)}
+                  onClick={() => onSetFastStartTempo(!isFastStartOn(state))}
+                  className={`g-btn ${isFastStartOn(state) ? 'g-btn-primary' : 'g-btn-secondary'} px-4 min-h-[44px]`}
+                >
+                  {isFastStartOn(state) ? 'Açık' : 'Kapalı'}
+                </button>
+              </div>
+            )}
 
             {/* Bina Paneli Açıkken Otomatik Duraklatma Seçeneği */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">

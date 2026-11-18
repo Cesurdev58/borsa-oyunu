@@ -20,7 +20,8 @@ import {
   X,
 } from 'lucide-react';
 import {
-  FIRST_SHOP_MIN_NET_WORTH,
+  TEMPO_COMPANY_MINUTES,
+  TEMPO_EARLY_MINUTES,
   MANAGER_MIN_SHOP_LEVEL,
   MARKET_BUY_MAX_OWNERSHIP_PCT,
   WEALTH_TAX_ANNUAL_RATE,
@@ -71,9 +72,9 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       Icon: Rocket,
       points: [
         `${fc(PROGRESSION_RULES.defaultNetWorth)} ile başlarsın. Amacın küçük parayı büyütüp bir holding patronu olmak.`,
-        `Yol şöyle: Borsada para kazan → toplam varlığın ${fc(FIRST_SHOP_MIN_NET_WORTH)} olunca dükkân aç → ${companyAt} olunca şirket kur → rakip şirketleri satın alıp holding ol.`,
+        `Yol şöyle: Borsayı tanı (bir hisse al, başka sektörden de al, bir hisseni sat) → dükkân aç → toplam varlığın ${companyAt} olunca şirket kur → rakip şirketleri satın alıp holding ol.`,
         'Ekranın üstündeki "Sıradaki hedef" şeridi o an ne yapman gerektiğini söyler. "Git" düğmesi seni oraya götürür.',
-        'Bir oyun günü 15 gerçek dakika sürer. Sağ alttaki düğmeyle zamanı 2 kat hızlandırabilirsin. Uygulama kapalıyken oyun en fazla 8 gün ilerler.',
+        `Başlangıç hızlıdır: şirket kurana kadar bir oyun günü ${TEMPO_EARLY_MINUTES} gerçek dakika, şirketin halka açılana kadar ${TEMPO_COMPANY_MINUTES} dakika sürer. Sonra Ayarlar'da seçtiğin uzunluk (15 dk) geçerli olur. Sağ alttaki düğmeyle zamanı 2 kat hızlandırabilirsin. Uygulama kapalıyken oyun en fazla yaklaşık 2 gerçek saat ilerler.`,
         'Üstteki para kutusuna dokununca toplam varlığını görürsün. Zil bildirimleri, yıldız ise hangi aşamada olduğunu gösterir.',
         'Gün gece 00:00\'da döner. O an sol altta altın "Gün raporu" çıkar: dokununca şirketin, dükkânların ve borsanın o gün ne kazandırdığını görürsün.',
       ],
@@ -103,7 +104,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       title: 'Dükkân işletmek',
       Icon: Store,
       points: [
-        `Toplam varlığın ${fc(FIRST_SHOP_MIN_NET_WORTH)} olunca Dükkân sekmesinden ilk dükkânını açarsın. Büfe en ucuzu, galeri en pahalısı.`,
+        'Borsada bir hisse alıp, başka bir sektörden de alıp, bir hisseni satınca Dükkân sekmesinden ilk dükkânını açarsın. Büfe en ucuzu, galeri en pahalısı.',
         'Her dükkânın kendi kasası vardır. Mal alımı ve maaşlar oradan ödenir. Kasa azalınca cebinden para koy, kâr birikince "Kâr al" de.',
         'Raf boşsa satış olmaz. "Rafları doldur" en ucuz toptancıdan mal ısmarlar. Mal birkaç günde gelir; gelene kadar "Yolda" yazar.',
         'Fiyat, çalışan ve dükkân büyütme için dükkân kartındaki "Yönet" düğmesine dokun.',

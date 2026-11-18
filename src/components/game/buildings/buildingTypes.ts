@@ -29,6 +29,9 @@ import {
 } from '../EsnafAndTradePanel';
 
 export interface BuildingDetailActions extends Partial<EsnafAndTradeActionsProps> {
+  /** Portföy yöneticisi (borsa otomasyonu, engine/AutoInvestEngine.ts) */
+  onHirePortfolioManager?: () => void;
+  onConfigureAutoInvest?: (params: { enabled?: boolean; reserve?: number }) => void;
   selectedTicker: string;
   onSelectTicker: (ticker: string) => void;
   onPlaceOrder: (params: {

@@ -18,11 +18,13 @@ import {
   SectorId,
 } from '../../../models/market';
 import { SectorIcon, sectorLabel } from '../ui/SectorIcon';
-import { History, ListChecks, Wallet } from 'lucide-react';
+import { History, ListChecks, UserCog, Wallet } from 'lucide-react';
 import { AssetsSection, HistorySection, OrdersSection } from './InvestorSections';
 import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
+
+import { AUTO_INVEST_HIRE_FEE } from '../../../data/gameBalance';
 
 export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -36,6 +38,8 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
   reservedCash,
   getReservedShares,
   formatCurrency,
+  onHirePortfolioManager,
+  onConfigureAutoInvest,
 }) => {
   const [sectorFilter, setSectorFilter] = useState<SectorId | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +144,64 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
         </div>
 
       </div>
+
+      {/* Portföy yöneticisi: kenardaki paranın fazlasını her gün sonunda borsaya yatırır */}
+      {onHirePortfolioManager && (
+        <div data-testid="auto-invest-card" className="g-card p-3 space-y-2.5">
+          <div className="flex items-center gap-3">
+            <span className="w-11 h-11 shrink-0 rounded-2xl bg-[#eef1fb] flex items-center justify-center">
+              <UserCog size={22} className="text-[var(--g-navy-600)]" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="font-extrabold text-[var(--g-ink)] leading-tight">Portföy yöneticisi</div>
+              <div data-testid="auto-invest-status" className="text-[13px] text-[var(--g-muted)] leading-snug">
+                {!state.autoInvest?.hired
+                  ? 'Boştaki paranı her gün sonunda bütün şirketlere eşit yatırır.'
+                  : state.autoInvest.enabled
+                  ? `${formatCurrency(state.autoInvest.reserve).replace(/,00$/, '')} kenarda kalır, fazlası borsaya.`
+                  : 'Şu an duruyor.'}
+              </div>
+            </div>
+            {!state.autoInvest?.hired ? (
+              <button
+                type="button"
+                data-testid="auto-invest-hire-btn"
+                disabled={spendableCash < AUTO_INVEST_HIRE_FEE}
+                onClick={onHirePortfolioManager}
+                className="g-btn g-btn-primary g-btn-sm shrink-0 px-3 tabular-nums"
+              >
+                Tut {formatCurrency(AUTO_INVEST_HIRE_FEE).replace(/,00$/, '')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="auto-invest-toggle"
+                aria-pressed={state.autoInvest.enabled}
+                onClick={() => onConfigureAutoInvest?.({ enabled: !state.autoInvest!.enabled })}
+                className={`g-btn ${state.autoInvest.enabled ? 'g-btn-primary' : 'g-btn-secondary'} g-btn-sm shrink-0 px-3`}
+              >
+                {state.autoInvest.enabled ? 'Açık' : 'Kapalı'}
+              </button>
+            )}
+          </div>
+          {state.autoInvest?.hired && (
+            <div className="grid grid-cols-4 gap-1.5" data-testid="auto-invest-reserve">
+              {[50_000, 100_000, 250_000, 1_000_000].map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  data-testid={`auto-invest-reserve-${v}`}
+                  data-active={state.autoInvest!.reserve === v ? 'true' : 'false'}
+                  onClick={() => onConfigureAutoInvest?.({ reserve: v })}
+                  className="g-choice text-[13px] tabular-nums"
+                >
+                  {v >= 1_000_000 ? `${v / 1_000_000} Mn` : `${v / 1000}B`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Varlıklarım · İşlem geçmişi · Bekleyen emirler */}
       <div className="grid grid-cols-3 gap-2" data-testid="borsa-tools-strip">

@@ -79,3 +79,15 @@ test('Rapor kartı açılınca toplam değişimi ve bölümleri gösterir; kayı
   );
   assert.equal(capsule, '');
 });
+
+test('Rekor gün: kazanç önceki rekoru %15 geçince rapor işaretlenir, az farkla geçince işaretlenmez', async () => {
+  const { markRecordDay } = await import('../../engine/DayReportEngine');
+  const st = { records: { bestDayGain: 10_000, bestDay: 3 } } as never as import('../../models/simulation').SimulationState;
+  const r1 = { day: 10, netWorthStart: 100_000, netWorthEnd: 110_500 } as never as import('../../models/simulation').DayReport;
+  markRecordDay(st, r1);
+  assert.equal(r1.isRecord, undefined, '%5 fazla: işaret yok');
+  assert.equal(st.records!.bestDayGain, 10_500, 'rekor yine güncellenir');
+  const r2 = { day: 11, netWorthStart: 100_000, netWorthEnd: 113_000 } as never as import('../../models/simulation').DayReport;
+  markRecordDay(st, r2);
+  assert.equal(r2.isRecord, true);
+});

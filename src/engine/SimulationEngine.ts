@@ -138,6 +138,9 @@ import {
 } from './GameClockEngine';
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
+import * as ShopUpgrades from './ShopUpgrades';
+import * as LifestyleEngine from './LifestyleEngine';
+import * as AutoInvestEngine from './AutoInvestEngine';
 import { PROGRESSION_RULES } from './ProgressionRules';
 import {
   IPOEngine,
@@ -718,6 +721,9 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       careerGoals: cloned.careerGoals,
+      lifestyle: cloned.lifestyle,
+      autoInvest: cloned.autoInvest,
+      records: cloned.records,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -1685,6 +1691,41 @@ export class SimulationEngine {
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  /** Portföy yöneticisi tutar (engine/AutoInvestEngine.ts). */
+  public hirePortfolioManager(): { success: boolean; message: string } {
+    const res = AutoInvestEngine.hirePortfolioManager(this);
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Borsa] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Portföy yöneticisini aç/kapat, kenarda kalacak parayı ayarla. */
+  public configureAutoInvest(params: { enabled?: boolean; reserve?: number }): { success: boolean; message: string } {
+    return AutoInvestEngine.configureAutoInvest(this, params);
+  }
+
+  /** Gösteriş harcaması yapar (engine/LifestyleEngine.ts). */
+  public buyLifestyleItem(itemId: string): { success: boolean; message: string } {
+    const res = LifestyleEngine.buyLifestyleItem(this.state, itemId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Lüks] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
+  public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
+    const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Dükkân] ${res.message}`);
+    }
+    return res;
+  }
+
   /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */
   public claimCareerGoal(
     goalId: string,

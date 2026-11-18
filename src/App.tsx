@@ -894,6 +894,39 @@ export default function App() {
     [engine, handleShopManagerResult]
   );
 
+  const handleHirePortfolioManager = useCallback(() => {
+    const res = engine.hirePortfolioManager();
+    setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+    persistAndRefreshUI();
+  }, [engine, persistAndRefreshUI]);
+
+  const handleConfigureAutoInvest = useCallback(
+    (params: { enabled?: boolean; reserve?: number }) => {
+      const res = engine.configureAutoInvest(params);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleBuyLifestyleItem = useCallback(
+    (itemId: string) => {
+      const res = engine.buyLifestyleItem(itemId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleBuyShopUpgrade = useCallback(
+    (shopId: string, upgradeId: string) => {
+      const res = engine.buyShopUpgrade(shopId, upgradeId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleUpgradeShopLevel = useCallback(
     (shopId: string) => {
       const res = engine.upgradeShopLevel(shopId);
@@ -1191,6 +1224,7 @@ export default function App() {
         notifications={notifications}
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
+        onBuyLifestyleItem={handleBuyLifestyleItem}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}
@@ -1235,6 +1269,9 @@ export default function App() {
         onDeliverCommercialContract={handleDeliverCommercialContract}
         onIncorporateShopsIntoCompany={handleIncorporateShops}
         onHireShopManager={handleHireShopManager}
+        onBuyShopUpgrade={handleBuyShopUpgrade}
+        onHirePortfolioManager={handleHirePortfolioManager}
+        onConfigureAutoInvest={handleConfigureAutoInvest}
         onFireShopManager={handleFireShopManager}
         onSetShopManagerSweep={handleSetShopManagerSweep}
         spendableCash={engine.getSpendableCash()}

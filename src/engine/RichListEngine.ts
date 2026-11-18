@@ -68,6 +68,15 @@ const FOUNDER_NAMES: readonly string[] = [
   'Erol Madenci',
 ];
 
+/**
+ * Dükkân döneminin rakip esnafı: karar kartlarında (rakip hamleleri) adı geçen kişi.
+ * Zenginler listesindeki ilk beş mahalle zengininden biri; tohum + günden seçilir.
+ */
+export function localRivalName(pick01: number): string {
+  const pool = LOCAL_RICH.slice(0, 5);
+  return pool[Math.min(pool.length - 1, Math.floor(pick01 * pool.length))][0];
+}
+
 /** Yerel zenginlerin yıllık büyümesi */
 const LOCAL_ANNUAL_GROWTH = 0.25;
 
@@ -79,7 +88,14 @@ function hash(seed: number, a: number, b: number): number {
   return (h >>> 0) / 0xffffffff;
 }
 
-type RichInput = Pick<SimulationState, 'seed' | 'day' | 'stocks' | 'netWorth'>;
+type RichInput = Pick<SimulationState, 'seed' | 'day' | 'stocks' | 'netWorth'> &
+  Partial<Pick<SimulationState, 'playerCompany'>>;
+
+/** Borsa şirketinin uydurma kurucusunun adı (zenginler listesindekiyle aynı). */
+export function founderNameForTicker(stocks: Pick<SimulationState, 'stocks'>['stocks'], ticker: string): string | null {
+  const i = stocks.findIndex((s) => s.ticker === ticker);
+  return i < 0 ? null : FOUNDER_NAMES[i % FOUNDER_NAMES.length];
+}
 
 export function buildRichList(state: RichInput): RichListModel {
   const seed = state.seed ?? 1;
@@ -98,10 +114,11 @@ export function buildRichList(state: RichInput): RichListModel {
     const stake = 0.28 + hash(seed, 100 + i, 0) * 0.24; // %28–52 kurucu payı
     const marketValue = s.price * (s.totalShares ?? 0);
     const shortName = s.name.split(' ')[0];
+    const isRival = Boolean(state.playerCompany && state.playerCompany.sector === s.sector);
     out.push({
       id: `founder-${s.ticker}`,
       name: FOUNDER_NAMES[i % FOUNDER_NAMES.length],
-      title: `${shortName} kurucusu`,
+      title: isRival ? `Rakibin · ${shortName} kurucusu` : `${shortName} kurucusu`,
       netWorth: stake * marketValue,
       isPlayer: false,
       ticker: s.ticker,

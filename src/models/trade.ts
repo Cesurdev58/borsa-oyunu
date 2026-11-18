@@ -415,6 +415,8 @@ export interface ShopInstance {
   manager?: ShopManagerInfo;
   /** Karar kartından gelen geçici müşteri çarpanı (eski kayıtlarda yoktur) */
   demandBoost?: { multiplier: number; untilDay: number };
+  /** Alınan küçük yükseltmeler (data/shopUpgrades.ts kimlikleri; eski kayıtlarda yoktur) */
+  upgrades?: string[];
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
   live?: ShopLiveDay;
   todayWalkInCustomers: number;

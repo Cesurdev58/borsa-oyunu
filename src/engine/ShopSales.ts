@@ -15,6 +15,7 @@
 
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
+import { shopUpgradeMultipliers } from './ShopUpgrades';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance, ShopLiveDay, TradeUniverseState } from '../models/trade';
@@ -106,6 +107,7 @@ export function computeShopDailyDemand(
     mechanicDemandMultiplier = 0.85 + (shop.specificState.showroomSlots || 6) * 0.04;
   }
 
+  const upgradeMult = shopUpgradeMultipliers(shop);
   const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
   const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
   const customers = Math.max(
@@ -120,6 +122,7 @@ export function computeShopDailyDemand(
         macroFactor *
         eventDemandMult *
         mechanicDemandMultiplier *
+        upgradeMult.customers *
         (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )
   );
@@ -141,7 +144,7 @@ export function computeShopDailyDemand(
         : Math.max(0.08, Math.pow(1 / priceRatio, 2.3));
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
-    const unitsPerCustomer = tpl.avgBasketValueTL / Math.max(1, fairRetailPrice);
+    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket) / Math.max(1, fairRetailPrice);
     const units = Math.max(
       1,
       Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity)

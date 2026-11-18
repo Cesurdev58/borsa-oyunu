@@ -11,6 +11,7 @@ import { SHOP_TEMPLATES } from '../src/engine/TradeAndShopEngine';
 import { restockShops } from '../src/tests/balance/restockBot';
 import { answerDecisionSensibly } from '../src/tests/balance/decisionBot';
 import { expandByTakeover, growCompanyGreedy } from '../src/tests/balance/companyBot';
+import { SHOP_UPGRADES } from '../src/data/shopUpgrades';
 
 const HEDEF_GERI_DONUS: Record<string, number> = {
   BUFE: 45,
@@ -93,6 +94,46 @@ for (const type of Object.keys(SHOP_TEMPLATES)) {
     'müdürlü kâr/gün', fmt(managed).padStart(8),
     `oran %${ratio}`,
     '(hedef %70–85)'
+  );
+}
+
+console.log('\n=== YÜKSELTMELER (3. seviye dükkân, 90 gün): yükseltmesiz vs 6 yükseltmenin hepsi ===');
+console.log('Hedef: 6 yükseltmenin hepsi, dükkânın hedef geri dönüş süresinin ~%80\'inde kendini çıkarsın (küçük ama sık alım).');
+for (const type of Object.keys(SHOP_TEMPLATES)) {
+  const run = (withUpgrades: boolean) => {
+    const eng = new SimulationEngine(20261104, 8_000_000);
+    if (!eng.openShop({ shopType: type as never }).success) return null;
+    const shopId = eng.getState().tradeState!.shops[0].shopId;
+    eng.upgradeShopLevel(shopId);
+    eng.upgradeShopLevel(shopId);
+    let cost = 0;
+    if (withUpgrades) {
+      for (const u of SHOP_UPGRADES) {
+        const r = eng.buyShopUpgrade(shopId, u.id);
+        if (r.success) cost += r.cost;
+      }
+    }
+    const profits: number[] = [];
+    for (let d = 1; d <= 90; d++) {
+      restockShops(eng);
+      answerDecisionSensibly(eng);
+      eng.advanceDaysWithoutPlayerDecisions(1, true);
+      if (d > 20) profits.push(eng.getState().tradeState!.shops[0].todayNetProfit);
+    }
+    return { profit: profits.reduce((a, b) => a + b, 0) / profits.length, cost };
+  };
+  const a = run(false);
+  const b = run(true);
+  if (!a || !b) continue;
+  const gain = b.profit - a.profit;
+  const payback = gain > 0 ? Math.round(b.cost / gain) : 'zarar';
+  console.log(
+    type.padEnd(20),
+    'kâr/gün', fmt(a.profit).padStart(8), '→', fmt(b.profit).padStart(8),
+    `(+%${Math.round((gain / Math.max(1, a.profit)) * 100)})`.padStart(7),
+    'maliyet', fmt(b.cost).padStart(9),
+    'geri dönüş', String(payback).padStart(5), 'gün',
+    `(hedef ~${Math.round(HEDEF_GERI_DONUS[type] * 0.8)})`
   );
 }
 

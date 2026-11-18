@@ -894,6 +894,15 @@ export default function App() {
     [engine, handleShopManagerResult]
   );
 
+  const handleBuyShopUpgrade = useCallback(
+    (shopId: string, upgradeId: string) => {
+      const res = engine.buyShopUpgrade(shopId, upgradeId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleUpgradeShopLevel = useCallback(
     (shopId: string) => {
       const res = engine.upgradeShopLevel(shopId);
@@ -1235,6 +1244,7 @@ export default function App() {
         onDeliverCommercialContract={handleDeliverCommercialContract}
         onIncorporateShopsIntoCompany={handleIncorporateShops}
         onHireShopManager={handleHireShopManager}
+        onBuyShopUpgrade={handleBuyShopUpgrade}
         onFireShopManager={handleFireShopManager}
         onSetShopManagerSweep={handleSetShopManagerSweep}
         spendableCash={engine.getSpendableCash()}

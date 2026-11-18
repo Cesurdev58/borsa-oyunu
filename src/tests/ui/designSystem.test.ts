@@ -8,7 +8,7 @@ test('Hedef zinciri gerçek kariyer yolunu izler (gizli limit emri hedefi yok)',
   const eng = new SimulationEngine(20261113, 100_000);
   const model = deriveCityQuestStripModel(eng.getState(), true);
   const ids = model.allQuests.map((q) => q.id);
-  assert.equal(ids.length, 27, 'hedef zinciri halka arz, devralma ve zenginler listesine kadar uzanır');
+  assert.equal(ids.length, 29, 'hedef zinciri halka arz, devralma ve zenginler listesine kadar uzanır');
   assert.equal(ids[ids.length - 1], 'goal-rich-top-1');
   assert.ok(!ids.some((id) => id.includes('limit')), 'limit emri hedefi kaldırılmış olmalı');
   assert.ok(ids.includes('quest-05-open-first-shop'));

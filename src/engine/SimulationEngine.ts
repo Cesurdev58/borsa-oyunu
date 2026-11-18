@@ -138,6 +138,7 @@ import {
 } from './GameClockEngine';
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
+import * as ShopUpgrades from './ShopUpgrades';
 import { PROGRESSION_RULES } from './ProgressionRules';
 import {
   IPOEngine,
@@ -1685,6 +1686,16 @@ export class SimulationEngine {
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
+  public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
+    const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Dükkân] ${res.message}`);
+    }
+    return res;
+  }
+
   /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */
   public claimCareerGoal(
     goalId: string,

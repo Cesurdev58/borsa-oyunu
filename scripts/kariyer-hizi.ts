@@ -14,6 +14,7 @@ import { SimulationEngine } from '../src/engine/SimulationEngine';
 import { SHOP_TEMPLATES } from '../src/engine/TradeAndShopEngine';
 import { firstShopGateStatus } from '../src/engine/FirstShopGate';
 import { buildCareerGoals } from '../src/engine/CareerGoals';
+import { listShopUpgrades } from '../src/engine/ShopUpgrades';
 import { PROGRESSION_RULES } from '../src/engine/ProgressionRules';
 import { restockShops } from '../src/tests/balance/restockBot';
 import { answerDecisionSensibly } from '../src/tests/balance/decisionBot';
@@ -137,6 +138,21 @@ function runCareer(seed: number): {
             upgrades++;
             break;
           }
+        }
+      }
+    }
+    // Küçük yükseltmeler: hedef isterse en ucuzunu al; ayrıca nakdin %20'sinden ucuz olanları al
+    {
+      const m = buildCareerGoals(eng.getState(), { hasOpenedBorsa: true, companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth });
+      const goalWants = m.active?.def.id === 'goal-first-upgrade' || m.active?.def.id === 'goal-six-upgrades';
+      const offers = (eng.getState().tradeState?.shops ?? [])
+        .flatMap((sh) => listShopUpgrades(sh).filter((u) => u.status === 'AVAILABLE').map((u) => ({ sh, u })))
+        .sort((a, b) => a.u.cost - b.u.cost);
+      for (const { sh, u } of offers) {
+        const cash = eng.getSpendableCash();
+        if ((goalWants && cash >= u.cost + 8_000) || u.cost < cash * 0.2) {
+          eng.buyShopUpgrade(sh.shopId, u.def.id);
+          if (goalWants) break;
         }
       }
     }

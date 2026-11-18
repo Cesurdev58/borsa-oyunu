@@ -32,6 +32,7 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   onDeliverCommercialContract,
   onIncorporateShopsIntoCompany,
   onHireShopManager,
+  onBuyShopUpgrade,
   onFireShopManager,
   onSetShopManagerSweep,
 }) => {
@@ -92,6 +93,7 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             onDeliverCommercialContract={onDeliverCommercialContract}
             onIncorporateShopsIntoCompany={onIncorporateShopsIntoCompany}
             onHireShopManager={onHireShopManager}
+            onBuyShopUpgrade={onBuyShopUpgrade}
             onFireShopManager={onFireShopManager}
             onSetShopManagerSweep={onSetShopManagerSweep}
           />

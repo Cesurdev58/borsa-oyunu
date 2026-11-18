@@ -5,7 +5,7 @@
  * KARİYER HEDEFLERİ (CareerGoals)
  * Oyunun başından sonuna kadar uzanan sıralı hedef zinciri ve gerçek para ödülleri.
  * Eskiden 8 hedef vardı, şirket kurulunca bitiyordu ve ödüller yalnızca yazıydı ("+100 İtibar").
- * Şimdi 27 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
+ * Şimdi 29 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
  * "Ödülü al" düğmesiyle alınan bir para ödülü vardır.
  *
  * Kurallar:
@@ -86,6 +86,7 @@ const rivalStakeMaxPct = (s: SimulationState) =>
   Math.max(0, ...s.stocks.filter((x) => !x.isPlayerCompany).map((x) => x.playerOwnershipPct ?? 0));
 const controlledRivals = (s: SimulationState) =>
   s.stocks.filter((x) => !x.isPlayerCompany && x.isControlledByPlayer).length;
+const upgradeCount = (s: SimulationState) => shops(s).reduce((a, sh) => a + (sh.upgrades?.length ?? 0), 0);
 const pastShopPhase = (s: SimulationState) => shops(s).length > 0 || hasCompany(s);
 /** Kişisel dükkânların bugüne kadarki toplam net kârı */
 const totalShopProfit = (s: SimulationState) =>
@@ -149,6 +150,13 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
       ),
   },
   {
+    id: 'goal-first-upgrade',
+    title: 'Dükkânına ilk küçük yükseltmeyi al',
+    reward: 3_000,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? count(1, 1) : count(upgradeCount(s), 1)),
+  },
+  {
     id: 'goal-shop-profit-10k',
     title: 'Dükkânlarından toplam 10 bin ₺ kâr et',
     reward: 5_000,
@@ -189,6 +197,13 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 15_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => money(s.netWorth, 250_000),
+  },
+  {
+    id: 'goal-six-upgrades',
+    title: 'Dükkânlarına toplam 6 küçük yükseltme al',
+    reward: 15_000,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? count(6, 6) : count(upgradeCount(s), 6)),
   },
   {
     id: 'goal-three-shops',

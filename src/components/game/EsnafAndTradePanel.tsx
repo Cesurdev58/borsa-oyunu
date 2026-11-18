@@ -29,6 +29,7 @@ import {
   Users,
   Lock,
   UserCog,
+  Check,
 } from 'lucide-react';
 import {
   RECIPE_CATALOG,
@@ -44,6 +45,7 @@ import { HelpTip } from './ui/HelpTip';
 import { SHOP_EMOJI } from './ui/shopEmoji';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { FirstShopGateCard } from './ui/FirstShopGateCard';
+import { listShopUpgrades } from '../../engine/ShopUpgrades';
 import {
   LogisticsVehicleType,
   PaymentTermType,
@@ -60,6 +62,8 @@ export interface EsnafAndTradeActionsProps {
   }) => void;
   onUpgradeShopLevel: (shopId: string) => void;
   onHireShopManager?: (shopId: string) => void;
+  /** Dükkâna küçük yükseltme al (engine/ShopUpgrades.ts) */
+  onBuyShopUpgrade?: (shopId: string, upgradeId: string) => void;
   onFireShopManager?: (shopId: string) => void;
   onSetShopManagerSweep?: (shopId: string, on: boolean) => void;
   onTransferShopCash: (params: {
@@ -167,6 +171,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   onOpenShop,
   onUpgradeShopLevel,
   onHireShopManager,
+  onBuyShopUpgrade,
   onFireShopManager,
   onSetShopManagerSweep,
   onTransferShopCash,
@@ -1260,6 +1265,51 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   ? 'En üst seviye'
                   : `Seviye ${activeShop.level + 1}'e yükselt`}
               </button>
+
+              {!activeShop.isCompanyBranch && (
+                <div data-testid="shop-small-upgrades" className="space-y-2 pt-1">
+                  <div className="g-section-title">Küçük yükseltmeler</div>
+                  {listShopUpgrades(activeShop).map((u) => {
+                    const canPay = spendableCash + activeShop.cashAccountBalance >= u.cost;
+                    return (
+                      <div
+                        key={u.def.id}
+                        data-testid={`shop-small-upgrade-${u.def.id}`}
+                        data-status={u.status}
+                        className={`flex items-center gap-3 p-3 rounded-2xl ${
+                          u.status === 'OWNED' ? 'bg-[#ecfaf3]' : 'g-card-soft'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="font-extrabold text-[var(--g-ink)] leading-tight">{u.def.name}</div>
+                          <div className="text-[13px] font-bold text-[var(--g-green-dark)]">{u.def.effectLabel}</div>
+                        </div>
+                        {u.status === 'OWNED' ? (
+                          <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                            <Check size={14} strokeWidth={3} /> Var
+                          </span>
+                        ) : u.status === 'LOCKED' ? (
+                          <span className="text-[13px] font-bold text-[var(--g-muted)] shrink-0 text-right">
+                            Seviye {u.def.minLevel}
+                            <br />
+                            gerekir
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            data-testid={`shop-small-upgrade-buy-${u.def.id}`}
+                            disabled={!canPay || !onBuyShopUpgrade}
+                            onClick={() => onBuyShopUpgrade?.(activeShop.shopId, u.def.id)}
+                            className="g-btn g-btn-primary g-btn-sm shrink-0 px-3 tabular-nums"
+                          >
+                            {formatCurrency(u.cost).replace(/,00$/, '')}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

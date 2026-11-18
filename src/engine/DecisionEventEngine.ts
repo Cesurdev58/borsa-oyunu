@@ -12,6 +12,7 @@
  * - Eski kayıtlarda alan yoktur; `ensureDecisionState` gerektiğinde oluşturur.
  */
 
+import { localRivalName } from './RichListEngine';
 import type { SimulationState } from '../models/simulation';
 import type {
   DecisionChoice,
@@ -207,6 +208,55 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
         choice('B', 'Kibarca reddet', []),
       ],
     }),
+  },
+  // --- Rakip hamleleri: zenginler listesindeki mahalle zenginleri oyuncunun dükkânlarına rakip çıkar ---
+  {
+    id: 'rival-next-door',
+    needsShop: true,
+    build: ({ state, shop, S }) => {
+      const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 501));
+      return {
+        emoji: '🏪',
+        titleTR: `${rival} karşına dükkân açtı`,
+        bodyTR: `${rival}, ${shop!.nameTR} dükkânının tam karşısına rakip bir dükkân açtı. Müşterilerin oraya kayabilir.`,
+        choices: [
+          choice('A', 'Açılış indirimi yap', [{ kind: 'CASH', amount: -S }, { kind: 'DEMAND_BOOST', multiplier: 1.1, days: 5 }]),
+          choice('B', 'Bekle, gör', [{ kind: 'DEMAND_BOOST', multiplier: 0.85, days: 6 }]),
+        ],
+      };
+    },
+  },
+  {
+    id: 'rival-poach',
+    needsShop: true,
+    build: ({ state, shop, S }) => {
+      const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 502));
+      return {
+        emoji: '🕵️',
+        titleTR: `${rival} çalışanını istiyor`,
+        bodyTR: `${rival}, ${shop!.nameTR} dükkânındaki en iyi çalışanına daha yüksek maaş teklif etti.`,
+        choices: [
+          choice('A', 'Zam yap, kalsın', [{ kind: 'CASH', amount: -round100(S * 0.6) }, { kind: 'SATISFACTION', delta: 2 }]),
+          choice('B', 'Bırak gitsin', [{ kind: 'SATISFACTION', delta: -6 }, { kind: 'DEMAND_BOOST', multiplier: 0.9, days: 3 }]),
+        ],
+      };
+    },
+  },
+  {
+    id: 'rival-price-war',
+    needsShop: true,
+    build: ({ state, shop, S }) => {
+      const rival = localRivalName(decisionHash(state.seed ?? 1, state.day, 503));
+      return {
+        emoji: '⚔️',
+        titleTR: `${rival} fiyat savaşı başlattı`,
+        bodyTR: `${rival} bütün fiyatlarını kırdı. ${shop!.nameTR} müşterileri karşılaştırma yapıyor.`,
+        choices: [
+          choice('A', 'Sen de kampanya yap', [{ kind: 'CASH', amount: -round100(S * 0.7) }, { kind: 'DEMAND_BOOST', multiplier: 1.05, days: 4 }]),
+          choice('B', 'Kaliteyle yarış', [{ kind: 'DEMAND_BOOST', multiplier: 0.88, days: 5 }, { kind: 'SATISFACTION', delta: 2 }]),
+        ],
+      };
+    },
   },
   {
     id: 'cousin-partner',

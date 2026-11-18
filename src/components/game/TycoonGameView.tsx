@@ -9,7 +9,7 @@ import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
 import { LifestyleModal } from './LifestyleModal';
-import { buildRichList } from '../../engine/RichListEngine';
+import { buildRichList, founderNameForTicker } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -422,6 +422,13 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         shopCount={state.tradeState?.shops.length ?? 0}
         stage={state.stage}
         richRank={richRank}
+        takeovers={state.stocks
+          .filter((s) => s.isControlledByPlayer && !s.isPlayerCompany)
+          .map((s) => ({
+            ticker: s.ticker,
+            company: s.name.split(' ')[0],
+            founder: founderNameForTicker(state.stocks, s.ticker) ?? 'Kurucusu',
+          }))}
       />
       <DecisionCard
         state={state}

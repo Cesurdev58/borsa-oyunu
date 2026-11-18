@@ -15,6 +15,9 @@ const PICK: Record<string, 'A' | 'B'> = {
   'bulk-order': 'A',
   'cousin-partner': 'B',
   'old-debt': 'A',
+  'rival-next-door': 'A',
+  'rival-poach': 'A',
+  'rival-price-war': 'A',
 };
 
 export function answerDecisionSensibly(eng: SimulationEngine): void {

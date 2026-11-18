@@ -2,7 +2,8 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * Önemli bir başarıda (yeni dükkân, yeni aşama) ekranda kısa süre beliren kutlama.
+ * Önemli bir başarıda (rakip devralma, yeni aşama, yeni dükkân, zenginler listesinde yükselme)
+ * ekranda kısa süre beliren kutlama.
  * Yalnızca görsel; oyun durumuna dokunmaz.
  */
 
@@ -17,6 +18,8 @@ interface CelebrationOverlayProps {
   stage: number;
   /** Zenginler listesindeki sıra; oturumda en iyi sıra geçilince kutlanır */
   richRank?: number;
+  /** Devralınan rakipler (kurucu adıyla); sayı artınca kutlanır */
+  takeovers?: { ticker: string; company: string; founder: string }[];
 }
 
 
@@ -24,8 +27,10 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
   shopCount,
   stage,
   richRank,
+  takeovers,
 }) => {
   const prev = useRef({ shopCount, stage });
+  const prevTakeovers = useRef(takeovers?.length ?? 0);
   // Sıra hisse fiyatlarıyla bir aşağı bir yukarı oynayabilir; yalnızca oturumdaki en iyi sıra geçilince kutla
   const bestRank = useRef<number | undefined>(richRank);
   const [message, setMessage] = useState<{ title: string; sub: string } | null>(
@@ -36,9 +41,16 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
     const before = prev.current;
     prev.current = { shopCount, stage };
     let next: { title: string; sub: string } | null = null;
-    if (stage > before.stage) {
+    const tk = takeovers?.length ?? 0;
+    if (tk > prevTakeovers.current && takeovers) {
+      const last = takeovers[takeovers.length - 1];
+      next = { title: `${last.company} artık senin!`, sub: `Kurucusu ${last.founder} şirketini sana devretti.` };
+    }
+    prevTakeovers.current = tk;
+    // Devralma kutlaması diğerlerinden önce gelir
+    if (!next && stage > before.stage) {
       next = { title: 'Yeni aşama!', sub: `Aşama ${stage} açıldı. Büyümeye devam!` };
-    } else if (shopCount > before.shopCount) {
+    } else if (!next && shopCount > before.shopCount) {
       next =
         before.shopCount === 0
           ? { title: 'İlk dükkânın açıldı!', sub: 'Şimdi rafları doldur, satış başlasın.' }
@@ -59,7 +71,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
     play('levelup');
     const t = window.setTimeout(() => setMessage(null), 2800);
     return () => window.clearTimeout(t);
-  }, [shopCount, stage, richRank]);
+  }, [shopCount, stage, richRank, takeovers?.length]);
 
   if (!message) return null;
 

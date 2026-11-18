@@ -8,6 +8,7 @@
  *  - Her gün rafları doldurur, karar kartlarına makul cevap verir.
  *  - Parası yetince yeni türde dükkân açar, açacak tür kalmayınca dükkân yükseltir.
  *  - Dükkân açacak para birikene kadar artan nakdi hisseye yatırmaz (dükkân daha kârlı).
+ * Prestij yıldızıyla ölçmek için: PRESTIJ_YILDIZ=2 npm run kariyer
  * Gerçek oyuncu haberleri okuyarak borsada daha hızlı gidebilir; bu robot alt sınıra yakın bir ölçüdür.
  */
 import { SimulationEngine } from '../src/engine/SimulationEngine';
@@ -15,6 +16,7 @@ import { SHOP_TEMPLATES } from '../src/engine/TradeAndShopEngine';
 import { firstShopGateStatus } from '../src/engine/FirstShopGate';
 import { buildCareerGoals } from '../src/engine/CareerGoals';
 import { listShopUpgrades } from '../src/engine/ShopUpgrades';
+import { prestigeBonuses } from '../src/engine/PrestigeEngine';
 import { PROGRESSION_RULES } from '../src/engine/ProgressionRules';
 import { restockShops } from '../src/tests/balance/restockBot';
 import { answerDecisionSensibly } from '../src/tests/balance/decisionBot';
@@ -31,7 +33,9 @@ function runCareer(seed: number): {
   shops: number;
   goalTimes: { title: string; min: number; reward: number }[];
 } {
-  const eng = new SimulationEngine(seed, 100_000);
+  const stars = Number(process.env.PRESTIJ_YILDIZ ?? 0);
+  const eng = new SimulationEngine(seed, prestigeBonuses(stars).startCash);
+  if (stars > 0) eng.getState().prestige = { stars, cities: 1, bestNetWorth: 0 };
   const ms: Milestones = {
     'İlk dükkân': null,
     'İlk yükseltme': null,

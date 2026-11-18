@@ -724,6 +724,7 @@ export class SimulationEngine {
       lifestyle: cloned.lifestyle,
       autoInvest: cloned.autoInvest,
       records: cloned.records,
+      prestige: cloned.prestige,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,

@@ -6,7 +6,7 @@
  * Oyuncunun satırı vurgulanır, bir üstündeki kişiye ne kadar kaldığı yazar.
  */
 import React, { useEffect, useRef } from 'react';
-import { Trophy, X } from 'lucide-react';
+import { Star, Trophy, X } from 'lucide-react';
 import { buildRichList } from '../../engine/RichListEngine';
 import type { SimulationState } from '../../models/simulation';
 import { formatHudCurrencyTR } from './city/questAndHudLogic';
@@ -15,7 +15,9 @@ export const RichListModal: React.FC<{
   open: boolean;
   state: SimulationState;
   onClose: () => void;
-}> = ({ open, state, onClose }) => {
+  /** Prestij penceresini aç (yeni şehirde başla) */
+  onOpenPrestige?: () => void;
+}> = ({ open, state, onClose, onOpenPrestige }) => {
   const playerRowRef = useRef<HTMLLIElement | null>(null);
   // Açılınca listeyi oyuncunun satırına kaydır (yeni oyuncu en altta başlar)
   useEffect(() => {
@@ -100,6 +102,22 @@ export const RichListModal: React.FC<{
             </li>
           ))}
         </ol>
+        {onOpenPrestige && (
+          <div className="px-3 pt-2 shrink-0 border-t border-[var(--g-line)]">
+            <button
+              type="button"
+              data-testid="rich-list-prestige-btn"
+              onClick={onOpenPrestige}
+              className="g-btn g-btn-navy w-full"
+            >
+              <Star className="w-4 h-4 text-[var(--g-gold)]" />
+              Yeni şehirde başla
+              {(state.prestige?.stars ?? 0) > 0 && (
+                <span className="tabular-nums text-[var(--g-gold)]">· {state.prestige!.stars} yıldız</span>
+              )}
+            </button>
+          </div>
+        )}
         <p className="px-4 py-2 text-[13px] text-[var(--g-muted)] shrink-0 border-t border-[var(--g-line)]">Listedeki kişiler ve servetleri uydurmadır. Kurucuların serveti şirketlerinin hisse fiyatıyla değişir.</p>
       </div>
     </div>

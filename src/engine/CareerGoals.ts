@@ -22,6 +22,7 @@ import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
 import { firstShopGateStatus } from './FirstShopGate';
 import { WalletEngine } from './WalletEngine';
 import { buildRichList } from './RichListEngine';
+import { prestigeBonuses } from './PrestigeEngine';
 
 /** Hedefin "Git" düğmesinin açacağı bina (arayüzdeki CityBuildingId ile aynı adlar). */
 export type GoalTarget = 'BORSA' | 'OYUNCU_OFISI' | 'SIRKET_MERKEZI' | 'HOLDING_MERKEZI' | 'LUKS';
@@ -340,6 +341,12 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
   },
 ];
 
+/** Hedef ödülü (prestij yıldızlarıyla artar, 100 ₺'ye yuvarlanır). */
+export function goalReward(state: Pick<SimulationState, 'prestige'>, def: CareerGoalDef): number {
+  const mult = prestigeBonuses(state.prestige?.stars ?? 0).rewardMult;
+  return Math.round((def.reward * mult) / 100) * 100;
+}
+
 export function ensureCareerGoalsState(state: SimulationState): CareerGoalsState {
   if (!state.careerGoals) state.careerGoals = { claimed: [], totalRewards: 0 };
   return state.careerGoals;
@@ -410,7 +417,7 @@ export function claimCareerGoal(
     return { success: false, message: 'Bu hedef henüz tamamlanmadı.', reward: 0 };
   }
   const gs = ensureCareerGoalsState(state);
-  const reward = active.def.reward;
+  const reward = goalReward(state, active.def);
   if (reward > 0) {
     WalletEngine.earn(state, reward);
     CentralLedgerEngine.recordPostedAccountingEntry(state, {

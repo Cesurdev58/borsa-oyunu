@@ -38,6 +38,27 @@ export const AUTO_INVEST_DEFAULT_RESERVE = 100_000;
 /** Bundan küçük fazlalar yatırılmaz (komisyon boşa gitmesin) */
 export const AUTO_INVEST_MIN_CHUNK = 5_000;
 
+/**
+ * PRESTİJ: YENİ ŞEHİRDE BAŞLA (engine/PrestigeEngine.ts)
+ * Toplam varlığı PRESTIGE_MIN_NET_WORTH'u geçen oyuncu imparatorluğunu bırakıp yeni bir şehirde
+ * sıfırdan başlayabilir. Bıraktığı servete göre kalıcı yıldız kazanır (eşikler aşağıda, en çok
+ * PRESTIGE_MAX_STARS toplam). Yıldız başına: başlangıç parası +PRESTIGE_START_CASH_PER_STAR,
+ * dükkân müşterisi +%PRESTIGE_CUSTOMER_PCT_PER_STAR, hedef ödülleri +%PRESTIGE_REWARD_PCT_PER_STAR.
+ */
+export const PRESTIGE_MIN_NET_WORTH = 10_000_000;
+/** [servet eşiği, o yeni şehirde kazanılan yıldız] (en yüksek uyan eşik geçerli) */
+export const PRESTIGE_STAR_THRESHOLDS: ReadonlyArray<readonly [number, number]> = [
+  [10_000_000, 1],
+  [50_000_000, 2],
+  [250_000_000, 3],
+  [1_000_000_000, 4],
+  [5_000_000_000, 5],
+];
+export const PRESTIGE_MAX_STARS = 10;
+export const PRESTIGE_START_CASH_PER_STAR = 50_000;
+export const PRESTIGE_CUSTOMER_PCT_PER_STAR = 4;
+export const PRESTIGE_REWARD_PCT_PER_STAR = 20;
+
 /** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
 export const OFFLINE_MAX_REAL_MINUTES = 120;
 export const OFFLINE_MAX_GAME_DAYS_CAP = 60;

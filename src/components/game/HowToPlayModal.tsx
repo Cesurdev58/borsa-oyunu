@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import {
   TEMPO_COMPANY_MINUTES,
+  PRESTIGE_MIN_NET_WORTH,
   TEMPO_EARLY_MINUTES,
   MANAGER_MIN_SHOP_LEVEL,
   MARKET_BUY_MAX_OWNERSHIP_PCT,
@@ -146,6 +147,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Kendi sektöründeki rakibi devralırsan daha iyi: onun müşterileri de sana açılır, şirketin daha çok satar.',
         'Holding ekranı devralmanın yaklaşık bedelini ve sana günlük ne kazandıracağını gösterir.',
         'Devralma parası cebinden çıkar. Önce şirketinden temettüyle para çekmen gerekebilir.',
+        `Toplam varlığın ${fc(PRESTIGE_MIN_NET_WORTH)}'yi geçince Zenginler listesinden "Yeni şehirde başla" diyebilirsin: her şey bu şehirde kalır, sen sıfırdan başlarsın ama bıraktığın servet kadar kalıcı yıldız kazanırsın. Her yıldız başlangıç paranı, dükkân müşterini ve hedef ödüllerini artırır.`,
       ],
       go: { label: "Holding'e git", building: 'HOLDING_MERKEZI' },
     },

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as PrestigeEngine from './engine/PrestigeEngine';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   SimulationEngine,
@@ -1173,6 +1174,34 @@ export default function App() {
     refreshUIOnly();
   }, [engine, refreshUIOnly]);
 
+  const handleStartNewCity = useCallback(() => {
+    const res = PrestigeEngine.startNewCity(engineRef.current!.getState(), (seed, cash) => new SimulationEngine(seed, cash));
+    if (!res.success || !res.engine) {
+      setStatusBanner({ type: 'error', text: res.message });
+      return;
+    }
+    const fresh = SimulationStore.replaceSharedEngine(res.engine);
+    engineRef.current = fresh;
+    lastRealTickMsRef.current = Date.now();
+    lastAutosaveRealMsRef.current = Date.now();
+    prevSnapshotRef.current = {
+      day: 1,
+      marketSession: 'MARKET_CLOSED',
+      stage2: false,
+      stage3: false,
+      stage4: false,
+      newsTopId: fresh.getState().newsFeed[0]?.id || '',
+      dividendsTotal: 0,
+      orderStatuses: {},
+      lowCashWarnedDay: 0,
+    };
+    setConsoleOutputLines([]);
+    setSelectedTicker(fresh.getState().stocks[0]?.ticker ?? 'NVEX');
+    setNotifications([]);
+    setStatusBanner({ type: 'success', text: res.message });
+    setTickVersion((v) => v + 1);
+  }, []);
+
   const handleResetSimulation = useCallback(() => {
     const fresh = SimulationStore.resetSharedEngine();
     engineRef.current = fresh;
@@ -1225,6 +1254,7 @@ export default function App() {
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
         onBuyLifestyleItem={handleBuyLifestyleItem}
+        onStartNewCity={handleStartNewCity}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}
         onSetRealMinutesPerDay={handleSetRealMinutesPerDay}

@@ -9,6 +9,7 @@ import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
 import { LifestyleModal } from './LifestyleModal';
+import { PrestigeModal } from './PrestigeModal';
 import { buildRichList, founderNameForTicker } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
@@ -69,6 +70,8 @@ interface TycoonGameViewProps extends BuildingDetailActions {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
   /** Gösteriş harcaması (engine/LifestyleEngine.ts) */
   onBuyLifestyleItem?: (itemId: string) => void;
+  /** Prestij: yeni şehirde başla (engine/PrestigeEngine.ts) */
+  onStartNewCity?: () => void;
   /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
   onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
   state: SimulationState;
@@ -102,6 +105,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onResolveDecision,
   onClaimCareerGoal,
   onBuyLifestyleItem,
+  onStartNewCity,
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
@@ -172,6 +176,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRichListOpen, setIsRichListOpen] = useState(false);
   const [isLifestyleOpen, setIsLifestyleOpen] = useState(false);
+  const [isPrestigeOpen, setIsPrestigeOpen] = useState(false);
   // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
   const richRank = buildRichList(state).playerRank;
 
@@ -495,7 +500,22 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           }
           onOpenRichList={() => setIsRichListOpen(true)}
         />
-        <RichListModal open={isRichListOpen} state={state} onClose={() => setIsRichListOpen(false)} />
+        <RichListModal
+          open={isRichListOpen}
+          state={state}
+          onClose={() => setIsRichListOpen(false)}
+          onOpenPrestige={() => {
+            setIsRichListOpen(false);
+            setIsPrestigeOpen(true);
+          }}
+        />
+        <PrestigeModal
+          open={isPrestigeOpen}
+          state={state}
+          formatCurrency={formatCurrency}
+          onStartNewCity={onStartNewCity}
+          onClose={() => setIsPrestigeOpen(false)}
+        />
         <LifestyleModal
           open={isLifestyleOpen}
           state={state}

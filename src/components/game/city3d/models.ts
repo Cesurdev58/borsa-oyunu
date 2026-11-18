@@ -547,6 +547,28 @@ function makeHotel(w: number, d: number, h: number, rng: Rng): THREE.Group {
 
 // ---------- Şehir blokları ----------
 
+/**
+ * Oyuncunun dükkânlarının ön köşesinde altın bayrak: "bu bina senin".
+ * Bayrağın üstünde dükkân seviyesi kadar (en çok 5) küçük altın küp durur.
+ */
+function ownerFlag(w: number, d: number, lvl: number): THREE.Group {
+  const g = new THREE.Group();
+  const x = w / 2 - 0.9;
+  const z = d / 2 - 0.9;
+  const poleH = 10 + Math.min(4, lvl - 1) * 0.8;
+  g.add(cyl(0.16, 0.16, poleH, stdMat('#d8dde3'), x, poleH / 2, z, 6));
+  const flag = box(3.4, 2.1, 0.1, stdMat('#ffc23d', { emissive: '#7a5200', emissiveIntensity: 0.35 }), x - 1.75, poleH - 1.15, z);
+  flag.name = 'owner-flag';
+  g.add(flag);
+  // Bayrağın üstünde dükkân seviyesi kadar (en çok 5) küçük altın küp
+  const gold = stdMat('#ffc23d', { emissive: '#7a5200', emissiveIntensity: 0.35 });
+  for (let i = 0; i < Math.min(5, lvl); i++) {
+    g.add(box(0.42, 0.42, 0.42, gold, x - 3.1 + i * 0.62, poleH + 0.1, z));
+  }
+  g.name = 'owner-mark';
+  return g;
+}
+
 export const SHOP_SLOT_IDS = new Set(['urban-ticaret-magaza-1', 'urban-ticaret-kafe-2', 'urban-ticaret-otel-5']);
 
 export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
@@ -556,6 +578,17 @@ export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
   const lvl = Math.max(1, block.level ?? 1);
   const h = 3.6 + block.floors * 3.1;
   const g = new THREE.Group();
+
+  // Oyuncunun dükkânı (ilk üç yer ya da büyüdükçe dükkâna dönüşen diğer bloklar)
+  if (block.activeShopType && block.activeShopId) {
+    g.add(shopModel(block.activeShopType, w, d, lvl, rng));
+    g.add(ownerFlag(w, d, lvl));
+    return g;
+  }
+  if (block.shopLot) {
+    g.add(makeLot(w, d, 'DÜKKÂN AÇ', rng, true, false));
+    return g;
+  }
 
   if (SHOP_SLOT_IDS.has(block.id)) {
     if (block.activeShopType) {

@@ -7,12 +7,31 @@
  */
 
 /**
- * İlk dükkânı açabilmek için gereken en düşük net değer (TL).
- * Oyuncu 100.000 TL ile başlar: ilk dükkân için borsada en az %20 kazanması gerekir.
- * Dükkân ekonomisi borsadan çok daha kârlı olduğu için bu kapı olmadan borsa aşaması atlanıyordu.
- * Daha kolay/zor bir başlangıç için yalnızca bu sayıyı değiştirmek yeterlidir.
+ * İLK DÜKKÂN KAPISI
+ * Eskiden ilk dükkân için net değerin 120.000 TL olması gerekiyordu; borsa yılda ~%80 getirdiği için
+ * bu, oyunun ilk 130–180 gününü (15 dk/gün ile 32–44 gerçek saat) yalnızca beklemekle geçirtiyordu.
+ * Şimdi kapı "borsayı öğren" görevleridir (engine/FirstShopGate.ts): bir hisse al, ikinci bir sektörden
+ * hisse al, bir hisse sat. Üçü bitince ilk dükkân açılır (normalde ilk 3–5 gerçek dakika).
+ * Bu sayı yalnızca "zaten zengin" kısayoludur: net değeri bunu geçen oyuncu (ör. testler, çok parayla
+ * başlayan oyun) görevleri yapmadan da dükkân açabilir.
  */
 export const FIRST_SHOP_MIN_NET_WORTH = 120_000;
+
+/**
+ * OYUN TEMPOSU (hızlı başlangıç)
+ * Tycoon oyunlarında başta her şey hızlı olur, imparatorluk büyüdükçe yavaşlar.
+ * Oyuncunun seçtiği gün uzunluğu (15/30/45/60 dk) üst sınırdır; kariyerin başında gün daha kısadır:
+ *  - şirket kurulana kadar (borsa + dükkân dönemi): bir oyun günü en fazla TEMPO_EARLY_MINUTES gerçek dakika
+ *  - şirket kurulduktan sonra, halka arza kadar: en fazla TEMPO_COMPANY_MINUTES
+ *  - halka arz / holding: oyuncunun seçtiği gün uzunluğu
+ * Ayarlardan "Hızlı başlangıç" kapatılırsa her zaman seçilen gün uzunluğu geçerlidir.
+ * Ölçüm: `npm run kariyer` (scripts/kariyer-hizi.ts) her önemli anın kaç gerçek dakikada geldiğini yazar.
+ */
+export const TEMPO_EARLY_MINUTES = 2;
+export const TEMPO_COMPANY_MINUTES = 5;
+/** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
+export const OFFLINE_MAX_REAL_MINUTES = 120;
+export const OFFLINE_MAX_GAME_DAYS_CAP = 60;
 
 /**
  * DÜKKÂN MÜDÜRÜ

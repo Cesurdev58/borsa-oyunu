@@ -252,6 +252,10 @@ export interface CityUrbanBlockNode {
   pendingDeliveryCount?: number;
   todayRevenue?: number;
   hasStockToSell?: boolean;
+  /** Oyuncunun büyümesiyle dükkâna dönüşecek sıradaki boş yer ("DÜKKÂN AÇ" arsası) */
+  shopLot?: boolean;
+  /** Bu bloktaki dükkânın sırası (1 = ilk dükkân) */
+  shopSlotNumber?: number;
 }
 
 export interface CityAtmosphereTheme {

@@ -10,7 +10,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
-    "balans": "tsx scripts/balans-olcumu.ts"
+    "balans": "tsx scripts/balans-olcumu.ts",
+    "kariyer": "tsx scripts/kariyer-hizi.ts"
   },
   "dependencies": {
     "@fontsource-variable/nunito": "^5.3.0",

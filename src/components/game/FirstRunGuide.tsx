@@ -7,7 +7,6 @@
  */
 
 import React, { useState } from 'react';
-import { FIRST_SHOP_MIN_NET_WORTH } from '../../data/gameBalance';
 
 const GUIDE_DONE_KEY = 'first_run_guide_done_v1';
 
@@ -58,7 +57,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
     {
       emoji: '🏪',
       title: 'İlk dükkânını aç',
-      text: `Toplam varlığın ${formatCurrency(FIRST_SHOP_MIN_NET_WORTH)} olunca dükkân kurabilirsin. Dükkân ekranında ilerlemeni görürsün.`,
+      text: 'Borsada bir hisse al, başka bir sektörden de al, sonra birini sat. Bu üç adım bitince dükkân kurabilirsin. Dükkân ekranında ilerlemeni görürsün.',
     },
     {
       emoji: '🛒',

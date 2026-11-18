@@ -3,8 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { effectiveRealMinutesPerGameDay, isFastStartOn } from '../../engine/TempoRules';
+import { TEMPO_COMPANY_MINUTES, TEMPO_EARLY_MINUTES } from '../../data/gameBalance';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
+import { RichListModal } from './RichListModal';
+import { buildRichList } from '../../engine/RichListEngine';
 import { FirstRunGuide } from './FirstRunGuide';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -62,6 +66,8 @@ import { WEALTH_TAX_ANNUAL_RATE, WEALTH_TAX_FREE_AMOUNT } from '../../data/gameB
 
 interface TycoonGameViewProps extends BuildingDetailActions {
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
+  /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
+  onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -73,6 +79,8 @@ interface TycoonGameViewProps extends BuildingDetailActions {
   onMarkNotificationsRead: () => void;
   onSetTimeScale: (scale: TimeScaleOption) => void;
   onSetRealMinutesPerDay: (mins: RealMinutesPerGameDayOption) => void;
+  /** Hızlı başlangıcı aç/kapat (kariyerin başında kısa günler). Verilmezse ayar gizlenir. */
+  onSetFastStartTempo?: (on: boolean) => void;
   onAdvanceToMarketOpen: () => void;
   onAdvanceOneHour: () => void;
   onTickDay: () => void;
@@ -89,9 +97,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   nextEvent,
   notifications,
   onResolveDecision,
+  onClaimCareerGoal,
   onMarkNotificationsRead,
   onSetTimeScale,
   onSetRealMinutesPerDay,
+  onSetFastStartTempo,
   onAdvanceToMarketOpen,
   onAdvanceOneHour,
   onTickDay,
@@ -153,6 +163,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
     useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isRichListOpen, setIsRichListOpen] = useState(false);
+  // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
+  const richRank = buildRichList(state).playerRank;
 
   // Kalıcı UI Ayarları (Grafik Kalitesi, Ses Yöneticisi, Kamera Konumu ve İlk Görev Takibi — ekonomik state'ten bağımsız)
   const [uiSettings, setUiSettings] = useState<UISettingsState>(() =>
@@ -401,6 +414,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       <CelebrationOverlay
         shopCount={state.tradeState?.shops.length ?? 0}
         stage={state.stage}
+        richRank={richRank}
       />
       <DecisionCard
         state={state}
@@ -436,6 +450,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         wealthTaxNote={wealthTaxNote}
         onOpenNotifications={handleOpenNotifications}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        richRank={richRank}
+        onOpenRichList={() => setIsRichListOpen(true)}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}
         formatCurrency={formatCurrency}
       />
@@ -447,7 +463,17 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           state={state}
           hasOpenedBorsaBuilding={uiSettings.hasOpenedBorsaBuilding}
           onOpenBuilding={handleOpenBuildingDetailSheet}
+          onClaimQuest={
+            onClaimCareerGoal
+              ? (id) => {
+                  play('coin');
+                  onClaimCareerGoal(id, Boolean(uiSettings.hasOpenedBorsaBuilding));
+                }
+              : undefined
+          }
+          onOpenRichList={() => setIsRichListOpen(true)}
         />
+        <RichListModal open={isRichListOpen} state={state} onClose={() => setIsRichListOpen(false)} />
 
         {activeBottomTab === 'city' ? (
           <CityNeighborhoodView
@@ -822,6 +848,29 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                 ))}
               </div>
             </div>
+
+            {/* Hızlı başlangıç: kariyerin başında günler kısa */}
+            {onSetFastStartTempo && (
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <div className="font-extrabold text-[var(--g-ink)]">Hızlı başlangıç</div>
+                  <div className="text-[13px] text-slate-500" data-testid="settings-fast-start-note">
+                    {isFastStartOn(state)
+                      ? `Şirket kurana kadar 1 gün ${TEMPO_EARLY_MINUTES} dk, halka arza kadar ${TEMPO_COMPANY_MINUTES} dk. Şu an: ${effectiveRealMinutesPerGameDay(state)} dk`
+                      : `Kapalı: her zaman ${state.realMinutesPerGameDay} dk`}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="settings-fast-start-toggle"
+                  aria-pressed={isFastStartOn(state)}
+                  onClick={() => onSetFastStartTempo(!isFastStartOn(state))}
+                  className={`g-btn ${isFastStartOn(state) ? 'g-btn-primary' : 'g-btn-secondary'} px-4 min-h-[44px]`}
+                >
+                  {isFastStartOn(state) ? 'Açık' : 'Kapalı'}
+                </button>
+              </div>
+            )}
 
             {/* Bina Paneli Açıkken Otomatik Duraklatma Seçeneği */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">

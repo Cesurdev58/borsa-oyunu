@@ -6,6 +6,7 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
+import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as ShopManager from './ShopManager';
 import * as SectorMarket from './SectorMarket';
@@ -747,13 +748,13 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
     const { cappedGameMinutes, wasCapped } =
       GameClockEngine.computeCappedOfflineGameMinutes(
         effectiveRealSeconds,
-        engine.state.realMinutesPerGameDay,
-        GameClockEngine.MAX_OFFLINE_GAME_DAYS
+        effectiveRealMinutesPerGameDay(engine.state),
+        maxOfflineGameDays(engine.state)
       );
 
     if (wasCapped) {
       warnings.push(
-        `Çevrimdışı ilerleme maksimum ${GameClockEngine.MAX_OFFLINE_GAME_DAYS} oyun günü (${GameClockEngine.MAX_OFFLINE_GAME_MINUTES} oyun dakikası) ile sınırlandırıldı.`
+        `Çevrimdışı ilerleme en fazla ${maxOfflineGameDays(engine.state)} oyun günü (yaklaşık 2 gerçek saat) ile sınırlandırıldı.`
       );
     }
 

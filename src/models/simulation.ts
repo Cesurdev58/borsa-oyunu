@@ -240,6 +240,8 @@ export interface SimulationState {
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
+  /** Kariyer hedeflerinde ödülü alınanlar (engine/CareerGoals.ts; eski kayıtlarda yoktur) */
+  careerGoals?: { claimed: string[]; totalRewards: number };
   /** Olağanüstü olaylar (savaş, salgın…; eski kayıtlarda yoktur) */
   worldEvents?: import('./worldEvents').WorldEventState;
   /** Son biten günün raporu (gün sonu raporu; eski kayıtlarda yoktur) */
@@ -256,6 +258,8 @@ export interface SimulationState {
   minutesIntoCurrentDay: number;
   totalElapsedGameMinutes: number;
   realMinutesPerGameDay: RealMinutesPerGameDayOption;
+  /** Hızlı başlangıç (kariyerin başında kısa günler, engine/TempoRules.ts). Eski kayıtlarda yoktur → açık. */
+  fastStartTempo?: boolean;
   timeScale: TimeScaleOption;
   isPaused: boolean;
   marketSession: MarketSession;

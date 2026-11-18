@@ -163,6 +163,15 @@ export class GameClockEngine {
     return GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY;
   }
 
+  /**
+   * Hesapta kullanılan (etkin) gün uzunluğu: seçenek listesi dışında da olabilir
+   * (hızlı başlangıçta 2 ya da 5 dk, bkz. engine/TempoRules.ts). 1–60 dk arası kabul edilir.
+   */
+  public static sanitizeEffectiveMinutesPerDay(value: number): number {
+    if (Number.isFinite(value) && value >= 1 && value <= 60) return value;
+    return GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY;
+  }
+
   public static sanitizeTimeScale(scale: number): TimeScaleOption {
     if (scale === 0 || scale === 1 || scale === 2) {
       return scale;
@@ -180,7 +189,7 @@ export class GameClockEngine {
    */
   public static realSecondsToGameMinutes(
     realSeconds: number,
-    realMinutesPerGameDay: RealMinutesPerGameDayOption = GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
+    realMinutesPerGameDay: number = GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
     timeScale: TimeScaleOption = 1,
     isPaused: boolean = false
   ): number {
@@ -192,8 +201,7 @@ export class GameClockEngine {
     ) {
       return 0;
     }
-    const validRealMins =
-      GameClockEngine.sanitizeRealMinutesPerDay(realMinutesPerGameDay);
+    const validRealMins = GameClockEngine.sanitizeEffectiveMinutesPerDay(realMinutesPerGameDay);
     const validScale = GameClockEngine.sanitizeTimeScale(timeScale);
     const rawMinutes = ((realSeconds * 24) / validRealMins) * validScale;
     return Number(rawMinutes.toFixed(6));
@@ -205,7 +213,7 @@ export class GameClockEngine {
    */
   public static computeCappedOfflineGameMinutes(
     realSecondsElapsed: number,
-    realMinutesPerGameDay: RealMinutesPerGameDayOption = GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
+    realMinutesPerGameDay: number = GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
     maxOfflineDays: number = GameClockEngine.MAX_OFFLINE_GAME_DAYS
   ): {
     rawGameMinutes: number;

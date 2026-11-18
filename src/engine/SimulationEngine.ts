@@ -136,6 +136,9 @@ import {
 import {
   GameClockEngine,
 } from './GameClockEngine';
+import { effectiveRealMinutesPerGameDay } from './TempoRules';
+import * as CareerGoals from './CareerGoals';
+import { PROGRESSION_RULES } from './ProgressionRules';
 import {
   IPOEngine,
 } from './IPOEngine';
@@ -407,6 +410,8 @@ export class SimulationEngine {
       totalElapsedGameMinutes: 0,
       realMinutesPerGameDay:
         GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
+      fastStartTempo: true,
+      careerGoals: { claimed: [], totalRewards: 0 },
       timeScale: 1,
       isPaused: false,
       marketSession: initialClock.marketSession,
@@ -631,6 +636,7 @@ export class SimulationEngine {
         cloned.realMinutesPerGameDay ??
           GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY
       ),
+      fastStartTempo: cloned.fastStartTempo !== false,
       timeScale: GameClockEngine.sanitizeTimeScale(cloned.timeScale ?? 1),
       isPaused:
         typeof cloned.isPaused === 'boolean'
@@ -711,6 +717,7 @@ export class SimulationEngine {
       lastFinancialIntegrityReport: cloned.lastFinancialIntegrityReport ?? null,
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
+      careerGoals: cloned.careerGoals,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -737,6 +744,10 @@ export class SimulationEngine {
       this.migrationNotices.push(msg);
     }
     this.recalculateFinancialsAndStages();
+    // Kariyer hedefleri eski kayıtta yoktur: zaten tamamlanmış hedefler ödülsüz alınmış sayılır
+    CareerGoals.migrateCareerGoalsForLegacySave(this.state, {
+      companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth,
+    });
   }
 
   public getNextScheduledEvent(): {
@@ -782,6 +793,16 @@ export class SimulationEngine {
       GameClockEngine.sanitizeRealMinutesPerDay(minutes);
   }
 
+  /** Hızlı başlangıcı açar/kapatır (kariyerin başında kısa günler). */
+  public setFastStartTempo(on: boolean): void {
+    this.state.fastStartTempo = on;
+  }
+
+  /** Şu an bir oyun günü kaç gerçek dakika sürüyor (hızlı başlangıç dahil). */
+  public getEffectiveMinutesPerGameDay(): number {
+    return effectiveRealMinutesPerGameDay(this.state);
+  }
+
   public setTimeScale(scale: TimeScaleOption): void {
     const cleanScale = GameClockEngine.sanitizeTimeScale(scale);
     this.state.timeScale = cleanScale;
@@ -820,7 +841,7 @@ export class SimulationEngine {
 
     const rawGameMinutes = GameClockEngine.realSecondsToGameMinutes(
       seconds,
-      this.state.realMinutesPerGameDay,
+      effectiveRealMinutesPerGameDay(this.state),
       this.state.timeScale,
       this.state.isPaused
     );
@@ -1664,6 +1685,24 @@ export class SimulationEngine {
   }
 
   /** Bekleyen karar kartında A ya da B seçeneğini uygular. */
+  /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */
+  public claimCareerGoal(
+    goalId: string,
+    ctx: { hasOpenedBorsa?: boolean } = {}
+  ): { success: boolean; message: string; reward: number } {
+    const res = CareerGoals.claimCareerGoal(
+      this.state,
+      goalId,
+      { ...ctx, companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth },
+      this.getReservedCash()
+    );
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Hedef] ${res.message}`);
+    }
+    return res;
+  }
+
   public resolveDecisionEvent(choiceId: 'A' | 'B'): { success: boolean; message: string } {
     const res = DecisionEventEngine.resolveDecision(this.state, choiceId, this.getReservedCash());
     if (res.success) {

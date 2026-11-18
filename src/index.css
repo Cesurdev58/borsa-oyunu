@@ -282,3 +282,8 @@ input[type='number'] {
 @keyframes g-pop-in { 0% { opacity: 0; transform: scale(.85); } 60% { opacity: 1; transform: scale(1.03); } 100% { transform: scale(1); } }
 .celebration-in { animation: g-pop-in .35s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .celebration-in { animation: none; } }
+
+/* Hedef ödülü hazır: altın düğme hafifçe nabız atar (CityQuestStrip) */
+@keyframes quest-claim-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 4px 0 var(--g-gold-dark), 0 0 0 0 rgba(255,194,61,.55); } 50% { transform: scale(1.05); box-shadow: 0 4px 0 var(--g-gold-dark), 0 0 0 8px rgba(255,194,61,0); } }
+.quest-claim-pulse { animation: quest-claim-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .quest-claim-pulse { animation: none; } }

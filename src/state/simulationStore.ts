@@ -543,6 +543,7 @@ export class SimulationStore {
           st.realMinutesPerGameDay ??
             GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY
         ),
+        fastStartTempo: st.fastStartTempo !== false,
         timeScale: GameClockEngine.sanitizeTimeScale(st.timeScale ?? 1),
         isPaused:
           typeof st.isPaused === 'boolean' ? st.isPaused : st.timeScale === 0,
@@ -621,6 +622,7 @@ export class SimulationStore {
         cityState: SimulationStore.deriveOrMigrateCityState(st, day),
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
+        careerGoals: st.careerGoals,
         wealthTax: st.wealthTax,
         lastDayReport: st.lastDayReport,
         worldEvents: st.worldEvents,

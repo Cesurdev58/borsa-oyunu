@@ -14,7 +14,7 @@ import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
 import { TradeAndShopEngine } from '../../../engine/TradeAndShopEngine';
 import { planShopRestock } from '../../../engine/ShopRestockPlanner';
-import { FIRST_SHOP_MIN_NET_WORTH } from '../../../data/gameBalance';
+import { FirstShopGateCard } from '../ui/FirstShopGateCard';
 import type { EsnafAndTradeActionsProps } from '../EsnafAndTradePanel';
 import { SHOP_EMOJI } from '../ui/shopEmoji';
 export { SHOP_EMOJI };
@@ -48,45 +48,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
   );
 
   if (trade.shops.length === 0) {
-    const pct = Math.min(
-      100,
-      Math.floor((state.netWorth / FIRST_SHOP_MIN_NET_WORTH) * 100)
-    );
-    const ready = state.netWorth >= FIRST_SHOP_MIN_NET_WORTH;
-    return (
-      <div
-        data-testid="first-shop-progress"
-        className="g-hero p-5 space-y-3"
-      >
-        <div className="g-display flex items-center gap-3 font-extrabold text-xl leading-tight">
-          <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 flex items-center justify-center text-[28px]">🏪</span>
-          {ready ? 'Hazırsın! İlk dükkânını aç' : 'İlk dükkânına ne kadar kaldı?'}
-        </div>
-        <div className="g-track h-4">
-          <div
-            className="g-fill"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-sm font-bold tabular-nums text-white/70">
-          <span className="text-[var(--g-gold)]">{formatCurrency(state.netWorth)}</span>
-          <span>{formatCurrency(FIRST_SHOP_MIN_NET_WORTH)}</span>
-        </div>
-        {ready ? (
-          <button
-            type="button"
-            onClick={() => onManage(null)}
-            className="g-btn g-btn-gold w-full"
-          >
-            Dükkân türünü seç
-          </button>
-        ) : (
-          <p className="text-sm font-semibold text-white/70">
-            Borsada hisse al-sat, parayı büyüt. Hedefe ulaşınca dükkân kurabilirsin!
-          </p>
-        )}
-      </div>
-    );
+    return <FirstShopGateCard state={state} onOpenShopPicker={() => onManage(null)} />;
   }
 
   // Bugünün görevleri: kayıt tutmadan, dükkânların anlık durumundan türetilir.

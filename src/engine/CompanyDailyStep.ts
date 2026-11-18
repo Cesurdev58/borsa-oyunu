@@ -277,7 +277,12 @@ export class CompanyDailyStep {
       macroFactor,
       context: marketCtx,
     });
-    const fullDayPotentialSales = rawPotentialSales <= 0 ? 0 : saturated.units;
+    // Rakip kartlarından gelen geçici satış çarpanı (DecisionEventEngine, COMPANY_DEMAND)
+    const boost =
+      company.demandBoost && company.operatingDays < company.demandBoost.untilOperatingDay
+        ? company.demandBoost.multiplier
+        : 1;
+    const fullDayPotentialSales = rawPotentialSales <= 0 ? 0 : saturated.units * boost;
     ops.potentialSalesUnits = fullDayPotentialSales;
     ops.sectorMarketUnits = marketCtx.marketUnits;
     ops.rivalUnitsInMarket = Math.round(marketCtx.uncontrolledRivalUnits);

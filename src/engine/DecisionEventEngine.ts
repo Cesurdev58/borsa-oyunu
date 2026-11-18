@@ -12,7 +12,7 @@
  * - Eski kayıtlarda alan yoktur; `ensureDecisionState` gerektiğinde oluşturur.
  */
 
-import { localRivalName } from './RichListEngine';
+import { founderNameForTicker, localRivalName } from './RichListEngine';
 import type { SimulationState } from '../models/simulation';
 import type {
   DecisionChoice,
@@ -45,6 +45,16 @@ export function decisionHash(seed: number, day: number, salt: number): number {
   x >>>= 0;
   x = Math.imul(x ^ (x >>> 15), 2246822519) >>> 0;
   return x / 4294967296;
+}
+
+/** Şirket döneminde rakip: aynı sektörde devralınmamış bir borsa şirketi ve uydurma kurucusu. */
+function companyRival(state: SimulationState, salt: number): { founder: string; company: string } {
+  const sector = state.playerCompany?.sector;
+  const pool = state.stocks.filter((s) => !s.isPlayerCompany && !s.isControlledByPlayer && s.sector === sector);
+  const list = pool.length ? pool : state.stocks.filter((s) => !s.isPlayerCompany && !s.isControlledByPlayer);
+  if (!list.length) return { founder: 'Yabancı bir rakip', company: 'Rakip şirket' };
+  const s = list[Math.floor(decisionHash(state.seed ?? 1, state.day, salt) * list.length) % list.length];
+  return { founder: founderNameForTicker(state.stocks, s.ticker) ?? 'Rakip patron', company: s.name.split(' ')[0] };
 }
 
 function round100(v: number): number {
@@ -83,11 +93,15 @@ interface TemplateContext {
   S: number;
   /** Kişisel olaylar için ölçek (net varlığın ~%2'si) */
   P: number;
+  /** Şirket olayları için ölçek (şirketin günlük net kârının yarısı, 10 bin–1 Mn; verilmezse 20 bin) */
+  C?: number;
 }
 
 interface DecisionTemplate {
   id: string;
   needsShop: boolean;
+  /** Oyuncunun şirketi varsa çıkar (şirket dönemi rakip hamleleri) */
+  needsCompany?: boolean;
   /** En az bu kadar dükkân varsa çıkar (rakipler oyuncu büyüyünce fark eder) */
   minShops?: number;
   build: (ctx: TemplateContext) => Omit<PendingDecision, 'eventId' | 'templateId' | 'day' | 'expiresDay' | 'shopId'>;
@@ -101,6 +115,10 @@ function hint(effects: DecisionEffect[]): string {
     if (e.kind === 'DEMAND_BOOST') {
       const pct = Math.round((e.multiplier - 1) * 100);
       parts.push(`${e.days} gün ${pct >= 0 ? '+' : '−'}%${Math.abs(pct)} müşteri`);
+    }
+    if (e.kind === 'COMPANY_DEMAND') {
+      const pct = Math.round((e.multiplier - 1) * 100);
+      parts.push(`${e.days} gün ${pct >= 0 ? '+' : '−'}%${Math.abs(pct)} şirket satışı`);
     }
     if (e.kind === 'DELAYED_CASH') {
       const chance = e.chancePct >= 100 ? '' : ` (%${e.chancePct} şans)`;
@@ -265,6 +283,58 @@ export const DECISION_TEMPLATES: DecisionTemplate[] = [
       };
     },
   },
+  // --- Şirket dönemi rakip hamleleri: aynı sektördeki uydurma kurucular ---
+  {
+    id: 'co-rival-price-cut',
+    needsShop: false,
+    needsCompany: true,
+    build: ({ state, C = 20_000 }) => {
+      const r = companyRival(state, 601);
+      return {
+        emoji: '📉',
+        titleTR: `${r.founder} fiyat kırdı`,
+        bodyTR: `${r.company} ürünlerini ucuzlattı. Şirketinin müşterileri karşılaştırma yapıyor.`,
+        choices: [
+          choice('A', 'Reklamla karşılık ver', [{ kind: 'CASH', amount: -C }, { kind: 'COMPANY_DEMAND', multiplier: 1.08, days: 5 }]),
+          choice('B', 'Bekle, gör', [{ kind: 'COMPANY_DEMAND', multiplier: 0.9, days: 5 }]),
+        ],
+      };
+    },
+  },
+  {
+    id: 'co-rival-poach',
+    needsShop: false,
+    needsCompany: true,
+    build: ({ state, C = 20_000 }) => {
+      const r = companyRival(state, 602);
+      return {
+        emoji: '🧑‍🔧',
+        titleTR: `${r.founder} mühendislerini istiyor`,
+        bodyTR: `${r.company}, şirketinin en iyi mühendislerine yüksek maaş teklif etti.`,
+        choices: [
+          choice('A', 'Prim öde, kalsınlar', [{ kind: 'CASH', amount: -round100(C * 0.6) }]),
+          choice('B', 'Bırak gitsinler', [{ kind: 'COMPANY_DEMAND', multiplier: 0.94, days: 6 }]),
+        ],
+      };
+    },
+  },
+  {
+    id: 'co-rival-partnership',
+    needsShop: false,
+    needsCompany: true,
+    build: ({ state, C = 20_000 }) => {
+      const r = companyRival(state, 603);
+      return {
+        emoji: '🤝',
+        titleTR: `${r.founder} ortak dağıtım öneriyor`,
+        bodyTR: `${r.company} kamyonlarını paylaşmayı teklif ediyor. Masrafı var ama ürünlerin daha çok yere ulaşır.`,
+        choices: [
+          choice('A', 'Anlaş', [{ kind: 'CASH', amount: -C }, { kind: 'COMPANY_DEMAND', multiplier: 1.12, days: 8 }]),
+          choice('B', 'Gerek yok', []),
+        ],
+      };
+    },
+  },
   {
     id: 'cousin-partner',
     needsShop: false,
@@ -403,14 +473,19 @@ export function onDayClosed(state: SimulationState, reservedCash: number): strin
       const hasShop = (state.tradeState?.shops.length ?? 0) > 0;
       const recent = new Set(ds.history.slice(-3).map((h) => h.templateId));
       const shopCount = state.tradeState?.shops.length ?? 0;
-      const fits = (t: DecisionTemplate) => (!t.needsShop || hasShop) && shopCount >= (t.minShops ?? 0);
+      const hasCompany = Boolean(state.playerCompany);
+      const fits = (t: DecisionTemplate) =>
+        (!t.needsShop || hasShop) && shopCount >= (t.minShops ?? 0) && (!t.needsCompany || hasCompany);
       const pool = DECISION_TEMPLATES.filter((t) => fits(t) && !recent.has(t.id));
       const list = pool.length ? pool : DECISION_TEMPLATES.filter(fits);
       if (list.length) {
         const tpl = list[Math.floor(decisionHash(seed, day, 2) * list.length) % list.length];
         const shop = tpl.needsShop ? pickShop(state, 3) : null;
         const { S, P } = scales(state, shop);
-        const built = tpl.build({ state, shop, S, P });
+        // Şirket kartlarının ölçeği: şirketin günlük net kârının yarısı (muhasebe yıllık tutarı ÷ 120)
+        const coDaily = (state.playerCompany?.financials.netIncome ?? 0) / 120;
+        const C = round100(clamp(coDaily * 0.5, 10_000, 1_000_000));
+        const built = tpl.build({ state, shop, S, P, C });
         ds.pending = {
           ...built,
           eventId: `DEC-D${day}-${tpl.id}`,
@@ -452,6 +527,11 @@ function applyEffects(
       shop.customerSatisfaction = Number(clamp(shop.customerSatisfaction + e.delta, 0, 100).toFixed(1));
     } else if (e.kind === 'DEMAND_BOOST' && shop) {
       shop.demandBoost = { multiplier: e.multiplier, untilDay: state.day + e.days };
+    } else if (e.kind === 'COMPANY_DEMAND' && state.playerCompany) {
+      state.playerCompany.demandBoost = {
+        multiplier: e.multiplier,
+        untilOperatingDay: state.playerCompany.operatingDays + e.days,
+      };
     } else if (e.kind === 'DELAYED_CASH') {
       const willPay = e.chancePct >= 100 || decisionHash(state.seed ?? 1, pending.day, 50 + i) * 100 < e.chancePct;
       ds.scheduledPayouts.push({

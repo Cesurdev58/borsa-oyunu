@@ -111,6 +111,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Her dükkânın kendi kasası vardır. Mal alımı ve maaşlar oradan ödenir. Kasa azalınca cebinden para koy, kâr birikince "Kâr al" de.',
         'Raf boşsa satış olmaz. "Rafları doldur" en ucuz toptancıdan mal ısmarlar. Mal birkaç günde gelir; gelene kadar "Yolda" yazar.',
         'Fiyat, çalışan ve dükkân büyütme için dükkân kartındaki "Yönet" düğmesine dokun.',
+        'Şehir haritasında dükkânının üstünde altın para baloncuğu çıkarsa kasada fazla para birikmiştir: dokun, kâr cebine gelir (kasada işletme payı kalır). Beyaz kutu baloncuğu raflar boş demektir: dokununca raflar dolar.',
         'Her dükkân türünün çalışma saati vardır (büfe 07:00–23:00, galeri 09:00–19:00 gibi). Dükkân açıkken satış gün boyu parça parça gelir, para hemen dükkân kasasına girer; kira ve maaş gece yarısı düşer.',
         'Olağanüstü olaylar dükkânları da etkiler: savaşta galeriye daha az, markete daha çok müşteri gelir, toptancı fiyatları artar. Etkisi yaklaşık bir hafta sürer.',
         'Yönet → Geliştir ekranında seviye yükseltmenin yanında 6 küçük yükseltme var (tabela, vitrin, ikinci kasa, reklam…). Her biri "+%3 müşteri" gibi etkisini yazar; pahalı olanlar dükkân seviyesi yükselince açılır.',

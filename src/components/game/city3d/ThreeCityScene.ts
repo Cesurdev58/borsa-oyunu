@@ -45,7 +45,8 @@ import {
   sign,
   stdMat,
 } from './kit';
-import { buildBlock, buildCore, SHOP_SLOT_IDS, tintLocked } from './models';
+import { buildBlock, buildCore, setCityAssets, SHOP_SLOT_IDS, tintLocked } from './models';
+import { type CityAssets, fitModel, loadCityAssets, mergeByLook, mergeStatic } from './assets';
 
 const K = 0.1;
 const wx = (x: number) => (x - 800) * K;
@@ -71,6 +72,8 @@ export interface CitySceneHandlers {
   onPickBuilding: (id: CityBuildingId) => void;
   onPickBlock: (id: string) => void;
   onPickNothing: () => void;
+  /** Dükkân üstündeki baloncuğa dokunuldu: 'coin' = kasadaki parayı topla, 'box' = rafları doldur */
+  onBubble?: (kind: 'coin' | 'box', shopId: string, amount: number) => void;
 }
 
 interface Entity {
@@ -87,6 +90,9 @@ interface Entity {
   radius: number;
   top: number;
   labelShown: boolean;
+  /** Hay Day tarzı dokunulabilir baloncuk (para / boş raf) */
+  bubble?: CSS2DObject;
+  bubbleSig?: string;
   /** Duman parçası (her karede aranmasın diye bir kez bulunur) */
   smoke?: THREE.Object3D | null;
 }
@@ -171,14 +177,42 @@ const ROADWAYS: Roadway[] = [
   { x1: 1255, y1: 885, x2: 1070, y2: 780, w: 4.8 },
 ];
 
+/**
+ * Şehrin büyüyen çevresi (dünya birimi): merkezi saran iç halka yol, dış halka yol ve ikisini
+ * merkezin ana caddelerine bağlayan yollar. Aralarına mahalleler (apartman, bahçeli ev) dizilir.
+ */
+const RING1 = { x: 88, zN: -66, zS: 70 };
+const RING2 = { x: 138, zN: -108, zS: 112 };
+const SUBURB_ROADS: { x1: number; z1: number; x2: number; z2: number; w: number }[] = [
+  { x1: -RING1.x, z1: RING1.zN, x2: RING1.x, z2: RING1.zN, w: 5.2 },
+  { x1: RING1.x, z1: RING1.zN, x2: RING1.x, z2: RING1.zS, w: 5.2 },
+  { x1: RING1.x, z1: RING1.zS, x2: -RING1.x, z2: RING1.zS, w: 5.2 },
+  { x1: -RING1.x, z1: RING1.zS, x2: -RING1.x, z2: RING1.zN, w: 5.2 },
+  { x1: -RING2.x, z1: RING2.zN, x2: RING2.x, z2: RING2.zN, w: 5.2 },
+  { x1: RING2.x, z1: RING2.zN, x2: RING2.x, z2: RING2.zS, w: 5.2 },
+  { x1: RING2.x, z1: RING2.zS, x2: -RING2.x, z2: RING2.zS, w: 5.2 },
+  { x1: -RING2.x, z1: RING2.zS, x2: -RING2.x, z2: RING2.zN, w: 5.2 },
+  { x1: -RING2.x, z1: -22, x2: -59, z2: -22, w: 5 },
+  { x1: 59, z1: -22, x2: RING2.x, z2: -22, w: 5 },
+  { x1: -RING2.x, z1: 29.5, x2: -65.5, z2: 29.5, w: 5 },
+  { x1: 66.5, z1: 29.5, x2: RING2.x, z2: 29.5, w: 5 },
+  { x1: -0.5, z1: RING2.zN, x2: -0.5, z2: -35, w: 5 },
+  { x1: 0.5, z1: 50, x2: 0.5, z2: RING2.zS, w: 5 },
+];
+/** Çevre yollarında kendi kendine dolaşan arabaların halkaları (dünya birimi) */
+const AMBIENT_LOOPS: [number, number][][] = [
+  [[-RING1.x, RING1.zN], [RING1.x, RING1.zN], [RING1.x, RING1.zS], [-RING1.x, RING1.zS], [-RING1.x, RING1.zN]],
+  [[-RING2.x, RING2.zN], [RING2.x, RING2.zN], [RING2.x, RING2.zS], [-RING2.x, RING2.zS], [-RING2.x, RING2.zN]],
+];
+
 const ZONES = [
-  { x: 220, y: 105, w: 1150, h: 245, color: '#dedbd0' },
-  { x: 70, y: 410, w: 415, h: 375, color: '#d8cdb8' },
-  { x: 1115, y: 410, w: 420, h: 375, color: '#a9d98f' },
-  { x: 75, y: 825, w: 545, h: 325, color: '#c2b6a4' },
-  { x: 665, y: 825, w: 865, h: 325, color: '#c4e3a0' },
-  { x: 65, y: 115, w: 135, h: 230, color: '#9fd36a' },
-  { x: 1395, y: 115, w: 140, h: 230, color: '#9fd36a' },
+  { x: 220, y: 105, w: 1150, h: 245, color: '#e9e4d6' },
+  { x: 70, y: 410, w: 415, h: 375, color: '#e3d7c0' },
+  { x: 1115, y: 410, w: 420, h: 375, color: '#94d26a' },
+  { x: 75, y: 825, w: 545, h: 325, color: '#cfc7b8' },
+  { x: 665, y: 825, w: 865, h: 325, color: '#9ed772' },
+  { x: 65, y: 115, w: 135, h: 230, color: '#8ccf5c' },
+  { x: 1395, y: 115, w: 140, h: 230, color: '#8ccf5c' },
 ];
 
 const TONE_COLOR: Record<string, string> = {
@@ -205,13 +239,17 @@ interface PhaseLook {
 }
 
 const LOOKS: Record<string, PhaseLook> = {
-  MORNING: { sky: '#cfe3f5', hemiSky: '#d6e8ff', hemiGround: '#9a9078', hemi: 1.15, sun: '#ffe2b8', sunI: 2.3, sunPos: [-110, 95, 60], grass: '#9ccb6b', glow: 0.15, lamps: 0, exposure: 1.05 },
-  DAY: { sky: '#bfdcf5', hemiSky: '#d6e8ff', hemiGround: '#8c8470', hemi: 1.25, sun: '#fff0d6', sunI: 2.8, sunPos: [-90, 130, 70], grass: '#86bd55', glow: 0, lamps: 0, exposure: 1.05 },
-  EVENING: { sky: '#e6b08c', hemiSky: '#f3c9a8', hemiGround: '#6f6a5e', hemi: 0.85, sun: '#ffa862', sunI: 2.1, sunPos: [120, 55, 40], grass: '#7aa152', glow: 0.55, lamps: 1, exposure: 1.0 },
+  MORNING: { sky: '#c4e4f7', hemiSky: '#e3f1ff', hemiGround: '#86a866', hemi: 1.2, sun: '#ffe2b8', sunI: 2.4, sunPos: [-110, 95, 60], grass: '#86c95a', glow: 0.15, lamps: 0, exposure: 1.08 },
+  DAY: { sky: '#a9dcf7', hemiSky: '#e3f1ff', hemiGround: '#7da45e', hemi: 1.35, sun: '#fff1d2', sunI: 2.9, sunPos: [-90, 130, 70], grass: '#7cc24e', glow: 0, lamps: 0, exposure: 1.1 },
+  EVENING: { sky: '#f0b98e', hemiSky: '#f6d0b0', hemiGround: '#6f7a58', hemi: 0.95, sun: '#ffab66', sunI: 2.2, sunPos: [120, 55, 40], grass: '#78a650', glow: 0.55, lamps: 1, exposure: 1.02 },
   NIGHT: { sky: '#1b2a44', hemiSky: '#6f8ac7', hemiGround: '#243a2e', hemi: 0.55, sun: '#8fa8e8', sunI: 0.75, sunPos: [-70, 120, 60], grass: '#2c4a36', glow: 1, lamps: 1, exposure: 0.95 },
 };
 
-const ZOOM_DISTANCE: Record<CityZoomPreset, number> = { CLOSER: 130, NORMAL: 185, OVERVIEW: 245 };
+const ZOOM_DISTANCE: Record<CityZoomPreset, number> = { CLOSER: 120, NORMAL: 185, OVERVIEW: 300 };
+/** Kamera kaydırma sınırları (dünya birimi) */
+const PAN_X = 125;
+const PAN_Z_MIN = -98;
+const PAN_Z_MAX = 102;
 // Harita eski görünümdeki gibi neredeyse düz karşıdan bakılır (hafif sağdan).
 // Sabit açı (Clash of Clans / Hay Day gibi): ~50° yukarıdan, hafif çapraz. Kamera dönmez.
 const VIEW_DIR = new THREE.Vector3(0.32, 0.98, 0.72).normalize();
@@ -250,6 +288,11 @@ export class ThreeCityScene {
   private decoGroup = new THREE.Group();
   private decoStage = -1;
   private vehicleGroup = new THREE.Group();
+  /** Hazır modeller (yüklenince dolar) */
+  private assets: CityAssets | null = null;
+  private forestGroup = new THREE.Group();
+  private suburbGroup = new THREE.Group();
+  private ambientCars: { obj: THREE.Object3D; loop: number; offset: number; speed: number }[] = [];
   private lookTarget: PhaseLook | null = null;
   private lookReady = false;
   private lookCur = {
@@ -329,8 +372,8 @@ export class ThreeCityScene {
     this.controls.panSpeed = 1.1;
     this.controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
     this.controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
-    this.controls.minDistance = 90;
-    this.controls.maxDistance = 290;
+    this.controls.minDistance = 70;
+    this.controls.maxDistance = 340;
     this.controls.target.set(0, 2, 6);
     this.camera.position.copy(this.controls.target).addScaledVector(VIEW_DIR, ZOOM_DISTANCE.NORMAL);
     this.controls.update();
@@ -340,10 +383,10 @@ export class ThreeCityScene {
     this.sun = new THREE.DirectionalLight('#fff0d6', 2.7);
     this.sun.castShadow = true;
     const sc = this.sun.shadow.camera as THREE.OrthographicCamera;
-    sc.left = -125;
-    sc.right = 125;
-    sc.top = 125;
-    sc.bottom = -125;
+    sc.left = -160;
+    sc.right = 160;
+    sc.top = 160;
+    sc.bottom = -160;
     sc.near = 10;
     sc.far = 420;
     this.sun.shadow.bias = -0.0004;
@@ -358,7 +401,15 @@ export class ThreeCityScene {
     this.scene.add(grass);
 
     this.buildGround();
+    this.scene.add(this.forestGroup);
+    this.scene.add(this.suburbGroup);
     this.buildForestBelt();
+    loadCityAssets().then((a) => {
+      if (this.disposed) return;
+      this.assets = a;
+      setCityAssets(a);
+      this.onAssetsReady();
+    });
     this.scene.add(this.decoGroup);
     this.scene.add(this.vehicleGroup);
     this.scene.add(this.walkerGroup);
@@ -378,7 +429,7 @@ export class ThreeCityScene {
       this.stars.visible = false;
       this.scene.add(this.stars);
       this.scene.background = new THREE.Color('#bfdcf5');
-      this.scene.fog = new THREE.Fog('#bfdcf5', 300, 560);
+      this.scene.fog = new THREE.Fog('#bfdcf5', 380, 760);
     }
 
     const ringMat = (color: string, opacity: number) =>
@@ -443,13 +494,17 @@ export class ThreeCityScene {
     const sidewalk = mat('#d6d3cb');
     const asphalt = mat('#4b5057', { roughness: 0.95 });
     const lineY = mat('#e8c648', { emissive: new THREE.Color('#000000') });
+    const segs = [
+      ...ROADWAYS.map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w })),
+      ...SUBURB_ROADS,
+    ];
     for (const pass of ['side', 'asph', 'line'] as const) {
-      for (const r of ROADWAYS) {
-        const dx = wx(r.x2) - wx(r.x1);
-        const dz = wz(r.y2) - wz(r.y1);
+      for (const r of segs) {
+        const dx = r.x2 - r.x1;
+        const dz = r.z2 - r.z1;
         const len = Math.hypot(dx, dz);
-        const cx = (wx(r.x1) + wx(r.x2)) / 2;
-        const cz = (wz(r.y1) + wz(r.y2)) / 2;
+        const cx = (r.x1 + r.x2) / 2;
+        const cz = (r.z1 + r.z2) / 2;
         const ang = Math.atan2(dz, dx);
         if (pass === 'side' || pass === 'asph') {
           const side = pass === 'side';
@@ -460,8 +515,8 @@ export class ThreeCityScene {
           m.rotation.y = -ang;
           m.receiveShadow = true;
           g.add(m);
-          for (const [ex, ez] of [[r.x1, r.y1], [r.x2, r.y2]]) {
-            const cap = cyl(width / 2, width / 2, height, side ? sidewalk : asphalt, wx(ex), y0 - height / 2, wz(ez), 18);
+          for (const [ex, ez] of [[r.x1, r.z1], [r.x2, r.z2]]) {
+            const cap = cyl(width / 2, width / 2, height, side ? sidewalk : asphalt, ex, y0 - height / 2, ez, 18);
             cap.receiveShadow = true;
             g.add(cap);
           }
@@ -472,34 +527,254 @@ export class ThreeCityScene {
             const dash = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.28), lineY);
             dash.rotation.x = -Math.PI / 2;
             dash.rotation.z = ang;
-            dash.position.set(wx(r.x1) + dx * tt, 0.375, wz(r.y1) + dz * tt);
+            dash.position.set(r.x1 + dx * tt, 0.375, r.z1 + dz * tt);
             g.add(dash);
           }
         }
       }
     }
-    this.scene.add(g);
+    // Yüzlerce kutu ve şerit çizgisi aynı birkaç renkten: birleştirince tek tük çizim çağrısı kalır
+    this.scene.add(mergeByLook(g));
   }
 
+  /** Şehrin en dışındaki orman kuşağı. Hazır modeller yüklüyse KayKit ağaçları tek parçada birleştirilir. */
   private buildForestBelt(): void {
+    this.forestGroup.children.slice().forEach((c) => {
+      disposeObject(c);
+      this.forestGroup.remove(c);
+    });
     const rng = createRng('forest-belt');
-    const group = new THREE.Group();
     const spots: [number, number][] = [];
-    for (let i = 0; i < 70; i++) {
-      spots.push([-92 + rng() * 184, -68 - rng() * 22]);
-      spots.push([-92 + rng() * 184, 68 + rng() * 22]);
+    const inBand = (x: number, z: number) => Math.abs(x) > RING2.x + 9 || z < RING2.zN - 9 || z > RING2.zS + 9;
+    while (spots.length < 380) {
+      const x = -190 + rng() * 380;
+      const z = -160 + rng() * 320;
+      if (inBand(x, z)) spots.push([x, z]);
     }
-    for (let i = 0; i < 36; i++) {
-      spots.push([-92 - rng() * 22, -66 + rng() * 132]);
-      spots.push([92 + rng() * 22, -66 + rng() * 132]);
+    if (this.assets) {
+      const trees = ['tree_A', 'tree_B', 'tree_C', 'tree_D', 'tree_E'];
+      const objs = spots.map(([x, z], i) => {
+        const t = fitModel(this.assets!, trees[i % trees.length], 5.5 + rng() * 3, 1, rng() * Math.PI * 2);
+        t.position.set(x, 0.05, z);
+        return t;
+      });
+      this.forestGroup.add(mergeStatic(objs, false, 60));
+    } else {
+      for (const [x, z] of spots.slice(0, 260)) {
+        const t = rng() < 0.3 ? makePine(1.1 + rng() * 0.8) : makeTree(1.2 + rng() * 0.9, rng);
+        t.position.set(x, 0, z);
+        mark(t);
+        this.forestGroup.add(t);
+      }
     }
-    for (const [x, z] of spots) {
-      const t = rng() < 0.3 ? makePine(1.1 + rng() * 0.8) : makeTree(1.2 + rng() * 0.9, rng);
-      t.position.set(x, 0, z);
-      mark(t);
-      group.add(t);
+    this.shadowDirty = true;
+  }
+
+  /**
+   * Çevre mahalleleri: iç ve dış halka yollar boyunca apartman ve bahçeli evler, aralarda ağaçlar.
+   * Yalnızca hazır modeller yüklüyse kurulur; paket başına tek parçada birleştirilir.
+   */
+  private buildSuburbs(): void {
+    if (!this.assets) return;
+    this.suburbGroup.children.slice().forEach((c) => {
+      disposeObject(c);
+      this.suburbGroup.remove(c);
+    });
+    const a = this.assets;
+    const rng = createRng('banliyo');
+    const roads = SUBURB_ROADS;
+    const nearRoad = (x: number, z: number, gap: number) =>
+      roads.some((r) => {
+        const dx = r.x2 - r.x1;
+        const dz = r.z2 - r.z1;
+        const L2 = dx * dx + dz * dz || 1;
+        const t = Math.max(0, Math.min(1, ((x - r.x1) * dx + (z - r.z1) * dz) / L2));
+        return Math.hypot(x - (r.x1 + dx * t), z - (r.z1 + dz * t)) < gap;
+      });
+    const inCore = (x: number, z: number) => Math.abs(x) < 80 && z > -60 && z < 64;
+    const apartments = ['building_C', 'building_D', 'building_E', 'building_F', 'building_G', 'building_B'];
+    const houses = 'abcdefghijklmnopqrstu'.split('').map((c) => `building-type-${c}`);
+    const placed: [number, number][] = [];
+    const objs: THREE.Object3D[] = [];
+    const trees: THREE.Object3D[] = [];
+    for (const r of roads) {
+      const dx = r.x2 - r.x1;
+      const dz = r.z2 - r.z1;
+      const len = Math.hypot(dx, dz);
+      const ux = dx / len;
+      const uz = dz / len;
+      for (const side of [-1, 1]) {
+        const nx = -uz * side;
+        const nz = ux * side;
+        for (let d = 8; d < len - 8; d += 11 + rng() * 2) {
+          const x = r.x1 + ux * d + nx * 9.5;
+          const z = r.z1 + uz * d + nz * 9.5;
+          if (inCore(x, z) || nearRoad(x, z, 8) || placed.some(([px, pz]) => Math.hypot(px - x, pz - z) < 9.5)) continue;
+          if (Math.abs(x) > RING2.x + 4 || z < RING2.zN - 4 || z > RING2.zS + 4) continue;
+          placed.push([x, z]);
+          // Bina ön yüzü yola baksın (modellerin önü +z)
+          const rot = Math.atan2(-nx, -nz);
+          const close = Math.abs(x) <= RING1.x + 14 && z >= RING1.zN - 14 && z <= RING1.zS + 14;
+          let o: THREE.Group;
+          if (close && rng() < 0.75) {
+            o = fitModel(a, apartments[Math.floor(rng() * apartments.length)], 9, 1 + rng() * 0.25, rot);
+          } else if (rng() < 0.12) {
+            const t = new THREE.Group();
+            for (let k = 0; k < 3; k++) {
+              const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 4 + rng() * 2, 1, rng() * 6.3);
+              tr.position.set((rng() - 0.5) * 6, 0, (rng() - 0.5) * 6);
+              t.add(tr);
+            }
+            t.position.set(x, 0.05, z);
+            trees.push(t);
+            continue;
+          } else {
+            o = fitModel(a, houses[Math.floor(rng() * houses.length)], 8, 1, rot);
+          }
+          o.position.set(x, 0.3, z);
+          objs.push(o);
+          // Bahçe ağacı
+          if (rng() < 0.55) {
+            const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 3.2 + rng() * 1.6, 1, rng() * 6.3);
+            tr.position.set(x - nx * 3 + uz * 4.5 * (rng() < 0.5 ? 1 : -1), 0.05, z - nz * 3 - ux * 4.5);
+            trees.push(tr);
+          }
+        }
+      }
     }
-    this.scene.add(group);
+    // Mahalle aralarına küçük korular
+    for (let i = 0; i < 110; i++) {
+      const x = -RING2.x + rng() * RING2.x * 2;
+      const z = RING2.zN + rng() * (RING2.zS - RING2.zN);
+      if (inCore(x, z) || nearRoad(x, z, 6) || placed.some(([px, pz]) => Math.hypot(px - x, pz - z) < 7.5)) continue;
+      const tr = fitModel(a, `tree_${'ABCDE'[i % 5]}`, 4 + rng() * 2.5, 1, rng() * 6.3);
+      tr.position.set(x, 0.05, z);
+      trees.push(tr);
+    }
+    // Sokak lambaları dış halka boyunca
+    const lamps: THREE.Object3D[] = [];
+    for (const r of roads) {
+      const len = Math.hypot(r.x2 - r.x1, r.z2 - r.z1);
+      for (let d = 10; d < len; d += 22) {
+        const t = d / len;
+        const x = r.x1 + (r.x2 - r.x1) * t;
+        const z = r.z1 + (r.z2 - r.z1) * t;
+        const nx = -(r.z2 - r.z1) / len;
+        const nz = (r.x2 - r.x1) / len;
+        const l = fitModel(a, 'streetlight', 1.6, 3.2, Math.atan2(nx, nz));
+        l.position.set(x + nx * 3.6, 0.3, z + nz * 3.6);
+        lamps.push(l);
+      }
+    }
+    // Çevre mahalleler gölge düşürmez (gölge haritası merkezdeki binalar için; telefonda pahalı)
+    this.suburbGroup.add(mergeStatic(objs, false, 50));
+    this.suburbGroup.add(mergeStatic(trees, false, 50));
+    this.suburbGroup.add(mergeStatic(lamps, false, 80));
+    this.shadowDirty = true;
+  }
+
+  /**
+   * Merkezdeki yolların iki yanına ağaç dizisi (Hay Day'deki gibi yeşil caddeler).
+   * Bina ve blokların üstüne gelen ağaçlar atlanır; bunun için oyun verisi (konumlar) gerekir.
+   */
+  private streetTreesBuilt = false;
+  private streetTreeGroup = new THREE.Group();
+  private buildStreetTrees(inp: CitySceneInputs): void {
+    if (!this.assets || this.streetTreesBuilt) return;
+    this.streetTreesBuilt = true;
+    const rects = [
+      ...inp.buildings.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * 0.085) / 2 + 2.5, hd: (b.height * 0.085) / 2 + 2.5 })),
+      ...inp.blocks.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * 0.0893) / 2 + 2, hd: (b.height * 0.0893) / 2 + 2 })),
+    ];
+    const segs = ROADWAYS.map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w }));
+    const onRoad = (x: number, z: number) =>
+      segs.some((r) => {
+        const dx = r.x2 - r.x1;
+        const dz = r.z2 - r.z1;
+        const L2 = dx * dx + dz * dz || 1;
+        const t = Math.max(0, Math.min(1, ((x - r.x1) * dx + (z - r.z1) * dz) / L2));
+        return Math.hypot(x - (r.x1 + dx * t), z - (r.z1 + dz * t)) < r.w / 2 + 1.6;
+      });
+    const rng = createRng('cadde-agac');
+    const trees: THREE.Object3D[] = [];
+    for (const r of segs) {
+      const len = Math.hypot(r.x2 - r.x1, r.z2 - r.z1);
+      const ux = (r.x2 - r.x1) / len;
+      const uz = (r.z2 - r.z1) / len;
+      for (const side of [-1, 1]) {
+        const off = r.w / 2 + 2.3;
+        for (let d = 5; d < len - 4; d += 8.5) {
+          const x = r.x1 + ux * d - uz * off * side;
+          const z = r.z1 + uz * d + ux * off * side;
+          if (onRoad(x, z) || rects.some((q) => Math.abs(x - q.x) < q.hw && Math.abs(z - q.z) < q.hd)) continue;
+          // Merkez meydanın içi boş kalsın
+          if (Math.abs(x) < 20 && Math.abs(z - wz(580)) < 13) continue;
+          const t = fitModel(this.assets, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 3.4 + rng() * 1.2, 1, rng() * 6.3);
+          t.position.set(x, 0.3, z);
+          trees.push(t);
+        }
+      }
+    }
+    this.streetTreeGroup.add(mergeStatic(trees, false, 50));
+    this.scene.add(this.streetTreeGroup);
+    this.shadowDirty = true;
+  }
+
+  /** Çevre yollarında dolaşan arabalar (oyun verisinden bağımsız, şehir canlı görünsün) */
+  private buildAmbientCars(): void {
+    if (!this.assets) return;
+    this.ambientCars.forEach((c) => {
+      this.vehicleGroup.remove(c.obj);
+    });
+    this.ambientCars = [];
+    const rng = createRng('cevre-araba');
+    const cars = ['car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_police'];
+    AMBIENT_LOOPS.forEach((loop, li) => {
+      const n = li === 0 ? 7 : 9;
+      for (let i = 0; i < n; i++) {
+        const obj = mergeByLook(mark(fitModel(this.assets!, cars[Math.floor(rng() * (i === 0 ? 5 : 4))], 4.2), false, false));
+        this.vehicleGroup.add(obj);
+        this.ambientCars.push({ obj, loop: li, offset: rng() * pathLength(loop), speed: (7 + rng() * 4) * (rng() < 0.5 ? 1 : -1) });
+      }
+    });
+  }
+
+  private moveAmbientCars(dt: number): void {
+    for (const c of this.ambientCars) {
+      const path = AMBIENT_LOOPS[c.loop];
+      const total = pathLength(path);
+      c.offset = (((c.offset + c.speed * dt) % total) + total) % total;
+      let d = c.offset;
+      let i = 0;
+      while (i < path.length - 2) {
+        const seg = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+        if (d <= seg) break;
+        d -= seg;
+        i++;
+      }
+      const p0 = path[i];
+      const p1 = path[i + 1];
+      const seg = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) || 1;
+      const ux = (p1[0] - p0[0]) / seg;
+      const uz = (p1[1] - p0[1]) / seg;
+      const dir = c.speed >= 0 ? 1 : -1;
+      // Sağdan git: şeridi yön tarafına göre kaydır
+      const lane = 1.4 * dir;
+      c.obj.position.set(p0[0] + ux * d + -uz * lane, 0.42, p0[1] + uz * d + ux * lane);
+      c.obj.rotation.y = Math.atan2(ux * dir, uz * dir);
+    }
+  }
+
+  /** Hazır modeller yüklendi: binaları, ormanı, mahalleleri ve trafiği yeniden kur. */
+  private onAssetsReady(): void {
+    for (const e of this.entities.values()) e.modelSig = '';
+    this.buildForestBelt();
+    this.buildSuburbs();
+    this.buildAmbientCars();
+    this.decoStage = -1;
+    this.trafficKey = '';
+    if (this.lastInputs) this.update(this.lastInputs);
+    this.shadowDirty = true;
   }
 
   // ---------- Dekorlar (aşamaya göre) ----------
@@ -522,13 +797,13 @@ export class ThreeCityScene {
       let o: THREE.Object3D | null = null;
       switch (d.kind) {
         case 'TREE':
-          o = makeTree(0.9 * sc, rng);
+          o = this.assets ? fitModel(this.assets, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 4.2 * sc, 1, rng() * 6.3) : makeTree(0.9 * sc, rng);
           break;
         case 'PINE_TREE':
-          o = makePine(0.95 * sc);
+          o = this.assets ? fitModel(this.assets, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 3.8 * sc, 1.15, rng() * 6.3) : makePine(0.95 * sc);
           break;
         case 'BUSH':
-          o = makeBush(sc);
+          o = this.assets ? fitModel(this.assets, `bush_${'ABC'[Math.floor(rng() * 3)]}`, 2.2 * sc, 1, rng() * 6.3) : makeBush(sc);
           break;
         case 'STREET_LAMP': {
           const l = makeLamp();
@@ -619,6 +894,12 @@ export class ThreeCityScene {
       mark(o, d.kind !== 'PARKING_LOT', true);
       this.decoGroup.add(o);
     }
+    // Süsleri (ağaç, çalı, bank, lamba…) tek seferde birleştir; gece yanan ışık havuzları ayrı kalır
+    {
+      const merged = mergeByLook(this.decoGroup, (o) => this.lampPools.includes(o));
+      this.decoGroup.clear();
+      merged.children.slice().forEach((c) => this.decoGroup.add(c));
+    }
     if (this.lastInputs) this.applyPhase(this.lastInputs.atmosphere.phase, true);
   }
 
@@ -703,6 +984,7 @@ export class ThreeCityScene {
     this.paused = inp.isPaused;
     this.applyQuality(inp.graphicsQuality);
     this.rebuildDecorations(inp.stage);
+    this.buildStreetTrees(inp);
     this.applyPhase(inp.atmosphere.phase);
 
     const seen = new Set<string>();
@@ -719,6 +1001,7 @@ export class ThreeCityScene {
       const modelSig = JSON.stringify([bl.isUnlocked, bl.level ?? 1, bl.activeShopType ?? null, bl.floors, Boolean(bl.activeShopId), Boolean(bl.shopLot)]);
       const labelSig = JSON.stringify([bl.shortTagTR, bl.isUnlocked, bl.stockWarning ?? false, bl.pendingDeliveryCount ?? 0, bl.hasStockToSell ?? false]);
       this.syncEntity(key, 'block', bl.id, wx(bl.x), wz(bl.y), modelSig, labelSig, () => buildBlock(bl), (el) => this.fillBlockLabel(el, bl), null, !bl.isUnlocked && !SHOP_SLOT_IDS.has(bl.id) && !bl.activeShopId && !bl.shopLot);
+      this.syncBubble(key, bl);
     }
     for (const [key, e] of this.entities) {
       if (!seen.has(key)) this.removeEntity(key, e);
@@ -770,9 +1053,11 @@ export class ThreeCityScene {
         disposeObject(e.orb);
         e.orb = null;
       }
-      const model = build();
-      if (faded) tintLocked(model);
-      mark(model);
+      const built = build();
+      if (faded) tintLocked(built);
+      mark(built);
+      // Kodla çizilmiş ve hazır modelli binalardaki parçaları görünüşe göre birleştir (duman ayrı kalır)
+      const model = mergeByLook(built, (o) => o.name === 'smoke');
       e.root.add(model);
       e.model = model;
       e.smoke = undefined;
@@ -853,6 +1138,60 @@ export class ThreeCityScene {
     }
   }
 
+  // ---------- Baloncuklar (Hay Day tarzı: dokun, topla) ----------
+
+  /**
+   * Dükkânın üstünde dokunulabilir baloncuk: kasada toplanacak para varsa altın para, raflar boşsa kutu.
+   * Müdürlü dükkânda kutu çıkmaz (müdür doldurur). Baloncuk etiket katmanında durur ama dokunulabilir.
+   */
+  private syncBubble(key: string, bl: CityUrbanBlockNode): void {
+    const e = this.entities.get(key);
+    if (!e) return;
+    const coin = (bl.collectableCash ?? 0) > 0;
+    const box = !coin && Boolean(bl.shelvesEmpty) && !bl.hasManager;
+    const kind: 'coin' | 'box' | '' = bl.activeShopId ? (coin ? 'coin' : box ? 'box' : '') : '';
+    const amountKey = coin ? Math.round((bl.collectableCash ?? 0) / 100) : 0;
+    const sig = `${kind}|${amountKey}|${Math.round(e.top)}`;
+    if (sig === e.bubbleSig) return;
+    e.bubbleSig = sig;
+    if (!kind) {
+      if (e.bubble) e.bubble.visible = false;
+      return;
+    }
+    if (!e.bubble) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'city-bubble';
+      el.style.pointerEvents = 'auto';
+      const obj = new CSS2DObject(el);
+      e.root.add(obj);
+      e.bubble = obj;
+      el.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const k = el.dataset.kind as 'coin' | 'box';
+        const shopId = el.dataset.shop ?? '';
+        const amount = Number(el.dataset.amount ?? 0);
+        el.classList.add('city-bubble-pop');
+        this.handlers.onBubble?.(k, shopId, amount);
+      });
+    }
+    const el = e.bubble.element as HTMLButtonElement;
+    el.classList.remove('city-bubble-pop');
+    el.dataset.kind = kind;
+    el.dataset.shop = bl.activeShopId ?? '';
+    el.dataset.amount = String(Math.floor(bl.collectableCash ?? 0));
+    el.setAttribute('data-testid', `city-bubble-${kind}-${bl.activeShopId}`);
+    el.setAttribute('aria-label', kind === 'coin' ? 'Kasadaki parayı topla' : 'Rafları doldur');
+    const amt = bl.collectableCash ?? 0;
+    const short = amt >= 1_000_000 ? `${(amt / 1_000_000).toFixed(1).replace('.', ',')} Mn` : amt >= 1000 ? `${Math.floor(amt / 1000)}B` : `${Math.floor(amt)}`;
+    el.innerHTML = kind === 'coin' ? `<span class="city-bubble-icon">₺</span><span class="city-bubble-text">${short}</span>` : `<span class="city-bubble-icon">📦</span>`;
+    el.dataset.variant = kind;
+    e.bubble.position.set(0, e.top + 4.2, 0);
+    e.bubble.visible = true;
+    this.labelsDirty = true;
+  }
+
   // ---------- Seçim ----------
 
   private updateSelection(inp: CitySceneInputs): void {
@@ -902,8 +1241,19 @@ export class ThreeCityScene {
     };
     for (const v of fleet.vehicles) {
       const heavy = v.vehicleType === 'DELIVERY_TRUCK' || v.vehicleType === 'BUS' || v.isFactoryTruck;
-      const obj = mark(heavy ? makeTruck(colors[v.vehicleType] ?? '#e6a23a') : makeCar(colors[v.vehicleType] ?? '#3a79c9'), false, false);
-      obj.scale.setScalar(heavy ? 0.8 : 0.85);
+      let obj: THREE.Group;
+      if (!heavy && this.assets) {
+        // Hazır araba modeli; modelin önü +z, rota hesabı +x bekler → çeyrek tur döndür
+        const name =
+          v.vehicleType === 'TAXI' ? 'car_taxi' : v.vehicleType === 'SERVICE_VEHICLE' ? 'car_police' : ['car_sedan', 'car_hatchback', 'car_stationwagon'][this.vehicles.length % 3];
+        obj = mergeByLook(mark(fitModel(this.assets, name, 4.2, 1, Math.PI / 2), false, false));
+        const holder = new THREE.Group();
+        holder.add(obj);
+        obj = holder;
+      } else {
+        obj = mergeByLook(mark(heavy ? makeTruck(colors[v.vehicleType] ?? '#e6a23a') : makeCar(colors[v.vehicleType] ?? '#3a79c9'), false, false));
+        obj.scale.setScalar(heavy ? 0.8 : 0.85);
+      }
       this.vehicleGroup.add(obj);
       this.vehicles.push({ obj, route: v.routeId, duration: Math.max(8, v.durationSec), delay: v.delaySec });
     }
@@ -937,7 +1287,8 @@ export class ThreeCityScene {
     WALK_PATHS.forEach((path, pi) => {
       const count = pi === 0 ? 7 : pi === 1 ? 6 : 5;
       for (let i = 0; i < count; i++) {
-        const obj = mark(makePerson(shirts[Math.floor(rng() * shirts.length)]), false, false);
+        // Gövde ve baş tek parça; bacaklar yürürken sallandığı için ayrı kalır
+        const obj = mergeByLook(mark(makePerson(shirts[Math.floor(rng() * shirts.length)]), false, false), (o) => o.name === 'legL' || o.name === 'legR');
         obj.scale.setScalar(0.95);
         this.walkerGroup.add(obj);
         this.walkers.push({
@@ -1178,8 +1529,9 @@ export class ThreeCityScene {
       }
       if (f >= 1) this.tween = null;
     }
-    this.controls.target.x = Math.max(-72, Math.min(72, this.controls.target.x));
-    this.controls.target.z = Math.max(-52, Math.min(58, this.controls.target.z));
+    // Şehir büyüdü: kamera çevre mahallelere de gidebilir (dış halka yol ±138 / −108…112)
+    this.controls.target.x = Math.max(-PAN_X, Math.min(PAN_X, this.controls.target.x));
+    this.controls.target.z = Math.max(PAN_Z_MIN, Math.min(PAN_Z_MAX, this.controls.target.z));
     this.controls.update();
 
     this.stepLook(dt);
@@ -1192,6 +1544,7 @@ export class ThreeCityScene {
       this.shadowDirty = false;
     }
     this.moveVehicles();
+    this.moveAmbientCars(this.paused ? 0 : dt);
     this.moveWalkers(this.paused ? 0 : dt);
     const nowMs = performance.now();
     if (this.flashKey && nowMs >= this.flashUntil) {

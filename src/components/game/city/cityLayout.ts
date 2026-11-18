@@ -635,8 +635,34 @@ const ORIGINAL_SHOP_SLOTS = 3;
 export function deriveCityUrbanBlocks(
   state: SimulationState
 ): CityUrbanBlockNode[] {
-  const base = deriveCityUrbanBlocksBase(state);
   const shops = state.tradeState?.shops ?? [];
+  return withShopBubbles(state, deriveCityUrbanBlocksWithSlots(state, shops));
+}
+
+/** Dükkân kasasında bırakılan işletme parası; fazlası şehirde "para baloncuğu" ile toplanır */
+export const SHOP_CASH_KEEP = 5_000;
+/** Bundan küçük kasa fazlası baloncuk çıkarmaz */
+export const SHOP_COLLECT_MIN = 1_000;
+
+function withShopBubbles(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {
+  const shops = state.tradeState?.shops ?? [];
+  return blocks.map((b) => {
+    if (!b.activeShopId) return b;
+    const shop = shops.find((s) => s.shopId === b.activeShopId);
+    if (!shop || shop.isCompanyBranch) return b;
+    const stock = shop.inventoryBatches.reduce((sum, x) => sum + x.availableQuantity, 0);
+    const extra = Math.floor(shop.cashAccountBalance - SHOP_CASH_KEEP);
+    return {
+      ...b,
+      collectableCash: extra >= SHOP_COLLECT_MIN ? extra : 0,
+      shelvesEmpty: stock <= 0 && (shop.pendingDeliveriesCount ?? 0) === 0,
+      hasManager: Boolean(shop.manager),
+    };
+  });
+}
+
+function deriveCityUrbanBlocksWithSlots(state: SimulationState, shops: NonNullable<SimulationState['tradeState']>['shops']): CityUrbanBlockNode[] {
+  const base = deriveCityUrbanBlocksBase(state);
   if (shops.length < ORIGINAL_SHOP_SLOTS) return base;
   return base.map((block) => {
     const slot = SHOP_SLOT_ORDER.indexOf(block.id);

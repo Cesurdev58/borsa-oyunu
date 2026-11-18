@@ -545,6 +545,12 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             nextEventLabelTR={nextEvent.eventLabelTR}
             nextEventFormattedRemaining={nextEvent.formattedRemaining}
             onRestockShop={handleRestockShop}
+            onCollectShopCash={(shopId, amount) => {
+              if (!onTransferShopCash || amount <= 0) return;
+              play('coin');
+              vibrate(15);
+              onTransferShopCash({ shopId, direction: 'FROM_SHOP', amount });
+            }}
           />
         ) : (
           <section

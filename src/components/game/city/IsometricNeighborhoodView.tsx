@@ -60,6 +60,8 @@ interface IsometricNeighborhoodViewProps {
   nextEventFormattedRemaining: string;
   /** Şehirdeki dükkân kartından "Rafları doldur" için (isteğe bağlı). */
   onRestockShop?: (shopId: string) => void;
+  /** 3D şehirde dükkânın üstündeki para baloncuğuna dokununca kasadaki fazlayı cebe al (isteğe bağlı). */
+  onCollectShopCash?: (shopId: string, amount: number) => void;
 }
 
 /**

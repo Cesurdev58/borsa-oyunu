@@ -447,6 +447,8 @@ export class ShopOperations {
         Math.min(40, Math.round(params.targetStaffCount))
       );
       shop.staffCount = nextStaff;
+      // Çalışan azalınca eğitimli sayısı da azalır; yeni gelen çalışan eğitimsizdir
+      if (typeof shop.trainedStaff === 'number' && shop.trainedStaff > nextStaff) shop.trainedStaff = nextStaff;
       if (shop.isCompanyBranch && state.playerCompany) {
         // Şirket toplam çalışan sayısını da senkron tut
         const totalBranchStaff = ts.shops

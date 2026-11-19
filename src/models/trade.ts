@@ -421,6 +421,10 @@ export interface ShopInstance {
   usedUpgrades?: Record<string, number>;
   /** Trafo'dan alınan güneş paneli: kira + işletme gideri düşer (eski kayıtlarda yoktur) */
   solarPanel?: boolean;
+  /** Akademi'de eğitilmiş çalışan sayısı (en çok staffCount kadar sayılır; eski kayıtlarda yoktur) */
+  trainedStaff?: number;
+  /** Sağlık Merkezi çalışan sigortası açık mı (eski kayıtlarda yoktur) */
+  staffInsurance?: boolean;
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
   live?: ShopLiveDay;
   todayWalkInCustomers: number;

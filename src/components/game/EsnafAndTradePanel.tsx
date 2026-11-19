@@ -8,6 +8,7 @@
  * - 3. Mantıklı ve tutarlı sistem (Borsa -> Esnaf -> Çok Şubeli Ticaret -> Şirketleşme -> Fabrika & Holding kariyer döngüsü)
  */
 
+import { insuranceDailyPremium, trainedStaffCount } from '../../engine/CityServices';
 import { shopHoursLabel, shopOpenStatus } from '../../data/shopHours';
 import { getManagerQuote } from '../../engine/ShopManager';
 import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
@@ -1195,6 +1196,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
                 <div className="text-[13px] text-rose-700 mt-1">
                   kişi başı {formatCurrency(activeShop.staffDailyWagePerPerson)} · her gün kasadan otomatik ödenir
+                </div>
+                <div data-testid="shop-staff-city-services" className="text-[13px] font-bold text-rose-800 mt-1">
+                  Eğitimli {trainedStaffCount(activeShop)}/{activeShop.staffCount} ·{' '}
+                  {activeShop.staffInsurance
+                    ? `Sigortalı (günde ${formatCurrency(insuranceDailyPremium(activeShop))} prim)`
+                    : 'Sigortasız'}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">

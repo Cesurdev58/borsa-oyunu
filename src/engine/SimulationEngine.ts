@@ -1758,6 +1758,26 @@ export class SimulationEngine {
     return res;
   }
 
+  /** Akademi: dükkânın eğitimsiz çalışanlarını eğitir. */
+  public trainShopStaff(shopId: string): { success: boolean; message: string } {
+    const res = CityServices.trainShopStaff(this.state, shopId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Akademi] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Sağlık Merkezi: dükkânın çalışan sigortasını açar/kapatır. */
+  public setStaffInsurance(shopId: string, on: boolean): { success: boolean; message: string } {
+    const res = CityServices.setStaffInsurance(this.state, shopId, on);
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Sağlık] ${res.message}`);
+    }
+    return res;
+  }
+
   /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
   public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
     const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());

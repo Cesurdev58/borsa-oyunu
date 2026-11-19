@@ -682,6 +682,18 @@ export const CITY_SERVICE_BLOCKS: Record<string, { service: CityServiceId; nameT
     shortTagTR: 'Trafo',
     summaryTR: 'Dükkânlarına güneş paneli kur: günlük gider azalır',
   },
+  'urban-tekno-akademi-16': {
+    service: 'AKADEMI',
+    nameTR: 'Akademi',
+    shortTagTR: 'Akademi',
+    summaryTR: 'Çalışanlarını eğit: müşteriler daha çok harcar',
+  },
+  'urban-yasam-saglik-19': {
+    service: 'SAGLIK',
+    nameTR: 'Sağlık Merkezi',
+    shortTagTR: 'Sağlık Mrk.',
+    summaryTR: 'Çalışanlarını sigortala: daha istekli çalışırlar',
+  },
 };
 
 function withCityServices(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {

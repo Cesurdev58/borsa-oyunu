@@ -111,6 +111,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onBuyUsedUpgrade,
   onFundProject,
   onBuySolar,
+  onTrainStaff,
+  onSetInsurance,
   onStartNewCity,
   onMarkNotificationsRead,
   onSetTimeScale,
@@ -532,6 +534,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onBuyUsedUpgrade={onBuyUsedUpgrade}
           onFundProject={onFundProject}
           onBuySolar={onBuySolar}
+          onTrainStaff={onTrainStaff}
+          onSetInsurance={onSetInsurance}
           onClose={() => setOpenCityService(null)}
         />
         <LifestyleModal

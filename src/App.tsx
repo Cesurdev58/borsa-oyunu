@@ -955,6 +955,24 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleTrainStaff = useCallback(
+    (shopId: string) => {
+      const res = engine.trainShopStaff(shopId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleSetInsurance = useCallback(
+    (shopId: string, on: boolean) => {
+      const res = engine.setStaffInsurance(shopId, on);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleBuyShopUpgrade = useCallback(
     (shopId: string, upgradeId: string) => {
       const res = engine.buyShopUpgrade(shopId, upgradeId);
@@ -1294,6 +1312,8 @@ export default function App() {
         onBuyUsedUpgrade={handleBuyUsedUpgrade}
         onFundProject={handleFundCityProject}
         onBuySolar={handleBuySolar}
+        onTrainStaff={handleTrainStaff}
+        onSetInsurance={handleSetInsurance}
         onStartNewCity={handleStartNewCity}
         onMarkNotificationsRead={handleMarkNotificationsRead}
         onSetTimeScale={handleSetTimeScale}

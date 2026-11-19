@@ -2,20 +2,30 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * Şehir hizmetleri penceresi: şehirde İkinci El Pazarı, Belediye ya da Trafo binasına dokununca açılır.
+ * Şehir hizmetleri penceresi: şehirde İkinci El Pazarı, Belediye, Trafo, Akademi ya da Sağlık Merkezi binasına dokununca açılır.
  * Motor `engine/CityServices.ts`, veri `data/cityServices.ts`. Rahat oyun ilkesi: üstte tek büyük sayı,
  * altında kısa liste ve büyük düğmeler.
  */
 import React, { useState } from 'react';
-import { Check, Lock, Recycle, Sun, Landmark, X } from 'lucide-react';
-import { CITY_PROJECTS, SECONDHAND_SELL_RATE, USED_UPGRADE_DAYS } from '../../data/cityServices';
+import { Check, GraduationCap, HeartPulse, Lock, Recycle, Sun, Landmark, X } from 'lucide-react';
+import {
+  CITY_PROJECTS,
+  INSURANCE_CUSTOMERS_PCT,
+  SECONDHAND_SELL_RATE,
+  TRAINING_BASKET_PCT,
+  USED_UPGRADE_DAYS,
+} from '../../data/cityServices';
 import {
   cityProjectCustomerMultiplier,
   fundedCityProjects,
+  insuranceDailyPremium,
   nextCityProject,
   secondHandStockLines,
   solarDailySaving,
   solarPanelCost,
+  trainedStaffCount,
+  trainingCostPerPerson,
+  untrainedStaffCount,
   usedUpgradeOffers,
 } from '../../engine/CityServices';
 import type { SimulationState } from '../../models/simulation';
@@ -26,13 +36,19 @@ export interface CityServiceHandlers {
   onBuyUsedUpgrade?: (offerKey: string) => void;
   onFundProject?: (projectId: string) => void;
   onBuySolar?: (shopId: string) => void;
+  onTrainStaff?: (shopId: string) => void;
+  onSetInsurance?: (shopId: string, on: boolean) => void;
 }
 
 const TITLES: Record<CityServiceId, string> = {
   IKINCI_EL: 'İkinci El Pazarı',
   BELEDIYE: 'Belediye',
   ENERJI: 'Trafo ve Enerji',
+  AKADEMI: 'Akademi',
+  SAGLIK: 'Sağlık Merkezi',
 };
+
+const ICONS = { IKINCI_EL: Recycle, BELEDIYE: Landmark, ENERJI: Sun, AKADEMI: GraduationCap, SAGLIK: HeartPulse } as const;
 
 export const CityServicesModal: React.FC<
   {
@@ -48,7 +64,7 @@ export const CityServicesModal: React.FC<
   if (!service) return null;
   const fc = (v: number) => formatCurrency(v).replace(/,00$/, '');
   const shops = (state.tradeState?.shops ?? []).filter((s) => !s.isCompanyBranch);
-  const Icon = service === 'IKINCI_EL' ? Recycle : service === 'BELEDIYE' ? Landmark : Sun;
+  const Icon = ICONS[service];
 
   let hero: { label: string; value: string; note: string };
   let body: React.ReactNode;
@@ -230,6 +246,89 @@ export const CityServicesModal: React.FC<
             </li>
           );
         })}
+      </ul>
+    );
+  } else if (service === 'AKADEMI') {
+    const totalStaff = shops.reduce((t, x) => t + x.staffCount, 0);
+    const trained = shops.reduce((t, x) => t + trainedStaffCount(x), 0);
+    hero = {
+      label: 'Eğitimli çalışan',
+      value: `${trained}/${totalStaff}`,
+      note: `Eğitimli çalışan daha iyi satar: bütün çalışanlar eğitimliyse müşteriler %${TRAINING_BASKET_PCT} daha çok harcar. Bir kez ödenir. Yeni işe aldığın çalışan eğitimsiz gelir.`,
+    };
+    body = (
+      <ul className="space-y-2">
+        {shops.map((s) => {
+          const untrained = untrainedStaffCount(s);
+          const cost = untrained * trainingCostPerPerson(s);
+          const done = untrained === 0;
+          return (
+            <li
+              key={s.shopId}
+              data-testid={`training-shop-${s.shopId}`}
+              data-done={done ? 'true' : 'false'}
+              className={`flex items-center gap-3 p-3 rounded-2xl ${done ? 'bg-[#ecfaf3]' : 'bg-[var(--g-surface-2)]'}`}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="font-extrabold text-[var(--g-ink)] leading-tight truncate">{s.nameTR}</div>
+                <div className="text-[13px] font-bold text-[var(--g-muted)]">
+                  {trainedStaffCount(s)}/{s.staffCount} çalışan eğitimli
+                </div>
+              </div>
+              {done ? (
+                <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                  <Check size={14} strokeWidth={3} /> Eğitimli
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  data-testid={`training-buy-${s.shopId}`}
+                  disabled={!h.onTrainStaff}
+                  onClick={() => h.onTrainStaff?.(s.shopId)}
+                  className="g-btn g-btn-gold g-btn-sm shrink-0 px-3 tabular-nums"
+                >
+                  {untrained} kişi · {fc(cost)}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  } else if (service === 'SAGLIK') {
+    const insured = shops.filter((s) => s.staffInsurance);
+    hero = {
+      label: 'Sigortalı dükkân',
+      value: `${insured.length}/${shops.length}`,
+      note: `Sigortalı çalışan daha istekli çalışır: +%${INSURANCE_CUSTOMERS_PCT} müşteri, zam istemez, rakibe gitmez. Prim her gün maaşla birlikte kasadan düşer; istediğin an kapatırsın.`,
+    };
+    body = (
+      <ul className="space-y-2">
+        {shops.map((s) => (
+          <li
+            key={s.shopId}
+            data-testid={`insurance-shop-${s.shopId}`}
+            data-on={s.staffInsurance ? 'true' : 'false'}
+            className={`flex items-center gap-3 p-3 rounded-2xl ${s.staffInsurance ? 'bg-[#ecfaf3]' : 'bg-[var(--g-surface-2)]'}`}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="font-extrabold text-[var(--g-ink)] leading-tight truncate">{s.nameTR}</div>
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">
+                {s.staffInsurance ? 'Sigortalı · ' : ''}
+                {s.staffCount} çalışan · günde {fc(insuranceDailyPremium(s))} prim
+              </div>
+            </div>
+            <button
+              type="button"
+              data-testid={`insurance-toggle-${s.shopId}`}
+              disabled={!h.onSetInsurance}
+              onClick={() => h.onSetInsurance?.(s.shopId, !s.staffInsurance)}
+              className={`g-btn ${s.staffInsurance ? 'g-btn-secondary' : 'g-btn-primary'} g-btn-sm shrink-0 px-3`}
+            >
+              {s.staffInsurance ? 'Kapat' : 'Sigortala'}
+            </button>
+          </li>
+        ))}
       </ul>
     );
   } else {

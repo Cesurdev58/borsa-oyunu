@@ -387,4 +387,4 @@ export interface CityDiagnosticsSummary {
 }
 
 /** Şehirde kendi işi olan binalar (engine/CityServices.ts) */
-export type CityServiceId = 'IKINCI_EL' | 'BELEDIYE' | 'ENERJI';
+export type CityServiceId = 'IKINCI_EL' | 'BELEDIYE' | 'ENERJI' | 'AKADEMI' | 'SAGLIK';

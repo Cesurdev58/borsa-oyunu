@@ -22,6 +22,7 @@ import type {
 } from '../models/decisions';
 import type { ShopInstance } from '../models/trade';
 import { WalletEngine } from './WalletEngine';
+import { INSURANCE_BLOCKED_DECISIONS } from '../data/cityServices';
 import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
 
 /** İki olay arasında en az kaç gün geçer */
@@ -481,6 +482,9 @@ export function onDayClosed(state: SimulationState, reservedCash: number): strin
       if (list.length) {
         const tpl = list[Math.floor(decisionHash(seed, day, 2) * list.length) % list.length];
         const shop = tpl.needsShop ? pickShop(state, 3) : null;
+        // Sigortalı dükkânda çalışan kartları (zam isteği, rakibe kaçma) çıkmaz: o gün kart gelmez, başka kart da
+        // seçilmez. Böylece sigorta yalnızca bu kötü olayları kaldırır; sigortası olmayanda olay sırası hiç değişmez.
+        if (shop?.staffInsurance && INSURANCE_BLOCKED_DECISIONS.includes(tpl.id)) return messages;
         const { S, P } = scales(state, shop);
         // Şirket kartlarının ölçeği: şirketin günlük net kârının yarısı (muhasebe yıllık tutarı ÷ 120)
         const coDaily = (state.playerCompany?.financials.netIncome ?? 0) / 120;

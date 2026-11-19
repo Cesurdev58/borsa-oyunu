@@ -16,7 +16,7 @@
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
-import { cityProjectCustomerMultiplier } from './CityServices';
+import { activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
@@ -134,8 +134,10 @@ export function computeShopDailyDemand(
   // Olağanüstü olay (savaş, salgın, faiz…) çarpanı yuvarlamadan SONRA uygulanır ve küsuratlı kalır;
   // küsurat günden güne taşınır. Böylece günde 1–2 satan dükkânda (galeri) yuvarlama olayı büyütmez.
   const ev = worldEventShopDemandMultiplier(state, shop.shopType);
-  const eventMult = Number.isFinite(ev) && ev > 0 ? ev : 1;
+  // Çalışan sigortasının müşteri etkisi de küsuratlı uygulanır (günde 10 müşterili dükkânda +%4 yuvarlanıp kaybolmasın)
+  const eventMult = (Number.isFinite(ev) && ev > 0 ? ev : 1) * insuranceCustomerMultiplier(shop);
 
+  const trainingBasket = trainingBasketMultiplier(shop);
   const items: DailyDemand['items'] = [];
   for (const resId of stockedResourceIds) {
     const resDef = RESOURCE_CATALOG[resId];
@@ -149,7 +151,7 @@ export function computeShopDailyDemand(
         : Math.max(0.08, Math.pow(1 / priceRatio, 2.3));
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
-    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket) / Math.max(1, fairRetailPrice);
+    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket) / Math.max(1, fairRetailPrice);
     const units = Math.max(
       1,
       Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity)
@@ -282,6 +284,7 @@ export function liveShopToday(
   const expenses =
     shop.staffCount * shop.staffDailyWagePerPerson +
     (shop.manager ? shop.manager.dailyWage : 0) +
+    activeInsurancePremium(shop) +
     shop.dailyRent +
     shop.level * 120;
   const dayFrac = Math.max(0, Math.min(1, minutesIntoDay / 1440));

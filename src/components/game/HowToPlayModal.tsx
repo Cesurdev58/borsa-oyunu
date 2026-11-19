@@ -31,6 +31,7 @@ import {
 } from '../../data/gameBalance';
 import { PROGRESSION_RULES } from '../../engine/ProgressionRules';
 import { DECISION_LIFETIME_DAYS } from '../../engine/DecisionEventEngine';
+import { INSURANCE_CUSTOMERS_PCT, TRAINING_BASKET_PCT } from '../../data/cityServices';
 import type { CityBuildingId, GameBottomTab } from './gameTypes';
 
 interface HowToPlayModalProps {
@@ -119,6 +120,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Aynı türden çok dükkân açma, müşteriyi paylaşırlar. Farklı türler açmak daha kârlı.',
         'Şehirdeki İkinci El Pazarı\'nda fazla malını hemen satabilirsin (alış fiyatının altında) ve ucuz ikinci el eşya alabilirsin: yenisinin yarı fiyatı, ama 60 gün sonra eskir.',
         'Belediye\'de mahalle projelerine katkı verirsen bütün dükkânlarına kalıcı müşteri ve itibar gelir. Trafo\'dan dükkânına güneş paneli kurarsan günlük giderin %20 azalır.',
+        `Akademi'de çalışanlarını eğit: bir kez ödersin, müşteriler %${TRAINING_BASKET_PCT} daha çok harcar. Yeni işe aldığın çalışan eğitimsiz gelir, onu da eğitmen gerekir.`,
+        `Sağlık Merkezi'nde çalışanlarını sigortala: günlük küçük bir prim karşılığında +%${INSURANCE_CUSTOMERS_PCT} müşteri gelir, çalışanların zam istemez ve rakibe gitmez.`,
         `Ara sıra bir karar kartı çıkar (festival, denetim gibi). ${DECISION_LIFETIME_DAYS} gün içinde seçmezsen ikinci seçenek seçilmiş sayılır.`,
       ],
       go: { label: 'Dükkânlarıma git', tab: 'portfolio' },

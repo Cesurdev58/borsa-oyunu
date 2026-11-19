@@ -10,22 +10,31 @@
  *  - Belediye: `fundCityProject` (sırayla açılan mahalle projeleri, `tradeState.cityProjects`; etkisi
  *    `cityProjectCustomerMultiplier` ile `ShopSales` müşteri hesabında).
  *  - Trafo: `buySolarPanel` (`ShopInstance.solarPanel`; etkisi `TradeAndShopEngine` kira + işletme giderinde).
+ *  - Akademi: `trainShopStaff` (`ShopInstance.trainedStaff`; eğitimli oranı kadar sepet, `trainingBasketMultiplier`
+ *    → `ShopSales`). Yeni işe alınan çalışan eğitimsiz gelir; çalışan azalınca eğitimli sayısı da azalır.
+ *  - Sağlık Merkezi: `setStaffInsurance` (`ShopInstance.staffInsurance`; günlük prim maaşla birlikte
+ *    `TradeAndShopEngine` personel giderine, müşteri çarpanı `insuranceCustomerMultiplier` → `ShopSales`,
+ *    sigortalı dükkânda zam/rakibe kaçma kartları çıkmaz: `DecisionEventEngine`).
  * Ödemeler: dükkân işleri önce dükkân kasasından, yetmezse kişisel nakitten (yükseltmelerle aynı); belediye
  * projeleri kişisel nakitten (WalletEngine + merkezi defter). İlanlar tohum + günden hesaplanır (sayı üretecine
  * dokunmaz; aynı kayıt aynı ilanları gösterir). Yalnızca veri, modeller ve alt motorları içe aktarır.
  */
 import {
   CITY_PROJECTS,
+  INSURANCE_CUSTOMERS_PCT,
+  INSURANCE_PREMIUM_RATE,
   SECONDHAND_SELL_RATE,
   SOLAR_OPEX_CUT,
   SOLAR_PAYBACK_DAYS,
+  TRAINING_BASKET_PCT,
+  TRAINING_COST_SHARE,
   USED_OFFERS_PER_DAY,
   USED_UPGRADE_DAYS,
   USED_UPGRADE_PRICE_SHARE,
   type CityProjectDef,
 } from '../data/cityServices';
 import { REPUTATION_MAX } from '../data/lifestyle';
-import { RESOURCE_CATALOG } from '../data/tradeCatalog';
+import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { SHOP_UPGRADES, type ShopUpgradeDef } from '../data/shopUpgrades';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance } from '../models/trade';
@@ -275,6 +284,87 @@ export function buySolarPanel(state: SimulationState, shopId: string, reservedCa
   return {
     success: true,
     message: `${shop.nameTR}: güneş paneli kuruldu. Günlük gider ${tl(solarDailySaving(shop))} azaldı.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// AKADEMİ — çalışan eğitimi
+// ---------------------------------------------------------------------------
+
+/** Bir çalışanı eğitmenin ücreti (dükkân türüne göre) */
+export function trainingCostPerPerson(shop: Pick<ShopInstance, 'shopType'>): number {
+  const tpl = SHOP_TEMPLATES[shop.shopType];
+  const setup = tpl.openingCost + tpl.decorationCost;
+  const total = setup * (TRAINING_COST_SHARE[shop.shopType] ?? 0.3);
+  return Math.max(500, Math.round(total / Math.max(1, tpl.minStaffRequired) / 100) * 100);
+}
+
+/** Şu an sayılan eğitimli çalışan (çalışan sayısını geçemez) */
+export function trainedStaffCount(shop: Pick<ShopInstance, 'trainedStaff' | 'staffCount'>): number {
+  return Math.max(0, Math.min(shop.staffCount, Math.floor(shop.trainedStaff ?? 0)));
+}
+
+export function untrainedStaffCount(shop: Pick<ShopInstance, 'trainedStaff' | 'staffCount'>): number {
+  return Math.max(0, shop.staffCount - trainedStaffCount(shop));
+}
+
+/** Eğitimin sepet çarpanı: bütün çalışanlar eğitimliyse 1 + %6, yarısıysa 1 + %3 (1 = etkisiz) */
+export function trainingBasketMultiplier(shop: Pick<ShopInstance, 'trainedStaff' | 'staffCount'>): number {
+  if (shop.staffCount <= 0) return 1;
+  return 1 + (TRAINING_BASKET_PCT / 100) * (trainedStaffCount(shop) / shop.staffCount);
+}
+
+/** Dükkânın eğitimsiz bütün çalışanlarını eğitir. Ödeme önce dükkân kasasından, yetmezse cepten. */
+export function trainShopStaff(state: SimulationState, shopId: string, reservedCash: number): Result & { cost: number } {
+  if (!cityServicesOpen(state)) return { success: false, message: 'Akademi için önce bir dükkân aç.', cost: 0 };
+  const shop = personalShops(state).find((s) => s.shopId === shopId);
+  if (!shop) return { success: false, message: 'Dükkân bulunamadı.', cost: 0 };
+  const count = untrainedStaffCount(shop);
+  if (count <= 0) return { success: false, message: `${shop.nameTR}: bütün çalışanlar zaten eğitimli.`, cost: 0 };
+  const cost = count * trainingCostPerPerson(shop);
+  if (!payFromShopThenPlayer(state, shop, cost, reservedCash)) {
+    return { success: false, message: `Eğitim için ${tl(cost)} gerekiyor.`, cost: 0 };
+  }
+  shop.trainedStaff = shop.staffCount;
+  return {
+    success: true,
+    message: `${shop.nameTR}: ${count} çalışan eğitim aldı. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
+    cost,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SAĞLIK MERKEZİ — çalışan sigortası
+// ---------------------------------------------------------------------------
+
+/** Sigortanın bugünkü günlük primi (sigorta kapalıysa da ne kadar tutacağını verir) */
+export function insuranceDailyPremium(shop: Pick<ShopInstance, 'staffCount' | 'staffDailyWagePerPerson'>): number {
+  return Math.round(shop.staffCount * shop.staffDailyWagePerPerson * INSURANCE_PREMIUM_RATE);
+}
+
+/** Sigorta açıksa ödenen günlük prim, kapalıysa 0 */
+export function activeInsurancePremium(shop: ShopInstance): number {
+  return shop.staffInsurance ? insuranceDailyPremium(shop) : 0;
+}
+
+export function insuranceCustomerMultiplier(shop: Pick<ShopInstance, 'staffInsurance'>): number {
+  return shop.staffInsurance ? 1 + INSURANCE_CUSTOMERS_PCT / 100 : 1;
+}
+
+/** Çalışan sigortasını açar/kapatır. Prim her gün maaşla birlikte dükkân kasasından düşer; peşin ödeme yok. */
+export function setStaffInsurance(state: SimulationState, shopId: string, on: boolean): Result {
+  if (!cityServicesOpen(state)) return { success: false, message: 'Sağlık Merkezi için önce bir dükkân aç.' };
+  const shop = personalShops(state).find((s) => s.shopId === shopId);
+  if (!shop) return { success: false, message: 'Dükkân bulunamadı.' };
+  if (Boolean(shop.staffInsurance) === on) {
+    return { success: false, message: on ? 'Bu dükkânda sigorta zaten açık.' : 'Bu dükkânda sigorta zaten kapalı.' };
+  }
+  shop.staffInsurance = on;
+  return {
+    success: true,
+    message: on
+      ? `${shop.nameTR}: çalışanlar sigortalandı. Günde ${tl(insuranceDailyPremium(shop))} prim, +%${INSURANCE_CUSTOMERS_PCT} müşteri.`
+      : `${shop.nameTR}: çalışan sigortası kapatıldı.`,
   };
 }
 

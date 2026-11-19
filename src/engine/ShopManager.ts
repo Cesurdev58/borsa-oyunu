@@ -26,6 +26,7 @@ import { planShopRestock } from './ShopRestockPlanner';
 import { TradeProcurement } from './TradeProcurement';
 import { ShopOperations } from './ShopOperations';
 import { WalletEngine } from './WalletEngine';
+import { activeInsurancePremium } from './CityServices';
 import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
 
 export interface ManagerQuote {
@@ -132,7 +133,8 @@ export function dailyFixedCost(shop: ShopInstance): number {
     shop.dailyRent +
     shop.level * 120 +
     shop.staffCount * shop.staffDailyWagePerPerson +
-    (shop.manager?.dailyWage ?? 0)
+    (shop.manager?.dailyWage ?? 0) +
+    activeInsurancePremium(shop)
   );
 }
 

@@ -7,8 +7,9 @@
  * altında kısa liste ve büyük düğmeler.
  */
 import React, { useState } from 'react';
-import { Check, GraduationCap, HeartPulse, Lock, Recycle, Sun, Landmark, X } from 'lucide-react';
+import { Check, GraduationCap, HeartPulse, Lock, Recycle, Sun, Landmark, Truck, X } from 'lucide-react';
 import {
+  CARGO_SHIPPING_CUT,
   CITY_PROJECTS,
   INSURANCE_CUSTOMERS_PCT,
   SECONDHAND_SELL_RATE,
@@ -16,6 +17,7 @@ import {
   USED_UPGRADE_DAYS,
 } from '../../data/cityServices';
 import {
+  cargoDailyFee,
   cityProjectCustomerMultiplier,
   fundedCityProjects,
   insuranceDailyPremium,
@@ -38,6 +40,7 @@ export interface CityServiceHandlers {
   onBuySolar?: (shopId: string) => void;
   onTrainStaff?: (shopId: string) => void;
   onSetInsurance?: (shopId: string, on: boolean) => void;
+  onSetCargo?: (shopId: string, on: boolean) => void;
 }
 
 const TITLES: Record<CityServiceId, string> = {
@@ -46,9 +49,10 @@ const TITLES: Record<CityServiceId, string> = {
   ENERJI: 'Trafo ve Enerji',
   AKADEMI: 'Akademi',
   SAGLIK: 'Sağlık Merkezi',
+  LOJISTIK: 'Lojistik Merkezi',
 };
 
-const ICONS = { IKINCI_EL: Recycle, BELEDIYE: Landmark, ENERJI: Sun, AKADEMI: GraduationCap, SAGLIK: HeartPulse } as const;
+const ICONS = { IKINCI_EL: Recycle, BELEDIYE: Landmark, ENERJI: Sun, AKADEMI: GraduationCap, SAGLIK: HeartPulse, LOJISTIK: Truck } as const;
 
 export const CityServicesModal: React.FC<
   {
@@ -326,6 +330,41 @@ export const CityServicesModal: React.FC<
               className={`g-btn ${s.staffInsurance ? 'g-btn-secondary' : 'g-btn-primary'} g-btn-sm shrink-0 px-3`}
             >
               {s.staffInsurance ? 'Kapat' : 'Sigortala'}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  } else if (service === 'LOJISTIK') {
+    const on = shops.filter((s) => s.cargoContract);
+    hero = {
+      label: 'Kargo anlaşmalı dükkân',
+      value: `${on.length}/${shops.length}`,
+      note: `Anlaşmalı dükkânın siparişleri %${Math.round(CARGO_SHIPPING_CUT * 100)} daha ucuz nakliyeyle ve 1 gün erken gelir. Ücret her gün dükkân kasasından düşer; istediğin an bitirirsin. En çok çabuk bozulan ya da pahalı mal satan dükkâna değer.`,
+    };
+    body = (
+      <ul className="space-y-2">
+        {shops.map((s) => (
+          <li
+            key={s.shopId}
+            data-testid={`cargo-shop-${s.shopId}`}
+            data-on={s.cargoContract ? 'true' : 'false'}
+            className={`flex items-center gap-3 p-3 rounded-2xl ${s.cargoContract ? 'bg-[#ecfaf3]' : 'bg-[var(--g-surface-2)]'}`}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="font-extrabold text-[var(--g-ink)] leading-tight truncate">{s.nameTR}</div>
+              <div className="text-[13px] font-bold text-[var(--g-muted)]">
+                {s.cargoContract ? 'Anlaşmalı · ' : ''}günde {fc(cargoDailyFee(s))}
+              </div>
+            </div>
+            <button
+              type="button"
+              data-testid={`cargo-toggle-${s.shopId}`}
+              disabled={!h.onSetCargo}
+              onClick={() => h.onSetCargo?.(s.shopId, !s.cargoContract)}
+              className={`g-btn ${s.cargoContract ? 'g-btn-secondary' : 'g-btn-primary'} g-btn-sm shrink-0 px-3`}
+            >
+              {s.cargoContract ? 'Bitir' : 'Anlaş'}
             </button>
           </li>
         ))}

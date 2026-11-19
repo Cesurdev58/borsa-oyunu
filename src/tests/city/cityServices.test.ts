@@ -22,7 +22,7 @@ function withShop() {
 test('Şehir hizmeti binaları ilk dükkânla açılır', () => {
   const eng = new SimulationEngine(20261104, 2_000_000);
   const svc = () => deriveCityUrbanBlocks(eng.getState()).filter((b) => b.cityService);
-  assert.equal(svc().length, 5);
+  assert.equal(svc().length, 6);
   assert.ok(svc().every((b) => !b.isUnlocked), 'dükkân yokken kapalı');
   eng.openShop({ shopType: 'BUFE' });
   assert.ok(svc().every((b) => b.isUnlocked), 'dükkânla açık');

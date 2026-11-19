@@ -6,6 +6,7 @@
  * (TradeAndShopEngine dosyasından ayrıldı; dış dünya hâlâ TradeAndShopEngine.* üzerinden erişebilir.)
  */
 
+import { cargoAdjust } from './CityServices';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -270,7 +271,12 @@ export class TradeProcurement {
     }
 
     const subtotalCost = Number((qty * baseUnitPrice).toFixed(2));
-    const shippingPerUnit = matchedOffer?.shippingCostPerUnit ?? 5;
+    // Lojistik kargo anlaşması: anlaşmalı kişisel dükkâna giden malın nakliyesi ucuz, teslimi erken
+    const cargo = cargoAdjust(
+      params.targetDestinationType === 'SHOP' ? ts.shops.find((x) => x.shopId === params.targetDestinationId) : null,
+      matchedOffer?.deliveryDays ?? supplier.deliverySpeedDays
+    );
+    const shippingPerUnit = Number(((matchedOffer?.shippingCostPerUnit ?? 5) * cargo.shippingMult).toFixed(2));
     const shippingCost = Number((qty * shippingPerUnit).toFixed(2));
     const taxAmount = 0; // KDV mahsuplaşması net maliyet bazında izlenir
     const totalCost = Number((subtotalCost + shippingCost + taxAmount).toFixed(2));
@@ -402,8 +408,7 @@ export class TradeProcurement {
     ts.shipmentSeq += 1;
     const orderId = `PO-D${state.day}-S${String(ts.orderSeq).padStart(6, '0')}`;
     const shipmentId = `SHP-D${state.day}-S${String(ts.shipmentSeq).padStart(6, '0')}`;
-    const deliveryDays = matchedOffer?.deliveryDays ?? supplier.deliverySpeedDays;
-    const estimatedArrivalDay = state.day + Math.max(1, deliveryDays);
+    const estimatedArrivalDay = state.day + cargo.deliveryDays;
     const effectiveUnitCost = Number((totalCost / qty).toFixed(2));
 
     const order: ProcurementOrder = {

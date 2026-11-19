@@ -2,14 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SimulationEngine } from '../../engine/SimulationEngine';
 import { restockShops } from '../balance/restockBot';
+import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import {
+  activeCargoFee,
+  cargoDailyFee,
   insuranceDailyPremium,
   trainedStaffCount,
   trainingBasketMultiplier,
   trainingCostPerPerson,
   untrainedStaffCount,
 } from '../../engine/CityServices';
-import { INSURANCE_BLOCKED_DECISIONS, INSURANCE_PREMIUM_RATE, TRAINING_BASKET_PCT } from '../../data/cityServices';
+import { CARGO_SHIPPING_CUT, INSURANCE_BLOCKED_DECISIONS, INSURANCE_PREMIUM_RATE, TRAINING_BASKET_PCT } from '../../data/cityServices';
 import { deriveCityUrbanBlocks } from '../../components/game/city/cityLayout';
 
 function withShop(type = 'MANAV', seed = 20261104) {
@@ -140,4 +143,47 @@ test('Eğitim ve sigorta kayıttan geri yüklenir', () => {
   const shop = back.getState().tradeState!.shops[0];
   assert.equal(shop.staffInsurance, true);
   assert.equal(trainedStaffCount(shop), shop.staffCount);
+});
+
+// ---------------------------------------------------------------------------
+// Lojistik: kargo anlaşması
+// ---------------------------------------------------------------------------
+
+test('Lojistik Merkezi şehirde kendi hizmetini açar', () => {
+  const eng = withShop();
+  const b = deriveCityUrbanBlocks(eng.getState()).find((x) => x.id === 'urban-sanayi-lojistik-10');
+  assert.equal(b?.cityService, 'LOJISTIK');
+  assert.equal(b?.isUnlocked, true);
+});
+
+test('Lojistik: anlaşmalı dükkânın siparişi yarı nakliyeyle ve 1 gün erken gelir, ücret giderlere eklenir', () => {
+  const order = (contract: boolean) => {
+    const eng = withShop('MANAV');
+    const shop = eng.getState().tradeState!.shops[0];
+    if (contract) assert.equal(eng.setCargoContract(shop.shopId, true).success, true);
+    const plan = planShopRestock(eng.getState(), shop.shopId, 1_000_000);
+    const o = plan.orders[0];
+    const r = eng.placeProcurementOrder({
+      supplierId: o.supplierId,
+      resourceId: o.resourceId,
+      quantity: o.quantity,
+      destinationType: 'SHOP',
+      destinationId: shop.shopId,
+      paymentTermType: 'CASH',
+    });
+    assert.equal(r.success, true, r.message);
+    const po = eng.getState().tradeState!.procurementOrders[0];
+    return { eng, po, day: eng.getState().day };
+  };
+  const a = order(false);
+  const b = order(true);
+  assert.ok(Math.abs(b.po.shippingCost - a.po.shippingCost * (1 - CARGO_SHIPPING_CUT)) <= 0.05 * a.po.orderedQuantity);
+  const da = a.po.estimatedArrivalDay - a.day;
+  const db = b.po.estimatedArrivalDay - b.day;
+  assert.equal(db, Math.max(1, da - 1));
+  b.eng.advanceDaysWithoutPlayerDecisions(1, true);
+  const sh = b.eng.getState().tradeState!.shops[0];
+  assert.ok(sh.todayRentAndOpex >= cargoDailyFee(sh), 'ücret işletme giderinde');
+  assert.equal(b.eng.setCargoContract(sh.shopId, false).success, true);
+  assert.equal(activeCargoFee(sh), 0);
 });

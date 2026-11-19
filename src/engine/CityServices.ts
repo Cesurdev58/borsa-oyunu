@@ -20,6 +20,9 @@
  * dokunmaz; aynı kayıt aynı ilanları gösterir). Yalnızca veri, modeller ve alt motorları içe aktarır.
  */
 import {
+  CARGO_DAILY_FEE,
+  CARGO_DAYS_FASTER,
+  CARGO_SHIPPING_CUT,
   CITY_PROJECTS,
   INSURANCE_CUSTOMERS_PCT,
   INSURANCE_PREMIUM_RATE,
@@ -365,6 +368,45 @@ export function setStaffInsurance(state: SimulationState, shopId: string, on: bo
     message: on
       ? `${shop.nameTR}: çalışanlar sigortalandı. Günde ${tl(insuranceDailyPremium(shop))} prim, +%${INSURANCE_CUSTOMERS_PCT} müşteri.`
       : `${shop.nameTR}: çalışan sigortası kapatıldı.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LOJİSTİK — kargo anlaşması
+// ---------------------------------------------------------------------------
+
+export function cargoDailyFee(shop: Pick<ShopInstance, 'shopType'>): number {
+  return CARGO_DAILY_FEE[shop.shopType] ?? 100;
+}
+
+/** Anlaşma açıksa ödenen günlük ücret, kapalıysa 0 */
+export function activeCargoFee(shop: Pick<ShopInstance, 'shopType' | 'cargoContract' | 'isCompanyBranch'>): number {
+  return shop.cargoContract && !shop.isCompanyBranch ? cargoDailyFee(shop) : 0;
+}
+
+/** Siparişin nakliye ücreti çarpanı ve teslim günü (anlaşmalı kişisel dükkâna gidiyorsa ucuz ve erken) */
+export function cargoAdjust(
+  shop: Pick<ShopInstance, 'cargoContract' | 'isCompanyBranch'> | undefined | null,
+  deliveryDays: number
+): { shippingMult: number; deliveryDays: number } {
+  if (!shop || !shop.cargoContract || shop.isCompanyBranch) return { shippingMult: 1, deliveryDays: Math.max(1, deliveryDays) };
+  return { shippingMult: 1 - CARGO_SHIPPING_CUT, deliveryDays: Math.max(1, deliveryDays - CARGO_DAYS_FASTER) };
+}
+
+/** Kargo anlaşmasını açar/kapatır. Ücret her gün dükkân kasasından düşer; peşin ödeme yok. */
+export function setCargoContract(state: SimulationState, shopId: string, on: boolean): Result {
+  if (!cityServicesOpen(state)) return { success: false, message: 'Lojistik için önce bir dükkân aç.' };
+  const shop = personalShops(state).find((s) => s.shopId === shopId);
+  if (!shop) return { success: false, message: 'Dükkân bulunamadı.' };
+  if (Boolean(shop.cargoContract) === on) {
+    return { success: false, message: on ? 'Bu dükkânın kargo anlaşması zaten var.' : 'Bu dükkânın kargo anlaşması yok.' };
+  }
+  shop.cargoContract = on;
+  return {
+    success: true,
+    message: on
+      ? `${shop.nameTR}: kargo anlaşması yapıldı. Siparişler yarı nakliyeyle, 1 gün erken gelir (günde ${tl(cargoDailyFee(shop))}).`
+      : `${shop.nameTR}: kargo anlaşması bitirildi.`,
   };
 }
 

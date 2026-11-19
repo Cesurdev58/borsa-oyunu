@@ -34,15 +34,26 @@ export function createRng(seedText: string): Rng {
 const textureCache = new Map<string, THREE.CanvasTexture>();
 const glowMaterials = new Set<THREE.MeshStandardMaterial>();
 const lampMaterials = new Set<THREE.MeshStandardMaterial>();
+/** Hazır modellerin pencere malzemeleri: modeller bir kez yüklenip saklandığı için sahne kapanınca silinmez */
+const assetGlowMaterials = new Set<THREE.MeshStandardMaterial>();
 
 /** Gece yanan pencere ve lamba malzemesi mi? (Birleştirmede kimliği korunmalı) */
 export function isGlowMaterial(m: THREE.Material): boolean {
-  return glowMaterials.has(m as THREE.MeshStandardMaterial) || lampMaterials.has(m as THREE.MeshStandardMaterial);
+  const sm = m as THREE.MeshStandardMaterial;
+  return glowMaterials.has(sm) || lampMaterials.has(sm) || assetGlowMaterials.has(sm);
+}
+
+/** Hazır modelden gelen bir malzemeyi gece yanan pencere malzemesi olarak kaydeder (setWindowGlow yakar). */
+export function markWindowGlowMaterial(m: THREE.MeshStandardMaterial): void {
+  assetGlowMaterials.add(m);
 }
 
 /** Gece pencere ışığını ayarlar (0 = kapalı, 1 = tam). */
 export function setWindowGlow(v: number): void {
   glowMaterials.forEach((m) => {
+    m.emissiveIntensity = v;
+  });
+  assetGlowMaterials.forEach((m) => {
     m.emissiveIntensity = v;
   });
 }

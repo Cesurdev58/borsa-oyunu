@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { isGlowMaterial } from './kit';
+import { isGlowMaterial, markWindowGlowMaterial } from './kit';
 
 const BASE: string = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -60,19 +60,80 @@ interface Entry {
  *  ortak malzemeye bağlayınca birleştirme bir paketin bütün parçalarını tek çizimde toplayabilir. */
 const SHARED_MATS = new Map<string, THREE.Material>();
 
-function prepare(root: THREE.Object3D, kit: string): void {
+// ---------- Gece yanan pencereler (hazır modeller) ----------
+// Hazır paketler renk kartelası dokusu kullanır: her renk dokuda bir kutudur. Binaların camı belli kutulardan
+// gelir; o kutular beyaz, gerisi siyah bir ışık haritası (emissiveMap) üretilir. Gece `setWindowGlow` ile yanar.
+// Kutular dokunun ızgarasıyla (sütun, satır; satır 0 = dokunun üstü) verilir. Ekran görüntüsüyle bulundu:
+// KayKit'te pencere çerçeveleri (1,0) kutusundadır (camın kendisi dokusuz, karanlık); çerçeve yanınca pencere yanmış
+// görünür. Kenney paketlerinde cam açık mavi (10–11, 2–3) kutulardır. Kenney "low-detail" binalarda cam yoktur.
+const GLASS_CELLS: Record<string, { cols: number; rows: number; cells: Array<[number, number]> }> = {
+  kaykit: { cols: 8, rows: 4, cells: [[1, 0]] },
+  'kenney-commercial': { cols: 16, rows: 8, cells: [[10, 2], [10, 3], [11, 2], [11, 3]] },
+  'kenney-suburban': { cols: 16, rows: 8, cells: [[10, 2], [10, 3], [11, 2], [11, 3]] },
+};
+
+/** Pencereleri gece yanacak modeller: binalar (ağaç, araba, yol parçası değil) */
+function isBuildingFile(file: string): boolean {
+  return /^(building|low-detail-building)/.test(file);
+}
+
+const glowMapCache = new Map<string, THREE.Texture | null>();
+
+function glassGlowMap(kit: string, map: THREE.Texture | null | undefined): THREE.Texture | null {
+  const spec = GLASS_CELLS[kit];
+  const img = map?.image as (CanvasImageSource & { width: number; height: number }) | undefined;
+  if (!spec || !img || !img.width || typeof document === 'undefined') return null;
+  const key = `${kit}:${map!.uuid}`;
+  if (glowMapCache.has(key)) return glowMapCache.get(key)!;
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.fillStyle = '#000';
+  g.fillRect(0, 0, c.width, c.height);
+  const cw = c.width / spec.cols;
+  const ch = c.height / spec.rows;
+  for (const [col, row] of spec.cells) {
+    // Kenarlardan biraz içeride çiz: komşu renge taşmasın
+    g.fillStyle = '#fff';
+    g.fillRect(col * cw + 1, row * ch + 1, cw - 2, ch - 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.flipY = map!.flipY;
+  tex.colorSpace = THREE.NoColorSpace;
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  glowMapCache.set(key, tex);
+  return tex;
+}
+
+function prepare(root: THREE.Object3D, kit: string, file: string): void {
+  const building = isBuildingFile(file);
   root.traverse((o) => {
     const m = o as THREE.Mesh;
     if (!m.isMesh) return;
     m.castShadow = true;
     m.receiveShadow = true;
     if (!Array.isArray(m.material)) {
-      const key = `${kit}:${m.material.name}`;
+      // Binalar aynı dokunun "gece yanan pencereli" kopyasını paylaşır (araba ve ağaçlar yanmaz)
+      const key = `${kit}:${m.material.name}${building ? ':glow' : ''}`;
       const shared = SHARED_MATS.get(key);
       if (shared) {
         m.material.dispose();
         m.material = shared;
         return;
+      }
+      if (building) {
+        const sm = m.material as THREE.MeshStandardMaterial;
+        const gm = glassGlowMap(kit, sm.map);
+        if (gm) {
+          sm.emissiveMap = gm;
+          sm.emissive = new THREE.Color('#ffd58a');
+          sm.emissiveIntensity = 0;
+          markWindowGlowMaterial(sm);
+        }
       }
       SHARED_MATS.set(key, m.material);
     }
@@ -105,7 +166,7 @@ export function loadCityAssets(): Promise<CityAssets> {
             `${BASE}${path}`,
             (gltf) => {
               const scene = gltf.scene;
-              prepare(scene, path.split('/')[1]);
+              prepare(scene, path.split('/')[1], name);
               const bb = new THREE.Box3().setFromObject(scene);
               lib.set(name, { scene, size: bb.getSize(new THREE.Vector3()) });
               resolve();

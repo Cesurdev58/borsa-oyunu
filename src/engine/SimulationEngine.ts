@@ -1778,6 +1778,16 @@ export class SimulationEngine {
     return res;
   }
 
+  /** Lojistik: dükkânın kargo anlaşmasını açar/kapatır. */
+  public setCargoContract(shopId: string, on: boolean): { success: boolean; message: string } {
+    const res = CityServices.setCargoContract(this.state, shopId, on);
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Lojistik] ${res.message}`);
+    }
+    return res;
+  }
+
   /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
   public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
     const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());

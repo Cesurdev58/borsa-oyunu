@@ -31,7 +31,7 @@ import {
 } from '../../data/gameBalance';
 import { PROGRESSION_RULES } from '../../engine/ProgressionRules';
 import { DECISION_LIFETIME_DAYS } from '../../engine/DecisionEventEngine';
-import { INSURANCE_CUSTOMERS_PCT, TRAINING_BASKET_PCT } from '../../data/cityServices';
+import { CARGO_SHIPPING_CUT, INSURANCE_CUSTOMERS_PCT, TRAINING_BASKET_PCT } from '../../data/cityServices';
 import type { CityBuildingId, GameBottomTab } from './gameTypes';
 
 interface HowToPlayModalProps {
@@ -122,6 +122,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
         'Belediye\'de mahalle projelerine katkı verirsen bütün dükkânlarına kalıcı müşteri ve itibar gelir. Trafo\'dan dükkânına güneş paneli kurarsan günlük giderin %20 azalır.',
         `Akademi'de çalışanlarını eğit: bir kez ödersin, müşteriler %${TRAINING_BASKET_PCT} daha çok harcar. Yeni işe aldığın çalışan eğitimsiz gelir, onu da eğitmen gerekir.`,
         `Sağlık Merkezi'nde çalışanlarını sigortala: günlük küçük bir prim karşılığında +%${INSURANCE_CUSTOMERS_PCT} müşteri gelir, çalışanların zam istemez ve rakibe gitmez.`,
+        `Lojistik Merkezi'nde kargo anlaşması yap: siparişlerin %${Math.round(CARGO_SHIPPING_CUT * 100)} daha ucuz nakliyeyle ve 1 gün erken gelir. En çok manav, market ve galeriye değer.`,
         `Ara sıra bir karar kartı çıkar (festival, denetim gibi). ${DECISION_LIFETIME_DAYS} gün içinde seçmezsen ikinci seçenek seçilmiş sayılır.`,
       ],
       go: { label: 'Dükkânlarıma git', tab: 'portfolio' },

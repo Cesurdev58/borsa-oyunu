@@ -137,12 +137,12 @@ for (const type of Object.keys(SHOP_TEMPLATES)) {
   );
 }
 
-console.log('\n=== AKADEMİ VE SAĞLIK (2. seviye dükkân, 120 gün, 8 tohum ortalaması) ===');
+console.log('\n=== AKADEMİ, SAĞLIK VE LOJİSTİK (2. seviye dükkân, 120 gün, 8 tohum ortalaması) ===');
 console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle aynı). Sigorta: günlük prim, kârı artırmalı ama az.');
 {
   const CS = await import('../src/engine/CityServices');
   for (const type of Object.keys(SHOP_TEMPLATES)) {
-    const runSeed = (mode: 'yok' | 'egitim' | 'sigorta', seed: number) => {
+    const runSeed = (mode: 'yok' | 'egitim' | 'sigorta' | 'kargo', seed: number) => {
       const eng = new SimulationEngine(seed, 8_000_000);
       if (!eng.openShop({ shopType: type as never }).success) return null;
       const shopId = eng.getState().tradeState!.shops[0].shopId;
@@ -154,6 +154,7 @@ console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle
         eng.trainShopStaff(shopId);
       }
       if (mode === 'sigorta') eng.setStaffInsurance(shopId, true);
+      if (mode === 'kargo') eng.setCargoContract(shopId, true);
       const profits: number[] = [];
       let premium = 0;
       for (let d = 1; d <= 120; d++) {
@@ -170,7 +171,7 @@ console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle
     };
     // Tek tohumda karar kartlarının sırası değiştiği için oynama büyük; 8 tohumun ortalaması alınır
     const SEEDS = [20261104, 11, 22, 33, 44, 55, 66, 77];
-    const run = (mode: 'yok' | 'egitim' | 'sigorta') => {
+    const run = (mode: 'yok' | 'egitim' | 'sigorta' | 'kargo') => {
       const rs = SEEDS.map((sd) => runSeed(mode, sd));
       if (rs.some((x) => !x)) return null;
       const avg = (f: (x: NonNullable<(typeof rs)[number]>) => number) => rs.reduce((t, x) => t + f(x!), 0) / rs.length;
@@ -179,7 +180,8 @@ console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle
     const a = run('yok');
     const e = run('egitim');
     const g = run('sigorta');
-    if (!a || !e || !g) continue;
+    const k = run('kargo');
+    if (!a || !e || !g || !k) continue;
     const eg = e.profit - a.profit;
     const sg = g.profit - a.profit;
     console.log(
@@ -188,7 +190,10 @@ console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle
       '| eğitim', fmt(e.cost).padStart(8), '→ +', fmt(eg).padStart(6), '/gün, geri dönüş', String(eg > 0 ? Math.round(e.cost / eg) : 'zarar').padStart(5),
       `(hedef ~${Math.round(HEDEF_GERI_DONUS[type] * 0.8)})`,
       '| sigorta prim', fmt(g.premium).padStart(6), '→ net', `${sg >= 0 ? '+' : ''}${fmt(sg)}`.padStart(7), '/gün',
-      `(%${Math.round((sg / Math.max(1, a.profit)) * 100)})`
+      `(%${Math.round((sg / Math.max(1, a.profit)) * 100)})`,
+      '| kargo ücret', fmt(CS.cargoDailyFee({ shopType: type as never })).padStart(4),
+      '→ net', `${k.profit - a.profit >= 0 ? '+' : ''}${fmt(k.profit - a.profit)}`.padStart(6), '/gün',
+      `(ücretsiz kazanç ${fmt(k.profit - a.profit + CS.cargoDailyFee({ shopType: type as never }))})`
     );
   }
 }

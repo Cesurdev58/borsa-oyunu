@@ -8,7 +8,7 @@
  *   Hammadde -> Tedarikçi -> Satın Alma -> Sevkiyat -> Depo -> Üretim -> Mamul Deposu -> Dağıtım -> Mağaza / Kurumsal Müşteri -> Satış -> Tahsilat
  */
 
-import { activeInsurancePremium, solarOpexMultiplier } from './CityServices';
+import { activeCargoFee, activeInsurancePremium, solarOpexMultiplier } from './CityServices';
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { MANAGER_PROFIT_SHARE } from '../data/gameBalance';
 import {
@@ -392,7 +392,7 @@ export class TradeAndShopEngine {
         ).toFixed(2)
       );
       shop.todayRentAndOpex = Number(
-        ((shop.dailyRent + shop.level * 120) * solarOpexMultiplier(shop)).toFixed(2)
+        ((shop.dailyRent + shop.level * 120) * solarOpexMultiplier(shop) + activeCargoFee(shop)).toFixed(2)
       );
       // Müdür primi: müdürden önceki günlük kârın bir payı (zarar günlerinde prim yok)
       if (shop.manager) {

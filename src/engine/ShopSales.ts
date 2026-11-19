@@ -16,7 +16,7 @@
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
-import { activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
+import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
@@ -285,6 +285,7 @@ export function liveShopToday(
     shop.staffCount * shop.staffDailyWagePerPerson +
     (shop.manager ? shop.manager.dailyWage : 0) +
     activeInsurancePremium(shop) +
+    activeCargoFee(shop) +
     shop.dailyRent +
     shop.level * 120;
   const dayFrac = Math.max(0, Math.min(1, minutesIntoDay / 1440));

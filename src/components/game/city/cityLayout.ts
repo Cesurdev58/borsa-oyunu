@@ -694,6 +694,12 @@ export const CITY_SERVICE_BLOCKS: Record<string, { service: CityServiceId; nameT
     shortTagTR: 'Sağlık Mrk.',
     summaryTR: 'Çalışanlarını sigortala: daha istekli çalışırlar',
   },
+  'urban-sanayi-lojistik-10': {
+    service: 'LOJISTIK',
+    nameTR: 'Lojistik Merkezi',
+    shortTagTR: 'Lojistik',
+    summaryTR: 'Kargo anlaşması yap: mal yarı nakliyeyle, erken gelir',
+  },
 };
 
 function withCityServices(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {

@@ -98,3 +98,29 @@ export const INSURANCE_CUSTOMERS_PCT = 4;
 export const INSURANCE_PREMIUM_RATE = 0.06;
 /** Sigortalı dükkânda bu karar kartları çıkmaz (çalışan memnun: zam istemez, rakibe gitmez) */
 export const INSURANCE_BLOCKED_DECISIONS: readonly string[] = ['staff-raise', 'rival-poach'];
+
+// ---------------------------------------------------------------------------
+// LOJİSTİK — kargo anlaşması
+// ---------------------------------------------------------------------------
+
+/** Anlaşmalı dükkâna gelen siparişlerin nakliye ücreti bu kadar düşer */
+export const CARGO_SHIPPING_CUT = 0.5;
+/** Anlaşmalı dükkâna gelen siparişler bu kadar gün erken gelir (en az 1 gün) */
+export const CARGO_DAYS_FASTER = 1;
+/**
+ * Kargo anlaşmasının günlük ücreti (dükkân kasasından, kira ve işletme gideriyle birlikte düşer).
+ * `npm run balans` "LOJİSTİK" bölümüyle (8 tohum, 2. seviye) ölçülerek verildi: anlaşma nakliyenin yarısını ve
+ * erken gelen malla raf boşluğunu kurtarır. Ücretsiz kazanç türe göre çok farklı (günde büfe ~110, manav ~730 (çabuk
+ * bozulan mal), market ~840, galeri ~2.700 (pahalı mal erken gelir); giyim ve elektronikte neredeyse yok); ücret bu
+ * kazancın ~%55'i. Giyimde anlaşma değmez (net ~−40), elektronikte az kazandırır: oyuncu hangi dükkâna değdiğini seçer.
+ */
+export const CARGO_DAILY_FEE: Record<ShopType, number> = {
+  BUFE: 60,
+  MANAV: 400,
+  KAFE: 120,
+  GIYIM_MAGAZASI: 40,
+  ELEKTRONIK_MAGAZASI: 50,
+  MOBILYA_MAGAZASI: 180,
+  MARKET: 450,
+  OTOMOBIL_GALERISI: 1450,
+};

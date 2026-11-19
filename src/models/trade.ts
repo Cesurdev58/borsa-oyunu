@@ -425,6 +425,8 @@ export interface ShopInstance {
   trainedStaff?: number;
   /** Sağlık Merkezi çalışan sigortası açık mı (eski kayıtlarda yoktur) */
   staffInsurance?: boolean;
+  /** Lojistik kargo anlaşması: siparişler ucuz ve erken gelir, günlük ücret (eski kayıtlarda yoktur) */
+  cargoContract?: boolean;
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
   live?: ShopLiveDay;
   todayWalkInCustomers: number;

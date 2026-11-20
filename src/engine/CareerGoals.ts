@@ -5,7 +5,7 @@
  * KARİYER HEDEFLERİ (CareerGoals)
  * Oyunun başından sonuna kadar uzanan sıralı hedef zinciri ve gerçek para ödülleri.
  * Eskiden 8 hedef vardı, şirket kurulunca bitiyordu ve ödüller yalnızca yazıydı ("+100 İtibar").
- * Şimdi 31 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
+ * Şimdi 32 hedef halka arz, holding, devralma ve zenginler listesine kadar gider; her hedefin
  * "Ödülü al" düğmesiyle alınan bir para ödülü vardır.
  *
  * Kurallar:
@@ -156,6 +156,14 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 3_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => (hasCompany(s) ? count(1, 1) : count(upgradeCount(s), 1)),
+  },
+  {
+    id: 'goal-first-employee',
+    title: 'Dükkânına ilk çalışanını işe al',
+    reward: 2_000,
+    target: 'OYUNCU_OFISI',
+    // İlk dükkân BUFE'de oyuncu kendisi çalışır (ownerWorks); çalışan alınınca ya da seviye yükselince biter.
+    progress: (s) => flag(hasCompany(s) || shops(s).some((sh) => !sh.ownerWorks && sh.staffCount >= 1)),
   },
   {
     id: 'goal-shop-profit-10k',
@@ -357,7 +365,14 @@ export function ensureCareerGoalsState(state: SimulationState): CareerGoalsState
  * (Sıradan başlayarak ilk tamamlanmamış hedefe kadar.)
  */
 export function migrateCareerGoalsForLegacySave(state: SimulationState, ctx: GoalContext): void {
-  if (state.careerGoals) return;
+  if (state.careerGoals) {
+    // Sonradan eklenen hedef (ilk çalışan): zincirde ondan sonraki hedef zaten alınmışsa ödülsüz alınmış sayılır
+    const cg = state.careerGoals;
+    if (!cg.claimed.includes('goal-first-employee') && cg.claimed.includes('goal-shop-profit-10k')) {
+      cg.claimed.push('goal-first-employee');
+    }
+    return;
+  }
   const claimed: string[] = [];
   for (const g of CAREER_GOALS) {
     if (!g.progress(state, { ...ctx, hasOpenedBorsa: true }).done) break;

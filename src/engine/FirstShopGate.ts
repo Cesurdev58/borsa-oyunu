@@ -4,16 +4,16 @@
  *
  * İLK DÜKKÂN KAPISI (FirstShopGate)
  * İlk dükkân, oyuncu borsanın temelini öğrenince açılır: bir hisse al, ikinci bir sektörden hisse al,
- * bir hisse sat. Eskiden kapı "net değer 120.000 TL" idi ve oyunun ilk 30–40 gerçek saatini bekletiyordu.
+ * bir hisse sat, piyasayı bir oyun günü izle (4. adım: alıp aynı dakikada çıkmak mini eğitimi atlatıyordu). Eskiden kapı "net değer 120.000 TL" idi ve oyunun ilk 30–40 gerçek saatini bekletiyordu.
  * Net değeri FIRST_SHOP_MIN_NET_WORTH'u geçen oyuncu (testler, çok parayla başlayan oyun) görev yapmadan geçer.
  * Bir kez dükkân açılınca ya da şirket kurulunca kapı hep açıktır.
  * Yalnızca modelleri ve denge sabitlerini içe aktarır (döngü oluşmaz).
  */
-import { FIRST_SHOP_MIN_NET_WORTH } from '../data/gameBalance';
+import { FIRST_SHOP_GATE_MARKET_DAYS, FIRST_SHOP_MIN_NET_WORTH } from '../data/gameBalance';
 import type { SimulationState } from '../models/simulation';
 
 export interface FirstShopGateStep {
-  id: 'buy' | 'two-sectors' | 'sell';
+  id: 'buy' | 'two-sectors' | 'sell' | 'market-day';
   label: string;
   done: boolean;
 }
@@ -27,6 +27,7 @@ export interface FirstShopGateStatus {
 }
 
 type GateInput = Pick<SimulationState, 'transactions' | 'stocks' | 'netWorth' | 'playerCompany'> &
+  Partial<Pick<SimulationState, 'day'>> &
   Partial<Pick<SimulationState, 'tradeState'>>;
 
 export function firstShopGateStatus(state: GateInput): FirstShopGateStatus {
@@ -34,9 +35,11 @@ export function firstShopGateStatus(state: GateInput): FirstShopGateStatus {
   const boughtSectors = new Set<string>();
   let bought = false;
   let sold = false;
+  let firstBuyDay: number | null = null;
   for (const t of state.transactions ?? []) {
     if (t.type === 'BUY') {
       bought = true;
+      if (firstBuyDay === null || t.day < firstBuyDay) firstBuyDay = t.day;
       const sec = t.ticker ? sectorOf.get(t.ticker) : undefined;
       if (sec) boughtSectors.add(sec);
     } else if (t.type === 'SELL') {
@@ -47,6 +50,12 @@ export function firstShopGateStatus(state: GateInput): FirstShopGateStatus {
     { id: 'buy', label: 'Borsadan bir hisse al', done: bought },
     { id: 'two-sectors', label: 'Başka bir sektörden de hisse al', done: boughtSectors.size >= 2 },
     { id: 'sell', label: 'Bir hisseni sat', done: sold },
+    // Mini eğitimin son adımı: piyasayı bir gün izle (fiyatlar bir gün boyunca oynasın; alıp aynı dakikada çıkılmasın)
+    {
+      id: 'market-day',
+      label: 'Piyasayı bir gün izle',
+      done: firstBuyDay !== null && (state.day ?? firstBuyDay) >= firstBuyDay + FIRST_SHOP_GATE_MARKET_DAYS,
+    },
   ];
   const alreadyPast =
     (state.tradeState?.shops.length ?? 0) > 0 ||

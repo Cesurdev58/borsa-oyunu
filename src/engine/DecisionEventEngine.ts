@@ -21,6 +21,7 @@ import type {
   PendingDecision,
 } from '../models/decisions';
 import type { ShopInstance } from '../models/trade';
+import { ONBOARDING_QUIET_DAYS } from '../data/gameBalance';
 import { WalletEngine } from './WalletEngine';
 import { INSURANCE_BLOCKED_DECISIONS } from '../data/cityServices';
 import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
@@ -33,8 +34,8 @@ export const DECISION_CHANCE = 0.5;
 export const DECISION_LIFETIME_DAYS = 2;
 /** Rakip hamlesi kartları en az bu kadar dükkânı olan oyuncuya çıkar (tek büfeyle başlayana sert gelmesin) */
 export const RIVAL_MIN_SHOPS = 2;
-/** İlk olay en erken bu günde çıkar (ilk gün rehber var) */
-export const DECISION_FIRST_DAY = 3;
+/** İlk olay en erken bu günde çıkar: ilk gün rehber var, sonraki ONBOARDING_QUIET_DAYS gün borsa → ilk dükkân → ilk çalışan öğrenilir */
+export const DECISION_FIRST_DAY = ONBOARDING_QUIET_DAYS + 1;
 
 /** Tohum + gün + tuzdan 0..1 arası sabit sayı üretir (xorshift). */
 export function decisionHash(seed: number, day: number, salt: number): number {

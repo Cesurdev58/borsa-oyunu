@@ -886,6 +886,10 @@ export default function App() {
     (shopId: string) => handleShopManagerResult(engine.hireShopManager(shopId)),
     [engine, handleShopManagerResult]
   );
+  const handleHireFirstEmployee = useCallback(
+    (shopId: string) => handleShopManagerResult(engine.hireFirstEmployee(shopId)),
+    [engine, handleShopManagerResult]
+  );
   const handleFireShopManager = useCallback(
     (shopId: string) => handleShopManagerResult(engine.fireShopManager(shopId)),
     [engine, handleShopManagerResult]
@@ -1369,6 +1373,7 @@ export default function App() {
         onDeliverCommercialContract={handleDeliverCommercialContract}
         onIncorporateShopsIntoCompany={handleIncorporateShops}
         onHireShopManager={handleHireShopManager}
+        onHireFirstEmployee={handleHireFirstEmployee}
         onBuyShopUpgrade={handleBuyShopUpgrade}
         onHirePortfolioManager={handleHirePortfolioManager}
         onConfigureAutoInvest={handleConfigureAutoInvest}

@@ -57,7 +57,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
     {
       emoji: '🏪',
       title: 'İlk dükkânını aç',
-      text: 'Borsada bir hisse al, başka bir sektörden de al, sonra birini sat. Bu üç adım bitince dükkân kurabilirsin. Dükkân ekranında ilerlemeni görürsün.',
+      text: 'Borsada bir hisse al, başka bir sektörden de al, sonra birini sat. Sonra piyasayı bir gün izle. Bu adımlar bitince dükkân kurabilirsin. Dükkân ekranında ilerlemeni görürsün.',
     },
     {
       emoji: '🛒',

@@ -11,6 +11,8 @@
 import { insuranceDailyPremium, trainedStaffCount } from '../../engine/CityServices';
 import { shopHoursLabel, shopOpenStatus } from '../../data/shopHours';
 import { getManagerQuote } from '../../engine/ShopManager';
+import { getFirstEmployeeQuote, getOpeningAdvice } from '../../engine/ShopOnboarding';
+import { FIRST_EMPLOYEE_HIRE_FEE_BUFE, OWNER_STAFF_CAPACITY } from '../../data/gameBalance';
 import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
 import { NumberInput } from './ui/NumberInput';
 import React, { useMemo, useState } from 'react';
@@ -63,6 +65,8 @@ export interface EsnafAndTradeActionsProps {
   }) => void;
   onUpgradeShopLevel: (shopId: string) => void;
   onHireShopManager?: (shopId: string) => void;
+  /** İlk dükkânda (BUFE) kendin çalışırken ilk çalışanı ücretle işe al (engine/ShopOnboarding.ts) */
+  onHireFirstEmployee?: (shopId: string) => void;
   /** Dükkâna küçük yükseltme al (engine/ShopUpgrades.ts) */
   onBuyShopUpgrade?: (shopId: string, upgradeId: string) => void;
   onFireShopManager?: (shopId: string) => void;
@@ -131,6 +135,8 @@ interface EsnafAndTradePanelProps extends EsnafAndTradeActionsProps {
   initialShopId?: string | null;
   /** true ise açılışta "yeni dükkân aç" sekmesi görünür. */
   startWithOpenBranch?: boolean;
+  /** Açılışta hangi alt ekran (testler ve kısayollar için); verilmezse dükkân yoksa "Yeni dükkân", varsa "Mal al". */
+  initialActionTab?: ShopActionTab;
 }
 
 type ShopActionTab =
@@ -172,6 +178,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   onOpenShop,
   onUpgradeShopLevel,
   onHireShopManager,
+  onHireFirstEmployee,
   onBuyShopUpgrade,
   onFireShopManager,
   onSetShopManagerSweep,
@@ -187,6 +194,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   onIncorporateShopsIntoCompany,
   initialShopId,
   startWithOpenBranch,
+  initialActionTab,
 }) => {
   const trade = useMemo(
     () => TradeAndShopEngine.ensureTradeUniverseState(state),
@@ -204,9 +212,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
     () => initialShopId ?? trade.shops[0]?.shopId ?? ''
   );
   const [shopActionTab, setShopActionTab] = useState<ShopActionTab>(() =>
-    trade.shops.length === 0 || startWithOpenBranch
+    initialActionTab ??
+    (trade.shops.length === 0 || startWithOpenBranch
       ? 'OPEN_BRANCH'
-      : 'ORDER_PRODUCT'
+      : 'ORDER_PRODUCT')
   );
   const [tradeTab, setTradeTab] = useState<TradeCenterTab>('TEDARIK');
   const [showAdvancedOrder, setShowAdvancedOrder] = useState(false);
@@ -217,6 +226,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const [newShopType, setNewShopType] = useState<ShopType>('BUFE');
   const [newShopCustomName, setNewShopCustomName] = useState<string>('');
   const [newShopCashFloat, setNewShopCashFloat] = useState<number>(8_000);
+  // Düşük sermayeyle açılışta ikinci onay: ilk basışta uyarı çıkar, aynı seçimle ikinci basışta dükkân açılır
+  const [lowCashArmedKey, setLowCashArmedKey] = useState<string | null>(null);
 
   // Tedarik sipariş formu
   const [selectedResourceId, setSelectedResourceId] = useState<string>(
@@ -272,6 +283,19 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const selectedShopTemplateForNew = useMemo(
     () => SHOP_TEMPLATES[newShopType] ?? SHOP_TEMPLATES.BUFE,
     [newShopType]
+  );
+
+  // Kişisel nakitten rezerve edilen kısım (bekleyen emirler) kullanılabilir paradan farkıdır
+  const reservedForAdvice = Math.max(0, state.cash - spendableCash);
+  const openingAdvice = useMemo(
+    () => getOpeningAdvice(state, newShopType, newShopCashFloat, reservedForAdvice),
+    [state, newShopType, newShopCashFloat, reservedForAdvice]
+  );
+  const openingKey = `${newShopType}|${newShopCashFloat}`;
+  const lowCashArmed = lowCashArmedKey === openingKey;
+  const firstEmployeeQuote = useMemo(
+    () => (activeShop && activeShop.ownerWorks ? getFirstEmployeeQuote(state, activeShop, reservedForAdvice) : null),
+    [state, activeShop, reservedForAdvice]
   );
 
   const supplierOffers = useMemo(
@@ -1183,9 +1207,35 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   {activeShop.staffCount}
                 </div>
                 <div className="text-sm font-bold text-white/65 mt-1">
-                  çalışan · en az {activeShop.minStaffRequired} gerekli
+                  {activeShop.ownerWorks && activeShop.staffCount <= 0
+                    ? 'çalışan · dükkânı sen yürütüyorsun'
+                    : `çalışan · en az ${activeShop.minStaffRequired} gerekli`}
                 </div>
               </div>
+              {firstEmployeeQuote && activeShop.staffCount <= 0 && (
+                <div data-testid="shop-first-hire-card" className="g-card-soft p-4 space-y-3 text-center">
+                  <div className="font-extrabold text-slate-900">İlk çalışanını işe al</div>
+                  <div className="text-sm text-slate-700">
+                    Şu an dükkân kapasitenin %{Math.round(OWNER_STAFF_CAPACITY * 100)}'ı ile çalışıyor. Çalışan alınca müşteri
+                    sayısı tam kapasiteye çıkar.
+                  </div>
+                  <div className="text-sm font-bold tabular-nums text-slate-800">
+                    İşe alma {formatCurrency(firstEmployeeQuote.fee)} · sonra günde {formatCurrency(firstEmployeeQuote.dailyWage)} maaş
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="shop-first-hire-btn"
+                    disabled={!firstEmployeeQuote.allowed || !onHireFirstEmployee}
+                    onClick={() => onHireFirstEmployee?.(activeShop.shopId)}
+                    className="g-btn g-btn-primary w-full"
+                  >
+                    İlk çalışanını işe al
+                  </button>
+                  {!firstEmployeeQuote.allowed && (
+                    <div className="text-[13px] font-semibold text-rose-700">{firstEmployeeQuote.reasonTR}</div>
+                  )}
+                </div>
+              )}
               <div
                 data-testid="shop-staff-wage-card"
                 className="g-card-soft p-4 text-center tabular-nums"
@@ -1204,7 +1254,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     : 'Sigortasız'}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={activeShop.ownerWorks && activeShop.staffCount <= 0 ? 'hidden' : 'grid grid-cols-2 gap-3'}>
                 <button
                   type="button"
                   data-testid="shop-hire-1-btn"
@@ -1424,19 +1474,59 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className="g-card mt-1 w-full min-h-[48px] px-3 text-sm tabular-nums font-bold"
                   />
                 </label>
+                <div data-testid="shop-opening-advice" className="g-card-soft p-3 space-y-1 text-sm text-slate-700">
+                  <div className="flex justify-between font-bold">
+                    <span>Önerilen işletme sermayesi</span>
+                    <span data-testid="shop-opening-recommended" className="tabular-nums text-amber-800">
+                      {formatCurrency(openingAdvice.recommendedWorkingCapital)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Açılıştan sonra elinde (kasa + cep)</span>
+                    <span data-testid="shop-opening-liquid" className="tabular-nums font-bold">
+                      {formatCurrency(openingAdvice.liquidAfterOpening)}
+                    </span>
+                  </div>
+                  <div data-testid="shop-opening-runway" className="text-[13px] font-semibold text-slate-600">
+                    İlk stok (~{formatCurrency(openingAdvice.firstStockCost)}), kira ve maaş düşünce yaklaşık{' '}
+                    {openingAdvice.runwayDays} gün dayanır.
+                  </div>
+                  {openingAdvice.ownerWorks && (
+                    <div data-testid="shop-opening-owner-note" className="text-[13px] font-semibold text-slate-600">
+                      İlk dükkânda sen çalışırsın (kapasite %{Math.round(OWNER_STAFF_CAPACITY * 100)}). Çalışanı sonradan{' '}
+                      {formatCurrency(FIRST_EMPLOYEE_HIRE_FEE_BUFE)} ile işe alırsın.
+                    </div>
+                  )}
+                </div>
+                {openingAdvice.belowRecommended && lowCashArmed && (
+                  <div
+                    data-testid="shop-opening-low-cash-warning"
+                    className="rounded-2xl bg-rose-50 border-2 border-rose-400 p-3 text-sm font-bold text-rose-800"
+                  >
+                    Dikkat: açılıştan sonra elinde önerilenin altında para kalacak. Stok alamazsan satış başlamaz ve kira
+                    kasayı eritir. Yine de açmak istiyorsan düğmeye bir kez daha bas.
+                  </div>
+                )}
                 <button
                   type="button"
                   data-testid="confirm-open-shop-btn"
-                  onClick={() =>
+                  onClick={() => {
+                    if (openingAdvice.belowRecommended && !lowCashArmed) {
+                      setLowCashArmedKey(openingKey);
+                      return;
+                    }
+                    setLowCashArmedKey(null);
                     onOpenShop({
                       shopType: newShopType,
                       customName: newShopCustomName.trim() || undefined,
                       initialCashFloat: newShopCashFloat,
-                    })
-                  }
-                  className="g-btn g-btn-primary w-full"
+                    });
+                  }}
+                  className={`g-btn w-full ${openingAdvice.belowRecommended && lowCashArmed ? 'g-btn-danger' : 'g-btn-primary'}`}
                 >
-                  {selectedShopTemplateForNew.nameTR} aç
+                  {openingAdvice.belowRecommended && lowCashArmed
+                    ? 'Yine de aç'
+                    : `${selectedShopTemplateForNew.nameTR} aç`}
                 </button>
               </div>
             </div>

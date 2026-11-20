@@ -28,6 +28,9 @@ import {
   WEALTH_TAX_ANNUAL_RATE,
   WEALTH_TAX_FREE_AMOUNT,
   WEALTH_TAX_PERIOD_DAYS,
+  OWNER_STAFF_CAPACITY,
+  FIRST_EMPLOYEE_HIRE_FEE_BUFE,
+  RECOMMENDED_WORKING_CAPITAL_BUFE,
 } from '../../data/gameBalance';
 import { PROGRESSION_RULES } from '../../engine/ProgressionRules';
 import { DECISION_LIFETIME_DAYS } from '../../engine/DecisionEventEngine';
@@ -108,7 +111,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       title: 'Dükkân işletmek',
       Icon: Store,
       points: [
-        'Borsada bir hisse alıp, başka bir sektörden de alıp, bir hisseni satınca Dükkân sekmesinden ilk dükkânını açarsın. Büfe en ucuzu, galeri en pahalısı.',
+        'Borsada bir hisse alıp, başka bir sektörden de alıp, bir hisseni satıp piyasayı bir gün izleyince Dükkân sekmesinden ilk dükkânını açarsın. Büfe en ucuzu, galeri en pahalısı.',
+        `İlk dükkânın büfeyse onu önce kendin çalıştırırsın (müşteri kapasitesi %${Math.round(OWNER_STAFF_CAPACITY * 100)}). Yönet → Çalışanlar'dan ilk çalışanını ${FIRST_EMPLOYEE_HIRE_FEE_BUFE.toLocaleString('tr-TR')} ₺ ile işe alınca dükkân tam kapasiteye çıkar. Dükkân açarken önerilen işletme sermayesini (büfe için ${RECOMMENDED_WORKING_CAPITAL_BUFE.toLocaleString('tr-TR')} ₺) elinde bırak; altına inersen uyarı çıkar.`,
         'Her dükkânın kendi kasası vardır. Mal alımı ve maaşlar oradan ödenir. Kasa azalınca cebinden para koy, kâr birikince "Kâr al" de.',
         'Raf boşsa satış olmaz. "Rafları doldur" en ucuz toptancıdan mal ısmarlar. Mal birkaç günde gelir; gelene kadar "Yolda" yazar.',
         'Fiyat, çalışan ve dükkân büyütme için dükkân kartındaki "Yönet" düğmesine dokun.',

@@ -159,3 +159,32 @@ export const PRICE_DEMAND_CAP_EXTREME = 0.01;
 export const LOAN_DEFAULT_MISSED_DUE_DATES = 3;
 /** Ödenemeyen taksit, bakiye yetince en erken kaç günde bir yeniden denenir. */
 export const LOAN_RETRY_INTERVAL_DAYS = 3;
+
+/**
+ * TEMPO VE İLK 30 DAKİKA (ilk dükkân, ilk çalışan, işletme sermayesi)
+ * Hedef süreler (1x, hızlı başlangıçta gün = 2 gerçek dk): ilk dükkân 4–6 dk, ilk küçük yükseltme 8–12 dk,
+ * ilk manuel çalışan 12–18 dk, ilk dükkân seviye yükseltmesi 18–25 dk. Ölçüm: `npm run kariyer`.
+ */
+
+/** İlk dükkân kapısı: ilk alıştan sonra en az bu kadar oyun günü geçmeli ("piyasayı bir gün izle"). */
+export const FIRST_SHOP_GATE_MARKET_DAYS = 1;
+
+/**
+ * İlk (kişisel) dükkân BUFE ise oyuncu kendisi çalışır: çalışan sayısı 0'dır ve talep, normal personel
+ * kapasitesinin bu kadarı (%65) ile işler. İlk çalışan alınınca normal personel hesabı devreye girer.
+ */
+export const OWNER_STAFF_CAPACITY = 0.65;
+/** BUFE için "İlk çalışanını işe al" bedeli (günlük maaş staffDailyWagePerPerson'dan aynen sürer). */
+export const FIRST_EMPLOYEE_HIRE_FEE_BUFE = 2_000;
+
+/** BUFE açılışında önerilen işletme sermayesi (dükkân kasası + cepte kalan serbest para). Diğer türlerde kurulum maliyetiyle ölçeklenir. */
+export const RECOMMENDED_WORKING_CAPITAL_BUFE = 15_000;
+/** BUFE kurulum maliyeti (25.000 + 10.000); diğer türlerin önerisi bu oranla ölçeklenir. */
+export const RECOMMENDED_WORKING_CAPITAL_SETUP_BASE = 35_000;
+
+/**
+ * Onboarding sessizliği: ilk bu kadar oyun günü karar kartı çıkmaz (hızlı başlangıçta 5 gün = 10 gerçek dk).
+ * Ölçüm (20 tohum, ilk 15 gün = 30 dk): ortalama 4,8 karar kartı (en çok 7), ilk kart 3.–6. günde;
+ * her kart 2 günde (4 dk) cevapsız kalıp B'ye düştüğü için ilk dükkân, ilk yükseltme ve ilk çalışan sırasında kartlar yığılıyordu.
+ */
+export const ONBOARDING_QUIET_DAYS = 5;

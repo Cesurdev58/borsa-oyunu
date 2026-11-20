@@ -39,6 +39,11 @@ test('Denge: borsada al, başka sektörden al, sat adımlarını bitiren 100.000
   assert.equal(eng.openShop({ shopType: 'BUFE' }).success, false, 'tek adım yetmez');
   assert.equal(eng.buyStock(b.ticker, 10).success, true);
   assert.equal(eng.sellStock(a.ticker, 5).success, true);
+  // Üç adım bitti ama piyasa henüz bir gün izlenmedi: kapı kapalı
+  const early = eng.openShop({ shopType: 'BUFE' });
+  assert.equal(early.success, false, 'alıp aynı dakikada çıkmak mini eğitimi atlatmamalı');
+  assert.match(early.message, /piyasayı bir gün izle/i);
+  eng.advanceDaysWithoutPlayerDecisions(1, true);
   const r = eng.openShop({ shopType: 'BUFE' });
   assert.equal(r.success, true, r.message);
 });

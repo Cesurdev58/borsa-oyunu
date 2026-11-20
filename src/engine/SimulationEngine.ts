@@ -15,6 +15,7 @@ import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as ShopManager from './ShopManager';
+import * as ShopOnboarding from './ShopOnboarding';
 import {
   createInitialNpcFunds,
 } from '../data/npcCompanies';
@@ -1711,6 +1712,21 @@ export class SimulationEngine {
     const res = ShopManager.hireManager(this.state, shopId, this.getReservedCash());
     if (res.success) this.recalculateFinancialsAndStages();
     return res;
+  }
+
+  /** İlk dükkândaki (BUFE) "kendim çalışıyorum" hâlini bitirip ilk çalışanı ücretle işe alır (ShopOnboarding). */
+  public hireFirstEmployee(shopId: string): { success: boolean; message: string } {
+    const res = ShopOnboarding.hireFirstEmployee(this.state, shopId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(res.message);
+    }
+    return res;
+  }
+
+  /** Dükkân açılış ekranı için işletme sermayesi bilgisi: önerilen tutar, açılış sonrası likit para, kaç gün dayanır. */
+  public getShopOpeningAdvice(shopType: ShopType, initialWorkingCash?: number): ShopOnboarding.OpeningAdvice {
+    return ShopOnboarding.getOpeningAdvice(this.state, shopType, initialWorkingCash, this.getReservedCash());
   }
 
   public fireShopManager(shopId: string): { success: boolean; message: string } {

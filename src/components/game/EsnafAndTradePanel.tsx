@@ -299,8 +299,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   );
 
   const supplierOffers = useMemo(
-    () => TradeAndShopEngine.getSupplierOffers(state, selectedResourceId),
-    [state, selectedResourceId]
+    () => TradeAndShopEngine.getSupplierOffers(state, selectedResourceId, activeShop),
+    [state, selectedResourceId, activeShop]
   );
 
   const activeOffer =
@@ -779,7 +779,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     (b) => b.resourceId === prodId
                   );
                   const qty = batch ? batch.quantity : 0;
-                  const best = TradeAndShopEngine.getSupplierOffers(state, prodId)
+                  const best = TradeAndShopEngine.getSupplierOffers(state, prodId, activeShop)
                     .filter((o) => o.maxAvailableQuantity >= o.minOrderQuantity)
                     .sort(
                       (x, y) =>

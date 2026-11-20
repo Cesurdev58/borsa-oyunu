@@ -907,7 +907,9 @@ export default function App() {
 
   const handleOpenShopInCity = useCallback(
     (cityId: string, shopType: ShopType) => {
-      const res = engine.openShop({ shopType, cityId });
+      // Aynı dokunuşun iki kez işlenmesini engelleyen kimlik: aynı sıra numarası ikinci kez dükkân açmaz
+      const requestId = `MAP-${engine.getTradeUniverseState().shopSeq}-${cityId}-${shopType}`;
+      const res = engine.openShop({ shopType, cityId, requestId });
       setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
       persistAndRefreshUI();
     },

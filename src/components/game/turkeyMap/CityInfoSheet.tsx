@@ -3,7 +3,7 @@
  * Rakamlar şehir tanımından (`CITY_DEFINITIONS`) ve motorun gerçek açılış teklifinden (`getCityOpeningQuote`) gelir;
  * arayüzde uydurma sayı yoktur. Aşağı sürükleyince ya da Kapat'a basınca kapanır.
  */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, MapPin, Store, AlertTriangle } from 'lucide-react';
 import type { CityDefinition, CityDifficulty } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
@@ -68,6 +68,17 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
   const summary = getCityShopSummary(state, city.id);
   const hasShop = presence.shopCount > 0;
   const quote = getCityOpeningQuote(state, city.id, 'BUFE', reservedCash);
+  const x = quote.expansion;
+  // Rezervin altında kalınıyorsa engel yok: ilk basışta uyarı, aynı seçimle ikinci basışta açılır
+  const [confirmedLow, setConfirmedLow] = useState(false);
+  useEffect(() => setConfirmedLow(false), [city.id]);
+  const askOpen = () => {
+    if (x.needsSecondConfirmation && !confirmedLow) {
+      setConfirmedLow(true);
+      return;
+    }
+    onOpenShop(city.id, 'BUFE');
+  };
 
   // Aşağı sürükleyerek kapatma
   const [dragY, setDragY] = useState(0);
@@ -224,14 +235,39 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
           <div className="g-section-title mb-1">{hasShop ? 'Yeni mağaza maliyeti' : 'İlk mağaza maliyeti'} ({quote.shopNameTR})</div>
           <div className="space-y-1 text-[15px]">
             <div className="flex justify-between"><span>Kurulum ve dekorasyon</span><b data-testid="city-info-quote-setup">{formatCurrency(quote.setupCost)}</b></div>
+            <div className="flex justify-between"><span>Kira depozitosu</span><span data-testid="city-info-quote-deposit">{formatCurrency(x.cityRentDeposit)}</span></div>
+            {x.regionalPermitCost > 0 && (
+              <div className="flex justify-between"><span>Bölge ruhsatı</span><span data-testid="city-info-quote-permit">{formatCurrency(x.regionalPermitCost)}</span></div>
+            )}
+            {x.initialLogisticsCost > 0 && (
+              <div className="flex justify-between"><span>Mal taşıma hattı kurulumu</span><span data-testid="city-info-quote-logistics">{formatCurrency(x.initialLogisticsCost)}</span></div>
+            )}
+            {x.discountKind !== 'NONE' && (
+              <div className="flex justify-between text-green-700"><span>{x.discountKind === 'PRESTIGE' ? 'Prestij indirimi' : 'Kilometre taşı indirimi'}</span><b data-testid="city-info-quote-discount">−{formatCurrency(x.prestigeDiscount + x.milestoneDiscount)}</b></div>
+            )}
             <div className="flex justify-between"><span>Dükkân kasasına konan para</span><b data-testid="city-info-quote-working">{formatCurrency(quote.workingCash)}</b></div>
             <div className="flex justify-between border-t border-slate-200 pt-1"><span className="font-bold">Şimdi ödenecek toplam</span><b className="text-[var(--g-gold-dark,#b8860b)]" data-testid="city-info-quote-total">{formatCurrency(quote.totalUpfrontCost)}</b></div>
             <div className="flex justify-between text-slate-600"><span>Rafları doldurma (yaklaşık)</span><span data-testid="city-info-quote-stock">{formatCurrency(quote.firstStockCost)}</span></div>
+            <div className="flex justify-between text-slate-600"><span>Önerilen güvenlik parası (7 gün)</span><span data-testid="city-info-quote-reserve">{formatCurrency(x.recommendedReserve)}</span></div>
             <div className="flex justify-between text-slate-600">
               <span>İlk mal teslimatı</span>
               <span data-testid="city-info-quote-delivery">{quote.estimatedDeliveryDays === null ? 'Teklif yok' : `~${quote.estimatedDeliveryDays} gün`}</span>
             </div>
           </div>
+          {x.logisticsNotesTR.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-[13px] text-slate-600" data-testid="city-info-logistics-notes">
+              {x.logisticsNotesTR.map((n) => <li key={n}>🚚 {n}</li>)}
+            </ul>
+          )}
+          {x.warningsTR.length > 0 && (
+            <ul
+              className={`mt-2 space-y-0.5 text-[13px] font-semibold ${x.warningLevel === 'CRITICAL' || x.warningLevel === 'RED' || !x.affordable ? 'text-red-700' : x.warningLevel === 'YELLOW' ? 'text-amber-700' : 'text-slate-600'}`}
+              data-testid="city-info-quote-warnings"
+              data-level={x.warningLevel}
+            >
+              {x.warningsTR.map((w) => <li key={w}>• {w}</li>)}
+            </ul>
+          )}
           {!quote.affordable && (
             <div className="mt-2 text-[13px] font-semibold text-red-600" data-testid="city-info-quote-short">
               Harcanabilir paran {formatCurrency(quote.spendableCash)}; {formatCurrency(quote.totalUpfrontCost - quote.spendableCash)} eksik.
@@ -250,8 +286,8 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
               <button type="button" className="g-btn g-btn-navy min-h-[52px]" data-testid="city-go-btn" onClick={() => onGoToCity(city.id)}>
                 <MapPin size={18} /> Şehre Git
               </button>
-              <button type="button" className="g-btn g-btn-primary min-h-[52px]" data-testid="city-open-shop-btn" onClick={() => onOpenShop(city.id, 'BUFE')}>
-                Yeni Mağaza Aç
+              <button type="button" className="g-btn g-btn-primary min-h-[52px]" data-testid="city-open-shop-btn" onClick={askOpen}>
+                {confirmedLow ? 'Yine de aç' : 'Yeni Mağaza Aç'}
               </button>
               <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid="city-stats-btn" onClick={() => scrollTo(presenceRef.current)}>
                 Şehir İstatistikleri
@@ -259,8 +295,8 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
             </>
           ) : (
             <>
-              <button type="button" className="g-btn g-btn-primary min-h-[52px]" data-testid="city-open-first-shop-btn" onClick={() => onOpenShop(city.id, 'BUFE')}>
-                İlk Mağazanı Aç
+              <button type="button" className="g-btn g-btn-primary min-h-[52px]" data-testid="city-open-first-shop-btn" onClick={askOpen}>
+                {confirmedLow ? 'Yine de aç' : 'İlk Mağazanı Aç'}
               </button>
               <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid="city-costs-btn" onClick={() => scrollTo(quoteRef.current)}>
                 Maliyetleri İncele

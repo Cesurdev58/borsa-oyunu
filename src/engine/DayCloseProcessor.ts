@@ -6,6 +6,7 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
+import { syncMilestoneDiscounts } from './CityExpansionQuote';
 import { isCitySelectionPending } from './CityMigration';
 import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
@@ -667,6 +668,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     };
 
     // 16. Gün sonu raporu (yalnızca gösterim)
+    // Net değer kilometre taşını geçtiyse açılış indirimi hakkı kalıcı kaydedilir (sonradan düşse de kaybolmaz)
+    syncMilestoneDiscounts(engine.state);
     engine.state.lastDayReport = buildDayReport(engine.state, currentDay - 1, {
       dividends: dividendsReceivedToday,
       holdingIncome: holdingSynergyReceivedToday,

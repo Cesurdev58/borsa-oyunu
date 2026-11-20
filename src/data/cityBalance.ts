@@ -61,3 +61,82 @@ export const CITY_MIGRATION_BACKUP_KEY =
 
 /** Dengeli ilk 12 şehir sayısı (city-audit ve testler için). */
 export const DETAILED_CITY_COUNT = 12;
+
+// ---------------------------------------------------------------------------
+// FAZ 7–9: ŞEHİR EKONOMİSİ, AÇILIŞ MALİYETİ VE LOJİSTİK
+// ---------------------------------------------------------------------------
+
+/**
+ * Oyunun bütün eski dengesi (dükkân geri dönüş süreleri, kariyer hızı) ANKARA'da ölçüldü.
+ * Bu yüzden şehir çarpanları Ankara'ya oranlanır: Ankara'da kira/ücret/talep çarpanı tam 1,0 olur,
+ * diğer şehirler Ankara'dan ne kadar farklıysa o kadar farklı davranır (İstanbul pahalı, Konya ucuz…).
+ */
+export const CITY_REFERENCE_ID: CityId = 'ankara';
+
+/** Rekabetin müşteri sayısına etkisi: talep ÷ rekabet^bu. (0 = rekabet etkisiz, 1 = tam etkili) */
+export const CITY_COMPETITION_EXPONENT = 0.5;
+/** Satın alma gücünün sepet tutarına etkisi: sepet × güç^bu. */
+export const CITY_PURCHASING_POWER_EXPONENT = 0.5;
+/** Perakende sektör bonusu bütün kişisel dükkânlara bu oranda yansır. */
+export const CITY_RETAIL_BONUS_SHARE = 1;
+
+/** Mevsimsellik: şehir başına genlik (0,25 = ±%25). Yıl 365 oyun günüdür, tepe noktası yaz ortası. */
+export const CITY_SEASON_DAYS = 365;
+export const CITY_SEASON_PEAK_DAY = 200;
+export const CITY_SEASON_AMPLITUDE: Readonly<Partial<Record<CityId, number>>> = {
+  antalya: 0.25,
+  mugla: 0.2,
+  trabzon: 0.08,
+  izmir: 0.06,
+};
+/** Mevsimin kafe ve giyim dükkânlarına etkisi daha güçlüdür (turizm). */
+export const CITY_SEASON_SHOP_WEIGHT: Readonly<Partial<Record<string, number>>> = {
+  KAFE: 1.5,
+  GIYIM_MAGAZASI: 1.25,
+};
+
+/** Komşu bölgeler (karayolu ile bitişik). Simetriktir. */
+export const REGION_NEIGHBORS: Readonly<Record<string, readonly string[]>> = {
+  MARMARA: ['EGE', 'KARADENIZ', 'IC_ANADOLU'],
+  EGE: ['MARMARA', 'AKDENIZ', 'IC_ANADOLU'],
+  AKDENIZ: ['EGE', 'IC_ANADOLU', 'GUNEYDOGU_ANADOLU', 'DOGU_ANADOLU'],
+  IC_ANADOLU: ['MARMARA', 'EGE', 'AKDENIZ', 'KARADENIZ', 'DOGU_ANADOLU', 'GUNEYDOGU_ANADOLU'],
+  KARADENIZ: ['MARMARA', 'IC_ANADOLU', 'DOGU_ANADOLU'],
+  DOGU_ANADOLU: ['KARADENIZ', 'IC_ANADOLU', 'AKDENIZ', 'GUNEYDOGU_ANADOLU'],
+  GUNEYDOGU_ANADOLU: ['AKDENIZ', 'IC_ANADOLU', 'DOGU_ANADOLU'],
+};
+
+/** Mesafe çarpanları (aynı şehir / aynı bölge / komşu bölge / uzak bölge). */
+export const DISTANCE_FACTOR_SAME_CITY = 1.0;
+export const DISTANCE_FACTOR_SAME_REGION = 1.1;
+export const DISTANCE_FACTOR_NEIGHBOR_REGION = 1.25;
+export const DISTANCE_FACTOR_FAR_REGION = 1.5;
+
+/** Lojistik indirimleri (toplanır, en çok LOGISTICS_DISCOUNT_CAP; her rota için YALNIZCA BİR KEZ uygulanır). */
+export const LOGISTICS_PORT_DISCOUNT = 0.15;
+export const LOGISTICS_DEPOT_DISCOUNT = 0.2;
+export const LOGISTICS_HIGHWAY_DISCOUNT = 0.1;
+export const LOGISTICS_DISCOUNT_CAP = 0.35;
+
+/** Limanı olan iller (liman indirimi). */
+export const PORT_CITY_IDS: ReadonlySet<string> = new Set([
+  'istanbul', 'izmir', 'mersin', 'samsun', 'trabzon', 'antalya', 'kocaeli', 'hatay', 'tekirdag',
+  'zonguldak', 'ordu', 'rize', 'giresun', 'sinop', 'canakkale', 'mugla', 'balikesir', 'yalova', 'bartin', 'aydin',
+]);
+
+/** Şehir depo kurma bedeli ve kapasitesi. */
+export const CITY_DEPOT_COST = 450_000;
+export const CITY_DEPOT_CAPACITY_UNITS = 4000;
+
+/** Açılış teklifi bileşenleri. */
+export const OPENING_RENT_DEPOSIT_DAYS = 3; // şehirdeki günlük kira × gün = peşin kira depozitosu
+export const OPENING_PERMIT_RATE = 0.12; // ruhsat: kurulum × oran × (mesafe çarpanı−1)/0,5
+export const OPENING_LOGISTICS_SETUP_RATE = 0.15; // hat kurulumu: ilk stok × oran × (lojistik çarpanı−1), alt sınır 0
+export const OPENING_RESERVE_DAYS = 7; // önerilen güvenlik rezervi: günlük sabit gider × gün
+export const PRESTIGE_OPENING_DISCOUNT = 0.2; // ilk dükkânda, yıldızı olan oyuncuya
+export const MILESTONE_OPENING_DISCOUNT = 0.1; // sonraki uygun dükkânda, kilometre taşı kazanılmışsa
+/** Kilometre taşı indirimi kazandıran net varlık eşikleri (her eşik bir hak). */
+export const MILESTONE_NET_WORTH_THRESHOLDS: readonly number[] = [500_000, 2_000_000, 10_000_000, 50_000_000];
+
+/** Denge hedefi: en güçlü ve en zayıf başlangıç şehrinin 10. saat net varlık farkı (yüzde, en güçlüye göre). */
+export const CITY_BALANCE_TARGET_BAND: readonly [number, number] = [20, 35];

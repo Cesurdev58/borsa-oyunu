@@ -92,7 +92,11 @@ describe('V7 Ticaret Evreni & Borsa->Esnaf->Şirket->IPO->Holding 18 Kapsamlı K
     const engine = new SimulationEngine(4242, 150_000);
     const cashBefore = engine.getState().cash;
     const tpl = SHOP_TEMPLATES.BUFE;
-    const expectedDeduction = tpl.openingCost + tpl.decorationCost + 12_000;
+    // Düşen tutar merkezi açılış teklifiyle aynıdır: kurulum + dekorasyon + işletme kasası + şehir kira depozitosu (merkez şehirde ruhsat/hat 0)
+    const quote = engine.getCityExpansionQuote('ankara', 'BUFE', 12_000);
+    const expectedDeduction = quote.totalUpfrontCost;
+    assert.equal(quote.baseSetupCost, tpl.openingCost + tpl.decorationCost);
+    assert.equal(quote.workingCash, 12_000);
 
     const openRes = engine.openShop({
       shopType: 'BUFE',

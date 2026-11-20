@@ -8,6 +8,7 @@
  *   Hammadde -> Tedarikçi -> Satın Alma -> Sevkiyat -> Depo -> Üretim -> Mamul Deposu -> Dağıtım -> Mağaza / Kurumsal Müşteri -> Satış -> Tahsilat
  */
 
+import { effectiveDailyRent, effectiveWagePerPerson } from './CityEconomy';
 import { activeCargoFee, activeInsurancePremium, solarOpexMultiplier } from './CityServices';
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
 import { MANAGER_PROFIT_SHARE } from '../data/gameBalance';
@@ -386,13 +387,13 @@ export class TradeAndShopEngine {
       // 4e. Günlük kira, personel ve işletme giderleri
       shop.todayPayrollCost = Number(
         (
-          shop.staffCount * shop.staffDailyWagePerPerson +
+          shop.staffCount * effectiveWagePerPerson(shop) +
           (shop.manager ? shop.manager.dailyWage : 0) +
           (shop.isCompanyBranch ? 0 : activeInsurancePremium(shop))
         ).toFixed(2)
       );
       shop.todayRentAndOpex = Number(
-        ((shop.dailyRent + shop.level * 120) * solarOpexMultiplier(shop) + activeCargoFee(shop)).toFixed(2)
+        ((effectiveDailyRent(shop) + shop.level * 120) * solarOpexMultiplier(shop) + activeCargoFee(shop)).toFixed(2)
       );
       // Müdür primi: müdürden önceki günlük kârın bir payı (zarar günlerinde prim yok)
       if (shop.manager) {

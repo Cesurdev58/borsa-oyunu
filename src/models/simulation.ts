@@ -248,6 +248,8 @@ export interface SimulationState {
   turkeyMapView?: import('./cities').TurkeyMapViewState;
   /** Eski kayıtların şehir geçişi durumu (engine/CityMigration.ts); alan yoksa geçiş gerekmiyor */
   cityMigration?: import('./cities').CityMigrationState;
+  /** Şehir genişlemesi: kazanılan/kullanılan kilometre taşı açılış indirimleri (eski kayıtta yok = 0/0) */
+  cityExpansion?: { milestonesEarned: number; milestonesUsed: number };
   /** Karar kartları (eski kayıtlarda yoktur; motor gerektiğinde oluşturur) */
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */

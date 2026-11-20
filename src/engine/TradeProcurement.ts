@@ -6,6 +6,8 @@
  * (TradeAndShopEngine dosyasından ayrıldı; dış dünya hâlâ TradeAndShopEngine.* üzerinden erişebilir.)
  */
 
+import { shopLogisticsRoute } from './CityEconomy';
+import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
 import { cargoAdjust } from './CityServices';
 import {
   SimulationState,
@@ -14,6 +16,7 @@ import {
   ProcurementOrder,
   PurchaseContract,
   Shipment,
+  ShopInstance,
   SupplierOffer,
   TradeInvoice,
 } from '../models/trade';
@@ -41,10 +44,14 @@ export class TradeProcurement {
    */
   public static getSupplierOffers(
     state: SimulationState,
-    filterResourceId?: string
+    filterResourceId?: string,
+    /** Verilirse nakliye bu dükkânın şehir/mesafe lojistiğine göre gösterilir (sipariş de aynı tutarı düşer). */
+    forShop?: ShopInstance | null
   ): SupplierOffer[] {
     const ts = TradeUniverse.ensureTradeUniverseState(state);
     const offers: SupplierOffer[] = [];
+    const shipRouteMult =
+      forShop && !forShop.isCompanyBranch ? shopLogisticsRoute(state, forShop).multiplier : 1;
 
     for (const sup of ts.suppliers) {
       for (const resId of sup.suppliedResourceIds) {
@@ -74,9 +81,9 @@ export class TradeProcurement {
           ).toFixed(2)
         );
         const shippingCostPerUnit = Number(
-          Math.max(
-            2,
-            resDef.unitWeightKg * 0.65 * (sup.deliverySpeedDays === 1 ? 1.1 : 0.9)
+          (
+            Math.max(2, resDef.unitWeightKg * 0.65 * (sup.deliverySpeedDays === 1 ? 1.1 : 0.9)) *
+            shipRouteMult
           ).toFixed(2)
         );
 
@@ -276,8 +283,17 @@ export class TradeProcurement {
       params.targetDestinationType === 'SHOP' ? ts.shops.find((x) => x.shopId === params.targetDestinationId) : null,
       matchedOffer?.deliveryDays ?? supplier.deliverySpeedDays
     );
-    const shippingPerUnit = Number(((matchedOffer?.shippingCostPerUnit ?? 5) * cargo.shippingMult).toFixed(2));
+    // Şehir/mesafe lojistiği (Faz 9): nakliye × şehir lojistik çarpanı × mesafe × (1 − liman/depo/otoyol indirimi).
+    // Şehri olmayan ya da şirket şubesi olmayan hedeflerde çarpan 1'dir; indirimler her rota için bir kez uygulanır.
+    const routeShop =
+      params.targetDestinationType === 'SHOP' ? ts.shops.find((x) => x.shopId === params.targetDestinationId) : undefined;
+    const route =
+      routeShop && !routeShop.isCompanyBranch ? shopLogisticsRoute(state, routeShop, qty) : null;
+    const routeMult = route ? route.multiplier : 1;
+    const baseShippingPerUnit = (matchedOffer?.shippingCostPerUnit ?? 5) * cargo.shippingMult;
+    const shippingPerUnit = Number((baseShippingPerUnit * routeMult).toFixed(2));
     const shippingCost = Number((qty * shippingPerUnit).toFixed(2));
+    const logisticsSurcharge = Number((shippingCost - qty * Number(baseShippingPerUnit.toFixed(2))).toFixed(2));
     const taxAmount = 0; // KDV mahsuplaşması net maliyet bazında izlenir
     const totalCost = Number((subtotalCost + shippingCost + taxAmount).toFixed(2));
 
@@ -408,7 +424,7 @@ export class TradeProcurement {
     ts.shipmentSeq += 1;
     const orderId = `PO-D${state.day}-S${String(ts.orderSeq).padStart(6, '0')}`;
     const shipmentId = `SHP-D${state.day}-S${String(ts.shipmentSeq).padStart(6, '0')}`;
-    const estimatedArrivalDay = state.day + cargo.deliveryDays;
+    const estimatedArrivalDay = state.day + cargo.deliveryDays; // teslim süresi sabit: mesafe gecikmesi ayrı özellik bayrağıyla (Faz 9 notu)
     const effectiveUnitCost = Number((totalCost / qty).toFixed(2));
 
     const order: ProcurementOrder = {
@@ -432,6 +448,7 @@ export class TradeProcurement {
       createdDay: state.day,
       estimatedArrivalDay,
       actualArrivalDay: null,
+      logisticsSurcharge,
       targetDestinationType: params.targetDestinationType,
       targetDestinationId: params.targetDestinationId,
       targetDestinationNameTR: destNameTR,
@@ -474,6 +491,20 @@ export class TradeProcurement {
     ts.todaySummary.logisticsCost = Number(
       (ts.todaySummary.logisticsCost + shippingCost).toFixed(2)
     );
+    // Lojistik maliyeti defterde AYRI satırdır (sipariş bedelinden bağımsız izlenir): şehir, mesafe ve indirimler açıklamada.
+    if (route && shippingCost > 0 && paymentMethod === 'CASH') {
+      const dist = route.kind === 'SAME_CITY' ? 'aynı şehir' : route.kind === 'SAME_REGION' ? 'aynı bölge' : route.kind === 'NEIGHBOR_REGION' ? 'komşu bölge' : 'uzak bölge';
+      const disc = [route.port ? 'liman' : '', route.depot ? 'şehir deposu' : ''].filter(Boolean).join(' + ');
+      CentralLedgerEngine.recordPostedAccountingEntry(state, {
+        idempotencyKey: `LOGISTICS-${orderId}`,
+        sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
+        destinationAccountId: ACCOUNT_IDS.OPERATING_EXPENSE,
+        amount: shippingCost,
+        category: 'OPERATING_EXPENSE_PAYMENT',
+        description: `Lojistik: ${orderId} → ${routeShop?.nameTR ?? ''} (${dist}, ×${route.multiplier.toFixed(2)}${disc ? `, ${disc} indirimi` : ''})`,
+        reservedOrderCash: params.reservedOrderCash,
+      });
+    }
 
     if (targetShop) {
       targetShop.pendingDeliveriesCount = ts.shipments.filter(

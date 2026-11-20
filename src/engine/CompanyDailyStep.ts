@@ -30,6 +30,7 @@ import {
 import {
   CompanyInvestmentProjects,
 } from './CompanyInvestmentProjects';
+import { DEBT_INTEREST_DAYS_PER_YEAR } from '../data/gameBalance';
 import { readMarketContext, saturatedPlayerDemand } from './SectorMarket';
 import { progressiveCorporateTax } from './TaxRules';
 
@@ -375,7 +376,7 @@ export class CompanyDailyStep {
     const fullDayDepreciation = (fin.fixedAssets * 0.08) / 252;
     const fullDayEbit = fullDayEbitda - fullDayDepreciation;
     const effectiveInterestRate = Math.max(0.1, macro.policyInterestRate * 0.6);
-    const fullDayInterest = (fin.totalLiabilities * effectiveInterestRate) / 252;
+    const fullDayInterest = (fin.totalLiabilities * effectiveInterestRate) / DEBT_INTEREST_DAYS_PER_YEAR;
     const fullDayPreTax = fullDayEbit - fullDayInterest;
     // Kademeli kurumlar vergisi: büyük kârın üst dilimi daha yüksek oranla vergilenir
     const fullDayTax = progressiveCorporateTax(fullDayPreTax, macro.corporateTaxRate);

@@ -13,7 +13,7 @@ import * as CityServices from './CityServices';
 import * as ShopManager from './ShopManager';
 import * as SectorMarket from './SectorMarket';
 import * as WealthTaxEngine from './WealthTaxEngine';
-import { HOLDING_PAYOUT_RATIO } from '../data/gameBalance';
+import { DEBT_INTEREST_DAYS_PER_YEAR, HOLDING_PAYOUT_RATIO } from '../data/gameBalance';
 import {
   DailyLogEntry,
   OfflineProgressSummary,
@@ -392,7 +392,7 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
         (
           (nonBankPlayerDebt *
             Math.max(0.1, engine.state.macro.policyInterestRate * 0.65)) /
-          252
+          DEBT_INTEREST_DAYS_PER_YEAR
         ).toFixed(2)
       );
       if (engine.state.cash >= dailyDebtInterest) {

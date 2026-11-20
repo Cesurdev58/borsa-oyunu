@@ -36,7 +36,7 @@ export function getAutoInvest(engine: SimulationEngine): AutoInvestState {
 export function hirePortfolioManager(engine: SimulationEngine): { success: boolean; message: string } {
   const cur = getAutoInvest(engine);
   if (cur.hired) return { success: false, message: 'Portföy yöneticin zaten var.' };
-  if (engine.getSpendableCash() < AUTO_INVEST_HIRE_FEE) {
+  if (engine.getFreeSpendableCash() < AUTO_INVEST_HIRE_FEE) {
     return { success: false, message: `Portföy yöneticisi için ₺${AUTO_INVEST_HIRE_FEE.toLocaleString('tr-TR')} gerekiyor.` };
   }
   WalletEngine.spend(engine.state, AUTO_INVEST_HIRE_FEE);
@@ -77,7 +77,7 @@ export function configureAutoInvest(
 export function runAutoInvest(engine: SimulationEngine): string | null {
   const cur = engine.state.autoInvest;
   if (!cur || !cur.hired || !cur.enabled) return null;
-  const excess = engine.getSpendableCash() - cur.reserve;
+  const excess = engine.getFreeSpendableCash() - cur.reserve;
   if (excess < AUTO_INVEST_MIN_CHUNK) return null;
   const picks = engine.state.stocks.filter((s) => !s.isPlayerCompany && !s.isControlledByPlayer);
   if (picks.length === 0) return null;

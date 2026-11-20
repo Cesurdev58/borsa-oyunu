@@ -122,7 +122,14 @@ export class ShopOperations {
         reservedOrderCash: params.reservedOrderCash,
       });
     } else {
-      if (spendablePlayerCash < totalNeeded) {
+      // Kurulum + dekorasyon kısıtlı işletme kredisinden karşılanabilir; kasaya konan işletme nakdi (çekilebilir)
+      // yalnızca serbest nakitten gelir, böylece kısıtlı para kasa yoluyla cebe dönemez.
+      const restrictedForSetup = Math.min(WalletEngine.restrictedFund(state), setupCost);
+      const freeNeeded = Number((totalNeeded - restrictedForSetup).toFixed(2));
+      const freeAvailable = Number(
+        Math.max(0, WalletEngine.freeCash(state) - params.reservedOrderCash).toFixed(2)
+      );
+      if (spendablePlayerCash < totalNeeded || freeAvailable < freeNeeded) {
         return {
           success: false,
           message: `${tpl.nameTR} açmak için gereken ₺${totalNeeded.toLocaleString('tr-TR')} (Kurulum & Dekorasyon: ₺${setupCost.toLocaleString('tr-TR')} + Dükkân Kasası: ₺${initialWorkingCash.toLocaleString('tr-TR')}) kullanılabilir nakdinizi (₺${spendablePlayerCash.toLocaleString('tr-TR')}) aşıyor.`,
@@ -130,7 +137,8 @@ export class ShopOperations {
           totalCapitalSpent: 0,
         };
       }
-      WalletEngine.spend(state, totalNeeded);
+      WalletEngine.spendBusiness(state, setupCost);
+      WalletEngine.spend(state, initialWorkingCash);
       CentralLedgerEngine.recordPostedAccountingEntry(state, {
         idempotencyKey: `SHOP-OPEN-PLAYER-D${state.day}-S${ts.shopSeq + 1}`,
         sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
@@ -304,7 +312,7 @@ export class ShopOperations {
         (shop.cashAccountBalance - fromShop).toFixed(2)
       );
       if (fromPlayer > 0) {
-        WalletEngine.spend(state, fromPlayer);
+        WalletEngine.spendBusiness(state, fromPlayer);
       }
     }
 
@@ -387,7 +395,8 @@ export class ShopOperations {
     }
 
     if (params.direction === 'PERSONAL_TO_SHOP') {
-      const spendable = Math.max(0, state.cash - params.reservedOrderCash);
+      // Kasaya para koymak hesaplar arası aktarımdır: kısıtlı işletme kredisi bakiyesi bu yoldan kasaya/cebe sızamaz
+      const spendable = Math.max(0, WalletEngine.freeCash(state) - params.reservedOrderCash);
       if (cleanAmount > spendable) {
         return {
           success: false,
@@ -465,6 +474,16 @@ export class ShopOperations {
     if (
       params.resourceIdForPrice &&
       typeof params.newSellingPrice === 'number' &&
+      !(Number.isFinite(params.newSellingPrice) && params.newSellingPrice > 0)
+    ) {
+      // Negatif, sıfır, NaN ya da sonsuz fiyat reddedilir; eski fiyat korunur
+      messages.push('Geçersiz satış fiyatı reddedildi; eski fiyat korundu.');
+    }
+
+    if (
+      params.resourceIdForPrice &&
+      typeof params.newSellingPrice === 'number' &&
+      Number.isFinite(params.newSellingPrice) &&
       params.newSellingPrice > 0
     ) {
       const cleanPrice = Number(params.newSellingPrice.toFixed(2));

@@ -102,7 +102,7 @@ export function placeOrder(engine: SimulationEngine, params: {
         requestedShares,
         isLimit ? limitPrice : undefined
       );
-      const spendableCash = engine.getSpendableCash();
+      const spendableCash = engine.getFreeSpendableCash();
       if (reservedCash > spendableCash) {
         return {
           success: false,
@@ -267,8 +267,10 @@ export function processPendingOrders(engine: SimulationEngine): {
           0,
           engine.getReservedCash() - order.reservedCash
         );
+        // Kısıtlı işletme kredisi bakiyesi hisse alımına kullanılamaz
+        const restrictedFund = WalletEngine.restrictedFund(engine.state);
         const availableForThisOrder = Number(
-          Math.max(0, engine.state.cash - otherReservedCash).toFixed(2)
+          Math.max(0, engine.state.cash - otherReservedCash - restrictedFund).toFixed(2)
         );
 
         const { result, newCash } = MarketEngine.executeBuyOrder({
@@ -282,7 +284,7 @@ export function processPendingOrders(engine: SimulationEngine): {
         });
 
         if (result.success) {
-          WalletEngine.setBalance(engine.state, newCash + otherReservedCash);
+          WalletEngine.setBalance(engine.state, newCash + otherReservedCash + restrictedFund);
           order.executedShares += result.sharesExecuted;
           order.remainingShares = 0;
           order.averageExecutionPrice = result.executionPrice;
@@ -426,7 +428,8 @@ export function buyStock(engine: SimulationEngine, ticker: string,
     }
 
     const reservedCash = engine.getReservedCash();
-    const spendableCash = engine.getSpendableCash();
+    const restrictedFund = WalletEngine.restrictedFund(engine.state);
+    const spendableCash = engine.getFreeSpendableCash();
     const netWorthBefore = engine.state.netWorth;
     const { result, newCash } = MarketEngine.executeBuyOrder({
       stock,
@@ -444,7 +447,7 @@ export function buyStock(engine: SimulationEngine, ticker: string,
       };
     }
 
-    WalletEngine.setBalance(engine.state, newCash + reservedCash);
+    WalletEngine.setBalance(engine.state, newCash + reservedCash + restrictedFund);
     if (
       engine.state.playerCompany &&
       engine.state.playerCompany.ticker === ticker

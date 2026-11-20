@@ -26,7 +26,8 @@ export function buyLifestyleItem(
   if (!def) return { success: false, message: 'Böyle bir şey satılmıyor.' };
   const owned = ownedLifestyle(state);
   if (owned.includes(def.id)) return { success: false, message: `${def.name} zaten senin.` };
-  const spendable = Math.max(0, state.cash - reservedCash);
+  // Kısıtlı işletme kredisi bakiyesi lüks harcamaya kullanılamaz
+  const spendable = Math.max(0, WalletEngine.freeCash(state) - reservedCash);
   if (spendable < def.price) {
     return { success: false, message: `${def.name} için ₺${def.price.toLocaleString('tr-TR')} nakit gerekiyor.` };
   }

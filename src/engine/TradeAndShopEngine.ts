@@ -477,7 +477,7 @@ export class TradeAndShopEngine {
           shop.cashAccountBalance = 0;
           const spendable = Math.max(0, state.cash - reservedOrderCash);
           if (spendable >= shortfall) {
-            WalletEngine.spend(state, shortfall);
+            WalletEngine.spendBusiness(state, shortfall);
             shop.totalInvestedCapital = Number(
               Math.max(5_000, shop.totalInvestedCapital - shortfall).toFixed(2)
             );
@@ -631,7 +631,7 @@ export class TradeAndShopEngine {
         } else {
           const spendable = Math.max(0, state.cash - reservedOrderCash);
           if (spendable >= toPay) {
-            WalletEngine.spend(state, toPay);
+            WalletEngine.spendBusiness(state, toPay);
             inv.paidAmount = inv.totalAmount;
             inv.remainingAmount = 0;
             inv.status = 'PAID';

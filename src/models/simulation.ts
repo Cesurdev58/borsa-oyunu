@@ -319,6 +319,13 @@ export interface SimulationState {
   activeLoans?: LoanContract[];
   collaterals?: CollateralItem[];
   loanSequence?: number;
+  /**
+   * Bireysel (şirketsiz) oyuncunun çektiği işletme/stok kredisinden gelen KISITLI nakit.
+   * `cash` içinde durur ama yalnızca stok, kira, personel, dekorasyon, lojistik ve dükkân yükseltmesinde
+   * kullanılabilir; hisse alımı, lüks harcama, şirkete/hesaplar arası para aktarımı için kullanılamaz.
+   * Alan yoksa (eski kayıt) 0 sayılır. Her zaman `cash`ten büyük olamaz (WalletEngine korur).
+   */
+  businessLoanFund?: number;
   projectSequence?: number;
   lastSimulationTickId?: string;
   lastProcessedGameMinuteTotal?: number;

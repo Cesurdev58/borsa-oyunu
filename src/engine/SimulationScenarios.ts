@@ -94,7 +94,7 @@ export function run30DaySimulation(engine: SimulationEngine, enableStrategyAutom
           }
         }
 
-        if (engine.getSpendableCash() > 12_000) {
+        if (engine.getFreeSpendableCash() > 12_000) {
           const candidates = [...engine.state.stocks]
             .filter((s) => !s.isPlayerCompany)
             .sort((a, b) => {
@@ -107,7 +107,7 @@ export function run30DaySimulation(engine: SimulationEngine, enableStrategyAutom
 
           const topPick = candidates[0];
           if (topPick) {
-            const budget = engine.getSpendableCash() * 0.35;
+            const budget = engine.getFreeSpendableCash() * 0.35;
             const lots = Math.min(
               500,
               Math.floor(budget / (topPick.askPrice * 1.002))
@@ -121,13 +121,13 @@ export function run30DaySimulation(engine: SimulationEngine, enableStrategyAutom
         if (
           !engine.state.playerCompany &&
           engine.state.netWorth >= CompanyEngine.STAGE_2_NET_WORTH_THRESHOLD &&
-          engine.getSpendableCash() >= 400_000
+          engine.getFreeSpendableCash() >= 400_000
         ) {
           engine.establishCompany(
             'Turkuaz Kuantum & Bulut Sistemleri A.Ş.',
             'TRKZ',
             'TEKNOLOJI',
-            Math.min(engine.getSpendableCash() * 0.65, 1_200_000)
+            Math.min(engine.getFreeSpendableCash() * 0.65, 1_200_000)
           );
         } else if (
           engine.state.playerCompany &&
@@ -163,7 +163,7 @@ export function run30DaySimulation(engine: SimulationEngine, enableStrategyAutom
             .sort((a, b) => a.equityValue - b.equityValue)[0];
           if (
             smallestNpc &&
-            engine.getSpendableCash() > smallestNpc.equityValue * 0.68
+            engine.getFreeSpendableCash() > smallestNpc.equityValue * 0.68
           ) {
             const toRes = engine.executeHostileTakeover(smallestNpc.ticker);
             if (toRes.success) {

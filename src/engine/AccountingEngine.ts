@@ -9,6 +9,7 @@
  * - Üretilen her ürünün otomatik satılmasını kaldırır; talep, fiyat elastikiyeti ve depo kapasitesi uygular.
  */
 
+import { DEBT_INTEREST_DAYS_PER_YEAR } from '../data/gameBalance';
 import { SECTOR_CONFIGS } from '../data/sectors';
 import { FinancialStatement, QuarterlyFinancialReport } from '../models/company';
 import { MacroEconomyState } from '../models/economy';
@@ -244,7 +245,7 @@ export class AccountingEngine {
     const dailyEbit = dailyEbitda - dailyDepreciation;
 
     const effectiveInterestRate = Math.max(0.1, macro.policyInterestRate * 0.6);
-    const dailyInterest = (fin.totalLiabilities * effectiveInterestRate) / 252;
+    const dailyInterest = (fin.totalLiabilities * effectiveInterestRate) / DEBT_INTEREST_DAYS_PER_YEAR;
     const dailyPreTax = dailyEbit - dailyInterest;
     const dailyTax = dailyPreTax > 0 ? dailyPreTax * macro.corporateTaxRate : 0;
     const dailyNetIncome = dailyPreTax - dailyTax;

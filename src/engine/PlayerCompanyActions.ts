@@ -61,7 +61,7 @@ export function establishCompany(engine: SimulationEngine, name: string,
     }
 
     const reservedCash = engine.getReservedCash();
-    const spendableCash = engine.getSpendableCash();
+    const spendableCash = engine.getFreeSpendableCash();
     const netWorthBefore = engine.state.netWorth;
     const res = CompanyEngine.establishPlayerCompany({
       input: {
@@ -138,7 +138,7 @@ export function transferCapitalToCompany(engine: SimulationEngine, amount: numbe
     }
 
     const reservedCash = engine.getReservedCash();
-    const spendableCash = engine.getSpendableCash();
+    const spendableCash = engine.getFreeSpendableCash();
     const netWorthBefore = engine.state.netWorth;
     const res = CompanyEngine.injectCapital({
       company: engine.state.playerCompany,
@@ -557,7 +557,7 @@ export function executeHostileTakeover(engine: SimulationEngine, ticker: string,
     }
 
     const reservedCash = engine.getReservedCash();
-    const spendableCash = engine.getSpendableCash();
+    const spendableCash = engine.getFreeSpendableCash();
     const netWorthBefore = engine.state.netWorth;
     const { result, newPlayerCash, newPlayerLongTermDebt } =
       MergerAcquisitionEngine.executeTakeoverTenderOffer({

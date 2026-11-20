@@ -9,6 +9,7 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { migrateLegacyLoanContract } from './LoanAmortization';
 import { stepShopsIntraday } from './ShopSales';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
@@ -495,6 +496,7 @@ export class SimulationEngine {
       activeLoans: [],
       collaterals: [],
       loanSequence: 0,
+      businessLoanFund: 0,
       projectSequence: 0,
       lastSimulationTickId: 'TICK-D1-M0',
       lastProcessedDayClose: 0,
@@ -691,12 +693,21 @@ export class SimulationEngine {
           ? cloned.lastOfflineSummaryDismissed
           : true,
       centralLedger: initialOrRestoredLedger,
-      activeLoans: Array.isArray(cloned.activeLoans) ? cloned.activeLoans : [],
+      activeLoans: Array.isArray(cloned.activeLoans)
+        ? cloned.activeLoans.map((l) => migrateLegacyLoanContract(l))
+        : [],
       collaterals: Array.isArray(cloned.collaterals) ? cloned.collaterals : [],
       loanSequence:
         typeof cloned.loanSequence === 'number' &&
         Number.isFinite(cloned.loanSequence)
           ? Math.floor(cloned.loanSequence)
+          : 0,
+      // Eski kayıtlarda kısıtlı işletme kredisi bakiyesi yoktur: sıfırla başlar
+      businessLoanFund:
+        typeof cloned.businessLoanFund === 'number' &&
+        Number.isFinite(cloned.businessLoanFund) &&
+        cloned.businessLoanFund > 0
+          ? Number(cloned.businessLoanFund.toFixed(2))
           : 0,
       projectSequence:
         typeof cloned.projectSequence === 'number' &&
@@ -1103,9 +1114,26 @@ export class SimulationEngine {
     return reserved;
   }
 
+  /**
+   * İŞLETME harcamaları (stok, kira, personel, dekorasyon, lojistik, dükkân yükseltmesi) için kullanılabilir nakit:
+   * rezerve emir tutarı düşülür, kısıtlı işletme kredisi bakiyesi DAHİLDİR.
+   */
   public getSpendableCash(): number {
     return Number(
       Math.max(0, this.state.cash - this.getReservedCash()).toFixed(2)
+    );
+  }
+
+  /**
+   * GENEL amaçlı harcamalar (hisse alımı, şirkete para koyma, portföy yöneticisi, lüks) için kullanılabilir nakit:
+   * rezerve emir tutarı VE kısıtlı işletme kredisi bakiyesi düşülür.
+   */
+  public getFreeSpendableCash(): number {
+    return Number(
+      Math.max(
+        0,
+        WalletEngine.freeCash(this.state) - this.getReservedCash()
+      ).toFixed(2)
     );
   }
 
@@ -1427,6 +1455,7 @@ export class SimulationEngine {
     message: string;
     principalReduced: number;
     interestPaid: number;
+    duplicate?: boolean;
   } {
     const res = BankLoanEngine.payLoanInstallment(
       this.state,

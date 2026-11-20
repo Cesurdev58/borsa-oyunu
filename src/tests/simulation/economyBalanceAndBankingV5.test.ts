@@ -585,14 +585,23 @@ test('C.1 - C.10: Banka ve Kredi Altyapısı, Tekil Günlük Faiz, Teminat Kilid
   // Şirket kasasını sıfıra yaklaştırarak taksit ödeyememesini simüle et
   engine.getState().playerCompany!.financials.cash = 100;
   engine.getState().playerCompany!.capitalCash = 100;
+  // Vadesi gelmemiş (erken) bir ödeme denemesi başarısız olsa da gecikme sayılmaz
+  const earlyAttempt = engine.payLoanInstallment(delinqLoanRes.loan!.loanId);
+  assert.equal(earlyAttempt.success, false);
+  const delinqLoan = (engine.getState().activeLoans ?? []).find(
+    (l) => l.loanId === delinqLoanRes.loan!.loanId
+  )!;
+  assert.equal(delinqLoan.status, 'ACTIVE', 'Vadesi gelmemiş taksit denemesi gecikme yaratmaz');
+  assert.equal(delinqLoan.missedPaymentCount, 0);
+
+  // Vade gününe gelince ödenemeyen taksit gecikme oluşturur
+  engine.getState().day = delinqLoan.nextPaymentGameDay;
   const failedInstallment = engine.payLoanInstallment(
     delinqLoanRes.loan!.loanId
   );
   assert.equal(failedInstallment.success, false);
-  const delinqLoan = (engine.getState().activeLoans ?? []).find(
-    (l) => l.loanId === delinqLoanRes.loan!.loanId
-  )!;
   assert.equal(delinqLoan.status, 'DELINQUENT');
+  assert.equal(delinqLoan.missedPaymentCount, 1);
   assert.ok(
     (engine.getState().playerCompany!.creditScore ?? 75) < scoreBeforeDelinq,
     'Taksit gecikmesinde kredi notu düşmelidir'

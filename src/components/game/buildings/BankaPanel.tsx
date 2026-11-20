@@ -474,8 +474,46 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               <div className="text-[13px] text-[var(--g-muted)]">Her {loanQuote.installmentFrequency} günde bir ödeyeceğin</div>
               <div className="text-3xl font-extrabold text-[var(--g-ink)]">{formatCurrency(loanQuote.installmentAmount)}</div>
               <div className="text-sm font-bold text-rose-700">
-                Toplam geri ödeme: {formatCurrency(loanQuote.totalRepayment)}
+                Toplam taksit ödemesi: {formatCurrency(loanQuote.totalInstallmentPayments)}
               </div>
+            </div>
+            <div
+              data-testid="loan-quote-breakdown"
+              className="grid grid-cols-2 gap-2 g-card-soft p-3 tabular-nums text-[13px]"
+            >
+              <div className="text-[var(--g-muted)]">Ana para</div>
+              <div data-testid="loan-quote-principal" className="text-right font-bold text-[var(--g-ink)]">
+                {formatCurrency(loanQuote.requestedPrincipal)}
+              </div>
+              <div className="text-[var(--g-muted)]">Peşin kullandırım ücreti</div>
+              <div data-testid="loan-quote-fee" className="text-right font-bold text-[var(--g-ink)]">
+                {formatCurrency(loanQuote.originationFee)}
+              </div>
+              <div className="text-[var(--g-muted)]">Hesaba geçen net tutar</div>
+              <div data-testid="loan-quote-net" className="text-right font-bold text-[var(--g-ink)]">
+                {formatCurrency(loanQuote.netDisbursement)}
+              </div>
+              <div className="text-[var(--g-muted)]">Toplam faiz</div>
+              <div data-testid="loan-quote-interest" className="text-right font-bold text-[var(--g-ink)]">
+                {formatCurrency(loanQuote.totalInterest)}
+              </div>
+              <div className="text-[var(--g-muted)]">Toplam taksit ödemesi</div>
+              <div data-testid="loan-quote-installments" className="text-right font-bold text-[var(--g-ink)]">
+                {formatCurrency(loanQuote.totalInstallmentPayments)}
+              </div>
+              <div className="font-bold text-[var(--g-ink)]">Kredinin toplam maliyeti</div>
+              <div data-testid="loan-quote-total-cost" className="text-right font-extrabold text-rose-700">
+                {formatCurrency(loanQuote.totalLoanCost)}
+              </div>
+              {loanQuote.borrowerType === 'PLAYER' && (
+                <div
+                  data-testid="loan-quote-restricted-note"
+                  className="col-span-2 text-[var(--g-muted)]"
+                >
+                  İşletme kredisidir: yalnızca stok, kira, personel, dekorasyon, lojistik ve dükkân yükseltmesinde
+                  kullanılır; hisse almak için kullanılamaz.
+                </div>
+              )}
             </div>
             <div className="hidden p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
               <div>
@@ -498,7 +536,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                   Toplam Geri Ödeme & Masraf
                 </div>
                 <div className="font-bold text-[var(--g-muted)]">
-                  {formatCurrency(loanQuote.totalRepayment)} (Masraf:{' '}
+                  {formatCurrency(loanQuote.totalInstallmentPayments)} (Peşin ücret:{' '}
                   {formatCurrency(loanQuote.originationFee)})
                 </div>
               </div>

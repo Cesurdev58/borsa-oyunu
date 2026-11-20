@@ -355,7 +355,7 @@ export class TradeProcurement {
           (targetShop.cashAccountBalance - paidFromShop).toFixed(2)
         );
         if (paidFromPersonal > 0) {
-          WalletEngine.spend(state, paidFromPersonal);
+          WalletEngine.spendBusiness(state, paidFromPersonal);
           targetShop.totalInvestedCapital = Number(
             (targetShop.totalInvestedCapital + paidFromPersonal).toFixed(2)
           );
@@ -373,7 +373,7 @@ export class TradeProcurement {
             shipment: null,
           };
         }
-        WalletEngine.spend(state, totalCost);
+        WalletEngine.spendBusiness(state, totalCost);
       }
       paidAmount = totalCost;
     } else {

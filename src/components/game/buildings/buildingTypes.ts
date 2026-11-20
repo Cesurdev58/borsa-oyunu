@@ -101,7 +101,10 @@ export interface BuildingDetailActions extends Partial<EsnafAndTradeActionsProps
   }) => void;
   onCancelInvestmentProject?: (projectId: string) => void;
   onLiquidateInventory?: (units: number, discountRatio: number) => void;
+  /** İşletme harcamaları için nakit (rezerve emir düşülmüş; kısıtlı işletme kredisi dahil) */
   spendableCash: number;
+  /** Genel amaçlı harcamalar (hisse, lüks, şirkete aktarım) için nakit; kısıtlı işletme kredisi düşülmüştür. Yoksa spendableCash. */
+  freeSpendableCash?: number;
   reservedCash: number;
   getReservedShares: (ticker: string) => number;
   ipoEligibility: IPOEligibilityResult;

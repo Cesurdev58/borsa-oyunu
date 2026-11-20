@@ -409,6 +409,23 @@ export interface LoanContract {
   lastInterestAccruedDay: number;
   totalInterestPaid: number;
   totalPrincipalPaid: number;
+  /**
+   * Taksit modeli. 'ANNUITY_V2' = azalan bakiyeli annuite (faiz taksite bir kez girer).
+   * Alan yoksa sözleşme eski modelle yazılmıştır; ilk işlemde sessizce yeni modele çevrilir (`migrateLegacyLoanContract`).
+   */
+  amortizationModel?: 'ANNUITY_V2';
+  /** Planlanan toplam taksit sayısı (annuite planı) */
+  installmentCount?: number;
+  /** Ödenmiş taksit sayısı; tekrar ödemeyi önleyen vade anahtarı bundan türer */
+  paidInstallmentCount?: number;
+  /** Gecikme faizinin (temerrüt faiz farkı) ödenmemiş birikimi; ana faizden ayrı tutulur */
+  accruedLateFeeUnpaid?: number;
+  /** Ödenmeden geçtiği için sayaca yazılmış en son vade günü; aynı vade ikinci kez sayılmaz */
+  lastMissedDueDay?: number;
+  /** Başarısız ödeme denemesinin yapıldığı son oyun günü (yeniden deneme aralığı için) */
+  lastPaymentAttemptDay?: number;
+  /** Taksitin başarıyla tahsil edildiği son oyun günü (aynı gün ikinci tahsilatı engeller) */
+  lastInstallmentPaidDay?: number;
 }
 
 export interface LoanOfferQuote {
@@ -424,7 +441,21 @@ export interface LoanOfferQuote {
   termInGameDays: number;
   installmentFrequency: number;
   installmentAmount: number;
+  /**
+   * Gelecekteki taksitlerin toplamı (yalnızca taksit ödemeleri: ana para + faiz).
+   * Peşin kullandırım ücreti BURADA YOKTUR; toplam maliyet için `totalLoanCost`a bakın.
+   */
   totalRepayment: number;
+  /** Peşin kesilen kullandırım ücreti çıkarılmış, hesaba geçecek net tutar */
+  netDisbursement: number;
+  /** Planın toplam faizi (annuite amortisman planından) */
+  totalInterest: number;
+  /** Toplam taksit ödemesi (= totalRepayment, açık ad) */
+  totalInstallmentPayments: number;
+  /** Kredinin toplam maliyeti: toplam faiz + peşin kullandırım ücreti */
+  totalLoanCost: number;
+  /** Taksit sayısı */
+  installmentCount: number;
   firstPaymentGameDay: number;
   originationFee: number;
   earlyPaymentFeeRate: number;

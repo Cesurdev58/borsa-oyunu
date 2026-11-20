@@ -1,6 +1,6 @@
 /**
  * Harita çökerse oyun beyaz ekranda kalmasın: hata konsola yazılır, fallback sayacı artar
- * ve eski 3D şehir açılır (Faz 11 acil durum çıkışı).
+ * ve eski klasik şehir açılır (Faz 11 acil durum çıkışı).
  */
 import React from 'react';
 import { recordMapFallback } from '../../../data/featureFlags';

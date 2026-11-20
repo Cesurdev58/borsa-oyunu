@@ -39,7 +39,7 @@ export interface TurkeyMapScreenProps {
   onSelectMapCity: (cityId: CityId | undefined) => void;
   onOpenShopInCity: (cityId: CityId, shopType: ShopType) => void;
   onGoToCity: (cityId: CityId) => void;
-  /** 3D şehre dönüş (verilmezse düğme çıkmaz). */
+  /** Klasik şehre dönüş (verilmezse düğme çıkmaz). */
   onExit?: () => void;
   /** Etkin filtre (verilmezse ekran kendi içinde tutar). Filtre kamerayı ve seçimi değiştirmez. */
   filter?: MapFilterId;
@@ -146,7 +146,7 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
         </button>
         {onExit && (
           <button type="button" data-testid="turkey-map-exit-btn" onClick={onExit} className="g-btn g-btn-secondary pointer-events-auto min-h-[44px] min-w-[44px] px-3 text-[14px]">
-            3D Şehre Dön
+            Klasik Şehre Dön
           </button>
         )}
         {owned.length > 0 && (

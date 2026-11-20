@@ -461,3 +461,25 @@ test('Eski modelle yazılmış kredi göçte patlamaz: kalan anapara aynı, taks
   assert.equal(loan.status, 'PAID_OFF');
   assert.equal(loan.remainingPrincipal, 0);
 });
+
+// ---------------------------------------------------------------------------
+// PR6 (Faz 13 · 36): çift faiz ve çevrimdışı çift tahsilat geri gelmez
+// ---------------------------------------------------------------------------
+test('36) Aynı çevrimdışı aralık iki kez işlenince kredi ikinci kez tahsil edilmez, faiz iki kez yazılmaz', () => {
+  const { engine, loan } = loanAtDueDay(20261201);
+  const start = '2026-01-01T10:00:00.000Z';
+  const end = '2026-01-01T12:00:00.000Z'; // 2 gerçek saat
+  engine.processOfflineProgress(start, end);
+  const paidAfterFirst = loan.paidInstallmentCount;
+  const principalAfterFirst = r2(loan.remainingPrincipal);
+  const cashAfterFirst = r2(engine.getState().cash);
+  const dayAfterFirst = engine.getState().day;
+
+  engine.processOfflineProgress(start, end); // aynı aralık
+  assert.equal(loan.paidInstallmentCount, paidAfterFirst, 'taksit sayısı değişmedi');
+  assert.equal(r2(loan.remainingPrincipal), principalAfterFirst, 'kalan anapara değişmedi');
+  assert.equal(r2(engine.getState().cash), cashAfterFirst, 'nakit değişmedi');
+  assert.equal(engine.getState().day, dayAfterFirst, 'gün ilerlemedi');
+  // Kalan anapara hiçbir zaman ilk anaparayı geçmez ve eksiye düşmez (faiz anaparaya eklenmez)
+  assert.ok(loan.remainingPrincipal <= 200_000 + 0.01 && loan.remainingPrincipal >= 0);
+});

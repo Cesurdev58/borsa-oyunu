@@ -1,7 +1,0 @@
-Şehir 3D modelleri (hepsi CC0, ücretsiz; ticari kullanım serbest, kaynak göstermek zorunlu değil):
-
-- kaykit/            KayKit City Builder Bits — Kay Lousberg, www.kaylousberg.com (CC0 1.0)
-- kenney-commercial/ City Kit (Commercial) — Kenney, www.kenney.nl (CC0 1.0)
-- kenney-suburban/   City Kit (Suburban) — Kenney, www.kenney.nl (CC0 1.0)
-
-Lisans: https://creativecommons.org/publicdomain/zero/1.0/

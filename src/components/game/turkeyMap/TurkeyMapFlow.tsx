@@ -22,7 +22,7 @@ export interface TurkeyMapFlowProps {
   onManageShop: (shopId: string, tab?: ShopManageTab) => void;
   /** Mağaza detay paneli (yönetim) açık mı? Açıkken geri tuşunu o panel karşılar. */
   detailOpen?: boolean;
-  /** Çıkış onayında "Çık" seçilirse (3D şehre döner). */
+  /** Çıkış onayında "Çık" seçilirse (klasik şehre döner). */
   onExit: () => void;
   fixedSize?: { width: number; height: number };
 }
@@ -93,8 +93,8 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
       {exitConfirm && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6" role="alertdialog" aria-label="Çıkış onayı" data-testid="map-exit-confirm">
           <div className="g-card w-full max-w-sm space-y-3 p-4 text-center">
-            <div className="g-display text-xl font-extrabold">3D şehre geçmek istiyor musun?</div>
-            <p className="text-[14px] text-slate-500">Eski 3D şehir görünümü açılır. İlerlemen kayıtlı.</p>
+            <div className="g-display text-xl font-extrabold">Klasik şehre geçmek istiyor musun?</div>
+            <p className="text-[14px] text-slate-500">Eski 2D şehir görünümü açılır. İlerlemen kayıtlı.</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid="map-exit-stay-btn" onClick={() => setExitConfirm(false)}>Kal</button>
               <button type="button" className="g-btn g-btn-primary min-h-[48px]" data-testid="map-exit-confirm-btn" onClick={confirmExit}>Çık</button>

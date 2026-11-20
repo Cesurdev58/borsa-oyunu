@@ -452,8 +452,11 @@ export default function App() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
-  const handleDismissOfflineModal = useCallback(() => {
+  const handleDismissOfflineModal = useCallback((resume?: boolean) => {
+    // Çevrimdışı iflas korumasıyla duraklatıldıysa: "devam et" oyunu açar, "ilgileneyim" duraklı bırakır
+    const hadPause = Boolean(engine.getState().lastOfflineSummary?.pause);
     engine.acknowledgeOfflineSummary();
+    if (hadPause && resume) engine.resumeSimulation();
     persistAndRefreshUI();
   }, [engine, persistAndRefreshUI]);
 
@@ -931,6 +934,15 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleBuyPrestigePerk = useCallback(
+    (perkId: string) => {
+      const res = engine.buyPrestigePerk(perkId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleSellShopStock = useCallback(
     (shopId: string, resourceId: string) => {
       const res = engine.sellStockSecondHand(shopId, resourceId);
@@ -1330,6 +1342,7 @@ export default function App() {
         onClaimCareerGoal={handleClaimCareerGoal}
         onUpdateOnboarding={handleUpdateOnboarding}
         onBuyLifestyleItem={handleBuyLifestyleItem}
+        onBuyPrestigePerk={handleBuyPrestigePerk}
         onSellShopStock={handleSellShopStock}
         onBuyUsedUpgrade={handleBuyUsedUpgrade}
         onFundProject={handleFundCityProject}

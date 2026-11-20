@@ -14,7 +14,8 @@ export type OverlayId =
   | 'richList'
   | 'lifestyle'
   | 'cityService'
-  | 'prestige';
+  | 'prestige'
+  | 'achievements';
 
 export const ALL_OVERLAYS: OverlayId[] = [
   'guide',
@@ -25,6 +26,7 @@ export const ALL_OVERLAYS: OverlayId[] = [
   'lifestyle',
   'cityService',
   'prestige',
+  'achievements',
 ];
 
 /** Biri açılırken kapatılması gereken diğer pencereler. */

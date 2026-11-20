@@ -6,6 +6,7 @@
  * (TradeAndShopEngine dosyasından ayrıldı; dış dünya hâlâ TradeAndShopEngine.* üzerinden erişebilir.)
  */
 
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
 import {
@@ -79,7 +80,7 @@ export class ShopOperations {
 
     // İlk dükkân BUFE ise oyuncu kendisi çalışır (çalışan 0, kapasite %65); "İlk çalışanını işe al" ücretlidir.
     const ownerWorks = startsWithOwnerWorking(state, params.shopType);
-    const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+    const setupCost = Number(((tpl.openingCost + tpl.decorationCost) * (state.playerCompany ? 1 : firstShopCostMultiplier(state))).toFixed(2));
     const initialWorkingCash = Number(
       Math.max(0, params.initialWorkingCash ?? Math.round(setupCost * 0.25)).toFixed(2)
     );

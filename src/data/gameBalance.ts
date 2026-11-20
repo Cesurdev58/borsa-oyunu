@@ -45,19 +45,29 @@ export const AUTO_INVEST_MIN_CHUNK = 5_000;
  * PRESTIGE_MAX_STARS toplam). Yıldız başına: başlangıç parası +PRESTIGE_START_CASH_PER_STAR,
  * dükkân müşterisi +%PRESTIGE_CUSTOMER_PCT_PER_STAR, hedef ödülleri +%PRESTIGE_REWARD_PCT_PER_STAR.
  */
-export const PRESTIGE_MIN_NET_WORTH = 10_000_000;
-/** [servet eşiği, o yeni şehirde kazanılan yıldız] (en yüksek uyan eşik geçerli) */
+export const PRESTIGE_MIN_NET_WORTH = 12_000_000;
+/**
+ * [servet eşiği, o yeni şehirde kazanılan yıldız] (en yüksek uyan eşik geçerli).
+ * `npm run prestij-sure` ile ölçüldü: 5. yıldız (1 Mr) güçlü sektörde (teknoloji/savunma) ~65–80 gerçek saat,
+ * 1. yıldız ~10 saat (12 Mn). Enerji gibi zayıf sektörler daha uzun sürer (bilinçli zorluk farkı).
+ */
 export const PRESTIGE_STAR_THRESHOLDS: ReadonlyArray<readonly [number, number]> = [
-  [10_000_000, 1],
-  [50_000_000, 2],
-  [250_000_000, 3],
-  [1_000_000_000, 4],
-  [5_000_000_000, 5],
+  [12_000_000, 1],
+  [40_000_000, 2],
+  [120_000_000, 3],
+  [400_000_000, 4],
+  [1_000_000_000, 5],
 ];
 export const PRESTIGE_MAX_STARS = 10;
+/** Yıldız başına: başlangıç parası (1 yıldızda 100 bin + 50 bin = 150 bin), müşteri, dükkân geliri */
 export const PRESTIGE_START_CASH_PER_STAR = 50_000;
-export const PRESTIGE_CUSTOMER_PCT_PER_STAR = 4;
+export const PRESTIGE_CUSTOMER_PCT_PER_STAR = 8;
+export const PRESTIGE_SHOP_REVENUE_PCT_PER_STAR = 5;
 export const PRESTIGE_REWARD_PCT_PER_STAR = 20;
+/** En az 1 yıldızı olan oyuncunun YENİ şehirdeki ilk dükkânının kurulum indirimi (%) */
+export const PRESTIGE_FIRST_SHOP_DISCOUNT_PCT = 20;
+/** Her yıldız 1 kalıcı prestij puanı verir; puanlar prestij avantajlarına harcanır (data/prestigePerks.ts) */
+export const PRESTIGE_POINTS_PER_STAR = 1;
 
 /** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
 export const OFFLINE_MAX_REAL_MINUTES = 120;
@@ -198,3 +208,16 @@ export const SHOP_CASH_KEEP = 5_000;
 export const SHOP_COLLECT_MIN = 1_000;
 /** Kayıttaki onboarding alanının sürümü */
 export const ONBOARDING_VERSION = 2;
+
+// ---------------------------------------------------------------------------
+// KADEMELİ ÇEVRİMDIŞI İLERLEME (engine/OfflineProgress.ts)
+// ---------------------------------------------------------------------------
+/** [sürenin bittiği gerçek saat, o dilimdeki verim]: ilk 2 sa %100, 2-4 sa %75, 4-8 sa %50, 8-12 sa %25; sonrası sayılmaz */
+export const OFFLINE_TIERS: ReadonlyArray<readonly [number, number]> = [
+  [2, 1],
+  [4, 0.75],
+  [8, 0.5],
+  [12, 0.25],
+];
+/** Çevrimdışı iflas koruması: dükkân kira+maaşı için bu kadar günlük karşılık yoksa faaliyetler durur */
+export const OFFLINE_SAFETY_RUNWAY_DAYS = 2;

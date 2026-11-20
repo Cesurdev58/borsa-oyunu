@@ -325,14 +325,19 @@ export function trainShopStaff(state: SimulationState, shopId: string, reservedC
   if (!shop) return { success: false, message: 'Dükkân bulunamadı.', cost: 0 };
   const count = untrainedStaffCount(shop);
   if (count <= 0) return { success: false, message: `${shop.nameTR}: bütün çalışanlar zaten eğitimli.`, cost: 0 };
-  const cost = count * trainingCostPerPerson(shop);
-  if (!payFromShopThenPlayer(state, shop, cost, reservedCash)) {
+  const fullCost = count * trainingCostPerPerson(shop);
+  // Eğitim bileti varsa eğitim bedavadır (başarım / haftalık hedef / prestij avantajı ödülü)
+  const useTicket = (state.trainingTickets ?? 0) > 0;
+  const cost = useTicket ? 0 : fullCost;
+  if (useTicket) {
+    state.trainingTickets = (state.trainingTickets ?? 0) - 1;
+  } else if (!payFromShopThenPlayer(state, shop, cost, reservedCash)) {
     return { success: false, message: `Eğitim için ${tl(cost)} gerekiyor.`, cost: 0 };
   }
   shop.trainedStaff = shop.staffCount;
   return {
     success: true,
-    message: `${shop.nameTR}: ${count} çalışan eğitim aldı. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
+    message: `${shop.nameTR}: ${count} çalışan eğitim aldı${useTicket ? ' (eğitim biletiyle bedava)' : ''}. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
     cost,
   };
 }

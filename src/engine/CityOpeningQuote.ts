@@ -10,9 +10,8 @@ import type { CityId } from '../models/cities';
 import type { ShopType } from '../models/trade';
 import type { SimulationState } from '../models/simulation';
 import { SHOP_TEMPLATES } from '../data/tradeCatalog';
-import { getOpeningAdvice } from './ShopOnboarding';
-import { WalletEngine } from './WalletEngine';
-import { TradeAndShopEngine } from './TradeAndShopEngine';
+import { getCityExpansionQuote } from './CityExpansionQuote';
+import type { CityExpansionQuote } from '../models/cities';
 
 export interface CityOpeningQuote {
   cityId: CityId;
@@ -22,17 +21,22 @@ export interface CityOpeningQuote {
   setupCost: number;
   /** Dükkân kasasına konan işletme parası (dükkânın kendi parasıdır, harcanmaz). */
   workingCash: number;
-  /** Peşin çıkacak toplam: kurulum + işletme kasası. */
+  /** Peşin çıkacak toplam (merkezi teklifin toplamı: kurulum + depozito + ruhsat + hat − indirim + işletme kasası). */
   totalUpfrontCost: number;
   /** Rafları bir kez doldurmanın yaklaşık bedeli. */
   firstStockCost: number;
-  /** İlk siparişin tahmini varış süresi (gün); toptancı teklifi bulunamazsa null. */
+  /** İlk siparişin tahmini varış süresi (gün; mesafe dahil). */
   estimatedDeliveryDays: number | null;
   /** Oyuncunun şu an harcayabileceği para yetiyor mu? */
   affordable: boolean;
   spendableCash: number;
+  /** Merkezi teklifin tamamı (şehir kirası, ruhsat, indirim, uyarılar…) */
+  expansion: CityExpansionQuote;
 }
 
+/**
+ * Harita paneli için teklif: `CityExpansionQuote` (tek merkezi hesap) üzerinden okunur; `openShop` aynı tutarı düşer.
+ */
 export function getCityOpeningQuote(
   state: SimulationState,
   cityId: CityId,
@@ -40,29 +44,19 @@ export function getCityOpeningQuote(
   reservedCash = 0
 ): CityOpeningQuote {
   const tpl = SHOP_TEMPLATES[shopType];
-  const advice = getOpeningAdvice(state, shopType, undefined, reservedCash);
-  const totalUpfrontCost = Number((advice.setupCost + advice.workingCash).toFixed(2));
-
-  let days: number | null = null;
-  for (const rid of tpl.allowedResourceIds) {
-    const best = TradeAndShopEngine.getSupplierOffers(state, rid)
-      .filter((o) => o.maxAvailableQuantity >= o.minOrderQuantity)
-      .sort((a, b) => a.unitPrice + a.shippingCostPerUnit - (b.unitPrice + b.shippingCostPerUnit))[0];
-    if (best) days = Math.max(days ?? 0, best.deliveryDays);
-  }
-
-  const spendableCash = Math.max(0, Number((WalletEngine.freeCash(state) - reservedCash).toFixed(2)));
+  const q = getCityExpansionQuote(state, cityId, shopType, { reservedCash });
   return {
     cityId,
     shopType,
     shopNameTR: tpl.nameTR,
-    setupCost: advice.setupCost,
-    workingCash: advice.workingCash,
-    totalUpfrontCost,
-    firstStockCost: advice.firstStockCost,
-    estimatedDeliveryDays: days,
-    affordable: spendableCash >= totalUpfrontCost,
-    spendableCash,
+    setupCost: q.baseSetupCost,
+    workingCash: q.workingCash,
+    totalUpfrontCost: q.totalUpfrontCost,
+    firstStockCost: q.initialStockCost,
+    estimatedDeliveryDays: q.estimatedDeliveryDays,
+    affordable: q.affordable,
+    spendableCash: q.spendableCash,
+    expansion: q,
   };
 }
 

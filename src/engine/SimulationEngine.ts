@@ -9,6 +9,8 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { getCityExpansionQuote } from './CityExpansionQuote';
+import type { CityExpansionQuote, CityId } from '../models/cities';
 import {
   defaultOnboarding,
   hasProgress as hasOnboardingProgress,
@@ -1761,7 +1763,9 @@ export class SimulationEngine {
     cityId?: string;
     districtLabel?: string;
     initialCashFloat?: number;
-  }): { success: boolean; message: string; shop?: ShopInstance } {
+    /** Aynı açılış isteğinin tekrarını engelleyen kimlik (çift dokunuş) */
+    requestId?: string;
+  }): { success: boolean; message: string; shop?: ShopInstance; duplicate?: boolean; quote?: CityExpansionQuote } {
     const res = TradeAndShopEngine.openShop(this.state, {
       shopType: params.shopType,
       customNameTR: params.customName,
@@ -1769,8 +1773,9 @@ export class SimulationEngine {
       cityId: params.cityId,
       initialWorkingCash: params.initialCashFloat,
       reservedOrderCash: this.getReservedCash(),
+      requestId: params.requestId,
     });
-    if (res.success) {
+    if (res.success && !res.duplicate) {
       this.recalculateFinancialsAndStages();
       this.pendingDailyActions.push(res.message);
     }
@@ -1778,6 +1783,8 @@ export class SimulationEngine {
       success: res.success,
       message: res.message,
       shop: res.shop ?? undefined,
+      duplicate: res.duplicate,
+      quote: res.quote,
     };
   }
 
@@ -2048,8 +2055,13 @@ export class SimulationEngine {
     return res;
   }
 
-  public getSupplierOffers(filterResourceId?: string): SupplierOffer[] {
-    return TradeAndShopEngine.getSupplierOffers(this.state, filterResourceId);
+  /** Herhangi bir şehirde yeni dükkân açmanın tek merkezi teklifi (openShop bu tutarı birebir tahsil eder). */
+  public getCityExpansionQuote(cityId: CityId, shopType: ShopType, workingCash?: number): CityExpansionQuote {
+    return getCityExpansionQuote(this.state, cityId, shopType, { workingCash, reservedCash: this.getReservedCash() });
+  }
+
+  public getSupplierOffers(filterResourceId?: string, forShop?: ShopInstance | null): SupplierOffer[] {
+    return TradeAndShopEngine.getSupplierOffers(this.state, filterResourceId, forShop);
   }
 
   public placeProcurementOrder(params: {

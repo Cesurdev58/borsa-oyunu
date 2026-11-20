@@ -101,21 +101,58 @@ export interface CityPresenceStatus {
   markerState: CityMarkerState;
 }
 
-/** Yeni mağaza açılış teklifi (Faz 7'de motor fonksiyonu üretir; burada yalnızca sözleşme). */
+/** Rezerv uyarısının şiddeti: NONE yok, YELLOW önerilenin altı, RED yarısının altı, CRITICAL bir günlük gideri bile karşılamıyor. */
+export type ExpansionWarningLevel = 'NONE' | 'YELLOW' | 'RED' | 'CRITICAL';
+
+/**
+ * Yeni mağaza açılış teklifi. Tek merkezi fonksiyon üretir (`engine/CityExpansionQuote.ts`);
+ * `openShop` tam olarak `totalUpfrontCost` kadar tahsil eder.
+ */
 export interface CityExpansionQuote {
   cityId: CityId;
   shopType: ShopType;
   baseSetupCost: number;
+  /** Peşin kira depozitosu: şehirdeki günlük kira × gün */
   cityRentDeposit: number;
+  /** Bölgesel ruhsat/giriş bedeli (merkezle aynı şehirde 0) */
   regionalPermitCost: number;
+  /** Rafları bir kez doldurmanın yaklaşık bedeli (dükkân kasasındaki işletme parasından ödenir; ayrıca tahsil edilmez) */
   initialStockCost: number;
+  /** Lojistik hattı kurulum bedeli (mesafe ve şehir lojistiğine göre; ucuz rotada 0) */
   initialLogisticsCost: number;
+  /** TL cinsinden uygulanan indirimler (en fazla biri sıfırdan büyük) */
   prestigeDiscount: number;
   milestoneDiscount: number;
+  /** Peşin çıkacak toplam = kurulum + depozito + ruhsat + hat kurulumu − indirim + dükkân kasasına konan işletme parası */
   totalUpfrontCost: number;
+  /** Önerilen güvenlik rezervi: şehirdeki günlük sabit giderin 7 günü */
   recommendedReserve: number;
   estimatedDeliveryDays: number;
   warningsTR: string[];
+
+  // --- ek bilgiler (arayüz ve ölçüm için) ---
+  /** Dükkân kasasına konan işletme parası (totalUpfrontCost içinde) */
+  workingCash: number;
+  /** İndirim öncesi kurulum+depozito+ruhsat+hat toplamı */
+  costBeforeDiscount: number;
+  discountKind: 'NONE' | 'PRESTIGE' | 'MILESTONE';
+  /** Şehirdeki günlük sabit gider (kira + işletme + maaş) */
+  dailyFixedCost: number;
+  /** Açılıştan ve ilk stoktan sonra elde kalacak para (dükkân kasası + cep) */
+  cashAfterOpening: number;
+  spendableCash: number;
+  /** Gerçekten yetersiz nakit: tek engel budur */
+  affordable: boolean;
+  warningLevel: ExpansionWarningLevel;
+  /** Rezervin altında kalınıyorsa ikinci onay istenir (engel değildir) */
+  needsSecondConfirmation: boolean;
+  distanceKind: 'SAME_CITY' | 'SAME_REGION' | 'NEIGHBOR_REGION' | 'FAR_REGION';
+  distanceFactor: number;
+  /** Nakliye çarpanı (şehir lojistiği × mesafe × indirim) */
+  logisticsMultiplier: number;
+  logisticsNotesTR: string[];
+  rentFactor: number;
+  wageFactor: number;
 }
 
 /**

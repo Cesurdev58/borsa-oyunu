@@ -46,6 +46,7 @@ import { shopUpgradeCost } from './ShopUpgrades';
 import { TradeInventory } from './TradeInventory';
 import { TradeUniverse } from './TradeUniverse';
 import { WalletEngine } from './WalletEngine';
+import { effectiveDailyRent } from './CityEconomy';
 
 type Result = { success: boolean; message: string };
 
@@ -259,7 +260,7 @@ export function fundCityProject(state: SimulationState, projectId: string, reser
 
 /** Dükkânın bugünkü kira + işletme gideri (güneş paneli düşülmeden) */
 function baseOpex(shop: ShopInstance): number {
-  return shop.dailyRent + shop.level * 120;
+  return effectiveDailyRent(shop) + shop.level * 120;
 }
 
 /** Güneş panelinin günlük tasarrufu */

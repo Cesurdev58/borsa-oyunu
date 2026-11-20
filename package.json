@@ -11,7 +11,9 @@
     "lint": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "balans": "tsx scripts/balans-olcumu.ts",
-    "kariyer": "tsx scripts/kariyer-hizi.ts"
+    "kariyer": "tsx scripts/kariyer-hizi.ts",
+    "city-audit": "tsx scripts/city-audit.ts",
+    "city-balance": "tsx scripts/city-balance.ts"
   },
   "dependencies": {
     "@fontsource-variable/nunito": "^5.3.0",

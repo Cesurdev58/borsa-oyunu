@@ -61,7 +61,7 @@ export function planShopRestock(
     const need = perResource - have - inbound;
     if (need < 5) continue;
 
-    const offer = TradeAndShopEngine.getSupplierOffers(state, rid)
+    const offer = TradeAndShopEngine.getSupplierOffers(state, rid, shop)
       .filter((o) => o.maxAvailableQuantity >= o.minOrderQuantity)
       .sort(
         (a, b) =>

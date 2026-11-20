@@ -243,7 +243,11 @@ test('Panel: gösterilen maliyet motorun gerçekten düşeceği tutarla aynıdı
   const q = getCityOpeningQuote(st, 'konya', 'BUFE', 0);
   const tpl = SHOP_TEMPLATES.BUFE;
   assert.equal(q.setupCost, Number((tpl.openingCost + tpl.decorationCost).toFixed(2)));
-  assert.equal(q.totalUpfrontCost, Number((q.setupCost + q.workingCash).toFixed(2)));
+  const x = q.expansion;
+  assert.equal(
+    q.totalUpfrontCost,
+    Number((x.baseSetupCost + x.cityRentDeposit + x.regionalPermitCost + x.initialLogisticsCost - x.prestigeDiscount - x.milestoneDiscount + x.workingCash).toFixed(2))
+  );
   assert.ok(q.firstStockCost > 0);
   assert.ok(q.estimatedDeliveryDays === null || q.estimatedDeliveryDays >= 1);
 

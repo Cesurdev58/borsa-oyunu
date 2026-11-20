@@ -13,6 +13,7 @@
  * Bu dosya ön yüzü (TradeAndShopEngine) içe aktarmaz; yalnızca alt modülleri kullanır.
  */
 
+import { cityDemandLayers, effectiveDailyRent, effectiveWagePerPerson } from './CityEconomy';
 import {
   PRICE_DEMAND_CAP_EXTREME,
   PRICE_DEMAND_CAP_HIGH,
@@ -137,6 +138,8 @@ export function computeShopDailyDemand(
   }
 
   const upgradeMult = shopUpgradeMultipliers(shop);
+  // Şehir katmanları (talep, rekabet, tür/sektör bonusu, mevsim; sepet için satın alma gücü). Tek kaynak: CityEconomy.
+  const cityLayers = cityDemandLayers(shop.cityId, shop.shopType, state.day);
   const prestigeCustomerMult = prestigeBonuses(state.prestige?.stars ?? 0).customerMult;
   const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
   const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
@@ -161,8 +164,10 @@ export function computeShopDailyDemand(
   // Olağanüstü olay (savaş, salgın, faiz…) çarpanı yuvarlamadan SONRA uygulanır ve küsuratlı kalır;
   // küsurat günden güne taşınır. Böylece günde 1–2 satan dükkânda (galeri) yuvarlama olayı büyütmez.
   const ev = worldEventShopDemandMultiplier(state, shop.shopType);
+  // Şehir talebi (talep, rekabet, bonus, mevsim) de aynı nedenle yuvarlamadan sonra, küsuratlı uygulanır: az müşterili
+  // dükkânda (galeri) küçük şehir farkı yuvarlamada kaybolmasın ya da sıçramasın.
   // Çalışan sigortasının müşteri etkisi de küsuratlı uygulanır (günde 10 müşterili dükkânda +%4 yuvarlanıp kaybolmasın)
-  const eventMult = (Number.isFinite(ev) && ev > 0 ? ev : 1) * insuranceCustomerMultiplier(shop);
+  const eventMult = (Number.isFinite(ev) && ev > 0 ? ev : 1) * insuranceCustomerMultiplier(shop) * cityLayers.customers;
 
   const trainingBasket = trainingBasketMultiplier(shop);
   const items: DailyDemand['items'] = [];
@@ -180,7 +185,7 @@ export function computeShopDailyDemand(
     }
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
-    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket) / Math.max(1, fairRetailPrice);
+    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket * cityLayers.basket) / Math.max(1, fairRetailPrice);
     const rawUnits = Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity);
     // Taban 1 birim yalnızca makul fiyat aralığında geçerli; aşırı fiyatta yuvarlama talebi canlı tutamaz
     const units = priceRatio <= PRICE_RATIO_ELASTIC_MAX ? Math.max(1, rawUnits) : Math.max(0, rawUnits);
@@ -310,11 +315,11 @@ export function liveShopToday(
 ): { revenue: number; profit: number; customers: number } {
   const live = shop.live && shop.live.day === day ? shop.live : emptyLiveDay(day);
   const expenses =
-    shop.staffCount * shop.staffDailyWagePerPerson +
+    shop.staffCount * effectiveWagePerPerson(shop) +
     (shop.manager ? shop.manager.dailyWage : 0) +
     activeInsurancePremium(shop) +
     activeCargoFee(shop) +
-    shop.dailyRent +
+    effectiveDailyRent(shop) +
     shop.level * 120;
   const dayFrac = Math.max(0, Math.min(1, minutesIntoDay / 1440));
   return {

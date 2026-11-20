@@ -142,6 +142,8 @@ export interface ProcurementOrder {
   createdDay: number;
   estimatedArrivalDay: number;
   actualArrivalDay: number | null;
+  /** Şehir/mesafe lojistiği: nakliyenin kaç TL'si şehir çarpanından geldi (iz sürmek için) */
+  logisticsSurcharge?: number;
   targetDestinationType: 'WAREHOUSE' | 'SHOP';
   targetDestinationId: string;
   targetDestinationNameTR: string;
@@ -214,6 +216,8 @@ export interface Warehouse {
   dailyStorageCostPerUnit: number;
   spoilageProtectionFactor: number; // 1.0 = normal, 0.5 = soğuk hava deposu (%50 daha az fire)
   batches: InventoryBatch[];
+  /** Depo hangi şehirde? (yoksa merkez depodur; şehir lojistik indirimi vermez) */
+  cityId?: string;
 }
 
 export interface ProductionOrder {

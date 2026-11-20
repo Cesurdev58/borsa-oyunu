@@ -73,11 +73,12 @@ export const StartCityScreen: React.FC<StartCityScreenProps> = ({
             )}
             <div className="mt-3 space-y-1 text-[15px]" data-testid="start-city-costs">
               <div className="flex justify-between"><span>İlk dükkân kurulumu</span><b data-testid="start-city-setup">{formatCurrency(summary.quote.setupCost)}</b></div>
+              <div className="flex justify-between"><span>Kira depozitosu ({city.nameTR} kirası)</span><span data-testid="start-city-deposit">{formatCurrency(summary.quote.expansion.cityRentDeposit)}</span></div>
               <div className="flex justify-between"><span>Dükkân kasasına konan para</span><b>{formatCurrency(summary.quote.workingCash)}</b></div>
               <div className="flex justify-between"><span>İlk 7 günün sabit gideri</span><b data-testid="start-city-seven-day">{formatCurrency(summary.sevenDayRunningCost)}</b></div>
               <div className="flex justify-between border-t border-slate-200 pt-1"><span className="font-bold">Açılıştan sonra elinde kalan</span><b data-testid="start-city-cash-after">{formatCurrency(summary.cashAfterOpening)}</b></div>
             </div>
-            <p className="mt-2 text-[13px] text-slate-500">Tutarlar oyunun şu anki fiyatlarıdır. Şehri seçince merkezin burası olur; sonra başka şehirlerde de dükkân açabilirsin.</p>
+            <p className="mt-2 text-[13px] text-slate-500">Kira ve çalışan maaşı şehre göre değişir; tutarlar gerçek açılış bedelidir. Şehri seçince merkezin burası olur; sonra başka şehirlerde de dükkân açabilirsin.</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" className="g-btn g-btn-secondary min-h-[52px]" data-testid="start-city-cancel-btn" onClick={() => setConfirming(false)}>Vazgeç</button>
               <button

@@ -9,7 +9,9 @@
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
 import { isCitySelectionPending, resolveNewShopCityId } from './CityMigration';
-import { isCityId } from '../data/cityDefinitions';
+import { getCityDefinition, isCityId } from '../data/cityDefinitions';
+import { getCityExpansionQuote, syncMilestoneDiscounts } from './CityExpansionQuote';
+import type { CityExpansionQuote } from '../models/cities';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -51,12 +53,19 @@ export class ShopOperations {
       cityId?: string;
       initialWorkingCash?: number;
       reservedOrderCash: number;
+      /**
+       * Aynı açılış isteğinin iki kez işlenmesini engeller (çift dokunuş, yeniden deneme): aynı kimlikle ikinci çağrı
+       * yeni dükkân açmaz, para da düşmez; ilk açılan dükkânı `duplicate: true` ile döndürür.
+       */
+      requestId?: string;
     }
   ): {
     success: boolean;
     message: string;
     shop: ShopInstance | null;
     totalCapitalSpent: number;
+    duplicate?: boolean;
+    quote?: CityExpansionQuote;
   } {
     if (isCitySelectionPending(state)) {
       return {
@@ -77,6 +86,22 @@ export class ShopOperations {
       };
     }
 
+    // Aynı istek ikinci kez geldiyse: yeni dükkân yok, yeni tahsilat yok
+    const requestKey = params.requestId ? `SHOP-OPEN-REQ-${params.requestId}` : null;
+    if (requestKey) {
+      const done = ts.processedOrderIds.find((k) => k.startsWith(`${requestKey}|`));
+      if (done) {
+        const existing = ts.shops.find((x) => x.shopId === done.slice(requestKey.length + 1)) ?? null;
+        return {
+          success: true,
+          message: 'Bu dükkân zaten açıldı; ikinci kez ücret alınmadı.',
+          shop: existing,
+          totalCapitalSpent: 0,
+          duplicate: true,
+        };
+      }
+    }
+
     // İlk dükkân kapısı: borsanın temelini öğrenmeden esnaflığa geçilemez (şirket şubeleri hariç).
     const gate = firstShopGateStatus(state);
     if (ts.shops.length === 0 && !gate.open) {
@@ -91,11 +116,18 @@ export class ShopOperations {
 
     // İlk dükkân BUFE ise oyuncu kendisi çalışır (çalışan 0, kapasite %65); "İlk çalışanını işe al" ücretlidir.
     const ownerWorks = startsWithOwnerWorking(state, params.shopType);
-    const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
-    const initialWorkingCash = Number(
-      Math.max(0, params.initialWorkingCash ?? Math.round(setupCost * 0.25)).toFixed(2)
-    );
-    const totalNeeded = Number((setupCost + initialWorkingCash).toFixed(2));
+    const targetCityId = isCityId(params.cityId) ? params.cityId : resolveNewShopCityId(state);
+    // Tek merkezi teklif: aşağıda tahsil edilen tutar bu teklifle birebir aynıdır.
+    const quote = getCityExpansionQuote(state, targetCityId, params.shopType, {
+      workingCash: params.initialWorkingCash,
+      reservedCash: params.reservedOrderCash,
+    });
+    const setupCost = quote.baseSetupCost;
+    const initialWorkingCash = quote.workingCash;
+    const totalNeeded = quote.totalUpfrontCost;
+    // Dükkânın kendisine yazılan işletme dışı peşin bedel: kurulum + depozito + ruhsat + hat kurulumu − indirim
+    const businessCost = Number((totalNeeded - initialWorkingCash).toFixed(2));
+    const quoteBreakdownTR = `Kurulum ₺${setupCost.toLocaleString('tr-TR')} + kira depozitosu ₺${quote.cityRentDeposit.toLocaleString('tr-TR')} + ruhsat ₺${quote.regionalPermitCost.toLocaleString('tr-TR')} + hat kurulumu ₺${quote.initialLogisticsCost.toLocaleString('tr-TR')}${quote.discountKind === 'NONE' ? '' : ` − indirim ₺${(quote.prestigeDiscount + quote.milestoneDiscount).toLocaleString('tr-TR')}`} + dükkân kasası ₺${initialWorkingCash.toLocaleString('tr-TR')}`;
 
     const isCompanyBranch = state.playerCompany !== null;
     const spendablePlayerCash = Number(
@@ -107,16 +139,17 @@ export class ShopOperations {
       if (pc.financials.cash < totalNeeded) {
         return {
           success: false,
-          message: `${tpl.nameTR} şubesi açmak için gereken ₺${totalNeeded.toLocaleString('tr-TR')} (Kurulum: ₺${setupCost.toLocaleString('tr-TR')} + İşletme Kasası: ₺${initialWorkingCash.toLocaleString('tr-TR')}) şirket kasasında mevcut değil.`,
+          message: `${tpl.nameTR} şubesi açmak için gereken ₺${totalNeeded.toLocaleString('tr-TR')} (${quoteBreakdownTR}) şirket kasasında mevcut değil.`,
           shop: null,
           totalCapitalSpent: 0,
+          quote,
         };
       }
-      // Şirket şubesi açılışı: Nakit azalır, sabit kıymet (fixedAssets) setupCost kadar artar, şube kasası initialWorkingCash tutar
-      CompanyWallet.spend(pc, setupCost);
+      // Şirket şubesi açılışı: Nakit azalır, sabit kıymet (fixedAssets) açılış bedeli kadar artar, şube kasası initialWorkingCash tutar
+      CompanyWallet.spend(pc, businessCost);
       pc.capitalCash = pc.financials.cash;
       pc.financials.fixedAssets = Number(
-        (pc.financials.fixedAssets + setupCost).toFixed(2)
+        (pc.financials.fixedAssets + businessCost).toFixed(2)
       );
       pc.financials.totalAssets = Number(
         (
@@ -130,7 +163,7 @@ export class ShopOperations {
         idempotencyKey: `SHOP-OPEN-COMP-D${state.day}-S${ts.shopSeq + 1}`,
         sourceAccountId: ACCOUNT_IDS.companyBank(pc.ticker),
         destinationAccountId: ACCOUNT_IDS.FIXED_ASSET,
-        amount: setupCost,
+        amount: businessCost,
         category: 'CAPEX_INVESTMENT',
         description: `${tpl.nameTR} yeni mağaza şubesi açılış ve dekorasyon yatırımı`,
         relatedCompanyId: pc.ticker,
@@ -139,30 +172,41 @@ export class ShopOperations {
     } else {
       // Kurulum + dekorasyon kısıtlı işletme kredisinden karşılanabilir; kasaya konan işletme nakdi (çekilebilir)
       // yalnızca serbest nakitten gelir, böylece kısıtlı para kasa yoluyla cebe dönemez.
-      const restrictedForSetup = Math.min(WalletEngine.restrictedFund(state), setupCost);
-      const freeNeeded = Number((totalNeeded - restrictedForSetup).toFixed(2));
-      const freeAvailable = Number(
-        Math.max(0, WalletEngine.freeCash(state) - params.reservedOrderCash).toFixed(2)
-      );
-      if (spendablePlayerCash < totalNeeded || freeAvailable < freeNeeded) {
+      if (!quote.affordable) {
         return {
           success: false,
-          message: `${tpl.nameTR} açmak için gereken ₺${totalNeeded.toLocaleString('tr-TR')} (Kurulum & Dekorasyon: ₺${setupCost.toLocaleString('tr-TR')} + Dükkân Kasası: ₺${initialWorkingCash.toLocaleString('tr-TR')}) kullanılabilir nakdinizi (₺${spendablePlayerCash.toLocaleString('tr-TR')}) aşıyor.`,
+          message: `${tpl.nameTR} açmak için gereken ₺${totalNeeded.toLocaleString('tr-TR')} (${quoteBreakdownTR}) kullanılabilir nakdinizi (₺${spendablePlayerCash.toLocaleString('tr-TR')}) aşıyor.`,
           shop: null,
           totalCapitalSpent: 0,
+          quote,
         };
       }
-      WalletEngine.spendBusiness(state, setupCost);
+      WalletEngine.spendBusiness(state, businessCost);
       WalletEngine.spend(state, initialWorkingCash);
+      // Defter: ana kayıt (kurulum + depozito + ruhsat + işletme kasası − indirim) ile lojistik hat kurulumu AYRI satırlardır;
+      // ikisinin toplamı teklifin toplamına eşittir.
       CentralLedgerEngine.recordPostedAccountingEntry(state, {
         idempotencyKey: `SHOP-OPEN-PLAYER-D${state.day}-S${ts.shopSeq + 1}`,
         sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
         destinationAccountId: ACCOUNT_IDS.FIXED_ASSET,
-        amount: totalNeeded,
+        amount: Number((totalNeeded - quote.initialLogisticsCost).toFixed(2)),
         category: 'CAPEX_INVESTMENT',
-        description: `${tpl.nameTR} esnaf dükkânı açılış ve işletme kasası tahsisi`,
+        description: `${tpl.nameTR} esnaf dükkânı açılış ve işletme kasası tahsisi (${getCityDefinition(targetCityId).nameTR})`,
         reservedOrderCash: params.reservedOrderCash,
       });
+      CentralLedgerEngine.recordPostedAccountingEntry(state, {
+        idempotencyKey: `SHOP-OPEN-LOGI-D${state.day}-S${ts.shopSeq + 1}`,
+        sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,
+        destinationAccountId: ACCOUNT_IDS.OPERATING_EXPENSE,
+        amount: quote.initialLogisticsCost,
+        category: 'OPERATING_EXPENSE_PAYMENT',
+        description: `Lojistik hat kurulumu: ${tpl.nameTR} (${getCityDefinition(targetCityId).nameTR})`,
+        reservedOrderCash: params.reservedOrderCash,
+      });
+      if (quote.discountKind === 'MILESTONE') {
+        syncMilestoneDiscounts(state);
+        state.cityExpansion!.milestonesUsed += 1;
+      }
     }
 
     ts.shopSeq += 1;
@@ -189,7 +233,7 @@ export class ShopOperations {
         params.customNameTR?.trim() ||
         `${tpl.nameTR} #${branchNumber}`,
       cityBlockId: params.cityBlockId || tpl.defaultCityBlockId,
-      cityId: isCityId(params.cityId) ? params.cityId : resolveNewShopCityId(state),
+      cityId: targetCityId,
       level: 1,
       openedDay: state.day,
       isCompanyBranch,
@@ -239,6 +283,7 @@ export class ShopOperations {
     };
 
     ts.shops.push(newShop);
+    if (requestKey) ts.processedOrderIds.push(`${requestKey}|${newShop.shopId}`);
     TradeUniverse.updateCareerStage(state);
 
     return {
@@ -246,6 +291,7 @@ export class ShopOperations {
       message: `${newShop.nameTR} başarıyla açıldı! Satışa başlamak için tedarikçiden ürün sipariş edebilirsiniz.`,
       shop: newShop,
       totalCapitalSpent: totalNeeded,
+      quote,
     };
   }
 

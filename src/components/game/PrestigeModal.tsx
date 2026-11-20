@@ -9,6 +9,8 @@ import React, { useState } from 'react';
 import { Star, X } from 'lucide-react';
 import {
   PRESTIGE_CUSTOMER_PCT_PER_STAR,
+  PRESTIGE_FIRST_SHOP_DISCOUNT_PCT,
+  PRESTIGE_SHOP_REVENUE_PCT_PER_STAR,
   PRESTIGE_MAX_STARS,
   PRESTIGE_MIN_NET_WORTH,
   PRESTIGE_REWARD_PCT_PER_STAR,
@@ -111,6 +113,9 @@ export const PrestigeModal: React.FC<{
               </div>
               <div className="text-[13px] text-[var(--g-muted)]">yıldız başı %{PRESTIGE_REWARD_PCT_PER_STAR}</div>
             </div>
+          </div>
+          <div className="g-tip" data-testid="prestige-extra-perks">
+            Her yıldız: +%{PRESTIGE_SHOP_REVENUE_PCT_PER_STAR} dükkân geliri, 1 prestij puanı. Yıldızın varken yeni şehirde ilk dükkânın kurulumu %{PRESTIGE_FIRST_SHOP_DISCOUNT_PCT} ucuz.
           </div>
           {!confirming ? (
             <button

@@ -7,6 +7,7 @@
  *  - Dükkân açarken "önerilen işletme sermayesi" bilgisi ve kaç gün dayanacağı (engel değil, uyarı + ikinci onay).
  * Yalnızca modelleri, katalogu, denge sabitlerini ve alt motorları (cüzdan, defter) içe aktarır (döngü oluşmaz).
  */
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import {
   FIRST_EMPLOYEE_HIRE_FEE_BUFE,
   OWNER_STAFF_CAPACITY,
@@ -115,7 +116,7 @@ export function getOpeningAdvice(
   reservedCash: number
 ): OpeningAdvice {
   const tpl = SHOP_TEMPLATES[shopType];
-  const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+  const setupCost = Number(((tpl.openingCost + tpl.decorationCost) * firstShopCostMultiplier(state)).toFixed(2));
   const workingCash = Number(Math.max(0, workingCashInput ?? Math.round(setupCost * 0.25)).toFixed(2));
   const personalAfter = Math.max(0, WalletEngine.freeCash(state) - reservedCash - Math.max(0, setupCost - WalletEngine.restrictedFund(state)) - workingCash);
   const liquidAfterOpening = Number((workingCash + personalAfter).toFixed(2));

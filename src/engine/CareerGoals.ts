@@ -22,7 +22,7 @@ import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
 import { firstShopGateStatus } from './FirstShopGate';
 import { WalletEngine } from './WalletEngine';
 import { buildRichList } from './RichListEngine';
-import { prestigeBonuses } from './PrestigeEngine';
+import { bonusesFor } from './PrestigeEngine';
 
 /** Hedefin "Git" düğmesinin açacağı bina (arayüzdeki CityBuildingId ile aynı adlar). */
 export type GoalTarget = 'BORSA' | 'OYUNCU_OFISI' | 'SIRKET_MERKEZI' | 'HOLDING_MERKEZI' | 'LUKS';
@@ -351,7 +351,7 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
 
 /** Hedef ödülü (prestij yıldızlarıyla artar, 100 ₺'ye yuvarlanır). */
 export function goalReward(state: Pick<SimulationState, 'prestige'>, def: CareerGoalDef): number {
-  const mult = prestigeBonuses(state.prestige?.stars ?? 0).rewardMult;
+  const mult = bonusesFor(state).rewardMult;
   return Math.round((def.reward * mult) / 100) * 100;
 }
 

@@ -31,6 +31,8 @@ interface GameTopBarProps {
   /** Ticari itibar (0–100) ve lüks alışveriş penceresi */
   reputation?: number;
   onOpenLifestyle?: () => void;
+  /** Başarımlar ve haftalık hedefler penceresi */
+  onOpenAchievements?: () => void;
   /** İlk aşama: yalnızca nakit, net değer ve gün/saat öne çıkar; aşama yıldızı ve ayrıntılar gizlenir */
   simpleMode?: boolean;
 }
@@ -52,6 +54,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     onOpenRichList,
     reputation,
     onOpenLifestyle,
+    onOpenAchievements,
     simpleMode = false,
   }) => {
     const sessionMeta = getMarketSessionBadgeMeta(marketSession);
@@ -290,6 +293,20 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 <span className="g-display font-extrabold text-base text-[var(--g-gold)] tabular-nums">
                   {Math.round(reputation)} ›
                 </span>
+              </button>
+            )}
+            {onOpenAchievements && (
+              <button
+                type="button"
+                data-testid="tycoon-top-achievements"
+                onClick={onOpenAchievements}
+                className="col-span-2 rounded-xl bg-white/[0.06] p-2.5 flex items-center justify-between text-left"
+              >
+                <span className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-[var(--g-gold)]" />
+                  <span className="text-[13px] text-white/60 font-bold">Başarımlar · haftalık hedefler</span>
+                </span>
+                <span className="g-display font-extrabold text-base text-[var(--g-gold)]">›</span>
               </button>
             )}
             {wealthTaxNote && (

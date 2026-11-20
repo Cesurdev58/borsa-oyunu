@@ -32,7 +32,7 @@ export interface GuideStep {
   title: string;
   text: (ctx: GuideContext & { cash: string }) => string;
   /** Vurgulanacak gerçek öğe (CSS seçici); bulunamazsa yalnızca kart gösterilir */
-  target?: string;
+  target?: string | ((ctx: GuideContext) => string | undefined);
   /** Karşılama penceresi mi (oyunu duraklatır) */
   modal?: boolean;
   /** Durumdan anlaşılan tamamlanma; yoksa "İleri" düğmesiyle geçilir */
@@ -43,6 +43,14 @@ export interface GuideStep {
 
 const personalShops = (s: SimulationState) => (s.tradeState?.shops ?? []).filter((x) => !x.isCompanyBranch);
 
+/** Oyuncunun başlangıç şehri (altın halkalı merkez): rehber halkası haritada bu noktaya oturur. */
+const startCityId = (s: SimulationState) => s.headquartersCityId ?? s.playerStartCityId;
+
+/** Seçili hedef bu ctx için seçiciye çevrilir (fonksiyon olabilir). */
+export function resolveGuideTarget(step: GuideStep, ctx: GuideContext): string | undefined {
+  return typeof step.target === 'function' ? step.target(ctx) : step.target;
+}
+
 /** Rehber adımları (sıra önemlidir). Metinler gerçek kurallarla uyumludur (ilk dükkân kapısı 4 adım). */
 export const GUIDE_STEPS: GuideStep[] = [
   {
@@ -50,7 +58,7 @@ export const GUIDE_STEPS: GuideStep[] = [
     title: 'Hoş geldin!',
     modal: true,
     text: ({ cash }) =>
-      `Cebinde ${cash} var. Borsanın temel işlemlerini tamamla: iki farklı sektörden hisse al, bir pozisyon sat ve ilk fiyat güncellemesini gör. Ardından ilk dükkânını açabilirsin.`,
+      `Cebinde ${cash} var. Borsanın temel işlemlerini tamamla: iki farklı sektörden hisse al, bir pozisyon sat ve ilk fiyat güncellemesini gör. Ardından Türkiye haritasında şehrine dokunup ilk dükkânını açarsın.`,
   },
   {
     id: 'open-market',
@@ -97,33 +105,60 @@ export const GUIDE_STEPS: GuideStep[] = [
     done: ({ gate }) => gate.open,
   },
   {
-    id: 'shop-tab',
-    title: 'İlk dükkânın hazır',
-    target: '[data-testid="bottom-nav-portfolio"]',
-    text: () => 'Dükkân sekmesi açıldı. Dokunup ilk dükkânını kur.',
-    done: ({ activeTab }) => activeTab === 'portfolio',
+    id: 'city-tab',
+    title: 'Şehir haritası',
+    target: '[data-testid="bottom-nav-city"]',
+    text: () => 'İlk dükkân kapısı açıldı. Şehir sekmesine dokun: Türkiye haritası açılır, ilk dükkânını orada kuracaksın.',
+    done: ({ activeTab, state }) => activeTab === 'city' || personalShops(state).length > 0,
     available: ({ gate }) => gate.open,
   },
   {
+    id: 'map-pick-city',
+    title: 'Şehrine dokun',
+    target: ({ state, activeTab }) => {
+      const id = startCityId(state);
+      return activeTab === 'city' && id ? `[data-testid="turkey-city-marker-${id}"]` : '[data-testid="bottom-nav-city"]';
+    },
+    text: ({ activeTab }) =>
+      activeTab === 'city'
+        ? 'Altın halkalı nokta başlangıç şehrin. Dokununca şehir bilgisi ve ilk dükkânın maliyeti açılır.'
+        : 'Önce Şehir sekmesine dön, sonra haritada altın halkalı şehrine dokun.',
+    done: ({ state }) => state.selectedMapCityId === startCityId(state) || personalShops(state).length > 0,
+    available: ({ gate, state }) => gate.open && personalShops(state).length === 0,
+  },
+  {
     id: 'opening-capital',
-    title: 'İşletme sermayesi',
-    target: '[data-testid="shop-opening-advice"]',
-    text: () =>
-      'Dükkân açarken cebinde işletme parası bırak: ilk mal, kira ve maaş buradan çıkar. Ekran kaç gün dayanacağını gösterir.',
+    title: 'İlk dükkânını aç',
+    target: ({ state, activeTab }) =>
+      activeTab === 'city' && state.selectedMapCityId
+        ? '[data-testid="city-open-first-shop-btn"]'
+        : activeTab === 'city' && startCityId(state)
+        ? `[data-testid="turkey-city-marker-${startCityId(state)}"]`
+        : '[data-testid="bottom-nav-city"]',
+    text: ({ activeTab, state }) =>
+      activeTab !== 'city'
+        ? 'Şehir sekmesine dön; şehrinin bilgi kartında "İlk Mağazanı Aç" düğmesi var.'
+        : !state.selectedMapCityId
+        ? 'Şehrine yeniden dokun ki bilgi kartı açılsın.'
+        : 'Kartta kurulum bedelini ve cebinde kalacak işletme parasını gör: ilk mal, kira ve maaş buradan çıkar. Hazırsan "İlk Mağazanı Aç" düğmesine bas.',
     done: ({ state }) => personalShops(state).length > 0,
-    available: ({ activeTab }) => activeTab === 'portfolio',
+    available: ({ gate, state }) => gate.open && personalShops(state).length === 0,
   },
   {
     id: 'first-order',
     title: 'İlk mal siparişi',
-    target: '[data-testid="shop-restock-all-btn"]',
-    text: () => '"Rafları doldur" ile ilk malını sipariş et. Raflar boşalırsa satış durur.',
+    target: ({ activeTab }) =>
+      activeTab === 'portfolio' ? '[data-testid="shop-restock-all-btn"]' : '[data-testid="bottom-nav-portfolio"]',
+    text: ({ activeTab }) =>
+      activeTab === 'portfolio'
+        ? '"Rafları doldur" ile ilk malını sipariş et. Raflar boşalırsa satış durur.'
+        : 'Dükkân sekmesine dokun; orada "Rafları doldur" ile ilk malını sipariş edebilirsin.',
     done: ({ state }) =>
       personalShops(state).some(
         (s) =>
           (s.pendingDeliveriesCount ?? 0) > 0 || s.inventoryBatches.some((b) => b.availableQuantity > 0)
       ),
-    available: ({ state, activeTab }) => personalShops(state).length > 0 && activeTab === 'portfolio',
+    available: ({ state }) => personalShops(state).length > 0,
   },
   {
     id: 'first-hire',
@@ -206,14 +241,15 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
 
   // Hedef öğeyi bul ve vurgula; bulunamazsa rect null kalır (kart yine görünür, uygulama kilitlenmez)
   useEffect(() => {
-    if (!showCard || !step?.target) {
+    const targetSel = step ? resolveGuideTarget(step, ctx) : undefined;
+    if (!showCard || !targetSel) {
       setRect(null);
       return;
     }
     let scrolledFor: Element | null = null;
     const measure = () => {
       try {
-        const el = document.querySelector(step.target as string);
+        const el = document.querySelector(targetSel);
         if (!el) return setRect(null);
         if (scrolledFor !== el) {
           scrolledFor = el;
@@ -235,13 +271,15 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
     };
-  }, [showCard, step]);
+  }, [showCard, step, state.selectedMapCityId, activeTab]);
 
   if (!step || !onboarding || (!showModal && !showCard)) return null;
 
   const text = step.text({ ...ctx, cash: formatCurrency(state.cash) });
   const index = GUIDE_STEPS.findIndex((s) => s.id === step.id);
   const manual = !step.done;
+  // Harita adımlarında alt bilgi kartı (açılış düğmesi altta) rehber kartının altında kalmasın: kart üste alınır.
+  const cardAtTop = activeTab === 'city' && step.id === 'opening-capital';
   const next = () => {
     onAction({ type: 'complete', stepId: step.id });
     if (step.id === 'welcome') onSelectTab('market');
@@ -293,7 +331,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
         aria-label="Rehber adımı"
         data-testid="guide-step-card"
         data-step={step.id}
-        className="fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-white p-3 shadow-2xl space-y-2 bottom-[calc(84px+env(safe-area-inset-bottom))]"
+        className={`fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-white p-3 shadow-2xl space-y-2 ${cardAtTop ? 'top-[128px]' : 'bottom-[calc(84px+env(safe-area-inset-bottom))]'}`}
       >
         <div className="flex items-center justify-between gap-2">
           <h3 className="g-section-title">{step.title}</h3>

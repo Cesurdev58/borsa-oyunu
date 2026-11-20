@@ -121,6 +121,8 @@ export interface MapMarkerModel {
   markerState: 'EMPTY' | 'OWNED' | 'HEADQUARTERS';
   hasIssue: boolean;
   shopCount: number;
+  /** Etkin filtreye uymuyor: soluk çizilir ama yine dokunulabilir (filtre kamerayı/seçimi bozmaz). */
+  dimmed?: boolean;
 }
 
 /** Ekran okuyucu etiketi: şehir adı yalnızca burada ve alt panelde geçer. */

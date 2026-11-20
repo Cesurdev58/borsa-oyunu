@@ -9,7 +9,7 @@ import type { CityId } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
 import { liveShopToday } from '../../../engine/ShopSales';
-import { shopHasIssue } from '../../../engine/CityOpeningQuote';
+import { SHOP_ISSUE_LABEL_TR, shopIssueKinds } from '../../../engine/CityOpeningQuote';
 import { shopsInCity, summarizeCityShops } from './mapNavigation';
 import { SHOP_EMOJI } from '../buildings/ShopDashboard';
 
@@ -79,7 +79,8 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             const t = liveShopToday(shop, state.day, nowMin);
             const used = shop.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
             const stockPct = Math.min(100, Math.round((used / Math.max(1, shop.shelfCapacity)) * 100));
-            const issue = shopHasIssue(shop);
+            const issueKinds = shopIssueKinds(shop, state.day);
+            const issue = issueKinds.length > 0;
             const staffText = shop.ownerWorks ? 'Sen çalışıyorsun' : `${shop.staffCount} çalışan`;
             return (
               <div key={shop.shopId} className="g-card overflow-hidden" data-testid={`city-shop-card-${shop.shopId}`} data-shop-city={shop.cityId}>
@@ -102,7 +103,7 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
                 </div>
                 {(issue || shop.manager) && (
                   <div className={`mx-3 mt-2 rounded-xl px-3 py-2 text-[13px] font-bold ${issue ? 'bg-[#ffe9e8] text-[var(--g-red-dark)]' : 'bg-[var(--g-surface-2)] text-[var(--g-muted)]'}`} data-testid={`city-shop-issue-${shop.shopId}`}>
-                    {issue ? (shop.manager?.lowCash ? 'Kasa boş, müdür mal alamıyor.' : 'Raf boş ve yolda mal yok.') : `Müdür: ${shop.manager?.lastActionTR ?? ''}`}
+                    {issue ? issueKinds.map((k) => SHOP_ISSUE_LABEL_TR[k]).join(' · ') : `Müdür: ${shop.manager?.lastActionTR ?? ''}`}
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2 p-3">

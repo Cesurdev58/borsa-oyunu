@@ -39,12 +39,13 @@ const CityMarker = memo(function CityMarker({ marker, selected, upp }: MarkerPro
       data-city-id={marker.cityId}
       data-marker-state={marker.markerState}
       data-has-issue={marker.hasIssue ? 'true' : 'false'}
+      data-dimmed={marker.dimmed ? 'true' : 'false'}
       data-hit-px={MARKER_HIT_PX}
       role="button"
       tabIndex={0}
       aria-label={markerAriaLabel(marker)}
       aria-pressed={selected}
-      style={{ cursor: 'pointer', outline: 'none' }}
+      style={{ cursor: 'pointer', outline: 'none', opacity: marker.dimmed && !selected ? 0.28 : 1 }}
     >
       {/* Görünmez dokunma alanı: en az 44×44 px */}
       <rect

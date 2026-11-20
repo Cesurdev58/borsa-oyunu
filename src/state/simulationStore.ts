@@ -11,6 +11,8 @@
  *   yapılandırılmış olarak raporlar.
  */
 
+import { prepareCityMigration } from '../engine/CityMigration';
+import { CITY_MIGRATION_BACKUP_KEY } from '../data/cityBalance';
 import { migrateLegacyLoanContract } from '../engine/LoanAmortization';
 import { ensureDecisionState } from '../engine/DecisionEventEngine';
 import { CentralLedgerEngine } from '../engine/CentralLedgerEngine';
@@ -52,11 +54,15 @@ export interface MigrationStats {
   legacyTechMultiplierBefore?: number;
   legacyTechMultiplierAfter?: number;
   companyValuationRebalanced?: boolean;
+  /** Şehir geçişi sonrası durum: PENDING = merkez şehir seçimi bekleniyor, COMPLETED = gerekmedi/tamam */
+  cityMigrationStatus?: 'PENDING' | 'COMPLETED';
 }
 
 export class SimulationStore {
   public static readonly STORAGE_KEY = 'borsa_holding_simulator_save_v2';
   public static readonly BACKUP_V4_KEY = 'borsa_holding_simulator_save_v4_backup';
+  /** Şehir geçişinden (şema v6) önceki orijinal kaydın yedeği; ilk yedek korunur, üzerine yazılmaz. */
+  public static readonly BACKUP_PRE_CITY_KEY = CITY_MIGRATION_BACKUP_KEY;
   public static readonly CURRENT_SCHEMA_VERSION =
     SimulationEngine.CURRENT_SCHEMA_VERSION; // 5
 
@@ -646,6 +652,12 @@ export class SimulationStore {
 
       TradeAndShopEngine.ensureTradeUniverseState(migratedState);
       ensureDecisionState(migratedState);
+      // Şehir geçişi: cityId'si olmayan dükkân varsa merkez şehir seçimi beklenir (idempotent)
+      prepareCityMigration(migratedState);
+      if (SimulationStore.lastMigrationStats) {
+        SimulationStore.lastMigrationStats.cityMigrationStatus =
+          migratedState.cityMigration?.status;
+      }
 
       return {
         schemaVersion: SimulationStore.CURRENT_SCHEMA_VERSION,
@@ -661,6 +673,32 @@ export class SimulationStore {
         err
       );
       return null;
+    }
+  }
+
+  /**
+   * Eski kaydın migration öncesi orijinal halini yedekler. Yedek zaten varsa dokunmaz (ilk yedek korunur).
+   * @returns yedek şu an var (yeni alındı ya da önceden vardı) ise true
+   */
+  public static createPreCityMigrationBackup(
+    rawJson: string,
+    storage?: Pick<Storage, 'getItem' | 'setItem'>
+  ): boolean {
+    try {
+      const store =
+        storage ??
+        (typeof window !== 'undefined' ? window.localStorage : undefined);
+      if (!store) return false;
+      if (store.getItem(SimulationStore.BACKUP_PRE_CITY_KEY)) return true;
+      store.setItem(SimulationStore.BACKUP_PRE_CITY_KEY, rawJson);
+      return true;
+    } catch (err) {
+      SimulationStore.reportError(
+        'QUOTA_ERROR',
+        'Şehir geçişi öncesi yedek alınamadı (depolama dolu olabilir).',
+        err
+      );
+      return false;
     }
   }
 
@@ -705,6 +743,14 @@ export class SimulationStore {
 
     try {
       const stats = SimulationStore.lastMigrationStats;
+      // Şehir geçişi (şema v6) öncesi orijinal kaydı bir kez yedekle
+      if (
+        stats &&
+        (stats.migratedFromVersion < SimulationStore.CURRENT_SCHEMA_VERSION ||
+          stats.cityMigrationStatus === 'PENDING')
+      ) {
+        SimulationStore.createPreCityMigrationBackup(rawJson);
+      }
       // Eski şemadan (v2/v3/v4) v5'e geçişten önce orijinal kaydın yedeğini oluştur
       if (
         stats &&

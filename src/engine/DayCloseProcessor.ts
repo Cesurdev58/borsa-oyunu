@@ -6,6 +6,7 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
+import { isCitySelectionPending } from './CityMigration';
 import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as AutoInvestEngine from './AutoInvestEngine';
@@ -63,6 +64,9 @@ import { buildDayReport, markRecordDay } from './DayReportEngine';
 import { stepWorldEvents } from './WorldEventEngine';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
+    if (isCitySelectionPending(engine.state)) {
+      return engine.state.dailyLogs[engine.state.dailyLogs.length - 1];
+    }
     if (
       typeof expectedDayToClose === 'number' &&
       engine.state.day !== expectedDayToClose
@@ -695,7 +699,12 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
       effectiveCurrentISO
     );
 
-    if (!parsedDiff.valid) {
+    // Merkez şehir seçilmeden çevrimdışı ilerleme başlamaz (eski kayıtların şehir geçişi)
+    if (isCitySelectionPending(engine.state)) {
+      warnings.push('Merkez şehir seçimi bekleniyor; çevrimdışı ilerleme işlenmedi.');
+    }
+
+    if (!parsedDiff.valid || isCitySelectionPending(engine.state)) {
       if (parsedDiff.warning) warnings.push(parsedDiff.warning);
       const emptySummary: OfflineProgressSummary = {
         realSecondsElapsed: 0,

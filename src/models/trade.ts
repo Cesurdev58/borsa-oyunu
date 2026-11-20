@@ -394,6 +394,11 @@ export interface ShopInstance {
   shopType: ShopType;
   nameTR: string;
   cityBlockId: string;
+  /**
+   * Dükkânın bulunduğu il (Türkiye haritası). Eski kayıtlarda yoktur: migration oyuncunun seçtiği
+   * merkez şehri atar (engine/CityMigration.ts). Yeni dükkânlar açılırken her zaman doldurulur.
+   */
+  cityId?: import('./cities').CityId;
   level: 1 | 2 | 3 | 4 | 5;
   openedDay: number;
   isCompanyBranch: boolean;

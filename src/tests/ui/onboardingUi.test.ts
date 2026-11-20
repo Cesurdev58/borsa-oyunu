@@ -44,12 +44,14 @@ function renderNav(eng: SimulationEngine): string {
   );
 }
 
-test('Yeni oyuncu ilk ekranda en çok 3 menü hedefi görür (Şehir, Borsa, Rehber)', () => {
+test('Yeni oyuncu: Şehir, Borsa, Rehber açık; Dükkân ve Şirket görünür ama kilitli; Haberler gizli', () => {
   const eng = new SimulationEngine(20261104, 100_000);
   const html = renderNav(eng);
-  for (const id of ['city', 'market', 'guide']) assert.ok(html.includes(`bottom-nav-${id}"`), id);
-  for (const id of ['portfolio', 'company', 'news']) assert.ok(!html.includes(`bottom-nav-${id}"`), `${id} gizli olmalı`);
-  assert.equal(navTabStatuses(eng.getState()).company.mode, 'hidden');
+  for (const id of ['city', 'market', 'guide', 'portfolio', 'company']) assert.ok(html.includes(`bottom-nav-${id}"`), id);
+  assert.ok(!html.includes('bottom-nav-news"'), 'haberler gizli olmalı');
+  const st0 = navTabStatuses(eng.getState());
+  assert.equal(st0.portfolio.mode, 'locked');
+  assert.equal(st0.company.mode, 'locked');
 });
 
 test('Aşamalı açılış: ilk alımda Haberler, kapı bitince Dükkân, sonra Şirket kilitli önizleme', () => {
@@ -60,13 +62,17 @@ test('Aşamalı açılış: ilk alımda Haberler, kapı bitince Dükkân, sonra 
   assert.equal(s.news.mode, 'active');
   assert.equal(s.portfolio.mode, 'locked');
   assert.ok(s.portfolio.hint && s.portfolio.hint.length > 5);
-  assert.equal(s.company.mode, 'hidden');
+  assert.equal(s.company.mode, 'locked');
 
   const eng2 = new SimulationEngine(20261104, 100_000);
   passGate(eng2);
   s = navTabStatuses(eng2.getState());
-  assert.equal(s.portfolio.mode, 'active');
+  assert.equal(s.portfolio.mode, 'locked', 'kapı bitti ama dükkân açılmadı: kilitli');
   assert.equal(s.company.mode, 'locked');
+  assert.equal(eng2.openShop({ shopType: 'BUFE' }).success, true);
+  s = navTabStatuses(eng2.getState());
+  assert.equal(s.portfolio.mode, 'active', 'dükkân açılınca Dükkân sekmesi açılır');
+  assert.equal(s.company.mode, 'locked', 'şirket kurulmadan Şirket kilitli kalır');
 });
 
 test('Kilitli sekme: gri/kilit simgesi, aria-disabled ve kısa açıklama; panel açılmaz', () => {

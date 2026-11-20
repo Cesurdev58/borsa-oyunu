@@ -34,19 +34,16 @@ export function navTabStatuses(state: NavInput): Record<NavTabId, NavTabStatus> 
   const hasBought = (state.transactions ?? []).some((t) => t.type === 'BUY');
   const shops = personalShops(state).length;
   const hasCompany = state.playerCompany !== null && state.playerCompany !== undefined;
-  const companyOpen = hasCompany || Boolean(state.stageUnlocks?.stage2Entrepreneur);
 
   const news: NavTabStatus = hasBought || shops > 0 || hasCompany ? { mode: 'active' } : { mode: 'hidden' };
-  const portfolio: NavTabStatus = gate.open
+  // Dükkân ve Şirket sekmeleri her zaman görünür; ilk dükkân / şirket kurulana kadar kilitlidir.
+  const portfolio: NavTabStatus =
+    shops > 0 || hasCompany
+      ? { mode: 'active' }
+      : { mode: 'locked', hint: gate.open ? 'İlk dükkânını şehirden açınca bu ekran açılır.' : 'Önce borsa görevlerini bitir, sonra ilk dükkânını aç.' };
+  const company: NavTabStatus = hasCompany
     ? { mode: 'active' }
-    : hasBought
-      ? { mode: 'locked', hint: 'Borsa görevlerini bitirince ilk dükkânını açabilirsin.' }
-      : { mode: 'hidden' };
-  const company: NavTabStatus = companyOpen
-    ? { mode: 'active' }
-    : gate.open || shops > 0
-      ? { mode: 'locked', hint: 'Dükkânların büyüyüp şirketleşme şartlarına ulaşınca kullanılabilir.' }
-      : { mode: 'hidden' };
+    : { mode: 'locked', hint: 'Şirketini kurunca bu ekran açılır.' };
 
   return {
     city: { mode: 'active' },

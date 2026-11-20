@@ -1425,6 +1425,12 @@ export function deriveIsometricBuildings(
     (l) => l.status === 'DELINQUENT' || l.status === 'DEFAULTED'
   );
   const hasDebtWarning = state.totalDebt > 0 || activeLoansCount > 0;
+  // Banka ilk dükkânla (ya da kredi/şirket varsa, eski kayıtlar için) açılır
+  const isBankUnlocked =
+    (state.tradeState?.shops.length ?? 0) > 0 ||
+    hasCompany ||
+    hasDebtWarning ||
+    Boolean(state.stageUnlocks?.stage2Entrepreneur);
   const isCompanyCashCritical = Boolean(
     pc && pc.financials.cash < pc.dailyOpex * 2
   );
@@ -1724,8 +1730,8 @@ export function deriveIsometricBuildings(
       zIndex: 25,
       level: bankaLevel,
       visualLevelSpec: deriveBuildingVisualLevelSpec('BANKA', bankaLevel),
-      isUnlocked: true,
-      isActiveWorking: true,
+      isUnlocked: isBankUnlocked,
+      isActiveWorking: isBankUnlocked,
       shortStatusLabel: hasDebtWarning ? 'Borç Kaydı' : 'Açık',
       statusTone: hasDebtWarning ? 'amber' : 'violet',
       primaryStatusType: hasOverdueLoan
@@ -1737,7 +1743,15 @@ export function deriveIsometricBuildings(
       accessibleLabel: `Merkez Bankası ve Hazine, seviye ${bankaLevel}, ${
         hasDebtWarning ? 'aktif borç uyarısı var' : 'bilanço dengeli'
       }, açmak için dokunun`,
-      lockedOverlayInfo: null,
+      lockedOverlayInfo: isBankUnlocked
+        ? null
+        : {
+            buildingId: 'BANKA',
+            title: 'Banka',
+            conditionText: 'İlk dükkânını açınca kullanılır.',
+            remainingText: 'Önce borsa görevlerini bitir.',
+            progressPct: 0,
+          },
       constructionInfo: null,
       selectionCard: buildSelectionCard({
         buildingId: 'BANKA',
@@ -1745,7 +1759,7 @@ export function deriveIsometricBuildings(
         districtNameTR: 'Finans Bölgesi',
         title: 'Merkez Bankası ve Hazine',
         level: bankaLevel,
-        isUnlocked: true,
+        isUnlocked: isBankUnlocked,
         shortStatus: hasDebtWarning ? 'Aktif Kredi Var' : 'Hesaplar Dengeli',
         primaryStatusType: hasOverdueLoan
           ? 'CRITICAL'

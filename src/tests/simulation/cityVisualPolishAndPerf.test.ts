@@ -144,9 +144,9 @@ describe('İzometrik Şehir Görsel Kalite, HUD, Görev Şeridi ve Performans Te
       (v) => engine.formatCurrency(v)
     );
 
+    // Banka artık ilk dükkânla açılır (aşamalı arayüz); bankUnlock.test.ts denetler
     const unlockedIds: CityBuildingId[] = [
       'BORSA',
-      'BANKA',
       'HABER_MERKEZI',
       'OYUNCU_OFISI',
     ];

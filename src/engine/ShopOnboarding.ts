@@ -100,6 +100,44 @@ export interface OpeningAdvice {
   /** İlk stoktan sonra kalan para kira + maaşı kaç gün karşılar */
   runwayDays: number;
   ownerWorks: boolean;
+  /** Bu açılışta hangi indirim uygulanıyor ve hangi hak sırada bekliyor (arayüz bilgisi) */
+  discount: OpeningDiscountInfo;
+}
+
+export interface OpeningDiscountInfo {
+  /** Bu açılışa uygulanan indirim: ilk dükkân → prestij, sonraki dükkân → kilometre taşı */
+  applied: 'PRESTIGE' | 'MILESTONE' | null;
+  appliedPct: number;
+  /** Bu açılışta kullanılmayıp sonraki dükkâna kalan kilometre taşı indirimi (%) */
+  waitingMilestonePct: number;
+  /** Arayüz cümlesi (indirim yoksa boş) */
+  textTR: string;
+}
+
+/** Hangi indirim uygulanıyor (ikisi asla birleşmez: ilk dükkân prestij, sonraki dükkân kilometre taşı). */
+export function openingDiscountInfo(state: SimulationState): OpeningDiscountInfo {
+  const hasShopAlready = (state.tradeState?.shops.length ?? 0) > 0 && state.playerCompany === null;
+  const milestonePct = state.milestones?.shopOpenDiscountPct ?? 0;
+  if (hasShopAlready) {
+    return {
+      applied: milestonePct > 0 ? 'MILESTONE' : null,
+      appliedPct: milestonePct,
+      waitingMilestonePct: 0,
+      textTR: milestonePct > 0 ? `Kilometre taşı indirimi uygulandı: %${milestonePct} (bir kez kullanılır).` : '',
+    };
+  }
+  const prestigePct = Math.round((1 - firstShopCostMultiplier(state)) * 100);
+  if (prestigePct > 0) {
+    return {
+      applied: 'PRESTIGE',
+      appliedPct: prestigePct,
+      waitingMilestonePct: milestonePct,
+      textTR:
+        `Prestij indirimi uygulandı: %${prestigePct}.` +
+        (milestonePct > 0 ? ` Kilometre taşı indirimin (%${milestonePct}) sonraki dükkânın için duruyor.` : ''),
+    };
+  }
+  return { applied: null, appliedPct: 0, waitingMilestonePct: milestonePct, textTR: milestonePct > 0 ? `Kilometre taşı indirimin (%${milestonePct}) sonraki dükkânın için duruyor.` : '' };
 }
 
 /** Önerilen işletme sermayesi: BUFE için sabit, diğer türlerde kurulum maliyetiyle orantılı (bin ₺'ye yuvarlanır). */
@@ -149,5 +187,6 @@ export function getOpeningAdvice(
     firstStockCost,
     runwayDays,
     ownerWorks,
+    discount: openingDiscountInfo(state),
   };
 }

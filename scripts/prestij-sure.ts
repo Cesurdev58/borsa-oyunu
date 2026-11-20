@@ -9,10 +9,12 @@ import { PRESTIGE_STAR_THRESHOLDS } from '../src/data/gameBalance';
 import { growCompanyGreedy, expandByTakeover } from '../src/tests/balance/companyBot';
 import { answerDecisionSensibly } from '../src/tests/balance/decisionBot';
 
-const KARIYER_SAAT = Number(process.env.KARIYER_SAAT ?? 5.1);
+const KARIYER_SAAT = Number(process.env.KARIYER_SAAT ?? 5.7);
 const MAX_DAYS = Number(process.env.MAX_DAYS ?? 3000);
 const fmtH = (h: number) => `${h.toFixed(1)} sa`;
 const thresholds = [...PRESTIGE_STAR_THRESHOLDS];
+/** Deneme: sektör performans katsayısı (yıldız hesabında net varlık × katsayı). Örn. ENERJI_KATSAYI=1.5. Yalnızca ölçüm; oyun koduna bağlı değildir. */
+const coefOf = (sector: string) => (sector === 'ENERJI' ? Number(process.env.ENERJI_KATSAYI ?? 1) : 1);
 
 console.log(`Şirket öncesi kariyer: ${KARIYER_SAAT} sa (kariyer ölçümü). Aşağıda toplam gerçek saat.`);
 for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
@@ -26,7 +28,7 @@ for (const sector of ['TEKNOLOJI', 'SAVUNMA', 'ENERJI'] as const) {
     answerDecisionSensibly(eng);
     hours += eng.getEffectiveMinutesPerGameDay() / 60;
     eng.advanceDaysWithoutPlayerDecisions(1, true);
-    const nw = eng.getState().netWorth;
+    const nw = eng.getState().netWorth * coefOf(sector);
     for (const [min, star] of thresholds) {
       if (!hit.has(star) && nw >= min) hit.set(star, `${fmtH(hours)} (gün ${d})`);
     }

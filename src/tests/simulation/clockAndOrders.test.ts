@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SimulationEngine,
-  GameClockEngine,
 } from '../../engine/SimulationEngine';
 import { SimulationStore } from '../../state/simulationStore';
 

@@ -339,7 +339,7 @@ export function trainShopStaff(state: SimulationState, shopId: string, reservedC
   shop.trainedStaff = shop.staffCount;
   return {
     success: true,
-    message: `${shop.nameTR}: ${count} çalışan eğitim aldı${free ? (useTicket ? ' (eğitim biletiyle bedava)' : ' (ücretsiz eğitim hakkıyla)') : ''}. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
+    message: `${shop.nameTR}: ${count} çalışan eğitim aldı. ${freeMilestone ? 'Kilometre taşı eğitim hakkı kullanıldı.' : useTicket ? '1 eğitim bileti kullanıldı.' : `Eğitim için ${tl(cost)} ödendi.`} Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
     cost,
   };
 }

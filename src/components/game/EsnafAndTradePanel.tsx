@@ -1565,6 +1565,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className="g-card mt-1 w-full min-h-[48px] px-3 text-sm tabular-nums font-bold"
                   />
                 </label>
+                {openingAdvice.discount.textTR && (
+                  <div data-testid="shop-open-discount-note" data-applied={openingAdvice.discount.applied ?? 'NONE'} className="g-tip">
+                    {openingAdvice.discount.textTR}
+                  </div>
+                )}
                 <div data-testid="shop-opening-advice" className="g-card-soft p-3 space-y-1 text-sm text-slate-700">
                   <div className="flex justify-between font-bold">
                     <span>Önerilen işletme sermayesi</span>

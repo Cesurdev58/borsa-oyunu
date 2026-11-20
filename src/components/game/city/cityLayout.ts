@@ -38,36 +38,21 @@ import {
   TimeOfDayPhase,
 } from './cityVisualTypes';
 
-export const VIRTUAL_MAP_WIDTH = 1600;
-export const VIRTUAL_MAP_HEIGHT = 1200;
-export const VIRTUAL_MAP_CENTER_X = 800;
-export const VIRTUAL_MAP_CENTER_Y = 600;
-
-/**
- * 1600x1200 sanal şehir alanı üzerinde 8 ana etkileşimli binanın yerleşim koordinatları.
- * Merkezde (800, 580) açık renkli Finans Meydanı ve park yer alır.
- */
-export const CITY_BUILDING_COORDINATES: Record<
-  CityBuildingId,
-  { x: number; y: number; width: number; height: number }
-> = {
-  // SOL ÜST: Haber ve Ekonomi Merkezi
-  HABER_MERKEZI: { x: 350, y: 275, width: 210, height: 185 },
-  // ORTA ÜST: Borsa Binası
-  BORSA: { x: 795, y: 215, width: 245, height: 205 },
-  // SAĞ ÜST: Merkez Bankası ve Hazine
-  BANKA: { x: 1245, y: 285, width: 225, height: 190 },
-  // SOL ORTA: Oyuncu / Çalışan Ofisi (Ticaret Bölgesi)
-  OYUNCU_OFISI: { x: 305, y: 605, width: 205, height: 180 },
-  // SAĞ ORTA: Şirket Arsası veya Şirket Genel Merkezi (Teknoloji & Kurumsal Kampüs)
-  SIRKET_MERKEZI: { x: 1275, y: 595, width: 230, height: 195 },
-  // SOL ALT: Oyuncu Fabrikası (Sanayi Bölgesi)
-  FABRIKA: { x: 365, y: 940, width: 235, height: 195 },
-  // ORTA ALT: Ar-Ge Merkezi (Teknoloji Bölgesi)
-  ARGE_MERKEZI: { x: 805, y: 965, width: 220, height: 185 },
-  // SAĞ ALT: Holding Merkezi
-  HOLDING_MERKEZI: { x: 1255, y: 925, width: 235, height: 215 },
-};
+// Harita ölçüleri ve ana bina koordinatları tek kaynaktan gelir: `CityGridDefinition.ts` (3D sahne de oradan okur).
+export {
+  VIRTUAL_MAP_WIDTH,
+  VIRTUAL_MAP_HEIGHT,
+  VIRTUAL_MAP_CENTER_X,
+  VIRTUAL_MAP_CENTER_Y,
+  CITY_BUILDING_COORDINATES,
+} from './CityGridDefinition';
+import {
+  VIRTUAL_MAP_WIDTH,
+  VIRTUAL_MAP_HEIGHT,
+  VIRTUAL_MAP_CENTER_X,
+  VIRTUAL_MAP_CENTER_Y,
+  CITY_BUILDING_COORDINATES,
+} from './CityGridDefinition';
 
 export const BUILDING_DISTRICT_MAP: Record<CityBuildingId, CityDistrictId> = {
   BORSA: 'FINANS_BOLGESI',
@@ -201,7 +186,7 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Bulvar Köşe Kafe & Bistro',
     shortTagTR: 'Kafe',
     category: 'CAFE_RESTAURANT',
-    x: 455,
+    x: 425, // yol boşluğu için 455→425 (plaza-west caddesine taşıyordu)
     y: 475,
     width: 104,
     height: 86,
@@ -220,7 +205,7 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Marmara Ticaret Hanı',
     shortTagTR: 'Ticaret Mrk.',
     category: 'TRADE_CENTER',
-    x: 135,
+    x: 125, // batı caddeye boşluk için 135→125
     y: 605,
     width: 118,
     height: 102,
@@ -258,7 +243,7 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Borsa Palas Butik Otel',
     shortTagTR: 'Butik Otel',
     category: 'BOUTIQUE_HOTEL',
-    x: 455,
+    x: 420, // yol boşluğu için 455→420 (plaza-south/west caddelerine taşıyordu)
     y: 730,
     width: 114,
     height: 104,
@@ -339,8 +324,8 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Merkez Mamul Stok Deposu',
     shortTagTR: 'Sanayi Depo',
     category: 'INDUSTRIAL_WAREHOUSE',
-    x: 145,
-    y: 935,
+    x: 145, // yol boşluğu için y 935→980 (güney cadde ve batı cadde taşması)
+    y: 980,
     width: 126,
     height: 98,
     floors: 2,
@@ -503,7 +488,7 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Çamlıca Park Rezidans & Konutları',
     shortTagTR: 'Konut Blok A',
     category: 'RESIDENTIAL_APARTMENT',
-    x: 585,
+    x: 600, // yol boşluğu için 585→600 (plaza-west kenarı)
     y: 465,
     width: 106,
     height: 92,
@@ -541,8 +526,8 @@ export const STATIC_CITY_URBAN_BLOCKS: Omit<CityUrbanBlockNode, 'isUnlocked'>[] 
     nameTR: 'Şehir Polikliniği ve Sağlık Merkezi',
     shortTagTR: 'Sağlık Mrk.',
     category: 'CITY_HOSPITAL',
-    x: 585,
-    y: 705,
+    x: 600, // yol boşluğu için (585,705)→(600,700) (plaza-west kenarı)
+    y: 700,
     width: 108,
     height: 90,
     floors: 2,

@@ -47,7 +47,7 @@ import {
   BuildingDetailContent,
   BuildingDetailSheet,
 } from './BuildingDetailSheet';
-import { CityNeighborhoodView } from './city3d/CityNeighborhoodView';
+import { IsometricNeighborhoodView } from './city/IsometricNeighborhoodView';
 import { deriveIsometricBuildings } from './city/cityLayout';
 import {
   CityCameraState,
@@ -193,14 +193,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
   const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
   // Şehir sekmesi doğrudan Türkiye haritasıdır (bayrak `turkeyMapEnabled`, varsayılan açık).
-  // 3D şehir yalnızca bu oturumda "3D Şehre Dön" denirse ya da harita çökerse açılır; kalıcı seçim yoktur,
+  // Klasik (2D) şehir yalnızca bu oturumda "Klasik Şehre Dön" denirse ya da harita çökerse açılır; kalıcı seçim yoktur,
   // bu yüzden uygulama yeniden açılınca Şehir sekmesi yine haritadır.
   const [mapEnabled] = useState<boolean>(() => isTurkeyMapEnabled());
-  const [fellBackTo3d, setFellBackTo3d] = useState(false);
-  const mapMode = mapEnabled && !fellBackTo3d;
+  const [fellBackToClassic, setFellBackToClassic] = useState(false);
+  const mapMode = mapEnabled && !fellBackToClassic;
   const changeMapMode = (next: boolean) => {
     if (!next) recordMapFallback('player-exit');
-    setFellBackTo3d(!next);
+    setFellBackToClassic(!next);
   };
   // Şehir Mağazaları ekranından belirli bir dükkânın yönetimini açma isteği.
   const [manageRequest, setManageRequest] = useState<{ shopId: string; tab?: ShopManageTab; nonce: number } | null>(null);
@@ -653,7 +653,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         />
 
         {activeBottomTab === 'city' && mapMode && onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
-          <MapErrorBoundary onFallback={() => setFellBackTo3d(true)}>
+          <MapErrorBoundary onFallback={() => setFellBackToClassic(true)}>
           <TurkeyMapFlow
             state={state}
             formatCurrency={formatCurrency}
@@ -681,7 +681,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               Türkiye Haritası
             </button>
           )}
-          <CityNeighborhoodView
+          <IsometricNeighborhoodView
             state={state}
             ipoEligibility={ipoEligibility}
             formatCurrency={formatCurrency}

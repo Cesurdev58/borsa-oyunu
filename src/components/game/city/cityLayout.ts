@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SHOP_CASH_KEEP, SHOP_COLLECT_MIN } from '../../../data/gameBalance';
 import {
   IPOEligibilityResult,
   MarketSession,
@@ -67,17 +66,6 @@ export const CITY_BUILDING_COORDINATES: Record<
   ARGE_MERKEZI: { x: 805, y: 965, width: 220, height: 185 },
   // SAĞ ALT: Holding Merkezi
   HOLDING_MERKEZI: { x: 1255, y: 925, width: 235, height: 215 },
-};
-
-export const BUILDING_DISTRICT_MAP: Record<CityBuildingId, CityDistrictId> = {
-  BORSA: 'FINANS_BOLGESI',
-  BANKA: 'FINANS_BOLGESI',
-  HABER_MERKEZI: 'FINANS_BOLGESI',
-  HOLDING_MERKEZI: 'FINANS_BOLGESI',
-  OYUNCU_OFISI: 'TICARET_BOLGESI',
-  FABRIKA: 'SANAYI_BOLGESI',
-  SIRKET_MERKEZI: 'TEKNOLOJI_BOLGESI',
-  ARGE_MERKEZI: 'TEKNOLOJI_BOLGESI',
 };
 
 /**
@@ -638,27 +626,7 @@ export function deriveCityUrbanBlocks(
   state: SimulationState
 ): CityUrbanBlockNode[] {
   const shops = state.tradeState?.shops ?? [];
-  return withCityServices(state, withShopBubbles(state, deriveCityUrbanBlocksWithSlots(state, shops)));
-}
-
-// Dükkân kasası eşikleri artık src/data/gameBalance.ts içinde (alt menü rozeti de kullanır)
-export { SHOP_CASH_KEEP, SHOP_COLLECT_MIN };
-
-function withShopBubbles(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {
-  const shops = state.tradeState?.shops ?? [];
-  return blocks.map((b) => {
-    if (!b.activeShopId) return b;
-    const shop = shops.find((s) => s.shopId === b.activeShopId);
-    if (!shop || shop.isCompanyBranch) return b;
-    const stock = shop.inventoryBatches.reduce((sum, x) => sum + x.availableQuantity, 0);
-    const extra = Math.floor(shop.cashAccountBalance - SHOP_CASH_KEEP);
-    return {
-      ...b,
-      collectableCash: extra >= SHOP_COLLECT_MIN ? extra : 0,
-      shelvesEmpty: stock <= 0 && (shop.pendingDeliveriesCount ?? 0) === 0,
-      hasManager: Boolean(shop.manager),
-    };
-  });
+  return withCityServices(state, deriveCityUrbanBlocksWithSlots(state, shops));
 }
 
 /** Şehir hizmeti binaları: blok kimliği → hizmet, görünen ad ve kısa açıklama */

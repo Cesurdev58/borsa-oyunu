@@ -13,6 +13,7 @@
  * Bu dosya ön yüzü (TradeAndShopEngine) içe aktarmaz; yalnızca alt modülleri kullanır.
  */
 
+import { decorationMultiplier } from './Achievements';
 import {
   PRICE_DEMAND_CAP_EXTREME,
   PRICE_DEMAND_CAP_HIGH,
@@ -25,7 +26,8 @@ import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopStaffRatio } from './ShopOnboarding';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
 import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
-import { prestigeBonuses } from './PrestigeEngine';
+import { bonusesFor } from './PrestigeEngine';
+import { milestoneCustomerMultiplier } from './Milestones';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance, ShopLiveDay, TradeUniverseState } from '../models/trade';
@@ -137,7 +139,8 @@ export function computeShopDailyDemand(
   }
 
   const upgradeMult = shopUpgradeMultipliers(shop);
-  const prestigeCustomerMult = prestigeBonuses(state.prestige?.stars ?? 0).customerMult;
+  const prestigeBonus = bonusesFor(state);
+  const prestigeCustomerMult = prestigeBonus.customerMult;
   const sameTypeCount = ts.shops.filter((x) => x.shopType === shop.shopType).length;
   const crowdingFactor = 1 / (1 + SHOP_SAME_TYPE_CROWDING * Math.max(0, sameTypeCount - 1));
   const customers = Math.max(
@@ -155,6 +158,8 @@ export function computeShopDailyDemand(
         upgradeMult.customers *
         cityProjectCustomerMultiplier(ts.cityProjects) *
         prestigeCustomerMult *
+        milestoneCustomerMultiplier(state) *
+        decorationMultiplier(state) *
         (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )
   );
@@ -180,7 +185,7 @@ export function computeShopDailyDemand(
     }
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
-    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket) / Math.max(1, fairRetailPrice);
+    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket * prestigeBonus.shopRevenueMult) / Math.max(1, fairRetailPrice);
     const rawUnits = Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity);
     // Taban 1 birim yalnızca makul fiyat aralığında geçerli; aşırı fiyatta yuvarlama talebi canlı tutamaz
     const units = priceRatio <= PRICE_RATIO_ELASTIC_MAX ? Math.max(1, rawUnits) : Math.max(0, rawUnits);

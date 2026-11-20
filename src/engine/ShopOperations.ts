@@ -6,6 +6,8 @@
  * (TradeAndShopEngine dosyasından ayrıldı; dış dünya hâlâ TradeAndShopEngine.* üzerinden erişebilir.)
  */
 
+import { consumeShopOpenDiscount, previewShopOpenDiscount } from './Milestones';
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
 import {
@@ -79,7 +81,14 @@ export class ShopOperations {
 
     // İlk dükkân BUFE ise oyuncu kendisi çalışır (çalışan 0, kapasite %65); "İlk çalışanını işe al" ücretlidir.
     const ownerWorks = startsWithOwnerWorking(state, params.shopType);
-    const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+    const fullSetupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+    // Kilometre taşı ödülü: sonraki kişisel dükkân açılışında indirim (şirket şubesi ve ilk dükkân hariç).
+    // İndirim yalnızca açılış başarılı olursa harcanır (aşağıda); burada sadece önizlenir.
+    // İlk dükkânda ise prestij indirimi uygulanır (yıldızı olan oyuncu; ikisi birbirini dışlar).
+    const discountApplies = state.playerCompany === null && ts.shops.length > 0;
+    const setupCost = discountApplies
+      ? previewShopOpenDiscount(state, fullSetupCost)
+      : Number((fullSetupCost * (state.playerCompany ? 1 : firstShopCostMultiplier(state))).toFixed(2));
     const initialWorkingCash = Number(
       Math.max(0, params.initialWorkingCash ?? Math.round(setupCost * 0.25)).toFixed(2)
     );
@@ -228,9 +237,11 @@ export class ShopOperations {
     ts.shops.push(newShop);
     TradeUniverse.updateCareerStage(state);
 
+    const usedDiscount = discountApplies ? consumeShopOpenDiscount(state, fullSetupCost).pct : 0;
+
     return {
       success: true,
-      message: `${newShop.nameTR} başarıyla açıldı! Satışa başlamak için tedarikçiden ürün sipariş edebilirsiniz.`,
+      message: `${newShop.nameTR} başarıyla açıldı!${usedDiscount > 0 ? ` Açılış maliyetinde %${usedDiscount} indirim uygulandı.` : ''} Satışa başlamak için tedarikçiden ürün sipariş edebilirsiniz.`,
       shop: newShop,
       totalCapitalSpent: totalNeeded,
     };

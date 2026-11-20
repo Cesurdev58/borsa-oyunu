@@ -125,11 +125,11 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
               type="button"
               data-testid="quest-claim-btn"
               onClick={() => onClaimQuest(activeQuest.id)}
-              aria-label={`Ödülü al: ${tl(activeQuest.reward)}`}
+              aria-label={`Ödülü al: ${activeQuest.rewardLabel.replace('Ödül: ', '')}`}
               className="g-btn g-btn-gold g-btn-sm shrink-0 px-3 quest-claim-pulse"
             >
               <Gift className="w-4 h-4" strokeWidth={2.6} />
-              <span className="tabular-nums">{tl(activeQuest.reward)}</span>
+              <span className="tabular-nums">{activeQuest.claimLabel}</span>
             </button>
           ) : (
             <button

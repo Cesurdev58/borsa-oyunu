@@ -18,7 +18,7 @@
 import { SimulationEngine } from '../src/engine/SimulationEngine';
 import { SHOP_TEMPLATES } from '../src/engine/TradeAndShopEngine';
 import { firstShopGateStatus } from '../src/engine/FirstShopGate';
-import { buildCareerGoals } from '../src/engine/CareerGoals';
+import { buildCareerGoals, CAREER_GOALS } from '../src/engine/CareerGoals';
 import { listShopUpgrades } from '../src/engine/ShopUpgrades';
 import { prestigeBonuses } from '../src/engine/PrestigeEngine';
 import { PROGRESSION_RULES } from '../src/engine/ProgressionRules';
@@ -48,10 +48,13 @@ function runCareer(seed: number): {
   finalNetWorth: number;
   shops: number;
   goalTimes: { title: string; min: number; reward: number }[];
+  /** Hedefin koşulu ilk ne zaman sağlandı (ödülü sırada beklese de) */
+  doneTimes: Record<string, number>;
 } {
   const stars = Number(process.env.PRESTIJ_YILDIZ ?? 0);
   const eng = new SimulationEngine(seed, prestigeBonuses(stars).startCash);
   if (stars > 0) eng.getState().prestige = { stars, cities: 1, bestNetWorth: 0 };
+  const doneTimes: Record<string, number> = {};
   const ms: Milestones = {
     'İlk dükkân': null,
     'İlk küçük yükseltme': null,
@@ -222,6 +225,11 @@ function runCareer(seed: number): {
     realMin += eng.getEffectiveMinutesPerGameDay();
     eng.advanceDaysWithoutPlayerDecisions(1, true);
 
+    // Her hedefin koşulu ilk ne zaman sağlandı (ödül alınması sırayı beklese de)
+    for (const g of buildCareerGoals(eng.getState(), { hasOpenedBorsa: true, companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth }).goals) {
+      if (doneTimes[g.def.id] === undefined && g.progress.done && !g.claimed) doneTimes[g.def.id] = realMin;
+    }
+
     const after = eng.getState();
     const n = after.tradeState?.shops.length ?? 0;
     if (n >= 1) mark('İlk dükkân', d);
@@ -243,7 +251,7 @@ function runCareer(seed: number): {
     if (ms['Şirket kapısı'] !== null && ms['Şirketleşme şartı'] !== null) break;
   }
   const fin = eng.getState();
-  return { ms, finalNetWorth: fin.netWorth, shops: fin.tradeState?.shops.length ?? 0, goalTimes };
+  return { ms, finalNetWorth: fin.netWorth, shops: fin.tradeState?.shops.length ?? 0, goalTimes, doneTimes };
 }
 
 const fmtMoney = (n: number) => Math.round(n).toLocaleString('tr-TR');
@@ -277,4 +285,18 @@ console.log('\n=== HEDEF ÖDÜLLERİ (ilk tohum): hangi dakikada alındı ===');
     prev = g.min;
   }
   console.log('  toplam ödül ₺' + total.toLocaleString('tr-TR'));
+
+  // Orta oyun kilometre taşları: koşulun sağlandığı an ile ödülün alındığı an (zincir sırası beklettiyse fark çıkar)
+  console.log('\n=== ORTA OYUN KİLOMETRE TAŞLARI: koşul sağlandı / ödül alındı (ilk tohum) ===');
+  const claimedAt = new Map(r.goalTimes.map((g) => [g.title, g.min]));
+  for (const g of CAREER_GOALS.filter((x) => x.id.startsWith('goal-ms-') || ['goal-first-manager', 'quest-07-networth-250k'].includes(x.id))) {
+    const done = r.doneTimes[g.id];
+    const got = claimedAt.get(g.title);
+    console.log(
+      '  ' + g.title.padEnd(38),
+      'koşul:', (done === undefined ? '—' : fmtTime(done)).padEnd(8),
+      'ödül:', (got === undefined ? '—' : fmtTime(got)).padEnd(8),
+      g.bonusText ? '[' + g.bonusText + ']' : ''
+    );
+  }
 }

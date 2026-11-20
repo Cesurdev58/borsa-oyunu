@@ -6,7 +6,10 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
-import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
+import { trackMilestonesDayClose } from './Milestones';
+import * as Achievements from './Achievements';
+import { effectiveRealMinutesPerGameDay } from './TempoRules';
+import { OFFLINE_MAX_COUNTED_HOURS, offlineCredit, offlineDanger, type OfflinePause } from './OfflineProgress';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as AutoInvestEngine from './AutoInvestEngine';
 import * as CityServices from './CityServices';
@@ -288,6 +291,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.rng,
       engine.getReservedCash()
     );
+    // 5B-1. Kilometre taşı sayaçları (kârlı gün serisi, günlük ciro, müşteri, üst üste faaliyet)
+    trackMilestonesDayClose(engine.state);
     // 5B-2. Dükkân müdürleri: rafları dükkân kasasından doldur, fazla kârı oyuncuya aktar
     for (const msg of ShopManager.runManagers(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Müdür] ${msg}`);
@@ -296,6 +301,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     // 5B-2a. Şehir hizmetleri: süresi biten ikinci el eşyalar
     for (const msg of CityServices.stepCityServicesDayClose(engine.state)) {
       engine.pendingDailyActions.push(`[İkinci el] ${msg}`);
+    }
+
+    // 5B-2c. Başarımlar ve haftalık hedefler (ödül: eğitim bileti, dekorasyon, prestij puanı)
+    for (const msg of Achievements.stepAchievementsDayClose(engine.state)) {
+      engine.pendingDailyActions.push(`[Başarım] ${msg}`);
     }
 
     // 5B-2b. Portföy yöneticisi: kenardaki paranın fazlasını borsaya yatır
@@ -372,20 +382,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       );
     }
 
-    const activePlayerBankLoanDebt = (engine.state.activeLoans || [])
-      .filter(
-        (l) =>
-          (l.status === 'ACTIVE' || l.status === 'DELINQUENT') &&
-          (l.borrowerType === 'PLAYER' || l.borrowerType === 'HOLDING')
-      )
-      .reduce(
-        (sum, l) => sum + l.remainingPrincipal + l.accruedInterestUnpaid,
-        0
-      );
-    const nonBankPlayerDebt = Math.max(
-      0,
-      engine.state.totalDebt - activePlayerBankLoanDebt
-    );
+    // Banka kredilerinin faizi kendi sözleşmesinden (annuite taksiti) tahsil edilir; burada ikinci kez kesilmez.
+    const nonBankPlayerDebt = BankLoanEngine.playerDebtOutsideBankLoans(engine.state);
 
     if (nonBankPlayerDebt > 0) {
       const dailyDebtInterest = Number(
@@ -757,17 +755,12 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
       (currentMs - effectiveStartMs) / 1000
     );
 
-    const { cappedGameMinutes, wasCapped } =
-      GameClockEngine.computeCappedOfflineGameMinutes(
-        effectiveRealSeconds,
-        effectiveRealMinutesPerGameDay(engine.state),
-        maxOfflineGameDays(engine.state)
-      );
-
-    if (wasCapped) {
-      warnings.push(
-        `Çevrimdışı ilerleme en fazla ${maxOfflineGameDays(engine.state)} oyun günü (yaklaşık 2 gerçek saat) ile sınırlandırıldı.`
-      );
+    // Kademeli verim: ilk 2 sa %100, 2-4 sa %75, 4-8 sa %50, 8-12 sa %25 (12 saatten fazlası sayılmaz)
+    const credit = offlineCredit(effectiveRealSeconds);
+    const perDay = effectiveRealMinutesPerGameDay(engine.state);
+    const cappedGameMinutes = Math.max(0, Math.floor((credit.effectiveMinutes * GameClockEngine.MINUTES_PER_GAME_DAY) / perDay));
+    if (credit.overLimit) {
+      warnings.push(`Çevrimdışı ilerleme en çok ${OFFLINE_MAX_COUNTED_HOURS} gerçek saat sayılır; fazlası oyuna eklenmedi.`);
     }
 
     // İzleme sayaçlarını sıfırla
@@ -782,10 +775,30 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
       newsGenerated: 0,
     };
 
-    const advanceRes =
-      cappedGameMinutes > 0
-        ? engine.advanceGameMinutes(cappedGameMinutes)
-        : { gameMinutesAdvanced: 0, daysClosed: 0 };
+    // Gün gün ilerle; her günden ÖNCE iflas sınırına bak (oyuncu yokken kimse iflas ettirilmez)
+    let advanced = 0;
+    let daysClosed = 0;
+    let pause: OfflinePause | undefined;
+    let remaining = cappedGameMinutes;
+    while (remaining > 0) {
+      const danger = offlineDanger(engine.state);
+      if (danger) {
+        pause = { ...danger, day: engine.state.day, skippedGameMinutes: remaining };
+        break;
+      }
+      const chunk = Math.min(remaining, GameClockEngine.MINUTES_PER_GAME_DAY);
+      const r = engine.advanceGameMinutes(chunk);
+      advanced += r.gameMinutesAdvanced;
+      daysClosed += r.daysClosed;
+      remaining -= chunk;
+      if (r.gameMinutesAdvanced <= 0) break;
+    }
+    const advanceRes = { gameMinutesAdvanced: advanced, daysClosed };
+    if (pause) {
+      // Faaliyetler durur: oyun duraklı kalır, dönüşte oyuncu karar verir
+      engine.state.isPaused = true;
+      warnings.push('Çevrimdışıyken risk çıktığı için faaliyetler durduruldu.');
+    }
 
     engine.maxProcessedOfflineTimestampMs = currentMs;
     engine.state.lastRealTimestampISO = effectiveCurrentISO;
@@ -814,9 +827,14 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
       startNetWorth,
       endNetWorth: engine.state.netWorth,
       warnings,
+      efficiency: Number(credit.averageEfficiency.toFixed(4)),
+      countedRealMinutes: Number(credit.countedRealMinutes.toFixed(2)),
+      overLimit: credit.overLimit,
+      ...(pause ? { pause } : {}),
     };
 
     engine.state.lastOfflineSummary = summary;
-    engine.state.lastOfflineSummaryDismissed = advanceRes.gameMinutesAdvanced === 0;
+    // Duraklatma varsa özet (ve karar) kapanmadan gösterilir
+    engine.state.lastOfflineSummaryDismissed = advanceRes.gameMinutesAdvanced === 0 && !pause;
     return summary;
   }

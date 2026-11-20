@@ -20,7 +20,7 @@ test('Prestij: servete göre yıldız, yeni şehirde başlangıç parası artar,
   assert.equal(r.success, true, r.message);
   assert.equal(r.starsEarned, 2);
   const st = r.engine!.getState();
-  assert.deepEqual(st.prestige, { stars: 2, cities: 1, bestNetWorth: Math.round(old.getState().netWorth) });
+  assert.deepEqual(st.prestige, { stars: 2, cities: 1, bestNetWorth: Math.round(old.getState().netWorth), pointsEarned: 2, perks: {} });
   assert.equal(st.cash, prestigeBonuses(2).startCash);
   assert.equal(st.tradeState?.shops.length ?? 0, 0, 'dükkânlar eski şehirde kalır');
   assert.equal(st.fastStartTempo, false, 'ayar taşınır');

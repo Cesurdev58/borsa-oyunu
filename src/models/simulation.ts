@@ -49,6 +49,13 @@ export interface OfflineProgressSummary {
   startNetWorth: number;
   endNetWorth: number;
   warnings: string[];
+  /** Çevrimdışı ilerlemenin ortalama verimi (0–1; kademeli: ilk 2 sa %100 … 8–12 sa %25) */
+  efficiency?: number;
+  /** Sayılan gerçek çevrimdışı dakika (en çok 12 sa) ve 12 saati aştı mı */
+  countedRealMinutes?: number;
+  overLimit?: boolean;
+  /** İflas sınırında durduysa neden ve ne yapılacağı (oyuncu dönünce karar verir) */
+  pause?: import('../engine/OfflineProgress').OfflinePause;
 }
 
 export interface StageUnlockStatus {
@@ -243,15 +250,31 @@ export interface SimulationState {
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */
   wealthTax?: { totalPaid: number; lastDay: number; lastAmount: number; lastBase: number };
   /** Prestij: yeni şehirde başlayınca taşınan kalıcı yıldızlar (engine/PrestigeEngine.ts; eski kayıtta yok) */
-  prestige?: { stars: number; cities: number; bestNetWorth: number };
+  prestige?: {
+    stars: number;
+    cities: number;
+    bestNetWorth: number;
+    /** Kazanılan toplam prestij puanı (yıldızlardan + haftalık hedeflerden); eski kayıtta yok = yıldız sayısı */
+    pointsEarned?: number;
+    /** Harcanan puanla alınan kalıcı avantajlar: avantaj kimliği → seviye */
+    perks?: Record<string, number>;
+  };
   /** Rekorlar (en kârlı gün; eski kayıtlarda yoktur) */
   records?: { bestDayGain: number; bestDay: number };
   /** Portföy yöneticisi (engine/AutoInvestEngine.ts; eski kayıtlarda yoktur) */
   autoInvest?: { hired: boolean; enabled: boolean; reserve: number; totalInvested: number };
   /** Gösteriş harcamaları (engine/LifestyleEngine.ts; eski kayıtlarda yoktur) */
   lifestyle?: { owned: string[]; spent: number };
+  /** Başarımlar ve haftalık hedefler (engine/Achievements.ts; eski kayıtlarda yoktur) */
+  achievements?: import('../engine/Achievements').AchievementsState;
+  /** Eğitim bileti: Akademi'de bir dükkânın eğitimsiz çalışanlarını bedava eğitir (eski kayıtta yok = 0) */
+  trainingTickets?: number;
+  /** Dekorasyon parçaları: her biri dükkân müşterisine +%0,5 (en çok 10 parça); eski kayıtta yok = 0 */
+  decorations?: number;
   /** Kariyer hedeflerinde ödülü alınanlar (engine/CareerGoals.ts; eski kayıtlarda yoktur) */
   careerGoals?: { claimed: string[]; totalRewards: number };
+  /** Orta oyun kilometre taşı sayaçları ve kalıcı ödüller (engine/Milestones.ts; eski kayıtlarda yoktur) */
+  milestones?: import('../engine/Milestones').MilestoneState;
   /** İlk oyun rehberinin durumu (engine/OnboardingRules.ts; eski kayıtta yoksa göçle üretilir) */
   onboarding?: import('../engine/OnboardingRules').OnboardingState;
   /** Olağanüstü olaylar (savaş, salgın…; eski kayıtlarda yoktur) */

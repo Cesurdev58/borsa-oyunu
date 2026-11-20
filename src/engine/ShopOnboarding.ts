@@ -7,6 +7,8 @@
  *  - Dükkân açarken "önerilen işletme sermayesi" bilgisi ve kaç gün dayanacağı (engel değil, uyarı + ikinci onay).
  * Yalnızca modelleri, katalogu, denge sabitlerini ve alt motorları (cüzdan, defter) içe aktarır (döngü oluşmaz).
  */
+import { previewShopOpenDiscount } from './Milestones';
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import {
   FIRST_EMPLOYEE_HIRE_FEE_BUFE,
   OWNER_STAFF_CAPACITY,
@@ -98,6 +100,44 @@ export interface OpeningAdvice {
   /** İlk stoktan sonra kalan para kira + maaşı kaç gün karşılar */
   runwayDays: number;
   ownerWorks: boolean;
+  /** Bu açılışta hangi indirim uygulanıyor ve hangi hak sırada bekliyor (arayüz bilgisi) */
+  discount: OpeningDiscountInfo;
+}
+
+export interface OpeningDiscountInfo {
+  /** Bu açılışa uygulanan indirim: ilk dükkân → prestij, sonraki dükkân → kilometre taşı */
+  applied: 'PRESTIGE' | 'MILESTONE' | null;
+  appliedPct: number;
+  /** Bu açılışta kullanılmayıp sonraki dükkâna kalan kilometre taşı indirimi (%) */
+  waitingMilestonePct: number;
+  /** Arayüz cümlesi (indirim yoksa boş) */
+  textTR: string;
+}
+
+/** Hangi indirim uygulanıyor (ikisi asla birleşmez: ilk dükkân prestij, sonraki dükkân kilometre taşı). */
+export function openingDiscountInfo(state: SimulationState): OpeningDiscountInfo {
+  const hasShopAlready = (state.tradeState?.shops.length ?? 0) > 0 && state.playerCompany === null;
+  const milestonePct = state.milestones?.shopOpenDiscountPct ?? 0;
+  if (hasShopAlready) {
+    return {
+      applied: milestonePct > 0 ? 'MILESTONE' : null,
+      appliedPct: milestonePct,
+      waitingMilestonePct: 0,
+      textTR: milestonePct > 0 ? `Kilometre taşı indirimi uygulandı: %${milestonePct} (bir kez kullanılır).` : '',
+    };
+  }
+  const prestigePct = Math.round((1 - firstShopCostMultiplier(state)) * 100);
+  if (prestigePct > 0) {
+    return {
+      applied: 'PRESTIGE',
+      appliedPct: prestigePct,
+      waitingMilestonePct: milestonePct,
+      textTR:
+        `Prestij indirimi uygulandı: %${prestigePct}.` +
+        (milestonePct > 0 ? ` Kilometre taşı indirimin (%${milestonePct}) sonraki dükkânın için duruyor.` : ''),
+    };
+  }
+  return { applied: null, appliedPct: 0, waitingMilestonePct: milestonePct, textTR: milestonePct > 0 ? `Kilometre taşı indirimin (%${milestonePct}) sonraki dükkânın için duruyor.` : '' };
 }
 
 /** Önerilen işletme sermayesi: BUFE için sabit, diğer türlerde kurulum maliyetiyle orantılı (bin ₺'ye yuvarlanır). */
@@ -108,6 +148,13 @@ export function recommendedWorkingCapital(shopType: ShopType): number {
   return Math.round(((setup / RECOMMENDED_WORKING_CAPITAL_SETUP_BASE) * RECOMMENDED_WORKING_CAPITAL_BUFE) / 1000) * 1000;
 }
 
+/** Bir günlük (temel kapasiteli) satışa yetecek stokun maliyeti; 100 ₺'ye yuvarlı. Açılış tavsiyesi ve yükseltme rezervi kullanır. */
+export function oneDayStockCost(shopType: ShopType): number {
+  const tpl = SHOP_TEMPLATES[shopType];
+  const grossShare = 1 - tpl.defaultGrossMarginPct / (100 + tpl.defaultGrossMarginPct);
+  return Math.round((tpl.baseCustomerCapacity * tpl.avgBasketValueTL * grossShare) / 100) * 100;
+}
+
 export function getOpeningAdvice(
   state: SimulationState,
   shopType: ShopType,
@@ -115,15 +162,19 @@ export function getOpeningAdvice(
   reservedCash: number
 ): OpeningAdvice {
   const tpl = SHOP_TEMPLATES[shopType];
-  const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+  const fullSetupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
+  const hasShopAlready = (state.tradeState?.shops.length ?? 0) > 0 && state.playerCompany === null;
+  // İlk dükkân: prestij indirimi; sonraki dükkânlar: kilometre taşı indirimi (ikisi birbirini dışlar)
+  const setupCost = hasShopAlready
+    ? previewShopOpenDiscount(state, fullSetupCost)
+    : Number((fullSetupCost * firstShopCostMultiplier(state)).toFixed(2));
   const workingCash = Number(Math.max(0, workingCashInput ?? Math.round(setupCost * 0.25)).toFixed(2));
   const personalAfter = Math.max(0, WalletEngine.freeCash(state) - reservedCash - Math.max(0, setupCost - WalletEngine.restrictedFund(state)) - workingCash);
   const liquidAfterOpening = Number((workingCash + personalAfter).toFixed(2));
   const ownerWorks = startsWithOwnerWorking(state, shopType);
   const staff = ownerWorks ? 0 : tpl.minStaffRequired;
   const dailyFixedCost = Number((tpl.dailyRentBase + 120 + staff * tpl.staffDailyWagePerPerson).toFixed(2));
-  const grossShare = 1 - tpl.defaultGrossMarginPct / (100 + tpl.defaultGrossMarginPct);
-  const firstStockCost = Math.round((tpl.baseCustomerCapacity * tpl.avgBasketValueTL * grossShare) / 100) * 100;
+  const firstStockCost = oneDayStockCost(shopType);
   const runwayDays = Math.max(0, Math.floor((liquidAfterOpening - firstStockCost) / Math.max(1, dailyFixedCost)));
   const recommended = recommendedWorkingCapital(shopType);
   return {
@@ -136,5 +187,6 @@ export function getOpeningAdvice(
     firstStockCost,
     runwayDays,
     ownerWorks,
+    discount: openingDiscountInfo(state),
   };
 }

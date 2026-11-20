@@ -9,6 +9,9 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { defaultMilestones, sanitizeMilestones } from './Milestones';
+import { sanitizeAchievements } from './Achievements';
+import { buyPerk } from './PrestigeEngine';
 import {
   defaultOnboarding,
   hasProgress as hasOnboardingProgress,
@@ -150,6 +153,8 @@ import {
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
 import * as ShopUpgrades from './ShopUpgrades';
+import * as ShopUpgradeReserve from './ShopUpgradeReserve';
+import type { UpgradeCashAssessment } from './ShopUpgradeReserve';
 import * as LifestyleEngine from './LifestyleEngine';
 import * as CityServices from './CityServices';
 import * as AutoInvestEngine from './AutoInvestEngine';
@@ -317,6 +322,19 @@ export class SimulationEngine {
   public state: SimulationState;
   public rng: RandomEngine;
   public pendingDailyActions: string[] = [];
+  /**
+   * Kritik işlemden (şirket kurma, şirketleşme, halka arz, devralma) HEMEN ÖNCE çağrılır; durum henüz değişmemiştir.
+   * Uygulama burada yerel yedek alır (state/SaveBackups.ts). Motor yedeğin nasıl alındığını bilmez; hata yutulur.
+   */
+  public criticalActionHook: ((reason: 'before-company' | 'before-incorporation' | 'before-ipo' | 'before-takeover') => void) | null = null;
+
+  private notifyCritical(reason: 'before-company' | 'before-incorporation' | 'before-ipo' | 'before-takeover'): void {
+    try {
+      this.criticalActionHook?.(reason);
+    } catch {
+      // yedek hatası oyunu durdurmamalı
+    }
+  }
   /** Kayıt yeni dengeye taşınırken oyuncuya bir kez gösterilecek notlar */
   public migrationNotices: string[] = [];
 
@@ -427,6 +445,7 @@ export class SimulationEngine {
         GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
       fastStartTempo: true,
       careerGoals: { claimed: [], totalRewards: 0 },
+      milestones: defaultMilestones(),
       onboarding: defaultOnboarding(),
       timeScale: 1,
       isPaused: false,
@@ -744,6 +763,7 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       careerGoals: cloned.careerGoals,
+      milestones: sanitizeMilestones(cloned.milestones),
       onboarding: migrateOnboarding(cloned.onboarding, {
         day,
         hasProgress: hasOnboardingProgress(cloned),
@@ -753,6 +773,9 @@ export class SimulationEngine {
       autoInvest: cloned.autoInvest,
       records: cloned.records,
       prestige: cloned.prestige,
+      achievements: sanitizeAchievements(cloned.achievements),
+      trainingTickets: Number.isFinite(cloned.trainingTickets) ? Math.max(0, Math.floor(cloned.trainingTickets as number)) : undefined,
+      decorations: Number.isFinite(cloned.decorations) ? Math.max(0, Math.floor(cloned.decorations as number)) : undefined,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -1346,6 +1369,7 @@ export class SimulationEngine {
       initialCapacity?: number;
     }
   ): { success: boolean; message: string; company?: PlayerCompany } {
+    this.notifyCritical('before-company');
     return PlayerCompanyActions.establishCompany(this, name, ticker, sector, initialCapital, options);
   }
 
@@ -1621,6 +1645,7 @@ export class SimulationEngine {
     discountRatio: number = 0.12,
     primaryShareIssueRatio: number = 0.35
   ): IPOExecutionResult {
+    this.notifyCritical('before-ipo');
     return PlayerCompanyActions.executeIPO(this, publicFloatRatio, discountRatio, primaryShareIssueRatio);
   }
 
@@ -1631,6 +1656,7 @@ export class SimulationEngine {
     ticker: string,
     options?: { targetOwnershipPct?: number; useDebtFinancing?: boolean }
   ): TakeoverResult {
+    this.notifyCritical('before-takeover');
     return PlayerCompanyActions.executeHostileTakeover(this, ticker, options);
   }
 
@@ -1768,6 +1794,11 @@ export class SimulationEngine {
     return AutoInvestEngine.configureAutoInvest(this, params);
   }
 
+  /** Prestij puanıyla kalıcı avantaj alır (engine/PrestigeEngine.ts). */
+  public buyPrestigePerk(perkId: string): { success: boolean; message: string } {
+    return buyPerk(this.state, perkId);
+  }
+
   /** Gösteriş harcaması yapar (engine/LifestyleEngine.ts). */
   public buyLifestyleItem(itemId: string): { success: boolean; message: string } {
     const res = LifestyleEngine.buyLifestyleItem(this.state, itemId, this.getReservedCash());
@@ -1849,13 +1880,23 @@ export class SimulationEngine {
   }
 
   /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
-  public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
+  public buyShopUpgrade(
+    shopId: string,
+    upgradeId: string
+  ): { success: boolean; message: string; cost: number; assessment?: UpgradeCashAssessment } {
+    // Nakit güvenlik rezervi: ALIMI ENGELLEMEZ; satın almadan ÖNCE hesaplanır (sonrası nakit değişmiş olur).
+    const assessment = ShopUpgradeReserve.assessUpgradeCash(this.state, shopId, upgradeId, this.getReservedCash());
     const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());
-    if (res.success) {
-      this.recalculateFinancialsAndStages();
-      this.pendingDailyActions.push(`[Dükkân] ${res.message}`);
-    }
-    return res;
+    if (!res.success) return res;
+    this.recalculateFinancialsAndStages();
+    const message = assessment?.belowReserve ? `${res.message} DİKKAT: ${assessment.warningTR}` : res.message;
+    this.pendingDailyActions.push(`[Dükkân] ${message}`);
+    return { ...res, message, assessment: assessment ?? undefined };
+  }
+
+  /** Yükseltme sonrası nakit güvenlik rezervi (engel değil, yalnızca uyarı verisi). Arayüz alım öncesi gösterir. */
+  public getUpgradeCashAssessment(shopId: string, upgradeId: string): UpgradeCashAssessment | null {
+    return ShopUpgradeReserve.assessUpgradeCash(this.state, shopId, upgradeId, this.getReservedCash());
   }
 
   /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */
@@ -2177,6 +2218,7 @@ export class SimulationEngine {
     sector: SectorId;
     additionalCashCapital?: number;
   }): { success: boolean; message: string } {
+    this.notifyCritical('before-incorporation');
     const res = TradeAndShopEngine.incorporateShopsIntoCompany(this.state, {
       companyName: params.companyName,
       ticker: params.ticker,

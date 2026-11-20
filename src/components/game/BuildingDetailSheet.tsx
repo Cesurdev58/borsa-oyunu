@@ -62,9 +62,9 @@ export type { BuildingDetailActions };
 export const BuildingDetailContent: React.FC<BuildingDetailContentProps> = (props) => {
   switch (props.buildingId) {
     case 'BORSA':
-      return <BorsaPanel {...props} />;
+      return <BorsaPanel {...props} spendableCash={props.freeSpendableCash ?? props.spendableCash} />;
     case 'BANKA':
-      return <BankaPanel {...props} />;
+      return <BankaPanel {...props} spendableCash={props.freeSpendableCash ?? props.spendableCash} />;
     case 'HABER_MERKEZI':
       return <HaberMerkeziPanel {...props} />;
     case 'OYUNCU_OFISI':

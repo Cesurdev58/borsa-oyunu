@@ -11,7 +11,12 @@
  * - Aynı teminatın iki kredide kullanılmasını ve grup içi para dolaşımıyla yapay kredi skoru üretilmesini engeller.
  */
 
-import { PERSONAL_LOAN_EXTRA_SPREAD } from '../data/gameBalance';
+import {
+  DEBT_INTEREST_DAYS_PER_YEAR,
+  LOAN_DEFAULT_MISSED_DUE_DATES,
+  LOAN_RETRY_INTERVAL_DAYS,
+  PERSONAL_LOAN_EXTRA_SPREAD,
+} from '../data/gameBalance';
 import { SECTOR_CONFIGS } from '../data/sectors';
 import {
   BankLoanType,
@@ -22,6 +27,13 @@ import {
 } from '../models/finance';
 import { SimulationState } from '../models/simulation';
 import { ACCOUNT_IDS, CentralLedgerEngine } from './CentralLedgerEngine';
+import {
+  buildAmortizationPlan,
+  installmentBreakdown,
+  loanPeriodRate,
+  migrateLegacyLoanContract,
+} from './LoanAmortization';
+import { WalletEngine } from './WalletEngine';
 
 export const LOAN_TYPE_CATALOG: Record<
   BankLoanType,
@@ -408,27 +420,27 @@ export class BankLoanEngine {
       ).toFixed(2)
     );
 
-    const periodRate = annualInterestRate * (installmentFrequency / 365);
-    const totalInterestOverTerm = Number(
-      (requestedPrincipal * periodRate * installmentCount).toFixed(2)
+    // Tek amortisman planı: teklif, sözleşme ve tahsilat aynı plandan çıkar (azalan bakiyeli annuite)
+    const plan = buildAmortizationPlan(
+      requestedPrincipal,
+      annualInterestRate,
+      installmentFrequency,
+      installmentCount
     );
+    const totalInterestOverTerm = plan.totalInterest;
     const originationFee = Number(
       (requestedPrincipal * cfg.originationFeeRate).toFixed(2)
     );
-    const totalRepayment = Number(
-      (requestedPrincipal + totalInterestOverTerm + originationFee).toFixed(2)
-    );
-    const installmentAmount = Number(
-      ((requestedPrincipal + totalInterestOverTerm) / installmentCount).toFixed(
-        2
-      )
-    );
+    // totalRepayment = yalnızca gelecekteki taksitlerin toplamı (peşin ücret HARİÇ)
+    const totalRepayment = plan.totalInstallmentPayments;
+    const installmentAmount = plan.installmentAmount;
+    const netDisbursement = Number((requestedPrincipal - originationFee).toFixed(2));
+    const totalLoanCost = Number((totalInterestOverTerm + originationFee).toFixed(2));
 
     const effectiveInterestRate = Number(
       (
-        ((totalInterestOverTerm + originationFee) /
-          Math.max(1, requestedPrincipal)) *
-        (365 / termInGameDays)
+        (totalLoanCost / Math.max(1, requestedPrincipal)) *
+        (DEBT_INTEREST_DAYS_PER_YEAR / Math.max(1, installmentCount * installmentFrequency))
       ).toFixed(4)
     );
 
@@ -506,6 +518,11 @@ export class BankLoanEngine {
       installmentFrequency,
       installmentAmount,
       totalRepayment,
+      netDisbursement,
+      totalInterest: totalInterestOverTerm,
+      totalInstallmentPayments: plan.totalInstallmentPayments,
+      totalLoanCost,
+      installmentCount,
       firstPaymentGameDay: state.day + installmentFrequency,
       originationFee,
       earlyPaymentFeeRate: cfg.earlyPaymentFeeRate,
@@ -520,7 +537,7 @@ export class BankLoanEngine {
       riskLevel,
       estimatedCashRunwayDays,
       delinquencyConsequencesTR:
-        'Taksit gecikmesinde gecikme faizi işler ve kredi notu 45 puan düşer. 3 ardışık gecikmede temerrüt oluşur ve teminat varlıkları borca mahsup edilir.',
+        'Taksit gecikmesinde gecikme faizi işler ve kredi notu 45 puan düşer. Üç farklı vade ödenmeden geçerse temerrüt oluşur ve teminat varlıkları borca mahsup edilir (aynı vadenin tekrar denenmesi tek vade sayılır).',
       creditScore,
     };
   }
@@ -730,6 +747,10 @@ export class BankLoanEngine {
       lastInterestAccruedDay: state.day,
       totalInterestPaid: 0,
       totalPrincipalPaid: 0,
+      amortizationModel: 'ANNUITY_V2',
+      installmentCount: quote.installmentCount,
+      paidInstallmentCount: 0,
+      accruedLateFeeUnpaid: 0,
     };
 
     if (!state.activeLoans) {
@@ -738,18 +759,71 @@ export class BankLoanEngine {
     state.activeLoans.unshift(loanContract);
     CentralLedgerEngine.syncLedgerWithState(state, reservedOrderCash);
 
+    // Bireysel (şirketsiz) oyuncunun işletme/stok kredisi KISITLI bakiyeye yatar: yalnızca stok, kira, personel,
+    // dekorasyon, lojistik ve dükkân yükseltmesinde kullanılır; hisse alımı, lüks harcama ve aktarım için kullanılamaz.
+    if (quote.borrowerType === 'PLAYER') {
+      WalletEngine.restrictToBusiness(state, netDisbursement);
+      BankLoanEngine.syncRestrictedFundWithLoans(state);
+    }
+
     return {
       success: true,
-      message: `${quote.labelTR} (${loanId}) onaylandı: +${netDisbursement.toLocaleString('tr-TR')} TL net nakit hesaba aktarıldı, ${quote.requestedPrincipal.toLocaleString('tr-TR')} TL kredi borcu bilançoya kaydedildi.`,
+      message: `${quote.labelTR} (${loanId}) onaylandı: +${netDisbursement.toLocaleString('tr-TR')} TL net nakit hesaba aktarıldı, ${quote.requestedPrincipal.toLocaleString('tr-TR')} TL kredi borcu bilançoya kaydedildi.${
+        quote.borrowerType === 'PLAYER'
+          ? ' Bu tutar işletme kredisidir: yalnızca stok, kira, personel, dekorasyon, lojistik ve dükkân yükseltmesinde kullanılabilir.'
+          : ''
+      }`,
       loan: loanContract,
     };
   }
 
   /**
+   * Ödenmeden geçmiş FARKLI vade sayısı. Vade takvimi sabittir: `nextPaymentGameDay` en eski ödenmemiş taksitin
+   * vade günüdür ve her ödemede bir aralık ilerler. Aynı vadenin tekrar tekrar denenmesi bu sayıyı artırmaz.
+   */
+  public static overdueDueDateCount(loan: LoanContract, day: number): number {
+    if (loan.status === 'PAID_OFF' || day < loan.nextPaymentGameDay) return 0;
+    const freq = Math.max(1, loan.installmentFrequency);
+    return Math.floor((day - loan.nextPaymentGameDay) / freq) + 1;
+  }
+
+  /**
+   * Vadesi geçmiş ödenmemiş taksitleri sayaca yazar: her vade YALNIZCA BİR KEZ sayılır (`lastMissedDueDay`).
+   * Üç farklı vade ödenmeden geçerse kredi temerrüde düşer ve teminat bir kez mahsup edilir.
+   * Vadesi henüz gelmemiş bir (erken) ödeme denemesi hiçbir şey değiştirmez.
+   */
+  private static registerOverdue(state: SimulationState, loan: LoanContract): void {
+    const overdue = BankLoanEngine.overdueDueDateCount(loan, state.day);
+    if (overdue <= 0) return;
+    const freq = Math.max(1, loan.installmentFrequency);
+    const highestDue = loan.nextPaymentGameDay + (overdue - 1) * freq;
+    const base =
+      loan.lastMissedDueDay !== undefined && loan.lastMissedDueDay >= loan.nextPaymentGameDay
+        ? loan.lastMissedDueDay
+        : loan.nextPaymentGameDay - freq;
+    const newlyMissed = Math.max(0, Math.round((highestDue - base) / freq));
+    const wasDefaulted = loan.status === 'DEFAULTED';
+    const previousStatus = loan.status;
+    if (newlyMissed > 0) {
+      loan.missedPaymentCount += newlyMissed;
+      loan.lastMissedDueDay = highestDue;
+    }
+    loan.status = overdue >= LOAN_DEFAULT_MISSED_DUE_DATES ? 'DEFAULTED' : 'DELINQUENT';
+    if (loan.status === 'DEFAULTED' && !wasDefaulted) {
+      BankLoanEngine.enforceDefaultedLoanCollateral(state, loan);
+    }
+    if (newlyMissed > 0 || previousStatus !== loan.status) {
+      BankLoanEngine.computeCreditScore(state);
+    }
+  }
+
+  /**
    * Kredi Taksiti Ödeme (`payLoanInstallment`):
    * - Kapanmış (`PAID_OFF`) krediden tekrar tahsilat yapmaz.
-   * - Anapara ve faiz ayrımını yapar; borcu azaltır.
-   * - Yetersiz bakiyede gecikme (`DELINQUENT`) oluşturur ve kredi notunu düşürür.
+   * - Taksit, annuite planından gelir (faiz = kalan anapara × dönem faizi; anapara = taksit − faiz); tahakkuk eden
+   *   faiz ikinci kez taksite EKLENMEZ. Yalnızca gecikme faizi farkı (`accruedLateFeeUnpaid`) ayrıca tahsil edilir.
+   * - Aynı kredi için aynı gün ikinci çağrı ya da aynı idempotency anahtarı yan etkisizdir (`duplicate: true`).
+   * - Yetersiz bakiyede gecikme yalnızca vadesi gelmiş taksit için ve her vade için BİR kez sayılır.
    */
   public static payLoanInstallment(
     state: SimulationState,
@@ -761,7 +835,9 @@ export class BankLoanEngine {
     message: string;
     principalReduced: number;
     interestPaid: number;
+    duplicate?: boolean;
   } {
+    const r2 = (v: number) => Number(v.toFixed(2));
     const loan = (state.activeLoans ?? []).find((l) => l.loanId === loanId);
     if (!loan) {
       return {
@@ -781,6 +857,28 @@ export class BankLoanEngine {
       };
     }
 
+    migrateLegacyLoanContract(loan);
+
+    // Mükerrer çağrı koruması: aynı gün ikinci tahsilat ya da daha önce işlenmiş anahtar hiçbir şeyi değiştirmez
+    const key =
+      idempotencyKey && idempotencyKey.trim()
+        ? idempotencyKey.trim()
+        : `IDEM-INSTALLMENT-${loan.loanId}-D${state.day}`;
+    const ledgerBefore = state.centralLedger;
+    if (
+      loan.lastInstallmentPaidDay === state.day ||
+      Boolean(ledgerBefore && ledgerBefore.processedIdempotencyKeys.includes(key))
+    ) {
+      if (ledgerBefore) ledgerBefore.duplicateIdempotencyAttempts += 1;
+      return {
+        success: false,
+        duplicate: true,
+        message: `${loan.loanId} için bu taksit zaten tahsil edildi; mükerrer tahsilat yapılmadı.`,
+        principalReduced: 0,
+        interestPaid: 0,
+      };
+    }
+
     const pc = state.playerCompany;
     const sourceAccountId =
       loan.borrowerType === 'COMPANY' && pc
@@ -789,15 +887,25 @@ export class BankLoanEngine {
         ? ACCOUNT_IDS.HOLDING_MAIN
         : ACCOUNT_IDS.PLAYER_INVESTMENT;
 
-    const totalDueNow = Number(
-      Math.min(
-        loan.remainingPrincipal + loan.accruedInterestUnpaid,
-        loan.installmentAmount + loan.accruedInterestUnpaid
-      ).toFixed(2)
+    const freq = Math.max(1, loan.installmentFrequency);
+    const periodRate = loanPeriodRate(loan.annualInterestRate, freq);
+    const plannedCount = Math.max(1, loan.installmentCount ?? 1);
+    const paidCount = loan.paidInstallmentCount ?? 0;
+    const isLast = paidCount + 1 >= plannedCount;
+    const split = installmentBreakdown(
+      loan.remainingPrincipal,
+      periodRate,
+      loan.installmentAmount,
+      isLast
     );
+    const lateFee = r2(Math.max(0, loan.accruedLateFeeUnpaid ?? 0));
+    const totalDueNow = r2(split.payment + lateFee);
 
     if (totalDueNow <= 0) {
       loan.status = 'PAID_OFF';
+      loan.remainingPrincipal = 0;
+      loan.accruedInterestUnpaid = 0;
+      loan.accruedLateFeeUnpaid = 0;
       BankLoanEngine.releaseLoanCollaterals(state, loan.loanId);
       return {
         success: true,
@@ -807,17 +915,16 @@ export class BankLoanEngine {
       };
     }
 
+    loan.lastPaymentAttemptDay = state.day;
     const transferRes = CentralLedgerEngine.executeTransfer(
       state,
       {
-        idempotencyKey:
-          idempotencyKey ||
-          `IDEM-INSTALLMENT-${loan.loanId}-D${state.day}-P${loan.totalPrincipalPaid.toFixed(0)}`,
+        idempotencyKey: key,
         sourceAccountId,
         destinationAccountId: ACCOUNT_IDS.LOAN_LIABILITY,
         amount: totalDueNow,
         category: 'LOAN_INSTALLMENT_PAYMENT',
-        description: `${loan.loanId} kredi taksit ödemesi`,
+        description: `${loan.loanId} kredi taksit ödemesi (${paidCount + 1}/${plannedCount})`,
         relatedCompanyId: pc?.ticker,
         relatedLoanId: loan.loanId,
       },
@@ -825,13 +932,8 @@ export class BankLoanEngine {
     );
 
     if (!transferRes.success) {
-      // Yetersiz bakiye -> Gecikme ve kredi notu düşüşü
-      loan.missedPaymentCount += 1;
-      loan.status = loan.missedPaymentCount >= 3 ? 'DEFAULTED' : 'DELINQUENT';
-      if (loan.status === 'DEFAULTED') {
-        BankLoanEngine.enforceDefaultedLoanCollateral(state, loan);
-      }
-      BankLoanEngine.computeCreditScore(state);
+      // Yetersiz bakiye: gecikme yalnızca vadesi gelmiş taksit için ve her vade için bir kez sayılır
+      BankLoanEngine.registerOverdue(state, loan);
       return {
         success: false,
         message: `${loan.loanId} taksit ödemesi için bakiye yetersiz (${totalDueNow.toLocaleString('tr-TR')} TL). Kredi durumu: ${loan.status}.`,
@@ -840,35 +942,17 @@ export class BankLoanEngine {
       };
     }
 
-    const interestPortion = Number(
-      Math.min(
-        totalDueNow,
-        loan.accruedInterestUnpaid > 0
-          ? loan.accruedInterestUnpaid
-          : loan.remainingPrincipal *
-              loan.annualInterestRate *
-              (loan.installmentFrequency / 365)
-      ).toFixed(2)
-    );
-    const principalPortion = Number(
-      Math.min(loan.remainingPrincipal, totalDueNow - interestPortion).toFixed(
-        2
-      )
-    );
+    const interestPortion = r2(split.interest + lateFee);
+    const principalPortion = split.principal;
+    const wasOverdueBeforePayment = state.day >= loan.nextPaymentGameDay;
 
-    loan.accruedInterestUnpaid = Number(
-      Math.max(0, loan.accruedInterestUnpaid - interestPortion).toFixed(2)
-    );
-    loan.remainingPrincipal = Number(
-      Math.max(0, loan.remainingPrincipal - principalPortion).toFixed(2)
-    );
-    loan.totalInterestPaid = Number(
-      (loan.totalInterestPaid + interestPortion).toFixed(2)
-    );
-    loan.totalPrincipalPaid = Number(
-      (loan.totalPrincipalPaid + principalPortion).toFixed(2)
-    );
-    loan.nextPaymentGameDay = state.day + loan.installmentFrequency;
+    loan.remainingPrincipal = r2(Math.max(0, loan.remainingPrincipal - principalPortion));
+    loan.accruedLateFeeUnpaid = 0;
+    loan.totalInterestPaid = r2(loan.totalInterestPaid + interestPortion);
+    loan.totalPrincipalPaid = r2(loan.totalPrincipalPaid + principalPortion);
+    loan.paidInstallmentCount = paidCount + 1;
+    loan.nextPaymentGameDay = loan.nextPaymentGameDay + freq;
+    loan.lastInstallmentPaidDay = state.day;
 
     // Bilançodan anapara borcunu düş, faiz kısmını geçmiş yıl kârlarından düş
     BankLoanEngine.reduceBalanceSheetDebt(
@@ -878,17 +962,26 @@ export class BankLoanEngine {
       interestPortion
     );
 
-    if (loan.remainingPrincipal <= 0.5) {
+    if (isLast || loan.remainingPrincipal <= 0.5) {
+      // Son taksitte kuruş farkı temizlenir: kalan anapara ve tahakkuk tam sıfır
       loan.remainingPrincipal = 0;
       loan.accruedInterestUnpaid = 0;
+      loan.accruedLateFeeUnpaid = 0;
       loan.status = 'PAID_OFF';
       BankLoanEngine.releaseLoanCollaterals(state, loan.loanId);
     } else {
-      loan.status = 'ACTIVE';
+      const stillOverdue = state.day >= loan.nextPaymentGameDay;
+      // Güncel vadeye yetişildiyse tahakkuk bu taksite işlenmiştir; hâlâ geciken vade varsa fazlası taşınır
+      loan.accruedInterestUnpaid = stillOverdue
+        ? r2(Math.max(0, loan.accruedInterestUnpaid - split.interest))
+        : 0;
+      loan.status = stillOverdue ? 'DELINQUENT' : 'ACTIVE';
+      void wasOverdueBeforePayment;
     }
 
     BankLoanEngine.computeCreditScore(state);
     CentralLedgerEngine.syncLedgerWithState(state, reservedOrderCash);
+    BankLoanEngine.syncRestrictedFundWithLoans(state);
 
     return {
       success: true,
@@ -933,6 +1026,8 @@ export class BankLoanEngine {
       };
     }
 
+    migrateLegacyLoanContract(loan);
+
     const pc = state.playerCompany;
     const sourceAccountId =
       loan.borrowerType === 'COMPANY' && pc
@@ -948,6 +1043,7 @@ export class BankLoanEngine {
       (
         loan.remainingPrincipal +
         loan.accruedInterestUnpaid +
+        (loan.accruedLateFeeUnpaid ?? 0) +
         earlyFeePaid
       ).toFixed(2)
     );
@@ -979,7 +1075,11 @@ export class BankLoanEngine {
 
     const principalCleared = loan.remainingPrincipal;
     const interestAndFee = Number(
-      (loan.accruedInterestUnpaid + earlyFeePaid).toFixed(2)
+      (
+        loan.accruedInterestUnpaid +
+        (loan.accruedLateFeeUnpaid ?? 0) +
+        earlyFeePaid
+      ).toFixed(2)
     );
 
     loan.totalPrincipalPaid = Number(
@@ -990,6 +1090,7 @@ export class BankLoanEngine {
     );
     loan.remainingPrincipal = 0;
     loan.accruedInterestUnpaid = 0;
+    loan.accruedLateFeeUnpaid = 0;
     loan.status = 'PAID_OFF';
 
     BankLoanEngine.reduceBalanceSheetDebt(
@@ -1001,6 +1102,7 @@ export class BankLoanEngine {
     BankLoanEngine.releaseLoanCollaterals(state, loan.loanId);
     BankLoanEngine.computeCreditScore(state);
     CentralLedgerEngine.syncLedgerWithState(state, reservedOrderCash);
+    BankLoanEngine.syncRestrictedFundWithLoans(state);
 
     return {
       success: true,
@@ -1013,6 +1115,9 @@ export class BankLoanEngine {
   /**
    * Gün Sonu Faiz Tahakkuku ve Vadesi Gelen Taksitlerin İşlenmesi:
    * - Aynı oyun günü içinde faiz YALNIZCA BİR KEZ tahakkuk eder (`lastInterestAccruedDay === state.day`).
+   * - Faiz 365 gün standardıyla, kalan anapara üzerinden işler; geciken kredide ayrıca gecikme faizi farkı birikir.
+   * - Vadesi gelen taksit bir kez denenir; ödenemezse yeniden deneme `LOAN_RETRY_INTERVAL_DAYS` aralıkla yapılır ve
+   *   gecikme sayacı yalnızca gerçekten yeni bir vade geçince artar.
    */
   public static stepDailyLoansAndInterest(
     state: SimulationState,
@@ -1030,28 +1135,43 @@ export class BankLoanEngine {
 
     for (const loan of state.activeLoans ?? []) {
       if (loan.status === 'PAID_OFF') continue;
+      migrateLegacyLoanContract(loan);
 
       const interestKey = `${loan.loanId}-D${state.day}`;
       if (
         loan.lastInterestAccruedDay < state.day &&
         !ledger.chargedInterestKeys.includes(interestKey)
       ) {
-        const activeRate =
-          loan.status === 'DELINQUENT' || loan.status === 'DEFAULTED'
-            ? loan.latePaymentRate
-            : loan.annualInterestRate;
         const dailyInterest = Number(
-          ((loan.remainingPrincipal * activeRate) / 365).toFixed(2)
+          (
+            (loan.remainingPrincipal * loan.annualInterestRate) /
+            DEBT_INTEREST_DAYS_PER_YEAR
+          ).toFixed(2)
         );
+        const isLate = loan.status === 'DELINQUENT' || loan.status === 'DEFAULTED';
+        const dailyLateExtra = isLate
+          ? Number(
+              (
+                (loan.remainingPrincipal *
+                  Math.max(0, loan.latePaymentRate - loan.annualInterestRate)) /
+                DEBT_INTEREST_DAYS_PER_YEAR
+              ).toFixed(2)
+            )
+          : 0;
 
         if (dailyInterest > 0) {
           loan.accruedInterestUnpaid = Number(
             (loan.accruedInterestUnpaid + dailyInterest).toFixed(2)
           );
-          totalInterestAccruedToday = Number(
-            (totalInterestAccruedToday + dailyInterest).toFixed(2)
+        }
+        if (dailyLateExtra > 0) {
+          loan.accruedLateFeeUnpaid = Number(
+            ((loan.accruedLateFeeUnpaid ?? 0) + dailyLateExtra).toFixed(2)
           );
         }
+        totalInterestAccruedToday = Number(
+          (totalInterestAccruedToday + dailyInterest + dailyLateExtra).toFixed(2)
+        );
         loan.lastInterestAccruedDay = state.day;
         ledger.chargedInterestKeys.push(interestKey);
         if (ledger.chargedInterestKeys.length > 500) {
@@ -1061,6 +1181,16 @@ export class BankLoanEngine {
 
       // Vadesi gelen taksit kontrolü
       if (state.day >= loan.nextPaymentGameDay) {
+        const canAttempt =
+          loan.lastPaymentAttemptDay === undefined ||
+          state.day === loan.nextPaymentGameDay ||
+          state.day - loan.lastPaymentAttemptDay >= LOAN_RETRY_INTERVAL_DAYS;
+        if (!canAttempt) {
+          // Bu gün yeniden deneme yok; yine de yeni bir vade geçtiyse sayaca (bir kez) yazılır
+          BankLoanEngine.registerOverdue(state, loan);
+          delinquentLoansCount += 1;
+          continue;
+        }
         const payRes = BankLoanEngine.payLoanInstallment(
           state,
           loan.loanId,
@@ -1069,9 +1199,8 @@ export class BankLoanEngine {
         );
         if (payRes.success) {
           installmentsPaidCount += 1;
-        } else {
+        } else if (!payRes.duplicate) {
           delinquentLoansCount += 1;
-          loan.nextPaymentGameDay = state.day + Math.max(5, loan.gracePeriod);
         }
       }
     }
@@ -1081,6 +1210,21 @@ export class BankLoanEngine {
       installmentsPaidCount,
       delinquentLoansCount,
     };
+  }
+
+  /**
+   * Kısıtlı işletme kredisi bakiyesi, bireysel (PLAYER) kredilerin ödenmemiş anaparasını ve nakdi aşamaz.
+   * Kredi ödendikçe kısıtlı bakiye de erir; böylece geri ödeme serbest nakdi sessizce kilitlemez.
+   */
+  private static syncRestrictedFundWithLoans(state: SimulationState): void {
+    const fund = state.businessLoanFund ?? 0;
+    if (!(fund > 0)) return;
+    const outstanding = (state.activeLoans ?? [])
+      .filter((l) => l.borrowerType === 'PLAYER' && l.status !== 'PAID_OFF')
+      .reduce((sum, l) => sum + l.remainingPrincipal, 0);
+    state.businessLoanFund = Number(
+      Math.max(0, Math.min(fund, outstanding, state.cash)).toFixed(2)
+    );
   }
 
   private static reduceBalanceSheetDebt(

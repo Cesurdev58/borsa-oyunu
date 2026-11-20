@@ -11,6 +11,7 @@
  *   yapılandırılmış olarak raporlar.
  */
 
+import { migrateLegacyLoanContract } from '../engine/LoanAmortization';
 import { ensureDecisionState } from '../engine/DecisionEventEngine';
 import { CentralLedgerEngine } from '../engine/CentralLedgerEngine';
 import { CompanyEngine } from '../engine/CompanyEngine';
@@ -592,12 +593,21 @@ export class SimulationStore {
             ? st.lastOfflineSummaryDismissed
             : true,
         centralLedger,
-        activeLoans: Array.isArray(st.activeLoans) ? st.activeLoans : [],
+        activeLoans: Array.isArray(st.activeLoans)
+          ? st.activeLoans.map((l) => migrateLegacyLoanContract(l))
+          : [],
         collaterals: Array.isArray(st.collaterals) ? st.collaterals : [],
         loanSequence:
           typeof st.loanSequence === 'number' &&
           Number.isFinite(st.loanSequence)
             ? Math.floor(st.loanSequence)
+            : 0,
+        // Eski kayıtlarda kısıtlı işletme kredisi bakiyesi yoktur: sıfırla başlar
+        businessLoanFund:
+          typeof st.businessLoanFund === 'number' &&
+          Number.isFinite(st.businessLoanFund) &&
+          st.businessLoanFund > 0
+            ? Number(st.businessLoanFund.toFixed(2))
             : 0,
         projectSequence:
           typeof st.projectSequence === 'number' &&

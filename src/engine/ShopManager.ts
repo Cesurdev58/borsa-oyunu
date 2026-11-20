@@ -78,7 +78,7 @@ export function hireManager(
   if (!shop) return { success: false, message: 'Dükkân bulunamadı.' };
   const q = getManagerQuote(state, shop, reservedCash);
   if (!q.allowed) return { success: false, message: q.reasonTR };
-  WalletEngine.spend(state, q.hireFee);
+  WalletEngine.spendBusiness(state, q.hireFee);
   CentralLedgerEngine.recordPostedAccountingEntry(state, {
     idempotencyKey: `MGR-HIRE-${shop.shopId}-D${state.day}`,
     sourceAccountId: ACCOUNT_IDS.PLAYER_INVESTMENT,

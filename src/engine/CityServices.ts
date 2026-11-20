@@ -68,7 +68,7 @@ function payFromShopThenPlayer(state: SimulationState, shop: ShopInstance, cost:
   const fromShop = Math.min(shop.cashAccountBalance, cost);
   const fromPlayer = r2(cost - fromShop);
   shop.cashAccountBalance = r2(shop.cashAccountBalance - fromShop);
-  if (fromPlayer > 0) WalletEngine.spend(state, fromPlayer);
+  if (fromPlayer > 0) WalletEngine.spendBusiness(state, fromPlayer);
   shop.totalInvestedCapital = r2(shop.totalInvestedCapital + cost);
   return true;
 }
@@ -231,7 +231,8 @@ export function fundCityProject(state: SimulationState, projectId: string, reser
   const next = nextCityProject(state);
   if (!next) return { success: false, message: 'Bütün mahalle projeleri bitti.' };
   if (next.id !== projectId) return { success: false, message: `Önce "${next.name}" projesi yapılmalı.` };
-  const spendable = Math.max(0, state.cash - reservedCash);
+  // Belediye projesi genel amaçlı harcamadır: kısıtlı işletme kredisi bakiyesi kullanılamaz
+  const spendable = Math.max(0, WalletEngine.freeCash(state) - reservedCash);
   if (spendable < next.price) return { success: false, message: `${next.name} için ${tl(next.price)} nakit gerekiyor.` };
   WalletEngine.spend(state, next.price);
   CentralLedgerEngine.recordPostedAccountingEntry(state, {

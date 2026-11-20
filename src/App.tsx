@@ -1375,6 +1375,7 @@ export default function App() {
         onFireShopManager={handleFireShopManager}
         onSetShopManagerSweep={handleSetShopManagerSweep}
         spendableCash={engine.getSpendableCash()}
+        freeSpendableCash={engine.getFreeSpendableCash()}
         reservedCash={engine.getReservedCash()}
         getReservedShares={(t) => engine.getReservedShares(t)}
         formattedTime={formattedTime}
@@ -1806,7 +1807,7 @@ export default function App() {
             portfolio={state.portfolio}
             pendingOrders={state.pendingOrders}
             cash={state.cash}
-            spendableCash={engine.getSpendableCash()}
+            spendableCash={engine.getFreeSpendableCash()}
             reservedCash={engine.getReservedCash()}
             marketSession={state.marketSession}
             formattedGameTime={formattedTime}
@@ -1827,7 +1828,7 @@ export default function App() {
           <CompanyIpoView
             playerCompany={state.playerCompany}
             ipoEligibility={engine.checkIPOEligibility()}
-            cash={engine.getSpendableCash()}
+            cash={engine.getFreeSpendableCash()}
             netWorth={state.netWorth}
             institutionalFunds={state.institutionalFunds}
             onEstablishCompany={handleEstablishCompany}
@@ -1842,7 +1843,7 @@ export default function App() {
           <TakeoverHoldingView
             stocks={state.stocks}
             portfolio={state.portfolio}
-            cash={engine.getSpendableCash()}
+            cash={engine.getFreeSpendableCash()}
             totalDebt={state.totalDebt}
             controlledSubsidiaries={state.controlledSubsidiaries}
             totalSynergyEarned={state.totalSynergyEarned}

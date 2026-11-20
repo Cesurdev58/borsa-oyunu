@@ -197,7 +197,7 @@ export class TradeProduction {
       );
     } else {
       const cashPaid = Math.min(state.cash, operatingCashCost);
-      WalletEngine.spend(state, cashPaid);
+      WalletEngine.spendBusiness(state, cashPaid);
     }
 
     const totalProductionCost = Number(
@@ -320,7 +320,7 @@ export class TradeProduction {
           vehicle: null,
         };
       }
-      WalletEngine.spend(state, spec.purchaseCost);
+      WalletEngine.spendBusiness(state, spec.purchaseCost);
     }
 
     ts.vehicleSeq += 1;

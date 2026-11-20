@@ -13,7 +13,14 @@
  * Bu dosya ön yüzü (TradeAndShopEngine) içe aktarmaz; yalnızca alt modülleri kullanır.
  */
 
-import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
+import {
+  PRICE_DEMAND_CAP_EXTREME,
+  PRICE_DEMAND_CAP_HIGH,
+  PRICE_RATIO_ELASTIC_MAX,
+  PRICE_RATIO_EXTREME_MAX,
+  PRICE_RATIO_HIGH_MAX,
+  SHOP_SAME_TYPE_CROWDING,
+} from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
 import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
@@ -56,6 +63,25 @@ export function openFractionElapsed(shopType: string, minutesIntoDay: number): n
 function ensureLive(shop: ShopInstance, day: number): ShopLiveDay {
   if (!shop.live || shop.live.day !== day) shop.live = emptyLiveDay(day);
   return shop.live;
+}
+
+/**
+ * Satış fiyatı ÷ adil fiyat oranına göre talep çarpanı.
+ *  - oran ≤ 1: ucuzlukla artan talep (en çok 1,35)
+ *  - 1 < oran ≤ PRICE_RATIO_ELASTIC_MAX: elastik düşüş (1/oran)^2,3
+ *  - ELASTIC_MAX < oran ≤ HIGH_MAX: en çok PRICE_DEMAND_CAP_HIGH
+ *  - HIGH_MAX < oran ≤ EXTREME_MAX: en çok PRICE_DEMAND_CAP_EXTREME
+ *  - oran > EXTREME_MAX: 0 (normal talep yok)
+ * Geçersiz oran (NaN, sonsuz, 0 ya da negatif) 0 döner: o ürün satılmaz.
+ */
+export function priceDemandMultiplier(priceRatio: number): number {
+  if (!Number.isFinite(priceRatio) || priceRatio <= 0) return 0;
+  if (priceRatio <= 1.0) return Math.min(1.35, 1 + (1 - priceRatio) * 0.8);
+  const elastic = Math.pow(1 / priceRatio, 2.3);
+  if (priceRatio <= PRICE_RATIO_ELASTIC_MAX) return elastic;
+  if (priceRatio <= PRICE_RATIO_HIGH_MAX) return Math.min(PRICE_DEMAND_CAP_HIGH, elastic);
+  if (priceRatio <= PRICE_RATIO_EXTREME_MAX) return Math.min(PRICE_DEMAND_CAP_EXTREME, elastic);
+  return 0;
 }
 
 interface DailyDemand {
@@ -145,17 +171,18 @@ export function computeShopDailyDemand(
     const fairRetailPrice = r2(resDef.baseMarketPrice * (1 + tpl.defaultGrossMarginPct / 100));
     const actualSellPrice = shop.sellingPrices[resId] ?? fairRetailPrice;
     const priceRatio = actualSellPrice / Math.max(1, fairRetailPrice);
-    const priceElasticity =
-      priceRatio <= 1.0
-        ? Math.min(1.35, 1 + (1 - priceRatio) * 0.8)
-        : Math.max(0.08, Math.pow(1 / priceRatio, 2.3));
+    const priceElasticity = priceDemandMultiplier(priceRatio);
+    if (priceElasticity <= 0) {
+      // Geçersiz ya da aşırı yüksek fiyat: bu üründe normal talep yok (rafta durur, satılmaz)
+      items.push({ resId, units: 0, price: Number.isFinite(actualSellPrice) ? actualSellPrice : 0 });
+      continue;
+    }
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
     const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket) / Math.max(1, fairRetailPrice);
-    const units = Math.max(
-      1,
-      Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity)
-    );
+    const rawUnits = Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity);
+    // Taban 1 birim yalnızca makul fiyat aralığında geçerli; aşırı fiyatta yuvarlama talebi canlı tutamaz
+    const units = priceRatio <= PRICE_RATIO_ELASTIC_MAX ? Math.max(1, rawUnits) : Math.max(0, rawUnits);
     items.push({ resId, units: units * eventMult, price: actualSellPrice });
   }
   return { customers: customers * eventMult, items };

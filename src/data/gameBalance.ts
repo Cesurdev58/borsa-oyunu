@@ -129,3 +129,33 @@ export const SHOP_SAME_TYPE_CROWDING = 0.15;
 
 /** Kontrol edilen (devralınan) rakibin günlük net kârından, sahiplik payı oranında oyuncuya aktarılan kısım */
 export const HOLDING_PAYOUT_RATIO = 0.6;
+
+/**
+ * EKONOMİ TUTARLILIĞI (kredi, fiyat, işletme kredisi)
+ * Yeni sabitler bu başlık altında toplanır; ilgili motorlar yalnızca buradan okur.
+ */
+
+/** Banka kredisi ve banka dışı borçlar için tek yıllıklaştırma standardı (gün). Eskiden bazı borçlar /252 kullanıyordu. */
+export const DEBT_INTEREST_DAYS_PER_YEAR = 365;
+
+/**
+ * Aşırı fiyatlama sınırı (dükkân satış fiyatı ÷ adil fiyat).
+ * Eskiden talep her durumda en az %8'e düşüp duruyordu; adil fiyatın 10 katında bile satış sürüyordu.
+ *  - oran ≤ ELASTIC_MAX: mevcut elastik formül
+ *  - ELASTIC_MAX < oran ≤ HIGH_MAX: talep çarpanı en çok HIGH_CAP
+ *  - HIGH_MAX < oran ≤ EXTREME_MAX: talep çarpanı en çok EXTREME_CAP
+ *  - oran > EXTREME_MAX: normal talep 0
+ */
+export const PRICE_RATIO_ELASTIC_MAX = 1.5;
+export const PRICE_RATIO_HIGH_MAX = 2.0;
+export const PRICE_RATIO_EXTREME_MAX = 3.0;
+export const PRICE_DEMAND_CAP_HIGH = 0.05;
+export const PRICE_DEMAND_CAP_EXTREME = 0.01;
+
+/**
+ * Taksit gecikmesi: kaç farklı vade (taksit günü) ödenmeden geçerse kredi temerrüde düşer.
+ * Aynı vadenin tekrar tekrar denenmesi tek vade sayılır.
+ */
+export const LOAN_DEFAULT_MISSED_DUE_DATES = 3;
+/** Ödenemeyen taksit, bakiye yetince en erken kaç günde bir yeniden denenir. */
+export const LOAN_RETRY_INTERVAL_DAYS = 3;

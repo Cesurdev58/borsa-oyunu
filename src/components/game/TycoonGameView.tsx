@@ -165,6 +165,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onFireShopManager,
   onSetShopManagerSweep,
   spendableCash,
+  freeSpendableCash,
   reservedCash,
   getReservedShares,
   formattedTime,
@@ -425,6 +426,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onFireShopManager,
   onSetShopManagerSweep,
     spendableCash,
+    freeSpendableCash,
     reservedCash,
     getReservedShares,
     ipoEligibility,
@@ -529,7 +531,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         <CityServicesModal
           service={openCityService}
           state={state}
-          spendableCash={spendableCash}
+          spendableCash={freeSpendableCash ?? spendableCash}
           formatCurrency={formatCurrency}
           onSellShopStock={onSellShopStock}
           onBuyUsedUpgrade={onBuyUsedUpgrade}
@@ -543,7 +545,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         <LifestyleModal
           open={isLifestyleOpen}
           state={state}
-          spendableCash={spendableCash}
+          spendableCash={freeSpendableCash ?? spendableCash}
           formatCurrency={formatCurrency}
           onBuy={onBuyLifestyleItem}
           onClose={() => setIsLifestyleOpen(false)}

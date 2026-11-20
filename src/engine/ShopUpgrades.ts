@@ -79,7 +79,7 @@ export function buyShopUpgrade(
   const fromShop = Math.min(shop.cashAccountBalance, cost);
   const fromPlayer = Math.round((cost - fromShop) * 100) / 100;
   shop.cashAccountBalance = Math.round((shop.cashAccountBalance - fromShop) * 100) / 100;
-  if (fromPlayer > 0) WalletEngine.spend(state, fromPlayer);
+  if (fromPlayer > 0) WalletEngine.spendBusiness(state, fromPlayer);
   shop.totalInvestedCapital = Math.round((shop.totalInvestedCapital + cost) * 100) / 100;
   shop.upgrades = [...(shop.upgrades ?? []), def.id];
   // Yenisi gelince ikinci el olan atılır

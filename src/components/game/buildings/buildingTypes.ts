@@ -116,5 +116,7 @@ export interface BuildingDetailContentProps extends BuildingDetailActions {
   buildingId: CityBuildingId;
   state: SimulationState;
   initialCompanySubTab?: 'OZET' | 'URETIM' | 'CALISANLAR' | 'FINANS' | 'GELISIM';
+  /** Şehir Mağazaları ekranından gelen "şu dükkânı şu bölümle aç" isteği (nonce her istekte değişir). */
+  manageRequest?: { shopId: string; tab?: 'ORDER_PRODUCT' | 'EDIT_PRICES' | 'MANAGE_STAFF' | 'UPGRADE_SHOP'; nonce: number } | null;
   onOpenBuilding?: (id: CityBuildingId) => void;
 }

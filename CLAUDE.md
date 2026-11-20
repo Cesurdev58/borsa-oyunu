@@ -206,6 +206,13 @@ Plan: `ai-workflow/TURKIYE_GECIS_SARTNAMESI.md` (şartname), `ai-workflow/TURKIY
 - **Yan yana çalışma:** Şehir sekmesinde "Türkiye Haritası" düğmesi (`city-open-turkey-map-btn`) haritaya geçirir, "3D Şehre Dön" geri getirir; seçim `localStorage` `city_map_mode`. 3D şehir silinmedi. Testi `src/tests/city/turkeyMap.test.ts`.
 - **Doğrulanmadı (gerçek cihaz):** dokunmatik pinch/sürükleme hissi, düğme yerleşimi (fixed `top-[132px]`), panelin küçük ekranda görünümü. Eklenmedi: "Pazar Araştırması" (mekaniği yok).
 
+## Başlangıç şehri ve Şehir Mağazaları (PR 3: Faz 5–6)
+
+- **Başlangıç şehri** (`engine/CityStartSelection.ts`, ekran `turkeyMap/StartCityScreen.tsx`): yeni kariyerde (`needsStartCitySelection`: şehir seçilmemiş, dükkân yok, gün ≤ 1, eski kayıt göçü yok) oyun zamanı durur ve harita ekranı açılır; şehir → "Bu Şehirde Başla" → risk/maliyet özeti → "Başla". Hiçbir şehir kilitli değil, Ankara kendiliğinden seçilmez. `chooseStartCity` bir kez uygular (ikinci çağrı etkisiz), `playerStartCityId` ve `headquartersCityId` yazılır; ilk dükkân o şehirde açılır. Eski kayıtlar bu yola girmez. **Bilinen:** şehir çarpanları (kira, maaş…) henüz oyun içi giderleri/maliyeti değiştirmez, özet rakamları motorun gerçek tutarlarıdır; şehre göre fiyat ve şehirler arası denge testi (en iyi/en zayıf şehir farkı) Faz 7'ye bırakıldı.
+- **Gezinme** (`turkeyMap/mapNavigation.ts` saf kurallar, `TurkeyMapFlow.tsx` akış, `CityShopsScreen.tsx`): Harita → bilgi paneli → "Şehre Git" (yalnızca şehirde dükkân varsa) → Şehir Mağazaları (yalnızca `cityId` eşleşen dükkânlar) → "Yönet" vb. mevcut dükkân yönetim panelini o dükkânla açar (`manageRequest` → `OyuncuOfisiPanel`, `initialActionTab`). Sol üstte sabit "Haritaya Dön" (44 px, güvenli alan). Kamera ve seçili şehir oyun durumunda durduğu için dönüşte aynen korunur.
+- **Geri tuşu** (`mapBackController.ts`): akış açıkken geçmişe nöbetçi kayıt konur; sıra: detay kapanır → şehir mağazalarından haritaya → bilgi paneli kapanır → çıkış onayı. "Haritaya Dön" düğmesi aynı `resolveBack` kuralını çalıştırır. Testi `src/tests/city/cityShopsFlow.test.ts`.
+- **Doğrulanmadı (gerçek cihaz):** Android geri tuşu ve dokunmatik akış gerçek telefonda denenmedi (sahte tarayıcı geçmişiyle test edildi). "Muhasebe" şimdilik kartın içinde açılan küçük özet; ayrı muhasebe ekranı yok. Şehir itibarı yok: üstte ticari itibar gösterilir.
+
 ## Şehir haritası (en çok karıştırılan kısım)
 
 Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` altında çizilir.

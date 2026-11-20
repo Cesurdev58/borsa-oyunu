@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SaveManagementSection, type SaveManagementProps } from './SaveManagementSection';
 import { effectiveRealMinutesPerGameDay, isFastStartOn } from '../../engine/TempoRules';
 import { TEMPO_COMPANY_MINUTES, TEMPO_EARLY_MINUTES } from '../../data/gameBalance';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
@@ -99,6 +100,7 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onTickDay: () => void;
   onSimulateOfflineProgress: () => void;
   onManualSave: () => void;
+  saveManagement?: SaveManagementProps;
   onResetSimulation: () => void;
   onDismissOfflineModal: () => void;
   onSwitchToDeveloperDashboard: () => void;
@@ -130,6 +132,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onTickDay,
   onSimulateOfflineProgress,
   onManualSave,
+  saveManagement,
   onResetSimulation,
   onDismissOfflineModal,
   onSwitchToDeveloperDashboard,
@@ -1079,6 +1082,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   <span>Oyunu Kaydet</span>
                 </button>
               </div>
+              {saveManagement && <SaveManagementSection {...saveManagement} />}
               <details className="group rounded-2xl bg-[var(--g-surface-2)] px-3 py-2">
                 <summary className="cursor-pointer list-none min-h-[40px] flex items-center justify-between text-[13px] font-extrabold text-[var(--g-muted)]">
                   Geliştirici araçları

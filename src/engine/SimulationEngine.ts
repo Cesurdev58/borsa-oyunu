@@ -20,6 +20,12 @@ import {
 } from './OnboardingRules';
 import { migrateLegacyLoanContract } from './LoanAmortization';
 import { stepShopsIntraday } from './ShopSales';
+import {
+  applyHeadquartersSelection,
+  isCitySelectionPending,
+  prepareCityMigration,
+  type HeadquartersSelectionResult,
+} from './CityMigration';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
@@ -303,7 +309,7 @@ export type {
 };
 
 export class SimulationEngine {
-  public static readonly CURRENT_SCHEMA_VERSION = 5;
+  public static readonly CURRENT_SCHEMA_VERSION = 6;
   public static readonly DEFAULT_SEED = 20261104;
   public static readonly DEFAULT_INITIAL_CASH = 100_000;
   public static readonly STAGE_2_NET_WORTH_THRESHOLD =
@@ -773,6 +779,8 @@ export class SimulationEngine {
 
     this.state = restored;
     TradeAndShopEngine.ensureTradeUniverseState(this.state);
+    // Şehir geçişi: cityId'si olmayan dükkân varsa merkez şehir seçimi beklenir (tekrar çağrılması zararsız)
+    prepareCityMigration(this.state);
     // Eski kayıtları yeni geç oyun dengesine taşı (bir kez)
     for (const msg of migrateBalance(this.state)) {
       this.pendingDailyActions.push(`[Denge] ${msg}`);
@@ -783,6 +791,22 @@ export class SimulationEngine {
     CareerGoals.migrateCareerGoalsForLegacySave(this.state, {
       companyNetWorth: PROGRESSION_RULES.entrepreneurNetWorth,
     });
+  }
+
+  /** Merkez şehir seçimi bekleniyor mu? (eski kayıtların şehir geçişi; bekleyen kayıtta oyun durur) */
+  public isCitySelectionPending(): boolean {
+    return isCitySelectionPending(this.state);
+  }
+
+  /**
+   * Eski kayıtta oyuncunun seçtiği şehri merkez yapar ve şehri eksik tüm dükkânları ona atar.
+   * Para, borç, stok vb. hiçbir alan değişmez; ikinci çağrı etkisizdir.
+   */
+  public completeHeadquartersSelection(
+    cityId: string,
+    nowISO: string = new Date().toISOString()
+  ): HeadquartersSelectionResult {
+    return applyHeadquartersSelection(this.state, cityId, nowISO);
   }
 
   public getNextScheduledEvent(): {
@@ -869,7 +893,8 @@ export class SimulationEngine {
       !Number.isFinite(seconds) ||
       seconds <= 0 ||
       this.state.isPaused ||
-      this.state.timeScale === 0
+      this.state.timeScale === 0 ||
+      isCitySelectionPending(this.state)
     ) {
       return { gameMinutesAdvanced: 0, daysClosed: 0 };
     }
@@ -905,7 +930,12 @@ export class SimulationEngine {
     gameMinutesAdvanced: number;
     daysClosed: number;
   } {
-    if (!Number.isFinite(minutes) || minutes <= 0) {
+    // Merkez şehir seçilmeden oyun saati ilerlemez (eski kayıtların şehir geçişi)
+    if (
+      !Number.isFinite(minutes) ||
+      minutes <= 0 ||
+      isCitySelectionPending(this.state)
+    ) {
       return { gameMinutesAdvanced: 0, daysClosed: 0 };
     }
 
@@ -1091,6 +1121,9 @@ export class SimulationEngine {
    * Geliştirici araçları ve mevcut testler için kontrollü gün sonu ilerletme fonksiyonu.
    */
   public tickDay(): DailyLogEntry {
+    if (isCitySelectionPending(this.state)) {
+      return this.state.dailyLogs[this.state.dailyLogs.length - 1];
+    }
     const remainingMinutesInDay =
       GameClockEngine.MINUTES_PER_GAME_DAY - this.state.minutesIntoCurrentDay;
     this.state.totalElapsedGameMinutes += remainingMinutesInDay;

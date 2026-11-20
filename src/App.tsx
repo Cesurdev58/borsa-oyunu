@@ -35,6 +35,7 @@ import { CompanyIpoView } from './components/CompanyIpoView';
 import { TakeoverHoldingView } from './components/TakeoverHoldingView';
 import { MathAndSimulationLabView } from './components/MathAndSimulationLabView';
 import { TycoonGameView } from './components/game/TycoonGameView';
+import { HeadquartersSelectionModal } from './components/game/HeadquartersSelectionModal';
 import {
   AppViewMode,
   GameNotificationCategory,
@@ -1249,6 +1250,17 @@ export default function App() {
     refreshUIOnly();
   }, [engine, refreshUIOnly]);
 
+  /** Eski kayıt: oyuncunun seçtiği şehri merkez yapar, dükkânları o şehre taşır (engine/CityMigration.ts). */
+  const handleSelectHeadquarters = useCallback(
+    (cityId: string) => {
+      const res = engineRef.current!.completeHeadquartersSelection(cityId);
+      lastRealTickMsRef.current = Date.now();
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [persistAndRefreshUI]
+  );
+
   const handleStartNewCity = useCallback(() => {
     const res = PrestigeEngine.startNewCity(engineRef.current!.getState(), (seed, cash) => new SimulationEngine(seed, cash));
     if (!res.success || !res.engine) {
@@ -1321,6 +1333,7 @@ export default function App() {
   // 1. VARSAYILAN ANA OYUNCU GÖRÜNÜMÜ (PLAYER_GAME - Beyaz Mobil Tycoon Arayüzü)
   if (viewMode === 'PLAYER_GAME') {
     return (
+      <>
       <TycoonGameView
         state={state}
         ipoEligibility={engine.checkIPOEligibility()}
@@ -1395,6 +1408,13 @@ export default function App() {
         formattedTime={formattedTime}
         formatCurrency={(v) => engine.formatCurrency(v)}
       />
+      {engine.isCitySelectionPending() && (
+        <HeadquartersSelectionModal
+          shopCount={state.tradeState?.shops.length ?? 0}
+          onConfirm={handleSelectHeadquarters}
+        />
+      )}
+      </>
     );
   }
 

@@ -238,6 +238,16 @@ export interface CitySavedState {
 }
 
 export interface SimulationState {
+  /** Oyuncunun kariyere başladığı il (eski kayıtta merkez şehir seçilince atanır; Faz 5'te yeni kariyerde seçilir) */
+  playerStartCityId?: import('./cities').CityId;
+  /** Haritada seçili il (arayüz durumu; Faz 3'te kullanılır) */
+  selectedMapCityId?: import('./cities').CityId;
+  /** Şirket merkezinin bulunduğu il (eski kayıtta oyuncu seçer; yoksa merkez işareti çizilmez) */
+  headquartersCityId?: import('./cities').CityId;
+  /** Harita kamerası: pan/zoom (Faz 3'te kullanılır) */
+  turkeyMapView?: import('./cities').TurkeyMapViewState;
+  /** Eski kayıtların şehir geçişi durumu (engine/CityMigration.ts); alan yoksa geçiş gerekmiyor */
+  cityMigration?: import('./cities').CityMigrationState;
   /** Karar kartları (eski kayıtlarda yoktur; motor gerektiğinde oluşturur) */
   decisionEvents?: import('./decisions').DecisionEventsState;
   /** Servet vergisi kayıtları (eski kayıtlarda yoktur) */

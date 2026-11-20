@@ -218,7 +218,7 @@ test('B.1 - B.8: Üretim Kapasite Tavanı, Eski 7.48x Çarpan Migrasyonu, Talep=
     'Eski v4 kaydı başarıyla yüklenip v5 şemasına migrate edilmelidir'
   );
   const loadedMig = migratedEnvelope.state;
-  assert.equal(loadedMig.schemaVersion, 5);
+  assert.equal(loadedMig.schemaVersion, SimulationStore.CURRENT_SCHEMA_VERSION);
   assert.ok(loadedMig.playerCompany);
   assert.ok(loadedMig.playerCompany.techQualityMultiplier <= 2.5);
   assert.ok(
@@ -914,8 +914,8 @@ test('F. V4 -> V5 Migration ve Kayıt Güvenliği: Toplam Para Korunumu, Hesap B
   const mState = migratedOnce!.state;
 
   // 1. Migration sürümü = 5
-  assert.equal(migratedOnce!.schemaVersion, 5);
-  assert.equal(mState.schemaVersion, 5);
+  assert.equal(migratedOnce!.schemaVersion, SimulationStore.CURRENT_SCHEMA_VERSION);
+  assert.equal(mState.schemaVersion, SimulationStore.CURRENT_SCHEMA_VERSION);
 
   // 2. Toplam para korunumu & Oyuncu kişisel / yatırım hesapları
   assert.equal(

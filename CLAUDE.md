@@ -188,6 +188,15 @@ Plan dosyası `ai-workflow/DUZELTME_PLANI.md` (Bölüm 1 ve 2 uygulandı; diğer
   Her panel kendi form durumunu (useState) kendi içinde tutar; ortak tipler `buildings/buildingTypes.ts` içindedir.
 - `src/tests/` — `node:test` ile yazılmış testler.
 
+## Şehirler ve Türkiye haritası geçişi (devam eden iş)
+
+Plan: `ai-workflow/TURKIYE_GECIS_SARTNAMESI.md` (şartname), `ai-workflow/TURKIYE_HARITASI_GECIS_PLANI.md` (envanter ve dosya planı). 3D şehir yeni harita doğrulanana kadar silinmez. PR 1 (Faz 0–2) uygulandı; harita arayüzü sonraki PR'larda.
+
+- **Veri tek yerde:** `models/cities.ts` (tipler), `data/cityDefinitions.ts` (81 il, `CITY_DEFINITIONS: Record<CityId, …>`; ilk 12 şehir `DETAILED`, kalan 69 il `DEFAULT` dengeli profil; `mapPosition` enlem/boylamdan türetilir), `data/cityBalance.ts` (çarpan sınırları, harita sınırları, varsayılan profil, yedek anahtarı). Arayüzde ekonomik katsayı sabit yazılmaz; çarpanlar `clampCityMultiplier` ile okunur. Testi `src/tests/city/cityDefinitions.test.ts` (hiçbir şehir diğerini her ölçüde geçmemeli).
+- **Dükkânın şehri:** `ShopInstance.cityId?` (eski kayıtta yok). Yeni dükkân `resolveNewShopCityId`: merkez → başlangıç şehri → Ankara. `state.headquartersCityId / playerStartCityId / selectedMapCityId / turkeyMapView / cityMigration` isteğe bağlıdır.
+- **Kayıt şeması 6 ve şehir geçişi** (`engine/CityMigration.ts`): `cityId`'si eksik/bozuk dükkân varsa `state.cityMigration.status = 'PENDING'` olur; **oyuncu merkez şehri seçene kadar gün/saat, çevrimdışı ilerleme ve dükkân açma durur** (`isCitySelectionPending`). `HeadquartersSelectionModal.tsx` (App) seçtirir → `engine.completeHeadquartersSelection`. Dükkânsız eski kayıt sormadan `COMPLETED`. Migration idempotent. Yükleme sırasında orijinal kayıt `SimulationStore.BACKUP_PRE_CITY_KEY` anahtarına bir kez yedeklenir (ezilmez). Testi `src/tests/city/cityMigration.test.ts`, `headquartersSelectionModal.test.ts`.
+- Şema sürümünü kontrol eden testler sabit sayı yerine `SimulationStore.CURRENT_SCHEMA_VERSION` kullanır.
+
 ## Şehir haritası (en çok karıştırılan kısım)
 
 Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` altında çizilir.

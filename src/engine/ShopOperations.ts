@@ -8,6 +8,7 @@
 
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
+import { isCitySelectionPending, resolveNewShopCityId } from './CityMigration';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -54,6 +55,14 @@ export class ShopOperations {
     shop: ShopInstance | null;
     totalCapitalSpent: number;
   } {
+    if (isCitySelectionPending(state)) {
+      return {
+        success: false,
+        message: 'Önce merkez şehrini seçmelisin.',
+        shop: null,
+        totalCapitalSpent: 0,
+      };
+    }
     const ts = TradeUniverse.ensureTradeUniverseState(state);
     const tpl = SHOP_TEMPLATES[params.shopType];
     if (!tpl) {
@@ -177,6 +186,7 @@ export class ShopOperations {
         params.customNameTR?.trim() ||
         `${tpl.nameTR} #${branchNumber}`,
       cityBlockId: params.cityBlockId || tpl.defaultCityBlockId,
+      cityId: resolveNewShopCityId(state),
       level: 1,
       openedDay: state.day,
       isCompanyBranch,

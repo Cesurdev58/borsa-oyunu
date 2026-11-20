@@ -31,6 +31,7 @@ import {
   stripeTexture,
 } from './kit';
 import { type CityAssets, fitModel } from './assets';
+import { CITY_BLOCK_FOOT, CITY_CORE_FOOT } from '../city/CityGridDefinition';
 
 // ---------- Hazır modeller (KayKit / Kenney, CC0) ----------
 
@@ -104,7 +105,7 @@ function assetBuilding(name: string, footprint: number, heightScale: number, lab
 }
 
 /** Harita birimi → dünya birimi (bina ayak izi için küçültme payıyla). */
-const FOOT = 0.085;
+const FOOT = CITY_CORE_FOOT;
 
 // ---------- Ortak modeller ----------
 
@@ -661,8 +662,8 @@ export const SHOP_SLOT_IDS = new Set(['urban-ticaret-magaza-1', 'urban-ticaret-k
 
 export function buildBlock(block: CityUrbanBlockNode): THREE.Group {
   const rng = createRng(`block-${block.id}`);
-  const w = block.width * FOOT * 1.05;
-  const d = block.height * FOOT * 1.05;
+  const w = block.width * CITY_BLOCK_FOOT;
+  const d = block.height * CITY_BLOCK_FOOT;
   const lvl = Math.max(1, block.level ?? 1);
   const h = 3.6 + block.floors * 3.1;
   const g = new THREE.Group();

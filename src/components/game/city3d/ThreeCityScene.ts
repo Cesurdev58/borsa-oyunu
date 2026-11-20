@@ -31,6 +31,7 @@ import {
   cyl,
   disposeKit,
   disposeObject,
+  retainKit,
   makeBush,
   makeCar,
   makePerson,
@@ -47,10 +48,27 @@ import {
 } from './kit';
 import { buildBlock, buildCore, setCityAssets, SHOP_SLOT_IDS, tintLocked } from './models';
 import { type CityAssets, fitModel, loadCityAssets, mergeByLook, mergeStatic } from './assets';
+import {
+  AMBIENT_LOOPS,
+  CITY_BLOCK_FOOT,
+  CITY_CORE_FOOT,
+  blockParcel,
+  CITY_GRID,
+  CITY_WORLD_SCALE,
+  RING2,
+  ROAD_SIDEWALK_EXTRA,
+  SUBURB_ROADS,
+  isOnRoad,
+  isSuburbRoad,
+  wx,
+  wz,
+  type CityRoadSegment,
+  type WorldRect,
+} from '../city/CityGridDefinition';
+import { placeModelInParcel } from './cityFit';
+import { walkGroveSpots, walkSuburbSpots } from './citySuburbs';
 
-const K = 0.1;
-const wx = (x: number) => (x - 800) * K;
-const wz = (y: number) => (y - 600) * K;
+const K = CITY_WORLD_SCALE;
 const BASE_Y = 0.26;
 
 export interface CitySceneInputs {
@@ -97,184 +115,18 @@ interface Entity {
   smoke?: THREE.Object3D | null;
 }
 
-interface RouteKey {
-  t: number;
-  x: number;
-  y: number;
-}
+type RouteKey = { t: number; x: number; y: number };
+const ROUTES = CITY_GRID.routes as Record<CityTrafficRouteId, readonly RouteKey[]>;
+/** Yaya yolları ve kapıları ortak ızgaradan gelir. */
+const WALK_PATHS = CITY_GRID.walkPaths as [number, number][][];
+const WALK_DOORS = CITY_GRID.walkDoors as [number, number][];
+const ZONES = CITY_GRID.zones;
 
-const ROUTES: Record<CityTrafficRouteId, RouteKey[]> = {
-  FINANS_MEYDANI_ROTASI: [
-    { t: 0, x: 520, y: 380 },
-    { t: 0.25, x: 1070, y: 380 },
-    { t: 0.5, x: 1070, y: 770 },
-    { t: 0.75, x: 520, y: 770 },
-    { t: 1, x: 520, y: 380 },
-  ],
-  SANAYI_SIRKET_ROTASI: [
-    { t: 0, x: 240, y: 895 },
-    { t: 0.5, x: 1340, y: 895 },
-    { t: 1, x: 240, y: 895 },
-  ],
-  TICARET_BULVARI_ROTASI: [
-    { t: 0, x: 215, y: 385 },
-    { t: 0.5, x: 215, y: 885 },
-    { t: 1, x: 215, y: 385 },
-  ],
-  KUZEY_GUNEY_ANAYOL_ROTASI: [
-    { t: 0, x: 380, y: 380 },
-    { t: 0.5, x: 1220, y: 380 },
-    { t: 1, x: 380, y: 380 },
-  ],
-};
-
-/** Yaya yolları (dünya birimi): halka yolun dış ve iç kaldırımı, güney cadde kaldırımı. Kapalı halkalar başa döner. */
-const WALK_PATHS: [number, number][][] = [
-  [[-32.6, -25.6], [32.6, -25.6], [32.6, 21.6], [-32.6, 21.6], [-32.6, -25.6]],
-  [[-25.4, -18.6], [25.4, -18.6], [25.4, 14.6], [-25.4, 14.6], [-25.4, -18.6]],
-  [[-64, 26.4], [64, 26.4], [64, 32.7], [-64, 32.7], [-64, 26.4]],
-];
-
-/** Yayaların girip çıktığı binaların kapıları (dünya birimi). Bina merkezi + ön yüz. */
-const WALK_DOORS: [number, number][] = [
-  [wx(795), wz(215) + 205 * 0.085 * 0.4 + 1.6],
-  [wx(1245), wz(285) + 190 * 0.085 * 0.4 + 1.6],
-  [wx(350), wz(275) + 185 * 0.085 * 0.4 + 1.6],
-];
-
-function pathLength(path: [number, number][]): number {
+function pathLength(path: readonly (readonly [number, number])[]): number {
   let t = 0;
   for (let i = 0; i < path.length - 1; i++) t += Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
   return t;
 }
-
-interface Roadway {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  w: number;
-}
-
-// Eski yol çizgileriyle aynı koordinatlar (harita birimi); genişlik dünya birimidir.
-const ROADWAYS: Roadway[] = [
-  { x1: 510, y1: 380, x2: 1090, y2: 380, w: 5.6 },
-  { x1: 1090, y1: 380, x2: 1090, y2: 780, w: 5.6 },
-  { x1: 1090, y1: 780, x2: 510, y2: 780, w: 5.6 },
-  { x1: 510, y1: 780, x2: 510, y2: 380, w: 5.6 },
-  { x1: 210, y1: 380, x2: 1390, y2: 380, w: 5.2 },
-  { x1: 795, y1: 330, x2: 795, y2: 380, w: 5 },
-  { x1: 355, y1: 320, x2: 535, y2: 415, w: 4.8 },
-  { x1: 1240, y1: 330, x2: 1065, y2: 415, w: 4.8 },
-  { x1: 215, y1: 380, x2: 215, y2: 895, w: 4.6 },
-  { x1: -80, y1: 605, x2: 215, y2: 605, w: 5 },
-  { x1: 1375, y1: 595, x2: 1680, y2: 595, w: 5 },
-  { x1: 1375, y1: 380, x2: 1375, y2: 895, w: 4.6 },
-  { x1: 145, y1: 895, x2: 1465, y2: 895, w: 5.6 },
-  { x1: 365, y1: 895, x2: 530, y2: 780, w: 4.8 },
-  { x1: 925, y1: 1100, x2: 925, y2: 780, w: 4.8 },
-  { x1: 1255, y1: 885, x2: 1070, y2: 780, w: 4.8 },
-];
-
-/**
- * Şehrin büyüyen çevresi (dünya birimi): merkezi saran iç halka yol, dış halka yol ve ikisini
- * merkezin ana caddelerine bağlayan yollar. Aralarına mahalleler (apartman, bahçeli ev) dizilir.
- */
-const RING1 = { x: 88, zN: -66, zS: 70 };
-const RING2 = { x: 138, zN: -108, zS: 112 };
-const SUBURB_ROADS: { x1: number; z1: number; x2: number; z2: number; w: number }[] = [
-  { x1: -RING1.x, z1: RING1.zN, x2: RING1.x, z2: RING1.zN, w: 5.2 },
-  { x1: RING1.x, z1: RING1.zN, x2: RING1.x, z2: RING1.zS, w: 5.2 },
-  { x1: RING1.x, z1: RING1.zS, x2: -RING1.x, z2: RING1.zS, w: 5.2 },
-  { x1: -RING1.x, z1: RING1.zS, x2: -RING1.x, z2: RING1.zN, w: 5.2 },
-  { x1: -RING2.x, z1: RING2.zN, x2: RING2.x, z2: RING2.zN, w: 5.2 },
-  { x1: RING2.x, z1: RING2.zN, x2: RING2.x, z2: RING2.zS, w: 5.2 },
-  { x1: RING2.x, z1: RING2.zS, x2: -RING2.x, z2: RING2.zS, w: 5.2 },
-  { x1: -RING2.x, z1: RING2.zS, x2: -RING2.x, z2: RING2.zN, w: 5.2 },
-  { x1: -RING2.x, z1: -22, x2: -59, z2: -22, w: 5 },
-  { x1: 59, z1: -22, x2: RING2.x, z2: -22, w: 5 },
-  { x1: -RING2.x, z1: 29.5, x2: -65.5, z2: 29.5, w: 5 },
-  { x1: 66.5, z1: 29.5, x2: RING2.x, z2: 29.5, w: 5 },
-  { x1: -0.5, z1: RING2.zN, x2: -0.5, z2: -52, w: 5 },
-  { x1: 12.5, z1: 50, x2: 12.5, z2: RING2.zS, w: 5 },
-];
-/** Bütün yollar dünya biriminde (bina yerleşimi denetimi için) */
-const ALL_ROAD_SEGS = [
-  // Borsa'nın önündeki kısa giriş yolu binaya kadar gelir; bilerek sayılmaz
-  ...ROADWAYS.filter((r) => !(r.x1 === 795 && r.x2 === 795)).map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w })),
-  ...SUBURB_ROADS,
-];
-
-/**
- * Hazır modeller eski arsalardan biraz büyük gelebilir; bina yola taşıyorsa yoldan uzağa
- * kaydırılır ve gerekirse biraz küçültülür. (x, z) binanın dünya konumu.
- */
-function fitClearOfRoads(model: THREE.Object3D, x: number, z: number): void {
-  model.updateMatrixWorld(true);
-  const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
-  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-  model.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (!m.isMesh) return;
-    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
-    const b = m.geometry.boundingBox!.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
-    minX = Math.min(minX, b.min.x);
-    maxX = Math.max(maxX, b.max.x);
-    minZ = Math.min(minZ, b.min.z);
-    maxZ = Math.max(maxZ, b.max.z);
-  });
-  if (!Number.isFinite(minX)) return;
-  let ox = 0, oz = 0, sc = 1;
-  for (let it = 0; it < 24; it++) {
-    const rx0 = x + ox + minX * sc, rx1 = x + ox + maxX * sc, rz0 = z + oz + minZ * sc, rz1 = z + oz + maxZ * sc;
-    const cx = (rx0 + rx1) / 2, cz = (rz0 + rz1) / 2;
-    let px = 0, pz = 0, hit = false;
-    for (const r of ALL_ROAD_SEGS) {
-      const clear = r.w / 2 + 0.5;
-      let best = Infinity, bx = 0, bz = 0;
-      for (let i = 0; i <= 48; i++) {
-        const sx = r.x1 + ((r.x2 - r.x1) * i) / 48, sz = r.z1 + ((r.z2 - r.z1) * i) / 48;
-        const qx = Math.min(rx1, Math.max(rx0, sx)), qz = Math.min(rz1, Math.max(rz0, sz));
-        const d = Math.hypot(qx - sx, qz - sz);
-        if (d < best) {
-          best = d;
-          // Yoldan binaya doğru itme yönü (yol binanın içindeyse binanın merkezine doğru)
-          if (d > 1e-3) { bx = (qx - sx) / d; bz = (qz - sz) / d; }
-          else { const l = Math.hypot(cx - sx, cz - sz) || 1; bx = (cx - sx) / l; bz = (cz - sz) / l; }
-        }
-      }
-      if (best < clear) {
-        hit = true;
-        px += bx * (clear - best);
-        pz += bz * (clear - best);
-      }
-    }
-    if (!hit) break;
-    ox += px * 0.55;
-    oz += pz * 0.55;
-    sc = Math.max(0.62, sc * 0.96);
-  }
-  if (ox === 0 && oz === 0 && sc === 1) return;
-  model.position.x += ox;
-  model.position.z += oz;
-  model.scale.multiplyScalar(sc);
-}
-
-/** Çevre yollarında kendi kendine dolaşan arabaların halkaları (dünya birimi) */
-const AMBIENT_LOOPS: [number, number][][] = [
-  [[-RING1.x, RING1.zN], [RING1.x, RING1.zN], [RING1.x, RING1.zS], [-RING1.x, RING1.zS], [-RING1.x, RING1.zN]],
-  [[-RING2.x, RING2.zN], [RING2.x, RING2.zN], [RING2.x, RING2.zS], [-RING2.x, RING2.zS], [-RING2.x, RING2.zN]],
-];
-
-const ZONES = [
-  { x: 220, y: 105, w: 1150, h: 245, color: '#e9e4d6' },
-  { x: 70, y: 410, w: 415, h: 375, color: '#e3d7c0' },
-  { x: 1115, y: 410, w: 420, h: 375, color: '#94d26a' },
-  { x: 75, y: 825, w: 545, h: 325, color: '#cfc7b8' },
-  { x: 665, y: 825, w: 865, h: 325, color: '#9ed772' },
-  { x: 65, y: 115, w: 135, h: 230, color: '#8ccf5c' },
-  { x: 1395, y: 115, w: 140, h: 230, color: '#8ccf5c' },
-];
 
 const TONE_COLOR: Record<string, string> = {
   emerald: '#2ecc71',
@@ -402,6 +254,7 @@ export class ThreeCityScene {
   constructor(container: HTMLElement, handlers: CitySceneHandlers) {
     this.container = container;
     this.handlers = handlers;
+    retainKit();
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
 
@@ -555,10 +408,7 @@ export class ThreeCityScene {
     const sidewalk = mat('#d6d3cb');
     const asphalt = mat('#4b5057', { roughness: 0.95 });
     const lineY = mat('#e8c648', { emissive: new THREE.Color('#000000') });
-    const segs = [
-      ...ROADWAYS.map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w })),
-      ...SUBURB_ROADS,
-    ];
+    const segs: { x1: number; z1: number; x2: number; z2: number; w: number }[] = CITY_GRID.roads.map((r: CityRoadSegment) => ({ x1: r.x1, z1: r.z1, x2: r.x2, z2: r.z2, w: r.width }));
     for (const pass of ['side', 'asph', 'line'] as const) {
       for (const r of segs) {
         const dx = r.x2 - r.x1;
@@ -569,7 +419,7 @@ export class ThreeCityScene {
         const ang = Math.atan2(dz, dx);
         if (pass === 'side' || pass === 'asph') {
           const side = pass === 'side';
-          const width = side ? r.w + 1.6 : r.w;
+          const width = side ? r.w + ROAD_SIDEWALK_EXTRA * 2 : r.w;
           const height = side ? 0.14 : 0.1;
           const y0 = side ? 0.3 : 0.36;
           const m = box(len, height, width, side ? sidewalk : asphalt, cx, y0 - height / 2 + 0.0, cz);
@@ -644,74 +494,43 @@ export class ThreeCityScene {
     const a = this.assets;
     const rng = createRng('banliyo');
     const roads = SUBURB_ROADS;
-    const nearRoad = (x: number, z: number, gap: number) =>
-      roads.some((r) => {
-        const dx = r.x2 - r.x1;
-        const dz = r.z2 - r.z1;
-        const L2 = dx * dx + dz * dz || 1;
-        const t = Math.max(0, Math.min(1, ((x - r.x1) * dx + (z - r.z1) * dz) / L2));
-        return Math.hypot(x - (r.x1 + dx * t), z - (r.z1 + dz * t)) < gap;
-      });
-    const inCore = (x: number, z: number) => Math.abs(x) < 80 && z > -60 && z < 64;
     const apartments = ['building_C', 'building_D', 'building_E', 'building_F', 'building_G', 'building_B'];
     const houses = 'abcdefghijklmnopqrstu'.split('').map((c) => `building-type-${c}`);
-    const placed: [number, number][] = [];
     const objs: THREE.Object3D[] = [];
     const trees: THREE.Object3D[] = [];
-    for (const r of roads) {
-      const dx = r.x2 - r.x1;
-      const dz = r.z2 - r.z1;
-      const len = Math.hypot(dx, dz);
-      const ux = dx / len;
-      const uz = dz / len;
-      for (const side of [-1, 1]) {
-        const nx = -uz * side;
-        const nz = ux * side;
-        for (let d = 8; d < len - 8; d += 11 + rng() * 2) {
-          const x = r.x1 + ux * d + nx * 9.5;
-          const z = r.z1 + uz * d + nz * 9.5;
-          if (inCore(x, z) || nearRoad(x, z, 8) || placed.some(([px, pz]) => Math.hypot(px - x, pz - z) < 9.5)) continue;
-          if (Math.abs(x) > RING2.x + 4 || z < RING2.zN - 4 || z > RING2.zS + 4) continue;
-          placed.push([x, z]);
-          // Bina ön yüzü yola baksın (modellerin önü +z)
-          const rot = Math.atan2(-nx, -nz);
-          const close = Math.abs(x) <= RING1.x + 14 && z >= RING1.zN - 14 && z <= RING1.zS + 14;
-          let o: THREE.Group;
-          if (close && rng() < 0.75) {
-            o = fitModel(a, apartments[Math.floor(rng() * apartments.length)], 9, 1 + rng() * 0.25, rot);
-          } else if (rng() < 0.12) {
-            const t = new THREE.Group();
-            for (let k = 0; k < 3; k++) {
-              const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 4 + rng() * 2, 1, rng() * 6.3);
-              tr.position.set((rng() - 0.5) * 6, 0, (rng() - 0.5) * 6);
-              t.add(tr);
-            }
-            t.position.set(x, 0.05, z);
-            trees.push(t);
-            continue;
-          } else {
-            o = fitModel(a, houses[Math.floor(rng() * houses.length)], 8, 1, rot);
-          }
-          o.position.set(x, 0.3, z);
-          objs.push(o);
-          // Bahçe ağacı
-          if (rng() < 0.55) {
-            const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 3.2 + rng() * 1.6, 1, rng() * 6.3);
-            tr.position.set(x - nx * 3 + uz * 4.5 * (rng() < 0.5 ? 1 : -1), 0.05, z - nz * 3 - ux * 4.5);
-            trees.push(tr);
-          }
+    // Yer seçimi (yollardan uzaklık dahil) `citySuburbs.ts` içindedir; burada yalnızca model konur
+    const placed = walkSuburbSpots(rng, ({ x, z, ux, uz, nx, nz, rot, close }) => {
+      let o: THREE.Group;
+      if (close && rng() < 0.75) {
+        o = fitModel(a, apartments[Math.floor(rng() * apartments.length)], 9, 1 + rng() * 0.25, rot);
+      } else if (rng() < 0.12) {
+        const t = new THREE.Group();
+        for (let k = 0; k < 3; k++) {
+          const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 4 + rng() * 2, 1, rng() * 6.3);
+          tr.position.set((rng() - 0.5) * 6, 0, (rng() - 0.5) * 6);
+          t.add(tr);
         }
+        t.position.set(x, 0.05, z);
+        trees.push(t);
+        return;
+      } else {
+        o = fitModel(a, houses[Math.floor(rng() * houses.length)], 8, 1, rot);
       }
-    }
+      o.position.set(x, 0.3, z);
+      objs.push(o);
+      // Bahçe ağacı
+      if (rng() < 0.55) {
+        const tr = fitModel(a, `tree_${'ABCDE'[Math.floor(rng() * 5)]}`, 3.2 + rng() * 1.6, 1, rng() * 6.3);
+        tr.position.set(x - nx * 3 + uz * 4.5 * (rng() < 0.5 ? 1 : -1), 0.05, z - nz * 3 - ux * 4.5);
+        trees.push(tr);
+      }
+    });
     // Mahalle aralarına küçük korular
-    for (let i = 0; i < 110; i++) {
-      const x = -RING2.x + rng() * RING2.x * 2;
-      const z = RING2.zN + rng() * (RING2.zS - RING2.zN);
-      if (inCore(x, z) || nearRoad(x, z, 6) || placed.some(([px, pz]) => Math.hypot(px - x, pz - z) < 7.5)) continue;
+    walkGroveSpots(rng, placed, (x, z, i) => {
       const tr = fitModel(a, `tree_${'ABCDE'[i % 5]}`, 4 + rng() * 2.5, 1, rng() * 6.3);
       tr.position.set(x, 0.05, z);
       trees.push(tr);
-    }
+    });
     // Sokak lambaları dış halka boyunca
     const lamps: THREE.Object3D[] = [];
     for (const r of roads) {
@@ -744,18 +563,11 @@ export class ThreeCityScene {
     if (!this.assets || this.streetTreesBuilt) return;
     this.streetTreesBuilt = true;
     const rects = [
-      ...inp.buildings.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * 0.085) / 2 + 2.5, hd: (b.height * 0.085) / 2 + 2.5 })),
-      ...inp.blocks.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * 0.0893) / 2 + 2, hd: (b.height * 0.0893) / 2 + 2 })),
+      ...inp.buildings.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * CITY_CORE_FOOT) / 2 + 2.5, hd: (b.height * CITY_CORE_FOOT) / 2 + 2.5 })),
+      ...inp.blocks.map((b) => ({ x: wx(b.x), z: wz(b.y), hw: (b.width * CITY_BLOCK_FOOT) / 2 + 2, hd: (b.height * CITY_BLOCK_FOOT) / 2 + 2 })),
     ];
-    const segs = ROADWAYS.map((r) => ({ x1: wx(r.x1), z1: wz(r.y1), x2: wx(r.x2), z2: wz(r.y2), w: r.w }));
-    const onRoad = (x: number, z: number) =>
-      segs.some((r) => {
-        const dx = r.x2 - r.x1;
-        const dz = r.z2 - r.z1;
-        const L2 = dx * dx + dz * dz || 1;
-        const t = Math.max(0, Math.min(1, ((x - r.x1) * dx + (z - r.z1) * dz) / L2));
-        return Math.hypot(x - (r.x1 + dx * t), z - (r.z1 + dz * t)) < r.w / 2 + 1.6;
-      });
+    const onRoad = (x: number, z: number) => isOnRoad(x, z, 1.6);
+    const segs = CITY_GRID.roads.filter((r) => !isSuburbRoad(r));
     const rng = createRng('cadde-agac');
     const trees: THREE.Object3D[] = [];
     for (const r of segs) {
@@ -763,7 +575,7 @@ export class ThreeCityScene {
       const ux = (r.x2 - r.x1) / len;
       const uz = (r.z2 - r.z1) / len;
       for (const side of [-1, 1]) {
-        const off = r.w / 2 + 2.3;
+        const off = r.width / 2 + 2.3;
         for (let d = 5; d < len - 4; d += 8.5) {
           const x = r.x1 + ux * d - uz * off * side;
           const z = r.z1 + uz * d + ux * off * side;
@@ -1054,14 +866,14 @@ export class ThreeCityScene {
       seen.add(key);
       const modelSig = JSON.stringify([b.isUnlocked, b.level, b.visualMeta.companyTicker, b.visualMeta.isFactoryProducing, Boolean(b.constructionInfo)]);
       const labelSig = JSON.stringify([b.shortName, b.shortStatusLabel, b.statusTone, b.badgeCount ?? 0, b.isUnlocked]);
-      this.syncEntity(key, 'core', b.id, wx(b.x), wz(b.y), modelSig, labelSig, () => buildCore(b), (el) => this.fillCoreLabel(el, b), b.statusTone, !b.isUnlocked);
+      this.syncEntity(key, 'core', b.id, wx(b.x), wz(b.y), modelSig, labelSig, () => buildCore(b), (el) => this.fillCoreLabel(el, b), b.statusTone, !b.isUnlocked, { cx: wx(b.x), cz: wz(b.y), hw: (b.width * CITY_CORE_FOOT) / 2, hd: (b.height * CITY_CORE_FOOT) / 2 });
     }
     for (const bl of inp.blocks) {
       const key = `block:${bl.id}`;
       seen.add(key);
       const modelSig = JSON.stringify([bl.isUnlocked, bl.level ?? 1, bl.activeShopType ?? null, bl.floors, Boolean(bl.activeShopId), Boolean(bl.shopLot)]);
       const labelSig = JSON.stringify([bl.shortTagTR, bl.isUnlocked, bl.stockWarning ?? false, bl.pendingDeliveryCount ?? 0, bl.hasStockToSell ?? false]);
-      this.syncEntity(key, 'block', bl.id, wx(bl.x), wz(bl.y), modelSig, labelSig, () => buildBlock(bl), (el) => this.fillBlockLabel(el, bl), null, !bl.isUnlocked && !SHOP_SLOT_IDS.has(bl.id) && !bl.activeShopId && !bl.shopLot);
+      this.syncEntity(key, 'block', bl.id, wx(bl.x), wz(bl.y), modelSig, labelSig, () => buildBlock(bl), (el) => this.fillBlockLabel(el, bl), null, !bl.isUnlocked && !SHOP_SLOT_IDS.has(bl.id) && !bl.activeShopId && !bl.shopLot, blockParcel(bl));
       this.syncBubble(key, bl);
     }
     for (const [key, e] of this.entities) {
@@ -1072,6 +884,20 @@ export class ThreeCityScene {
     this.updateTraffic(inp);
     this.labelsDirty = true;
   }
+
+  /**
+   * Bina modeli yollardan ve parsel dışından uzak dursun: modelin ayak izi (parça sınır kutularının zarfı) ortak
+   * şehir ızgarasındaki bütün yollara karşı gerçek mesafeyle denetlenir; gerekirse parselin içinde kaydırılır,
+   * en sonda küçültülür. Çözüm yoksa en az kötü durum uygulanır ve `layoutIssues` listesine yazılır (QA okur).
+   */
+  private fitModelToParcel(model: THREE.Object3D, key: string, parcel: WorldRect): void {
+    const r = placeModelInParcel(model, parcel);
+    if (r.ok) this.layoutIssues.delete(key);
+    else this.layoutIssues.set(key, `${key}: ${r.problem}`);
+  }
+
+  /** Son yerleşimde yol boşluğu ya da ayak izi sorunu olan varlıklar (anahtar → açıklama) */
+  readonly layoutIssues = new Map<string, string>();
 
   private syncEntity(
     key: string,
@@ -1084,7 +910,8 @@ export class ThreeCityScene {
     build: () => THREE.Group,
     fillLabel: (el: HTMLDivElement) => void,
     tone: string | null,
-    faded: boolean
+    faded: boolean,
+    parcel: WorldRect
   ): void {
     let e = this.entities.get(key);
     if (!e) {
@@ -1120,7 +947,7 @@ export class ThreeCityScene {
       // Kodla çizilmiş ve hazır modelli binalardaki parçaları görünüşe göre birleştir (duman ayrı kalır)
       const model = mergeByLook(built, (o) => o.name === 'smoke');
       e.root.add(model);
-      fitClearOfRoads(model, x, z);
+      this.fitModelToParcel(model, key, parcel);
       e.model = model;
       e.smoke = undefined;
       this.shadowDirty = true;
@@ -1692,13 +1519,8 @@ export class ThreeCityScene {
     c.removeEventListener('pointermove', this.onPointerMove);
     c.removeEventListener('pointerleave', this.onPointerLeave);
     this.controls.dispose();
-    this.scene.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (mesh.isMesh) {
-        mesh.geometry?.dispose();
-        (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((m) => m?.dispose());
-      }
-    });
+    // Hazır modellerin ortak geometri/malzeme/dokularına dokunmaz (başka sahne ya da sonraki açılış kullanır)
+    disposeObject(this.scene);
     disposeKit();
     this.renderer.dispose();
     c.remove();

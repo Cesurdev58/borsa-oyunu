@@ -326,17 +326,20 @@ export function trainShopStaff(state: SimulationState, shopId: string, reservedC
   const count = untrainedStaffCount(shop);
   if (count <= 0) return { success: false, message: `${shop.nameTR}: bütün çalışanlar zaten eğitimli.`, cost: 0 };
   const fullCost = count * trainingCostPerPerson(shop);
-  // Kilometre taşı ödülü: ücretsiz eğitim hakkı varsa bir kez kullanılır
-  const free = (state.milestones?.freeTrainings ?? 0) > 0;
+  // Ücretsiz eğitim: önce kilometre taşı hakkı, sonra eğitim bileti (başarım / haftalık hedef / prestij ödülü)
+  const freeMilestone = (state.milestones?.freeTrainings ?? 0) > 0;
+  const useTicket = !freeMilestone && (state.trainingTickets ?? 0) > 0;
+  const free = freeMilestone || useTicket;
   const cost = free ? 0 : fullCost;
+  if (useTicket) state.trainingTickets = (state.trainingTickets ?? 0) - 1;
   if (!free && !payFromShopThenPlayer(state, shop, cost, reservedCash)) {
     return { success: false, message: `Eğitim için ${tl(cost)} gerekiyor.`, cost: 0 };
   }
-  if (free && state.milestones) state.milestones.freeTrainings -= 1;
+  if (freeMilestone && state.milestones) state.milestones.freeTrainings -= 1;
   shop.trainedStaff = shop.staffCount;
   return {
     success: true,
-    message: `${shop.nameTR}: ${count} çalışan eğitim aldı${free ? ' (ücretsiz eğitim hakkıyla)' : ''}. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
+    message: `${shop.nameTR}: ${count} çalışan eğitim aldı${free ? (useTicket ? ' (eğitim biletiyle bedava)' : ' (ücretsiz eğitim hakkıyla)') : ''}. Müşteriler daha çok harcıyor (+%${TRAINING_BASKET_PCT} sepet).`,
     cost,
   };
 }

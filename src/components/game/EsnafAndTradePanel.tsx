@@ -10,6 +10,7 @@
 
 import { insuranceDailyPremium, trainedStaffCount } from '../../engine/CityServices';
 import { shopHoursLabel, shopOpenStatus } from '../../data/shopHours';
+import { firstShopCostMultiplier } from '../../engine/PrestigeEngine';
 import { getManagerQuote } from '../../engine/ShopManager';
 import { getFirstEmployeeQuote, getOpeningAdvice } from '../../engine/ShopOnboarding';
 import { FIRST_EMPLOYEE_HIRE_FEE_BUFE, OWNER_STAFF_CAPACITY } from '../../data/gameBalance';
@@ -1482,7 +1483,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 {ALL_SHOP_TEMPLATES.map((tpl) => {
                   const totalCost =
-                    tpl.openingCost + tpl.decorationCost + newShopCashFloat;
+                    (tpl.openingCost + tpl.decorationCost) * firstShopCostMultiplier(state) + newShopCashFloat;
                   const selected = newShopType === tpl.shopType;
                   return (
                     <button
@@ -1501,7 +1502,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         {tpl.nameTR}
                       </div>
                       <div className="text-sm tabular-nums text-amber-800 font-bold mt-0.5">
-                        {formatCurrency(tpl.openingCost + tpl.decorationCost)}
+                        {formatCurrency((tpl.openingCost + tpl.decorationCost) * firstShopCostMultiplier(state))}
                       </div>
                       <div
                         data-testid={`shop-type-hours-${tpl.shopType}`}
@@ -1535,8 +1536,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <span>Toplam</span>
                   <span className="tabular-nums text-amber-800">
                     {formatCurrency(
-                      selectedShopTemplateForNew.openingCost +
-                        selectedShopTemplateForNew.decorationCost +
+                      (selectedShopTemplateForNew.openingCost +
+                        selectedShopTemplateForNew.decorationCost) * firstShopCostMultiplier(state) +
                         newShopCashFloat
                     )}
                   </span>

@@ -12,7 +12,8 @@ import { deriveDeterministicOfflineWarningItems } from './city/questAndHudLogic'
 interface OfflineProgressModalProps {
   summary: OfflineProgressSummary | null;
   isOpen: boolean;
-  onDismiss: () => void;
+  /** `resume` true ise oyun hemen devam eder; aksi hâlde (özet kapanırken) duraklı kalır */
+  onDismiss: (resume?: boolean) => void;
   formatCurrency: (val: number) => string;
 }
 
@@ -52,7 +53,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
         aria-label="Çevrimdışı İlerleme Özeti"
         data-testid="offline-progress-modal"
         className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(18,28,68,.6)] p-4"
-        onClick={onDismiss}
+        onClick={() => onDismiss()}
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -62,7 +63,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
             <button
               type="button"
               aria-label="Çevrimdışı Özetini Kapat"
-              onClick={onDismiss}
+              onClick={() => onDismiss()}
               className="absolute right-3 top-3 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white"
             >
               <X className="w-5 h-5" />
@@ -115,6 +116,27 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
               {summary.newsGenerated > 0 && <span className="g-pill bg-[var(--g-surface-2)]">{summary.newsGenerated} yeni haber</span>}
               {summary.ordersExpired > 0 && <span className="g-pill bg-[#ffe9e8] text-[var(--g-red-dark)]">{summary.ordersExpired} emrin süresi doldu</span>}
             </div>
+            {summary.efficiency !== undefined && summary.efficiency > 0 && (
+              <div className="g-tip" data-testid="offline-efficiency-note">
+                Uzun süre uzak kalınca kazanç azalır: ilk 2 saat %100, 2–4 saat %75, 4–8 saat %50, 8–12 saat %25.
+                Bu sefer ortalama verim <strong>%{Math.round(summary.efficiency * 100)}</strong>
+                {summary.overLimit ? ' (12 saatten fazlası sayılmadı)' : ''}.
+              </div>
+            )}
+            {summary.pause && (
+              <div
+                role="alert"
+                data-testid="offline-pause-card"
+                className="rounded-2xl border-2 border-[var(--g-red)] bg-[#fff1f0] p-3 space-y-1"
+              >
+                <div className="font-extrabold text-[var(--g-red-dark)]">Faaliyetler durduruldu (Gün {summary.pause.day})</div>
+                <div className="text-[13px] font-semibold text-[var(--g-ink)]" data-testid="offline-pause-message">{summary.pause.message}</div>
+                <div className="text-[13px] text-[var(--g-muted)]">{summary.pause.advice}</div>
+                <div className="text-[13px] text-[var(--g-muted)]">
+                  Sen yokken iflas edilmesin diye oyun burada bekledi; kalan süre sayılmadı.
+                </div>
+              </div>
+            )}
             {summary.warnings.length > 0 && (
               <div className="g-tip flex-col !gap-1">
                 {deriveDeterministicOfflineWarningItems(
@@ -128,16 +150,37 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
             )}
           </div>
 
-          <div className="px-4 pb-4">
-            <button
-              type="button"
-              data-testid="offline-modal-continue-btn"
-              onClick={onDismiss}
-              className="g-btn g-btn-gold w-full"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Topla ve devam et</span>
-            </button>
+          <div className="px-4 pb-4 space-y-2">
+            {summary.pause ? (
+              <>
+                <button
+                  type="button"
+                  data-testid="offline-pause-fix-btn"
+                  onClick={() => onDismiss(false)}
+                  className="g-btn g-btn-primary w-full"
+                >
+                  <span>Önce ilgileneyim (oyun duraklı kalsın)</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="offline-pause-resume-btn"
+                  onClick={() => onDismiss(true)}
+                  className="g-btn g-btn-secondary w-full"
+                >
+                  <span>Yine de devam et</span>
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                data-testid="offline-modal-continue-btn"
+                onClick={() => onDismiss(true)}
+                className="g-btn g-btn-gold w-full"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Topla ve devam et</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

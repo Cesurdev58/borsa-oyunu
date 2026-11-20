@@ -7,6 +7,7 @@
  */
 
 import { consumeShopOpenDiscount, previewShopOpenDiscount } from './Milestones';
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
 import {
@@ -83,8 +84,11 @@ export class ShopOperations {
     const fullSetupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
     // Kilometre taşı ödülü: sonraki kişisel dükkân açılışında indirim (şirket şubesi ve ilk dükkân hariç).
     // İndirim yalnızca açılış başarılı olursa harcanır (aşağıda); burada sadece önizlenir.
+    // İlk dükkânda ise prestij indirimi uygulanır (yıldızı olan oyuncu; ikisi birbirini dışlar).
     const discountApplies = state.playerCompany === null && ts.shops.length > 0;
-    const setupCost = discountApplies ? previewShopOpenDiscount(state, fullSetupCost) : fullSetupCost;
+    const setupCost = discountApplies
+      ? previewShopOpenDiscount(state, fullSetupCost)
+      : Number((fullSetupCost * (state.playerCompany ? 1 : firstShopCostMultiplier(state))).toFixed(2));
     const initialWorkingCash = Number(
       Math.max(0, params.initialWorkingCash ?? Math.round(setupCost * 0.25)).toFixed(2)
     );

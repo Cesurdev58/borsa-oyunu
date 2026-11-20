@@ -10,6 +10,7 @@ import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
 import { LifestyleModal } from './LifestyleModal';
+import { AchievementsModal } from './AchievementsModal';
 import { CityServicesModal, type CityServiceHandlers } from './CityServicesModal';
 import type { CityServiceId } from './city/cityVisualTypes';
 import { PrestigeModal } from './PrestigeModal';
@@ -76,6 +77,8 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onResolveDecision?: (choiceId: 'A' | 'B') => void;
   /** Gösteriş harcaması (engine/LifestyleEngine.ts) */
   onBuyLifestyleItem?: (itemId: string) => void;
+  /** Prestij puanıyla avantaj al (engine/PrestigeEngine.ts) */
+  onBuyPrestigePerk?: (perkId: string) => void;
   /** Prestij: yeni şehirde başla (engine/PrestigeEngine.ts) */
   onStartNewCity?: () => void;
   /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
@@ -102,7 +105,7 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onManualSave: () => void;
   saveManagement?: SaveManagementProps;
   onResetSimulation: () => void;
-  onDismissOfflineModal: () => void;
+  onDismissOfflineModal: (resume?: boolean) => void;
   onSwitchToDeveloperDashboard: () => void;
 }
 
@@ -115,6 +118,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onClaimCareerGoal,
   onUpdateOnboarding,
   onBuyLifestyleItem,
+  onBuyPrestigePerk,
   onSellShopStock,
   onBuyUsedUpgrade,
   onFundProject,
@@ -198,6 +202,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [isLifestyleOpen, setIsLifestyleOpenRaw] = useState(false);
   const [openCityService, setOpenCityServiceRaw] = useState<CityServiceId | null>(null);
   const [isPrestigeOpen, setIsPrestigeOpenRaw] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpenRaw] = useState(false);
 
   // Pencere koordinasyonu (plan 4-H): biri açılırken diğerleri kapanır; üst üste açılmaz.
   const closeOverlaysExcept = (keep: OverlayId) => {
@@ -209,6 +214,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     if (keep !== 'lifestyle') setIsLifestyleOpenRaw(false);
     if (keep !== 'cityService') setOpenCityServiceRaw(null);
     if (keep !== 'prestige') setIsPrestigeOpenRaw(false);
+    if (keep !== 'achievements') setIsAchievementsOpenRaw(false);
   };
   const setIsGuideOpen = (v: boolean) => { if (v) closeOverlaysExcept('guide'); setIsGuideOpenRaw(v); };
   const setSelectedBuildingId = (v: CityBuildingId | null) => { if (v) closeOverlaysExcept('building'); setSelectedBuildingIdRaw(v); };
@@ -218,6 +224,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const setIsLifestyleOpen = (v: boolean) => { if (v) closeOverlaysExcept('lifestyle'); setIsLifestyleOpenRaw(v); };
   const setOpenCityService = (v: CityServiceId | null) => { if (v) closeOverlaysExcept('cityService'); setOpenCityServiceRaw(v); };
   const setIsPrestigeOpen = (v: boolean) => { if (v) closeOverlaysExcept('prestige'); setIsPrestigeOpenRaw(v); };
+  const setIsAchievementsOpen = (v: boolean) => { if (v) closeOverlaysExcept('achievements'); setIsAchievementsOpenRaw(v); };
   const overlayFlags: OverlayFlags = {
     guide: isGuideOpen,
     settings: isSettingsModalOpen,
@@ -227,6 +234,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     lifestyle: isLifestyleOpen,
     cityService: openCityService !== null,
     prestige: isPrestigeOpen,
+    achievements: isAchievementsOpen,
   };
   const overlayOpen = anyOverlayOpen(overlayFlags);
 
@@ -432,7 +440,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const offlineModalOpen = Boolean(
     state.lastOfflineSummary &&
       !state.lastOfflineSummaryDismissed &&
-      state.lastOfflineSummary.gameMinutesAdvanced > 0
+      (state.lastOfflineSummary.gameMinutesAdvanced > 0 || Boolean(state.lastOfflineSummary.pause))
   );
 
   const handleRestockShop = useCallback(
@@ -569,6 +577,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         onOpenRichList={() => setIsRichListOpen(true)}
         reputation={hasShop ? state.tradeState?.tradeReputationScore : undefined}
         onOpenLifestyle={() => setIsLifestyleOpen(true)}
+        onOpenAchievements={hasShop ? () => setIsAchievementsOpen(true) : undefined}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}
         formatCurrency={formatCurrency}
       />
@@ -621,6 +630,12 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onSetInsurance={onSetInsurance}
           onSetCargo={onSetCargo}
           onClose={() => setOpenCityService(null)}
+        />
+        <AchievementsModal
+          open={isAchievementsOpen}
+          state={state}
+          onBuyPerk={onBuyPrestigePerk}
+          onClose={() => setIsAchievementsOpen(false)}
         />
         <LifestyleModal
           open={isLifestyleOpen}

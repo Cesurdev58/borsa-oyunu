@@ -10,6 +10,8 @@
  */
 
 import { defaultMilestones, sanitizeMilestones } from './Milestones';
+import { sanitizeAchievements } from './Achievements';
+import { buyPerk } from './PrestigeEngine';
 import {
   defaultOnboarding,
   hasProgress as hasOnboardingProgress,
@@ -771,6 +773,9 @@ export class SimulationEngine {
       autoInvest: cloned.autoInvest,
       records: cloned.records,
       prestige: cloned.prestige,
+      achievements: sanitizeAchievements(cloned.achievements),
+      trainingTickets: Number.isFinite(cloned.trainingTickets) ? Math.max(0, Math.floor(cloned.trainingTickets as number)) : undefined,
+      decorations: Number.isFinite(cloned.decorations) ? Math.max(0, Math.floor(cloned.decorations as number)) : undefined,
       wealthTax: cloned.wealthTax,
       lastDayReport: cloned.lastDayReport,
       worldEvents: cloned.worldEvents,
@@ -1787,6 +1792,11 @@ export class SimulationEngine {
   /** Portföy yöneticisini aç/kapat, kenarda kalacak parayı ayarla. */
   public configureAutoInvest(params: { enabled?: boolean; reserve?: number }): { success: boolean; message: string } {
     return AutoInvestEngine.configureAutoInvest(this, params);
+  }
+
+  /** Prestij puanıyla kalıcı avantaj alır (engine/PrestigeEngine.ts). */
+  public buyPrestigePerk(perkId: string): { success: boolean; message: string } {
+    return buyPerk(this.state, perkId);
   }
 
   /** Gösteriş harcaması yapar (engine/LifestyleEngine.ts). */

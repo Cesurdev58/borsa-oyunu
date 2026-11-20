@@ -8,6 +8,7 @@
  * Yalnızca modelleri, katalogu, denge sabitlerini ve alt motorları (cüzdan, defter) içe aktarır (döngü oluşmaz).
  */
 import { previewShopOpenDiscount } from './Milestones';
+import { firstShopCostMultiplier } from './PrestigeEngine';
 import {
   FIRST_EMPLOYEE_HIRE_FEE_BUFE,
   OWNER_STAFF_CAPACITY,
@@ -125,7 +126,10 @@ export function getOpeningAdvice(
   const tpl = SHOP_TEMPLATES[shopType];
   const fullSetupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
   const hasShopAlready = (state.tradeState?.shops.length ?? 0) > 0 && state.playerCompany === null;
-  const setupCost = hasShopAlready ? previewShopOpenDiscount(state, fullSetupCost) : fullSetupCost;
+  // İlk dükkân: prestij indirimi; sonraki dükkânlar: kilometre taşı indirimi (ikisi birbirini dışlar)
+  const setupCost = hasShopAlready
+    ? previewShopOpenDiscount(state, fullSetupCost)
+    : Number((fullSetupCost * firstShopCostMultiplier(state)).toFixed(2));
   const workingCash = Number(Math.max(0, workingCashInput ?? Math.round(setupCost * 0.25)).toFixed(2));
   const personalAfter = Math.max(0, WalletEngine.freeCash(state) - reservedCash - Math.max(0, setupCost - WalletEngine.restrictedFund(state)) - workingCash);
   const liquidAfterOpening = Number((workingCash + personalAfter).toFixed(2));

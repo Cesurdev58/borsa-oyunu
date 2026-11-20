@@ -108,6 +108,13 @@ export function recommendedWorkingCapital(shopType: ShopType): number {
   return Math.round(((setup / RECOMMENDED_WORKING_CAPITAL_SETUP_BASE) * RECOMMENDED_WORKING_CAPITAL_BUFE) / 1000) * 1000;
 }
 
+/** Bir günlük (temel kapasiteli) satışa yetecek stokun maliyeti; 100 ₺'ye yuvarlı. Açılış tavsiyesi ve yükseltme rezervi kullanır. */
+export function oneDayStockCost(shopType: ShopType): number {
+  const tpl = SHOP_TEMPLATES[shopType];
+  const grossShare = 1 - tpl.defaultGrossMarginPct / (100 + tpl.defaultGrossMarginPct);
+  return Math.round((tpl.baseCustomerCapacity * tpl.avgBasketValueTL * grossShare) / 100) * 100;
+}
+
 export function getOpeningAdvice(
   state: SimulationState,
   shopType: ShopType,
@@ -122,8 +129,7 @@ export function getOpeningAdvice(
   const ownerWorks = startsWithOwnerWorking(state, shopType);
   const staff = ownerWorks ? 0 : tpl.minStaffRequired;
   const dailyFixedCost = Number((tpl.dailyRentBase + 120 + staff * tpl.staffDailyWagePerPerson).toFixed(2));
-  const grossShare = 1 - tpl.defaultGrossMarginPct / (100 + tpl.defaultGrossMarginPct);
-  const firstStockCost = Math.round((tpl.baseCustomerCapacity * tpl.avgBasketValueTL * grossShare) / 100) * 100;
+  const firstStockCost = oneDayStockCost(shopType);
   const runwayDays = Math.max(0, Math.floor((liquidAfterOpening - firstStockCost) / Math.max(1, dailyFixedCost)));
   const recommended = recommendedWorkingCapital(shopType);
   return {

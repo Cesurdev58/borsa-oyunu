@@ -150,6 +150,8 @@ import {
 import { effectiveRealMinutesPerGameDay } from './TempoRules';
 import * as CareerGoals from './CareerGoals';
 import * as ShopUpgrades from './ShopUpgrades';
+import * as ShopUpgradeReserve from './ShopUpgradeReserve';
+import type { UpgradeCashAssessment } from './ShopUpgradeReserve';
 import * as LifestyleEngine from './LifestyleEngine';
 import * as CityServices from './CityServices';
 import * as AutoInvestEngine from './AutoInvestEngine';
@@ -1849,13 +1851,23 @@ export class SimulationEngine {
   }
 
   /** Dükkâna küçük yükseltme alır (engine/ShopUpgrades.ts). */
-  public buyShopUpgrade(shopId: string, upgradeId: string): { success: boolean; message: string; cost: number } {
+  public buyShopUpgrade(
+    shopId: string,
+    upgradeId: string
+  ): { success: boolean; message: string; cost: number; assessment?: UpgradeCashAssessment } {
+    // Nakit güvenlik rezervi: ALIMI ENGELLEMEZ; satın almadan ÖNCE hesaplanır (sonrası nakit değişmiş olur).
+    const assessment = ShopUpgradeReserve.assessUpgradeCash(this.state, shopId, upgradeId, this.getReservedCash());
     const res = ShopUpgrades.buyShopUpgrade(this.state, shopId, upgradeId, this.getReservedCash());
-    if (res.success) {
-      this.recalculateFinancialsAndStages();
-      this.pendingDailyActions.push(`[Dükkân] ${res.message}`);
-    }
-    return res;
+    if (!res.success) return res;
+    this.recalculateFinancialsAndStages();
+    const message = assessment?.belowReserve ? `${res.message} DİKKAT: ${assessment.warningTR}` : res.message;
+    this.pendingDailyActions.push(`[Dükkân] ${message}`);
+    return { ...res, message, assessment: assessment ?? undefined };
+  }
+
+  /** Yükseltme sonrası nakit güvenlik rezervi (engel değil, yalnızca uyarı verisi). Arayüz alım öncesi gösterir. */
+  public getUpgradeCashAssessment(shopId: string, upgradeId: string): UpgradeCashAssessment | null {
+    return ShopUpgradeReserve.assessUpgradeCash(this.state, shopId, upgradeId, this.getReservedCash());
   }
 
   /** Sıradaki kariyer hedefinin ödülünü alır (engine/CareerGoals.ts). */

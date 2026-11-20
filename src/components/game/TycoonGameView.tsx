@@ -58,6 +58,9 @@ import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
 import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
+import { TurkeyMapScreen } from './turkeyMap/TurkeyMapScreen';
+import type { CityId, TurkeyMapViewState } from '../../models/cities';
+import type { ShopType } from '../../models/trade';
 import { DecisionCard } from './DecisionCard';
 import { DayReportCard } from './DayReportCard';
 import { WorldEventCard } from './WorldEventCard';
@@ -81,6 +84,9 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
   /** Rehberin kayıtlı durumunu günceller (adım bitti, atla, yeniden başlat) */
   onUpdateOnboarding?: (action: OnboardingAction) => void;
+  onSetTurkeyMapView?: (view: TurkeyMapViewState) => void;
+  onSelectMapCity?: (cityId: CityId | undefined) => void;
+  onOpenShopInCity?: (cityId: CityId, shopType: ShopType) => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -112,6 +118,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onResolveDecision,
   onClaimCareerGoal,
   onUpdateOnboarding,
+  onSetTurkeyMapView,
+  onSelectMapCity,
+  onOpenShopInCity,
   onBuyLifestyleItem,
   onSellShopStock,
   onBuyUsedUpgrade,
@@ -180,6 +189,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
   const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
+  // Türkiye haritası şimdilik 3D şehirle yan yana çalışır; seçim tarayıcıda saklanır (varsayılan: 3D şehir).
+  const [mapMode, setMapMode] = useState<boolean>(() => {
+    try { return typeof window !== 'undefined' && window.localStorage.getItem('city_map_mode') === 'harita'; } catch { return false; }
+  });
+  const changeMapMode = (next: boolean) => {
+    setMapMode(next);
+    try { window.localStorage.setItem('city_map_mode', next ? 'harita' : 'sehir'); } catch { /* yok say */ }
+  };
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
   const [selectedBuildingId, setSelectedBuildingIdRaw] =
@@ -628,7 +645,29 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onClose={() => setIsLifestyleOpen(false)}
         />
 
-        {activeBottomTab === 'city' ? (
+        {activeBottomTab === 'city' && mapMode && onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
+          <TurkeyMapScreen
+            state={state}
+            formatCurrency={formatCurrency}
+            reservedCash={reservedCash}
+            onExit={() => changeMapMode(false)}
+            onSetMapView={onSetTurkeyMapView}
+            onSelectMapCity={onSelectMapCity}
+            onOpenShopInCity={onOpenShopInCity}
+            onGoToCity={() => handleSelectTab('portfolio')}
+          />
+        ) : activeBottomTab === 'city' ? (
+          <>
+          {onSetTurkeyMapView && (
+            <button
+              type="button"
+              data-testid="city-open-turkey-map-btn"
+              onClick={() => changeMapMode(true)}
+              className="g-btn g-btn-navy fixed right-3 top-[132px] z-20 min-h-[44px] px-3 text-[14px]"
+            >
+              Türkiye Haritası
+            </button>
+          )}
           <CityNeighborhoodView
             state={state}
             ipoEligibility={ipoEligibility}
@@ -656,6 +695,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               onTransferShopCash({ shopId, direction: 'FROM_SHOP', amount });
             }}
           />
+          </>
         ) : (
           <section
             key={activeBottomTab}

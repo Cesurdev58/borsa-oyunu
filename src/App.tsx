@@ -884,6 +884,31 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleSetTurkeyMapView = useCallback(
+    (view: { panX: number; panY: number; zoom: number }) => {
+      engine.setTurkeyMapView(view);
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleSelectMapCity = useCallback(
+    (cityId: string | undefined) => {
+      engine.setSelectedMapCity(cityId);
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
+  const handleOpenShopInCity = useCallback(
+    (cityId: string, shopType: ShopType) => {
+      const res = engine.openShop({ shopType, cityId });
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleShopManagerResult = useCallback(
     (res: { success: boolean; message: string }) => {
       setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
@@ -1342,6 +1367,9 @@ export default function App() {
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
         onUpdateOnboarding={handleUpdateOnboarding}
+        onSetTurkeyMapView={handleSetTurkeyMapView}
+        onSelectMapCity={handleSelectMapCity}
+        onOpenShopInCity={handleOpenShopInCity}
         onBuyLifestyleItem={handleBuyLifestyleItem}
         onSellShopStock={handleSellShopStock}
         onBuyUsedUpgrade={handleBuyUsedUpgrade}

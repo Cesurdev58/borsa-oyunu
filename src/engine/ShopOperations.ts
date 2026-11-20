@@ -9,6 +9,7 @@
 import { firstShopGateStatus } from './FirstShopGate';
 import { startsWithOwnerWorking } from './ShopOnboarding';
 import { isCitySelectionPending, resolveNewShopCityId } from './CityMigration';
+import { isCityId } from '../data/cityDefinitions';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -46,6 +47,8 @@ export class ShopOperations {
       shopType: ShopType;
       customNameTR?: string;
       cityBlockId?: string;
+      /** Haritadan seçilen şehir; geçersizse merkez/başlangıç şehri kullanılır. */
+      cityId?: string;
       initialWorkingCash?: number;
       reservedOrderCash: number;
     }
@@ -186,7 +189,7 @@ export class ShopOperations {
         params.customNameTR?.trim() ||
         `${tpl.nameTR} #${branchNumber}`,
       cityBlockId: params.cityBlockId || tpl.defaultCityBlockId,
-      cityId: resolveNewShopCityId(state),
+      cityId: isCityId(params.cityId) ? params.cityId : resolveNewShopCityId(state),
       level: 1,
       openedDay: state.day,
       isCompanyBranch,

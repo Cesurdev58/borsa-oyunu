@@ -45,11 +45,17 @@ export const MAP_HEIGHT = Math.round(
   (MAP_LATITUDE_MAX - MAP_LATITUDE_MIN) * MAP_SCALE
 );
 
-export function projectToMap(latitude: number, longitude: number): CityMapPosition {
+/** Yuvarlanmamış izdüşüm: harita çizimi (kıyı çizgisi) şehir noktalarıyla aynı formülü kullanır. */
+export function projectToMapPrecise(latitude: number, longitude: number): CityMapPosition {
   return {
-    x: Math.round((longitude - MAP_LONGITUDE_MIN) * MAP_LONGITUDE_SQUEEZE * MAP_SCALE),
-    y: Math.round((MAP_LATITUDE_MAX - latitude) * MAP_SCALE),
+    x: (longitude - MAP_LONGITUDE_MIN) * MAP_LONGITUDE_SQUEEZE * MAP_SCALE,
+    y: (MAP_LATITUDE_MAX - latitude) * MAP_SCALE,
   };
+}
+
+export function projectToMap(latitude: number, longitude: number): CityMapPosition {
+  const p = projectToMapPrecise(latitude, longitude);
+  return { x: Math.round(p.x), y: Math.round(p.y) };
 }
 
 // ---------------------------------------------------------------------------

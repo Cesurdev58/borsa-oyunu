@@ -197,6 +197,15 @@ Plan: `ai-workflow/TURKIYE_GECIS_SARTNAMESI.md` (şartname), `ai-workflow/TURKIY
 - **Kayıt şeması 6 ve şehir geçişi** (`engine/CityMigration.ts`): `cityId`'si eksik/bozuk dükkân varsa `state.cityMigration.status = 'PENDING'` olur; **oyuncu merkez şehri seçene kadar gün/saat, çevrimdışı ilerleme ve dükkân açma durur** (`isCitySelectionPending`). `HeadquartersSelectionModal.tsx` (App) seçtirir → `engine.completeHeadquartersSelection`. Dükkânsız eski kayıt sormadan `COMPLETED`. Migration idempotent. Yükleme sırasında orijinal kayıt `SimulationStore.BACKUP_PRE_CITY_KEY` anahtarına bir kez yedeklenir (ezilmez). Testi `src/tests/city/cityMigration.test.ts`, `headquartersSelectionModal.test.ts`.
 - Şema sürümünü kontrol eden testler sabit sayı yerine `SimulationStore.CURRENT_SCHEMA_VERSION` kullanır.
 
+## Türkiye haritası arayüzü (PR 2: Faz 3–4)
+
+- **Harita çizimi:** `data/turkeyMapGeometry.ts` (otomatik üretilir: `scripts/build-turkey-map.ts`), kaynak Natural Earth (kamu malı) / `world-atlas` (ISC); lisans notu `data/TURKEY_MAP_SOURCE.md`. Şehir noktalarıyla aynı izdüşüm (`projectToMapPrecise`); çalışma zamanında ağ isteği yok.
+- **Bileşenler** (`components/game/turkeyMap/`): `mapView.ts` (kamera matematiği, saf), `TurkeyMap.tsx` (SVG, sürükle/pinch/tekerlek, işaretler `memo`), `CityInfoSheet.tsx` (alt panel), `TurkeyMapScreen.tsx` (birleştirir). Kamera `state.turkeyMapView`, seçili şehir `state.selectedMapCityId` (motor: `setTurkeyMapView`, `setSelectedMapCity`); hareket bitince kayda yazılır.
+- **İşaret kuralı:** mağaza yok = gri (tıklanabilir, `disabled`/`aria-disabled` yok), mağaza var = beyaz, merkez = altın halka, sorun = kırmızı halka (`CityOpeningQuote.shopHasIssue`: rafı boş + yolda mal yok, ya da müdür kasası boş). Dokunma alanı 44×44 px (`MARKER_HIT_PX`). Şehir adı haritada yazılı durmaz; yalnızca `aria-label` ve panelde.
+- **Panel maliyeti gerçektir:** `engine/CityOpeningQuote.getCityOpeningQuote` = `ShopOnboarding.getOpeningAdvice` + toptancı tekliflerinden teslimat günü; `openShop` aynı tutarı düşer (testle doğrulanır). Şehir çarpanları henüz açılış bedelini değiştirmez (Faz 7). `openShop({cityId})` dükkânı seçilen şehre kurar.
+- **Yan yana çalışma:** Şehir sekmesinde "Türkiye Haritası" düğmesi (`city-open-turkey-map-btn`) haritaya geçirir, "3D Şehre Dön" geri getirir; seçim `localStorage` `city_map_mode`. 3D şehir silinmedi. Testi `src/tests/city/turkeyMap.test.ts`.
+- **Doğrulanmadı (gerçek cihaz):** dokunmatik pinch/sürükleme hissi, düğme yerleşimi (fixed `top-[132px]`), panelin küçük ekranda görünümü. Eklenmedi: "Pazar Araştırması" (mekaniği yok).
+
 ## Şehir haritası (en çok karıştırılan kısım)
 
 Harita 1600×1200 sanal birimlik bir sahnedir ve `src/components/game/city/` altında çizilir.

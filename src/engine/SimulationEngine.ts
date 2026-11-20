@@ -26,6 +26,7 @@ import {
   prepareCityMigration,
   type HeadquartersSelectionResult,
 } from './CityMigration';
+import { isCityId } from '../data/cityDefinitions';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
@@ -807,6 +808,17 @@ export class SimulationEngine {
     nowISO: string = new Date().toISOString()
   ): HeadquartersSelectionResult {
     return applyHeadquartersSelection(this.state, cityId, nowISO);
+  }
+
+  /** Harita kamerası (kayıtta saklanır; sınırlar `clampMapView` ile haritada uygulanır). */
+  public setTurkeyMapView(view: { panX: number; panY: number; zoom: number }): void {
+    if (![view.panX, view.panY, view.zoom].every(Number.isFinite)) return;
+    this.state.turkeyMapView = { panX: view.panX, panY: view.panY, zoom: view.zoom };
+  }
+
+  /** Haritada seçili şehir (alt panel açık = dolu, kapalı = undefined). */
+  public setSelectedMapCity(cityId: string | undefined): void {
+    this.state.selectedMapCityId = isCityId(cityId) ? cityId : undefined;
   }
 
   public getNextScheduledEvent(): {
@@ -1734,6 +1746,8 @@ export class SimulationEngine {
     shopType: ShopType;
     customName?: string;
     cityBuildingId?: string;
+    /** Haritadan seçilen şehir (CityId). */
+    cityId?: string;
     districtLabel?: string;
     initialCashFloat?: number;
   }): { success: boolean; message: string; shop?: ShopInstance } {
@@ -1741,6 +1755,7 @@ export class SimulationEngine {
       shopType: params.shopType,
       customNameTR: params.customName,
       cityBlockId: params.cityBuildingId,
+      cityId: params.cityId,
       initialWorkingCash: params.initialCashFloat,
       reservedOrderCash: this.getReservedCash(),
     });

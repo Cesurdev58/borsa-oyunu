@@ -26,6 +26,7 @@ import { shopStaffRatio } from './ShopOnboarding';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
 import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
+import { milestoneCustomerMultiplier } from './Milestones';
 import { shopHoursFor } from '../data/shopHours';
 import type { SimulationState } from '../models/simulation';
 import type { ShopInstance, ShopLiveDay, TradeUniverseState } from '../models/trade';
@@ -155,6 +156,7 @@ export function computeShopDailyDemand(
         upgradeMult.customers *
         cityProjectCustomerMultiplier(ts.cityProjects) *
         prestigeCustomerMult *
+        milestoneCustomerMultiplier(state) *
         (shop.demandBoost && shop.demandBoost.untilDay >= state.day ? shop.demandBoost.multiplier : 1)
     )
   );

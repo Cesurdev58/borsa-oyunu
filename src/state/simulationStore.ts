@@ -633,6 +633,7 @@ export class SimulationStore {
         tradeState: st.tradeState,
         decisionEvents: st.decisionEvents,
         careerGoals: st.careerGoals,
+        milestones: st.milestones,
         onboarding: st.onboarding,
         lifestyle: st.lifestyle,
         autoInvest: st.autoInvest,
@@ -757,6 +758,40 @@ export class SimulationStore {
     }
   }
 
+  /**
+   * Zarfı (ana kayıt, yedek yuvası ya da dosya) göçten geçirip yeni bir motor kurar; yazma yapmaz.
+   * Okunamıyorsa null döner (son hata `getLastError` ile alınır).
+   */
+  public static engineFromEnvelope(parsed: unknown): SimulationEngine | null {
+    const migrated = SimulationStore.migrateIfNeeded(parsed);
+    if (!migrated) return null;
+    try {
+      const engine = new SimulationEngine(migrated.seed, SimulationEngine.DEFAULT_INITIAL_CASH);
+      engine.restoreFromSavedState(migrated.state);
+      return engine;
+    } catch (err) {
+      SimulationStore.reportError('RESTORE_ERROR', 'Kayıtlı simülasyon motoru durumu geri yüklenirken hata oluştu.', err);
+      return null;
+    }
+  }
+
+  /** Motorun şu anki kaydını, depoya yazmadan zarf olarak üretir (dosyaya aktarma için). */
+  public static buildEnvelope(engine: SimulationEngine, nowISO: string = new Date().toISOString()): SavedSimulationEnvelope {
+    const state = engine.getState();
+    state.randomState = engine.getRandomState();
+    state.schemaVersion = SimulationStore.CURRENT_SCHEMA_VERSION;
+    return {
+      schemaVersion: SimulationStore.CURRENT_SCHEMA_VERSION,
+      savedAtISO: nowISO,
+      seed: state.seed,
+      randomState: state.randomState,
+      state: JSON.parse(JSON.stringify(state)) as SimulationState,
+    };
+  }
+
+  /** Motor ortak motor olunca çağrılır (uygulama burada yedek kancasını bağlar). */
+  public static onEngineAdopted: ((engine: SimulationEngine) => void) | null = null;
+
   private static sharedEngine: SimulationEngine | null = null;
   private static sharedCreationCount: number = 0;
 
@@ -778,6 +813,7 @@ export class SimulationStore {
         SimulationStore.sharedEngine = fresh;
       }
       SimulationStore.sharedCreationCount += 1;
+      SimulationStore.onEngineAdopted?.(SimulationStore.sharedEngine);
     }
     return SimulationStore.sharedEngine;
   }
@@ -791,6 +827,7 @@ export class SimulationStore {
     SimulationStore.saveToStorage(fresh);
     SimulationStore.sharedEngine = fresh;
     SimulationStore.sharedCreationCount = 1;
+    SimulationStore.onEngineAdopted?.(fresh);
     return fresh;
   }
 
@@ -799,6 +836,7 @@ export class SimulationStore {
     SimulationStore.saveToStorage(engine);
     SimulationStore.sharedEngine = engine;
     SimulationStore.sharedCreationCount += 1;
+    SimulationStore.onEngineAdopted?.(engine);
     return engine;
   }
 

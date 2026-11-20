@@ -23,6 +23,19 @@ import { firstShopGateStatus } from './FirstShopGate';
 import { WalletEngine } from './WalletEngine';
 import { buildRichList } from './RichListEngine';
 import { prestigeBonuses } from './PrestigeEngine';
+import { grantBonus, type GoalBonus } from './Milestones';
+import { SHOP_TEMPLATES } from '../data/tradeCatalog';
+import {
+  MILESTONE_ACTIVE_STREAK_DAYS,
+  MILESTONE_CUSTOMER_BONUS_PCT,
+  MILESTONE_CUSTOMER_TARGET,
+  MILESTONE_DAILY_REVENUE_TARGET,
+  MILESTONE_PROFIT_STREAK_DAYS,
+  MILESTONE_SECOND_SHOP_CASH_FACTOR,
+  MILESTONE_SHOP_OPEN_DISCOUNT_PCT,
+  MILESTONE_STREAK_BOOST_DAYS,
+  MILESTONE_STREAK_BOOST_MULT,
+} from '../data/gameBalance';
 
 /** Hedefin "Git" düğmesinin açacağı bina (arayüzdeki CityBuildingId ile aynı adlar). */
 export type GoalTarget = 'BORSA' | 'OYUNCU_OFISI' | 'SIRKET_MERKEZI' | 'HOLDING_MERKEZI' | 'LUKS';
@@ -47,6 +60,10 @@ export interface CareerGoalDef {
   reward: number;
   target: GoalTarget;
   progress: (state: SimulationState, ctx: GoalContext) => GoalProgress;
+  /** Para dışındaki ödül (kalıcı müşteri artışı, ücretsiz eğitim, indirim…); ödül alınınca uygulanır */
+  bonus?: GoalBonus;
+  /** Bonusun oyuncuya gösterilen kısa yazısı (arayüz) */
+  bonusText?: string;
 }
 
 export interface CareerGoalsState {
@@ -94,6 +111,13 @@ const totalShopProfit = (s: SimulationState) =>
   shops(s).reduce((a, sh) => a + Math.max(0, sh.cumulativeNetProfit ?? 0), 0);
 const profitGoal = (s: SimulationState, target: number): GoalProgress =>
   hasCompany(s) ? money(1, 1) : money(totalShopProfit(s), target);
+
+
+// --- Orta oyun kilometre taşı sayaçları (engine/Milestones.ts) ---
+const ms = (s: SimulationState) => s.milestones;
+const personalCount = (s: SimulationState) => shops(s).filter((x) => !x.isCompanyBranch).length;
+const cheapestShopSetup = () =>
+  Math.min(...Object.values(SHOP_TEMPLATES).map((t) => t.openingCost + t.decorationCost));
 
 export const CAREER_GOALS: readonly CareerGoalDef[] = [
   // --- Borsa ---
@@ -173,6 +197,53 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     progress: (s) => profitGoal(s, 10_000),
   },
   {
+    id: 'goal-ms-profit-7days',
+    title: '7 kârlı gün geçir (üst üste)',
+    reward: 7500,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? count(MILESTONE_PROFIT_STREAK_DAYS, MILESTONE_PROFIT_STREAK_DAYS) : count(Math.max(ms(s)?.profitStreak ?? 0, ms(s)?.bestProfitStreak ?? 0), MILESTONE_PROFIT_STREAK_DAYS)),
+    bonus: { kind: 'STREAK_BOOST' },
+    bonusText: `${MILESTONE_STREAK_BOOST_DAYS} gün +%${Math.round((MILESTONE_STREAK_BOOST_MULT - 1) * 100)} müşteri`,
+  },
+  {
+    id: 'goal-ms-daily-5k',
+    title: 'Bir günde 5.000 ₺ ciro yap',
+    reward: 10000,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? money(1, 1) : money(ms(s)?.bestDailyRevenue ?? 0, MILESTONE_DAILY_REVENUE_TARGET)),
+  },
+  {
+    id: 'goal-ms-customers-100',
+    title: 'Toplam 100 müşteriye ulaş',
+    reward: 0,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? count(MILESTONE_CUSTOMER_TARGET, MILESTONE_CUSTOMER_TARGET) : count(ms(s)?.totalCustomers ?? 0, MILESTONE_CUSTOMER_TARGET)),
+    bonus: { kind: 'CUSTOMER_PCT', pct: MILESTONE_CUSTOMER_BONUS_PCT },
+    bonusText: `Kalıcı +%${MILESTONE_CUSTOMER_BONUS_PCT} müşteri`,
+  },
+  {
+    id: 'goal-ms-active-30',
+    title: '30 gün üst üste faaliyette kal',
+    reward: 20000,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => (hasCompany(s) ? count(MILESTONE_ACTIVE_STREAK_DAYS, MILESTONE_ACTIVE_STREAK_DAYS) : count(Math.max(ms(s)?.activeStreak ?? 0, ms(s)?.bestActiveStreak ?? 0), MILESTONE_ACTIVE_STREAK_DAYS)),
+  },
+  {
+    id: 'goal-ms-second-shop-prep',
+    title: 'İkinci dükkân için sermaye hazırla',
+    reward: 0,
+    target: 'OYUNCU_OFISI',
+    progress: (s) => {
+      if (hasCompany(s) || personalCount(s) >= 2) return count(1, 1);
+      if (personalCount(s) === 0) return { done: false, pct: 0, text: '%0' };
+      const need = Math.round(cheapestShopSetup() * MILESTONE_SECOND_SHOP_CASH_FACTOR);
+      const have = Math.max(0, WalletEngine.freeCash(s));
+      return { done: have >= need, pct: Math.min(100, Math.floor((have / need) * 100)), text: `%${Math.min(100, Math.floor((have / need) * 100))}` };
+    },
+    bonus: { kind: 'SHOP_OPEN_DISCOUNT', pct: MILESTONE_SHOP_OPEN_DISCOUNT_PCT },
+    bonusText: `Sonraki dükkân açılışında %${MILESTONE_SHOP_OPEN_DISCOUNT_PCT} indirim`,
+  },
+  {
     id: 'goal-second-shop',
     title: 'İkinci dükkânını aç',
     reward: 10_000,
@@ -196,9 +267,11 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
   {
     id: 'goal-first-manager',
     title: 'Bir dükkâna müdür tut',
-    reward: 10_000,
+    reward: 0,
     target: 'OYUNCU_OFISI',
     progress: (s) => flag(hasCompany(s) || shops(s).some((sh) => Boolean(sh.manager))),
+    bonus: { kind: 'FREE_TRAINING', count: 1 },
+    bonusText: '1 ücretsiz eğitim (Akademi)',
   },
   {
     id: 'quest-07-networth-250k',
@@ -206,6 +279,8 @@ export const CAREER_GOALS: readonly CareerGoalDef[] = [
     reward: 15_000,
     target: 'OYUNCU_OFISI',
     progress: (s) => money(s.netWorth, 250_000),
+    bonus: { kind: 'DECORATION', id: 'vitrin-rafi' },
+    bonusText: 'Yeni vitrin rafı (+%1 müşteri)',
   },
   {
     id: 'goal-six-upgrades',
@@ -355,6 +430,16 @@ export function goalReward(state: Pick<SimulationState, 'prestige'>, def: Career
   return Math.round((def.reward * mult) / 100) * 100;
 }
 
+/** Zincire sonradan eklenen hedefler (eski kayıtta, kendinden sonraki hedef alınmışsa ödülsüz geçilir) */
+const RETROFITTED_GOAL_IDS: ReadonlySet<string> = new Set([
+  'goal-first-employee',
+  'goal-ms-profit-7days',
+  'goal-ms-second-shop-prep',
+  'goal-ms-daily-5k',
+  'goal-ms-customers-100',
+  'goal-ms-active-30',
+]);
+
 export function ensureCareerGoalsState(state: SimulationState): CareerGoalsState {
   if (!state.careerGoals) state.careerGoals = { claimed: [], totalRewards: 0 };
   return state.careerGoals;
@@ -366,11 +451,22 @@ export function ensureCareerGoalsState(state: SimulationState): CareerGoalsState
  */
 export function migrateCareerGoalsForLegacySave(state: SimulationState, ctx: GoalContext): void {
   if (state.careerGoals) {
-    // Sonradan eklenen hedef (ilk çalışan): zincirde ondan sonraki hedef zaten alınmışsa ödülsüz alınmış sayılır
+    // Sonradan eklenen hedefler: zincirde kendisinden SONRAKİ bir hedef zaten alınmışsa, oyuncu o hedefi
+    // geçmiştir; ödül ve bonus vermeden alınmış sayılır (bedava ödül çıkmasın, sıra geri dönmesin).
+    // Yalnızca SONRADAN EKLENEN hedefler bu kuralla geçilir; eskiden var olan bir hedefin sırası değişse bile
+    // alınmamış ödülü kaybolmaz (oyuncu onu alır).
     const cg = state.careerGoals;
-    if (!cg.claimed.includes('goal-first-employee') && cg.claimed.includes('goal-shop-profit-10k')) {
-      cg.claimed.push('goal-first-employee');
-    }
+    const claimedSet = new Set(cg.claimed);
+    let lastClaimedIndex = -1;
+    CAREER_GOALS.forEach((g, i) => {
+      if (claimedSet.has(g.id)) lastClaimedIndex = i;
+    });
+    CAREER_GOALS.forEach((g, i) => {
+      if (i < lastClaimedIndex && !claimedSet.has(g.id) && RETROFITTED_GOAL_IDS.has(g.id)) {
+        cg.claimed.push(g.id);
+        claimedSet.add(g.id);
+      }
+    });
     return;
   }
   const claimed: string[] = [];
@@ -447,5 +543,7 @@ export function claimCareerGoal(
   }
   gs.claimed.push(goalId);
   gs.totalRewards = Math.round((gs.totalRewards + reward) * 100) / 100;
-  return { success: true, message: `Hedef tamam: ${active.def.title}. Ödül +₺${reward.toLocaleString('tr-TR')}`, reward };
+  const bonusMsg = active.def.bonus ? grantBonus(state, active.def.bonus) : '';
+  const parts = [reward > 0 ? `+₺${reward.toLocaleString('tr-TR')}` : '', bonusMsg].filter(Boolean);
+  return { success: true, message: `Hedef tamam: ${active.def.title}. Ödül ${parts.join(' · ')}`, reward };
 }

@@ -70,6 +70,11 @@ export function formatHudCurrencyTR(
   };
 }
 
+function rewardLabelOf(cash: number, bonusText?: string): string {
+  const parts = [cash > 0 ? `₺${cash.toLocaleString('tr-TR')}` : '', bonusText ?? ''].filter(Boolean);
+  return `Ödül: ${parts.join(' + ')}`;
+}
+
 export interface CityQuestItem {
   /** Deterministik görev kimliği */
   id: string;
@@ -79,8 +84,12 @@ export interface CityQuestItem {
   progressPct: number;
   /** Ödül yazısı, ör. "Ödül: ₺5.000" */
   rewardLabel: string;
-  /** Gerçek para ödülü (TL); "Ödülü al" ile kişisel nakde girer */
+  /** Gerçek para ödülü (TL); "Ödülü al" ile kişisel nakde girer (para dışı ödüllü hedefte 0) */
   reward: number;
+  /** Para dışı ödülün kısa yazısı (kalıcı müşteri artışı, ücretsiz eğitim…); yoksa boş */
+  bonusText: string;
+  /** "Ödülü al" düğmesindeki yazı: para varsa tutar, yoksa kısa bonus */
+  claimLabel: string;
   targetBuildingId: CityBuildingId;
   /** Hedef tamamlandı mı (ödül alınmış ya da alınmaya hazır) */
   completed: boolean;
@@ -120,8 +129,10 @@ export function deriveCityQuestStripModel(
     title: g.def.title,
     progressText: g.progress.text,
     progressPct: g.progress.pct,
-    rewardLabel: `Ödül: ₺${goalReward(state, g.def).toLocaleString('tr-TR')}`,
+    rewardLabel: rewardLabelOf(goalReward(state, g.def), g.def.bonusText),
     reward: goalReward(state, g.def),
+    bonusText: g.def.bonusText ?? '',
+    claimLabel: goalReward(state, g.def) > 0 ? `₺${goalReward(state, g.def).toLocaleString('tr-TR')}` : 'Ödülü al',
     targetBuildingId: g.def.target as CityBuildingId,
     completed: g.claimed || g.progress.done,
     claimed: g.claimed,

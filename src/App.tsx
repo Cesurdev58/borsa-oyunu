@@ -4,7 +4,7 @@
  */
 
 import * as PrestigeEngine from './engine/PrestigeEngine';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   SimulationEngine,
   SimulationStage,
@@ -29,6 +29,8 @@ import {
   ShopType,
   VehicleTypeId,
 } from './models/trade';
+import { SaveBackups } from './state/SaveBackups';
+import { exportSaveFile, importSaveFile, SaveFileError } from './state/SaveFile';
 import { SimulationStore } from './state/simulationStore';
 import { MarketTerminalView } from './components/MarketTerminalView';
 import { CompanyIpoView } from './components/CompanyIpoView';
@@ -54,6 +56,9 @@ type ActiveDeveloperTab = 'market' | 'company' | 'takeover' | 'math';
 
 // React StrictMode altında gerçek zaman döngüsünün iki kez çalışmasını engelleyen modül kilidi
 let activeRealtimeIntervalToken: number | null = null;
+
+// Ortak motor ne zaman değişse kritik işlem kancası yedeğe bağlanır (şirketleşme, halka arz, devralma…)
+SimulationStore.onEngineAdopted = (eng) => SaveBackups.attach(eng);
 
 export default function App() {
   // Tekil (Singleton) SimulationEngine örneği: Görünüm geçişlerinde veya yeniden render'da asla ikinci örnek oluşturmaz
@@ -412,6 +417,8 @@ export default function App() {
           SimulationStore.saveToStorage(engine);
           lastAutosaveRealMsRef.current = nowMs;
         }
+        // Dönen 5 yuvalı otomatik yedek (en çok 7 dakikada bir)
+        if (SaveBackups.isAutoBackupDue(nowMs)) SaveBackups.take(engine, 'auto', nowMs);
         syncEngineEventsToNotifications();
         setTickVersion((v) => v + 1);
       }
@@ -1250,6 +1257,7 @@ export default function App() {
   }, [engine, refreshUIOnly]);
 
   const handleStartNewCity = useCallback(() => {
+    SaveBackups.take(engineRef.current!, 'before-prestige');
     const res = PrestigeEngine.startNewCity(engineRef.current!.getState(), (seed, cash) => new SimulationEngine(seed, cash));
     if (!res.success || !res.engine) {
       setStatusBanner({ type: 'error', text: res.message });
@@ -1276,6 +1284,71 @@ export default function App() {
     setStatusBanner({ type: 'success', text: res.message });
     setTickVersion((v) => v + 1);
   }, []);
+
+  /** Yeni bir motoru ortak motor yapar ve ekranı ona göre sıfırlar (içe aktarma ve yedekten dönme için) */
+  const adoptEngine = useCallback((next: SimulationEngine, text: string) => {
+    const fresh = SimulationStore.replaceSharedEngine(next);
+    engineRef.current = fresh;
+    lastRealTickMsRef.current = Date.now();
+    lastAutosaveRealMsRef.current = Date.now();
+    const st = fresh.getState();
+    prevSnapshotRef.current = {
+      day: st.day,
+      marketSession: st.marketSession,
+      stage2: Boolean(st.stageUnlocks?.stage2Entrepreneur),
+      stage3: Boolean(st.stageUnlocks?.stage3Ipo),
+      stage4: Boolean(st.stageUnlocks?.stage4Holding),
+      newsTopId: st.newsFeed[0]?.id || '',
+      dividendsTotal: 0,
+      orderStatuses: {},
+      lowCashWarnedDay: 0,
+    };
+    setConsoleOutputLines([]);
+    setSelectedTicker(st.stocks[0]?.ticker ?? 'NVEX');
+    setNotifications([]);
+    setStatusBanner({ type: 'success', text });
+    setTickVersion((v) => v + 1);
+  }, []);
+
+  const saveManagement = useMemo(
+    () => ({
+      onExport: async () => {
+        try {
+          const { fileName, text } = await exportSaveFile(engineRef.current!);
+          const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          return { ok: true, message: `Kayıt "${fileName}" olarak indirildi.` };
+        } catch (err) {
+          return { ok: false, message: err instanceof SaveFileError ? err.message : 'Kayıt dışa aktarılamadı.' };
+        }
+      },
+      onImport: async (text: string) => {
+        try {
+          const next = await importSaveFile(text); // doğrulama başarısızsa burada fırlar, oyun değişmez
+          SaveBackups.take(engineRef.current!, 'before-import');
+          adoptEngine(next, 'Kayıt dosyası yüklendi. Önceki oyunun yedeğe alındı.');
+          return { ok: true, message: 'Kayıt yüklendi. Önceki oyunun otomatik yedeğe alındı.' };
+        } catch (err) {
+          return { ok: false, message: err instanceof SaveFileError ? err.message : 'Kayıt yüklenemedi. Mevcut oyunun değişmedi.' };
+        }
+      },
+      listBackups: () => SaveBackups.list(),
+      onRestoreBackup: (slot: number) => {
+        const { engine: restored, error } = SaveBackups.load(slot);
+        if (!restored) return { ok: false, message: error ?? 'Yedek yüklenemedi.' };
+        SaveBackups.take(engineRef.current!, 'before-import');
+        adoptEngine(restored, 'Yedekten geri dönüldü.');
+        return { ok: true, message: 'Yedekten geri dönüldü.' };
+      },
+    }),
+    [adoptEngine]
+  );
 
   const handleResetSimulation = useCallback(() => {
     const fresh = SimulationStore.resetSharedEngine();
@@ -1347,6 +1420,7 @@ export default function App() {
         onTickDay={handleTickDay}
         onSimulateOfflineProgress={handleSimulateOfflineProgress}
         onManualSave={handleManualSave}
+        saveManagement={saveManagement}
         onResetSimulation={handleResetSimulation}
         onDismissOfflineModal={handleDismissOfflineModal}
         onSwitchToDeveloperDashboard={() => setViewMode('DEVELOPER_DASHBOARD')}

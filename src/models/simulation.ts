@@ -252,6 +252,8 @@ export interface SimulationState {
   lifestyle?: { owned: string[]; spent: number };
   /** Kariyer hedeflerinde ödülü alınanlar (engine/CareerGoals.ts; eski kayıtlarda yoktur) */
   careerGoals?: { claimed: string[]; totalRewards: number };
+  /** Orta oyun kilometre taşı sayaçları ve kalıcı ödüller (engine/Milestones.ts; eski kayıtlarda yoktur) */
+  milestones?: import('../engine/Milestones').MilestoneState;
   /** İlk oyun rehberinin durumu (engine/OnboardingRules.ts; eski kayıtta yoksa göçle üretilir) */
   onboarding?: import('../engine/OnboardingRules').OnboardingState;
   /** Olağanüstü olaylar (savaş, salgın…; eski kayıtlarda yoktur) */

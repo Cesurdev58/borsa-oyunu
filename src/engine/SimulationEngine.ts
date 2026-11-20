@@ -9,6 +9,7 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import { defaultMilestones, sanitizeMilestones } from './Milestones';
 import {
   defaultOnboarding,
   hasProgress as hasOnboardingProgress,
@@ -317,6 +318,19 @@ export class SimulationEngine {
   public state: SimulationState;
   public rng: RandomEngine;
   public pendingDailyActions: string[] = [];
+  /**
+   * Kritik işlemden (şirket kurma, şirketleşme, halka arz, devralma) HEMEN ÖNCE çağrılır; durum henüz değişmemiştir.
+   * Uygulama burada yerel yedek alır (state/SaveBackups.ts). Motor yedeğin nasıl alındığını bilmez; hata yutulur.
+   */
+  public criticalActionHook: ((reason: 'before-company' | 'before-incorporation' | 'before-ipo' | 'before-takeover') => void) | null = null;
+
+  private notifyCritical(reason: 'before-company' | 'before-incorporation' | 'before-ipo' | 'before-takeover'): void {
+    try {
+      this.criticalActionHook?.(reason);
+    } catch {
+      // yedek hatası oyunu durdurmamalı
+    }
+  }
   /** Kayıt yeni dengeye taşınırken oyuncuya bir kez gösterilecek notlar */
   public migrationNotices: string[] = [];
 
@@ -427,6 +441,7 @@ export class SimulationEngine {
         GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
       fastStartTempo: true,
       careerGoals: { claimed: [], totalRewards: 0 },
+      milestones: defaultMilestones(),
       onboarding: defaultOnboarding(),
       timeScale: 1,
       isPaused: false,
@@ -744,6 +759,7 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       careerGoals: cloned.careerGoals,
+      milestones: sanitizeMilestones(cloned.milestones),
       onboarding: migrateOnboarding(cloned.onboarding, {
         day,
         hasProgress: hasOnboardingProgress(cloned),
@@ -1346,6 +1362,7 @@ export class SimulationEngine {
       initialCapacity?: number;
     }
   ): { success: boolean; message: string; company?: PlayerCompany } {
+    this.notifyCritical('before-company');
     return PlayerCompanyActions.establishCompany(this, name, ticker, sector, initialCapital, options);
   }
 
@@ -1621,6 +1638,7 @@ export class SimulationEngine {
     discountRatio: number = 0.12,
     primaryShareIssueRatio: number = 0.35
   ): IPOExecutionResult {
+    this.notifyCritical('before-ipo');
     return PlayerCompanyActions.executeIPO(this, publicFloatRatio, discountRatio, primaryShareIssueRatio);
   }
 
@@ -1631,6 +1649,7 @@ export class SimulationEngine {
     ticker: string,
     options?: { targetOwnershipPct?: number; useDebtFinancing?: boolean }
   ): TakeoverResult {
+    this.notifyCritical('before-takeover');
     return PlayerCompanyActions.executeHostileTakeover(this, ticker, options);
   }
 
@@ -2177,6 +2196,7 @@ export class SimulationEngine {
     sector: SectorId;
     additionalCashCapital?: number;
   }): { success: boolean; message: string } {
+    this.notifyCritical('before-incorporation');
     const res = TradeAndShopEngine.incorporateShopsIntoCompany(this.state, {
       companyName: params.companyName,
       ticker: params.ticker,

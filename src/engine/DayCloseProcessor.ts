@@ -6,6 +6,7 @@
  * (SimulationEngine dosyasından ayrıldı. Fonksiyonlar ilk parametre olarak motoru alır; dış dünya hâlâ SimulationEngine.* üzerinden çağırır.)
  */
 
+import { trackMilestonesDayClose } from './Milestones';
 import { effectiveRealMinutesPerGameDay, maxOfflineGameDays } from './TempoRules';
 import * as DecisionEventEngine from './DecisionEventEngine';
 import * as AutoInvestEngine from './AutoInvestEngine';
@@ -288,6 +289,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.rng,
       engine.getReservedCash()
     );
+    // 5B-1. Kilometre taşı sayaçları (kârlı gün serisi, günlük ciro, müşteri, üst üste faaliyet)
+    trackMilestonesDayClose(engine.state);
     // 5B-2. Dükkân müdürleri: rafları dükkân kasasından doldur, fazla kârı oyuncuya aktar
     for (const msg of ShopManager.runManagers(engine.state, engine.getReservedCash())) {
       engine.pendingDailyActions.push(`[Müdür] ${msg}`);

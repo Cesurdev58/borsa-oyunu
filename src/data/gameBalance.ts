@@ -198,3 +198,25 @@ export const SHOP_CASH_KEEP = 5_000;
 export const SHOP_COLLECT_MIN = 1_000;
 /** Kayıttaki onboarding alanının sürümü */
 export const ONBOARDING_VERSION = 2;
+
+// ---------------------------------------------------------------------------
+// ORTA OYUN KİLOMETRE TAŞLARI (20 dk – 3 saat) — engine/Milestones.ts, engine/CareerGoals.ts
+// ---------------------------------------------------------------------------
+/** "7 kârlı gün" hedefi için gereken ardışık kârlı gün sayısı */
+export const MILESTONE_PROFIT_STREAK_DAYS = 7;
+/** Kârlı gün ödülü: geçici müşteri bonusu (çarpan ve gün sayısı) */
+export const MILESTONE_STREAK_BOOST_MULT = 1.05;
+export const MILESTONE_STREAK_BOOST_DAYS = 7;
+/** "Günlük ciro" hedefi (kişisel dükkânların bir günlük toplam satışı, ₺) */
+export const MILESTONE_DAILY_REVENUE_TARGET = 5_000;
+/** "Toplam müşteri" hedefi ve ödülü (kalıcı müşteri artışı, %) */
+export const MILESTONE_CUSTOMER_TARGET = 100;
+export const MILESTONE_CUSTOMER_BONUS_PCT = 2;
+/** 250 bin ₺ net değer ödülü olan dekorasyon/raf: küçük kalıcı müşteri artışı (%) */
+export const MILESTONE_DECORATION_BONUS_PCT = 1;
+/** "Üst üste faaliyet" hedefi (gün) */
+export const MILESTONE_ACTIVE_STREAK_DAYS = 30;
+/** İkinci dükkân hazırlığı: cepte, en ucuz dükkânın açılış maliyetinin bu katı kadar serbest nakit olmalı */
+export const MILESTONE_SECOND_SHOP_CASH_FACTOR = 1.3;
+/** İkinci dükkân hazırlığı ödülü: bir sonraki dükkân açılışında maliyet indirimi (%) */
+export const MILESTONE_SHOP_OPEN_DISCOUNT_PCT = 10;

@@ -13,47 +13,63 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { isGlowMaterial, markWindowGlowMaterial } from './kit';
+import { isGlowMaterial, markSharedMaterial, markSharedResource, markWindowGlowMaterial } from './kit';
+import { ASSET_FILES, assetUrl, boundsProblem } from './assetManifest';
+import { makeFallbackModel } from './assetFallback';
 
 const BASE: string = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
-/** Kısa ad → dosya yolu (public/models altına göre) */
-const KAYKIT = [
-  'building_A', 'building_B', 'building_C', 'building_D', 'building_E', 'building_F', 'building_G', 'building_H',
-  'base', 'tree_A', 'tree_B', 'tree_C', 'tree_D', 'tree_E', 'bush_A', 'bush_B', 'bush_C',
-  'streetlight', 'trafficlight_A', 'bench', 'car_hatchback', 'car_police', 'car_sedan', 'car_stationwagon', 'car_taxi',
-  'road_straight', 'road_junction', 'road_corner_curved', 'road_tsplit', 'road_straight_crossing',
-  'park_base_decorated_trees', 'park_road_junction_decorated_A', 'park_road_junction_decorated_C',
-  'watertower', 'firehydrant', 'trash_A', 'dumpster',
-];
-const KENNEY_COMMERCIAL = [
-  'building-skyscraper-a', 'building-skyscraper-b', 'building-skyscraper-c', 'building-skyscraper-d', 'building-skyscraper-e',
-  'building-a', 'building-c', 'building-g', 'building-k', 'building-n',
-  ...'abcdefghijklmn'.split('').map((c) => `low-detail-building-${c}`),
-  'low-detail-building-wide-a', 'low-detail-building-wide-b',
-];
-const KENNEY_SUBURBAN = [
-  ...'abcdefghijklmnopqrstu'.split('').map((c) => `building-type-${c}`),
-  'tree-large', 'tree-small', 'fence-2x2', 'planter',
-];
-
-const FILES: Record<string, string> = {};
-for (const n of KAYKIT) FILES[n] = `models/kaykit/${n}.gltf`;
-for (const n of KENNEY_COMMERCIAL) FILES[n] = `models/kenney-commercial/${n}.glb`;
-for (const n of KENNEY_SUBURBAN) FILES[n] = `models/kenney-suburban/${n}.glb`;
+/** Kısa ad → dosya yolu (public/models altına göre). Liste `assetManifest.ts` içindedir (denetim de oradan okur). */
+const FILES: Record<string, string> = { ...ASSET_FILES };
 
 export type AssetName = keyof typeof FILES & string;
 
+export interface AssetFailure {
+  name: string;
+  /** Oyunun istediği tam adres (BASE_URL + yol); günlükte ve denetimde görünen budur */
+  url: string;
+  reason: string;
+}
+
 export interface CityAssets {
+  /** Gerçek (yüklenmiş ve geçerli) model var mı? Yedek model için `true` DÖNMEZ: eski kodla çizilmiş binalar yedeğe tercih edilir. */
   has(name: string): boolean;
-  /** Modelin kopyası (geometri ve malzeme paylaşılır). Boyutu: `size(name)` */
+  /**
+   * Modelin kopyası (geometri ve malzeme paylaşılır). Model yüklenememişse boş grup DEĞİL, adına uygun
+   * (ağaç, ev, araba…) kodla çizilmiş yedek döner; böylece hiçbir şey haritadan sessizce kaybolmaz.
+   */
   clone(name: string): THREE.Group;
   size(name: string): THREE.Vector3;
+  /** Yüklenemeyen ya da geçersiz çıkan modeller (ad → ayrıntı) */
+  failures(): ReadonlyMap<string, AssetFailure>;
+  /** Bu ad için yedek model mi kullanılıyor? */
+  isFallback(name: string): boolean;
 }
 
 interface Entry {
   scene: THREE.Group;
   size: THREE.Vector3;
+}
+
+/** Yükleyici sözleşmesi (testlerde sahte yükleyici verilebilir). */
+export interface AssetLoaderLike {
+  load(url: string, onLoad: (gltf: { scene: THREE.Group }) => void, onProgress?: unknown, onError?: (err: unknown) => void): void;
+}
+
+export interface LoadCityAssetsOptions {
+  loader?: AssetLoaderLike;
+  base?: string;
+  /** Hata günlüğü (varsayılan: console.error) */
+  log?: (message: string) => void;
+  /** Önbelleği yok sayıp yeniden yükle (testler için) */
+  fresh?: boolean;
+  /** Yalnızca bu adları yükle (testler için; varsayılan: bütün liste) */
+  only?: readonly string[];
+}
+
+/** Sınır kutusu kullanılabilir mi? (sonlu, sıfır olmayan genişlik ve yükseklik) */
+export function validateBounds(size: THREE.Vector3): string | null {
+  return boundsProblem(size.x, size.y, size.z);
 }
 
 /** Paket (klasör) + malzeme adı → ortak malzeme. Her dosya aynı dokuyu ayrı kopya olarak getirir;
@@ -105,6 +121,7 @@ function glassGlowMap(kit: string, map: THREE.Texture | null | undefined): THREE
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
   tex.generateMipmaps = false;
+  markSharedResource(tex);
   glowMapCache.set(key, tex);
   return tex;
 }
@@ -123,6 +140,7 @@ function prepare(root: THREE.Object3D, kit: string, file: string): void {
       if (shared) {
         m.material.dispose();
         m.material = shared;
+        markSharedResource(m.geometry);
         return;
       }
       if (building) {
@@ -137,6 +155,7 @@ function prepare(root: THREE.Object3D, kit: string, file: string): void {
       }
       SHARED_MATS.set(key, m.material);
     }
+    markSharedResource(m.geometry);
     const mats = Array.isArray(m.material) ? m.material : [m.material];
     for (const mat of mats) {
       const sm = mat as THREE.MeshStandardMaterial;
@@ -144,6 +163,7 @@ function prepare(root: THREE.Object3D, kit: string, file: string): void {
         sm.map.colorSpace = THREE.SRGBColorSpace;
         sm.map.anisotropy = 4;
       }
+      markSharedMaterial(sm);
       // Hazır paketler parlak plastik gibi görünmesin: mat, sıcak "oyun" yüzeyi
       sm.roughness = Math.max(sm.roughness ?? 1, 0.75);
       sm.metalness = 0;
@@ -153,38 +173,90 @@ function prepare(root: THREE.Object3D, kit: string, file: string): void {
 
 let loading: Promise<CityAssets> | null = null;
 
-/** Bütün şehir modellerini bir kez yükler (sonraki çağrılar aynı sözü döndürür). */
-export function loadCityAssets(): Promise<CityAssets> {
-  if (loading) return loading;
-  const loader = new GLTFLoader();
+/** Modeli doğrular; yüklenemeyen ya da geçersiz çıkanlar yedek modele döner ve TAM dosya yoluyla günlüğe yazılır. */
+function buildLibrary(
+  results: Array<{ name: string; url: string; scene: THREE.Group | null; error?: string }>,
+  log: (m: string) => void
+): CityAssets {
   const lib = new Map<string, Entry>();
-  loading = Promise.all(
-    Object.entries(FILES).map(
-      ([name, path]) =>
-        new Promise<void>((resolve) => {
-          loader.load(
-            `${BASE}${path}`,
-            (gltf) => {
-              const scene = gltf.scene;
-              prepare(scene, path.split('/')[1], name);
-              const bb = new THREE.Box3().setFromObject(scene);
-              lib.set(name, { scene, size: bb.getSize(new THREE.Vector3()) });
-              resolve();
-            },
-            undefined,
-            () => resolve() // eksik model: o parça eski çizimle kalır
-          );
+  const failed = new Map<string, AssetFailure>();
+  const fallbackSize = new Map<string, THREE.Vector3>();
+  for (const r of results) {
+    let reason: string | null = r.scene ? null : (r.error ?? 'bilinmeyen hata');
+    let size: THREE.Vector3 | null = null;
+    if (r.scene) {
+      const bb = new THREE.Box3().setFromObject(r.scene);
+      size = bb.getSize(new THREE.Vector3());
+      reason = validateBounds(size);
+    }
+    if (!reason && r.scene && size) {
+      lib.set(r.name, { scene: r.scene, size });
+    } else {
+      failed.set(r.name, { name: r.name, url: r.url, reason: reason ?? 'bilinmeyen hata' });
+      log(`[city3d] Model kullanılamıyor: ${r.url} — ${reason}. Yedek (${r.name} için kodla çizilmiş) model gösterilecek.`);
+    }
+  }
+  const fallbackFor = (n: string) => {
+    let sz = fallbackSize.get(n);
+    if (!sz) {
+      sz = new THREE.Box3().setFromObject(makeFallbackModel(n)).getSize(new THREE.Vector3());
+      fallbackSize.set(n, sz);
+    }
+    return sz;
+  };
+  return {
+    has: (n) => lib.has(n),
+    clone: (n) => {
+      const e = lib.get(n);
+      if (e) return e.scene.clone(true) as THREE.Group;
+      // Listede olmayan ya da yüklenemeyen ad: boş grup değil, adına uygun yedek
+      return makeFallbackModel(n);
+    },
+    size: (n) => (lib.get(n)?.size.clone() ?? fallbackFor(n).clone()),
+    failures: () => failed,
+    isFallback: (n) => !lib.has(n),
+  };
+}
+
+/** Bütün şehir modellerini bir kez yükler (sonraki çağrılar aynı sözü döndürür). */
+export function loadCityAssets(options: LoadCityAssetsOptions = {}): Promise<CityAssets> {
+  if (loading && !options.fresh) return loading;
+  const loader: AssetLoaderLike = options.loader ?? (new GLTFLoader() as unknown as AssetLoaderLike);
+  const base = options.base ?? BASE;
+  const log = options.log ?? ((m: string) => console.error(m));
+  const names = options.only ?? Object.keys(FILES);
+  const p = Promise.all(
+    names.map(
+      (name) =>
+        new Promise<{ name: string; url: string; scene: THREE.Group | null; error?: string }>((resolve) => {
+          const path = FILES[name];
+          const url = assetUrl(name, base);
+          if (!path) {
+            resolve({ name, url, scene: null, error: 'model listede (assetManifest.ts) yok' });
+            return;
+          }
+          try {
+            loader.load(
+              url,
+              (gltf) => {
+                try {
+                  prepare(gltf.scene, path.split('/')[1], name);
+                  resolve({ name, url, scene: gltf.scene });
+                } catch (err) {
+                  resolve({ name, url, scene: null, error: `işlenemedi: ${String((err as Error)?.message ?? err)}` });
+                }
+              },
+              undefined,
+              (err) => resolve({ name, url, scene: null, error: `yüklenemedi: ${String((err as Error)?.message ?? err)}` })
+            );
+          } catch (err) {
+            resolve({ name, url, scene: null, error: `yükleyici hata verdi: ${String((err as Error)?.message ?? err)}` });
+          }
         })
     )
-  ).then(() => ({
-    has: (n: string) => lib.has(n),
-    clone: (n: string) => {
-      const e = lib.get(n);
-      return e ? (e.scene.clone(true) as THREE.Group) : new THREE.Group();
-    },
-    size: (n: string) => (lib.get(n)?.size.clone() ?? new THREE.Vector3(1, 1, 1)),
-  }));
-  return loading;
+  ).then((results) => buildLibrary(results, log));
+  if (!options.fresh) loading = p;
+  return p;
 }
 
 /**

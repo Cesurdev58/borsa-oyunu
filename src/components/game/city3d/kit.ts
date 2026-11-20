@@ -65,28 +65,91 @@ export function setLampGlow(v: number): void {
   });
 }
 
-/** Sahne kapanırken önbellekleri temizler. */
+// ---------- Ortak kaynaklar ----------
+// Hazır modellerin geometri, malzeme ve dokuları bütün binalar arasında paylaşılır (bir kez yüklenir, `clone` ağacı
+// geometri ve malzemeyi kopyalamaz). Bir bina silinirken bunlar serbest bırakılırsa ya da pencere/lamba kaydından
+// çıkarılırsa aynı malzemeyi kullanan DİĞER binalar bozulur (gece pencereleri söner, doku yeniden yüklenir).
+// Bu yüzden ortak kaynaklar buraya yazılır ve `disposeObject` / sahne kapanışı onlara dokunmaz.
+const sharedResources = new WeakSet<object>();
+
+/** Kaynağı (geometri, malzeme, doku) ortak işaretler: hiçbir bina silinirken serbest bırakılmaz. */
+export function markSharedResource<T extends object>(r: T | null | undefined): T | null | undefined {
+  if (r) sharedResources.add(r);
+  return r;
+}
+
+/** Bir malzemeyi, dokularıyla birlikte ortak işaretler. */
+export function markSharedMaterial(m: THREE.Material | THREE.Material[]): void {
+  for (const mat of Array.isArray(m) ? m : [m]) {
+    markSharedResource(mat);
+    for (const v of Object.values(mat as unknown as Record<string, unknown>)) {
+      if (v && (v as THREE.Texture).isTexture) markSharedResource(v as THREE.Texture);
+    }
+  }
+}
+
+export function isSharedResource(r: object | null | undefined): boolean {
+  return !!r && sharedResources.has(r);
+}
+
+/** Aynı anda açık sahne sayısı: önbellekler yalnızca SON sahne kapanınca temizlenir. */
+let kitUsers = 0;
+export function retainKit(): void {
+  kitUsers++;
+}
+
+/** QA: açık sahne sayısı ve önbellekteki doku adedi */
+export function kitStats(): { users: number; textures: number } {
+  return { users: kitUsers, textures: textureCache.size };
+}
+
+/** Sahne kapanırken önbellekleri temizler (başka açık sahne varsa dokunmaz). */
 export function disposeKit(): void {
+  kitUsers = Math.max(0, kitUsers - 1);
+  if (kitUsers > 0) return;
   textureCache.forEach((t) => t.dispose());
   textureCache.clear();
   glowMaterials.clear();
   lampMaterials.clear();
 }
 
-/** Bir nesne ağacındaki geometri ve malzemeleri serbest bırakır. */
-export function disposeObject(o: THREE.Object3D): void {
+/**
+ * Bir nesne ağacındaki geometri ve malzemeleri serbest bırakır. Ortak işaretli kaynaklara (hazır modeller,
+ * paylaşılan malzeme ve dokular) ve gece ışığı kayıtlarına dokunmaz; başka binalar onları kullanıyor olabilir.
+ * Döndürülen sayı: gerçekten serbest bırakılan kaynak adedi (QA için).
+ */
+export function disposeObject(o: THREE.Object3D): number {
+  let freed = 0;
+  // Aynı kaynak bir ağaçta birden çok kez geçebilir (çok malzemeli gövdede aynı yüz malzemesi): bir kez bırakılır
+  const seen = new Set<object>();
   o.traverse((m) => {
     const mesh = m as THREE.Mesh;
     if (!mesh.isMesh) return;
-    mesh.geometry?.dispose();
+    if (mesh.geometry && !isSharedResource(mesh.geometry) && !seen.has(mesh.geometry)) {
+      seen.add(mesh.geometry);
+      mesh.geometry.dispose();
+      freed++;
+    }
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const mat of mats) {
+      if (!mat || isSharedResource(mat) || seen.has(mat)) continue;
+      seen.add(mat);
       const sm = mat as THREE.MeshStandardMaterial;
       glowMaterials.delete(sm);
       lampMaterials.delete(sm);
       sm.dispose();
+      freed++;
+      // Bu malzemeye özel dokular (ör. her bina gövdesinin kendi kopyası) de gider; ortak olanlara dokunulmaz
+      for (const v of Object.values(sm as unknown as Record<string, unknown>)) {
+        const tex = v as THREE.Texture;
+        if (tex && tex.isTexture && !isSharedResource(tex) && !seen.has(tex)) {
+          seen.add(tex);
+          tex.dispose();
+        }
+      }
     }
   });
+  return freed;
 }
 
 export const stdMat = (
@@ -165,6 +228,8 @@ function facadeTextures(wall: string, glass: string, frame: string, brick: boole
   };
   const map = make(false);
   const glow = make(true);
+  markSharedResource(map);
+  markSharedResource(glow);
   textureCache.set(key, map);
   textureCache.set(`${key}|glow`, glow);
   return { map, glow };
@@ -210,6 +275,7 @@ export function stripeTexture(a: string, b: string): THREE.CanvasTexture {
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  markSharedResource(tex);
   textureCache.set(key, tex);
   return tex;
 }

@@ -1213,6 +1213,25 @@ export class BankLoanEngine {
   }
 
   /**
+   * Oyuncunun BANKA KREDİSİ OLMAYAN borcu (`state.totalDebt` içinden bireysel/holding banka kredilerinin anaparası çıkarılır).
+   * Banka kredilerinin faizi taksitle (annuite planı) ve gecikme farkıyla tahsil edilir; günlük borç faizi yalnızca bu
+   * tutara işler. Çift faiz kurallarının ikisi burada korunur:
+   *  - Temerrüde düşmüş (`DEFAULTED`) kredinin anaparası da düşülür (eskiden düşülmüyor, aynı krediye ikinci faiz biniyordu).
+   *  - `totalDebt` yalnızca anapara tuttuğu için tahakkuk eden faiz (`accruedInterestUnpaid`) DÜŞÜLMEZ
+   *    (eskiden düşülüyor, diğer borcun faizi eksik hesaplanıyordu).
+   */
+  public static playerDebtOutsideBankLoans(state: SimulationState): number {
+    const bankLoanPrincipal = (state.activeLoans ?? [])
+      .filter(
+        (l) =>
+          l.status !== 'PAID_OFF' &&
+          (l.borrowerType === 'PLAYER' || l.borrowerType === 'HOLDING')
+      )
+      .reduce((sum, l) => sum + l.remainingPrincipal, 0);
+    return Number(Math.max(0, (state.totalDebt ?? 0) - bankLoanPrincipal).toFixed(2));
+  }
+
+  /**
    * Kısıtlı işletme kredisi bakiyesi, bireysel (PLAYER) kredilerin ödenmemiş anaparasını ve nakdi aşamaz.
    * Kredi ödendikçe kısıtlı bakiye de erir; böylece geri ödeme serbest nakdi sessizce kilitlemez.
    */

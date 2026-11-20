@@ -198,3 +198,13 @@ export const SHOP_CASH_KEEP = 5_000;
 export const SHOP_COLLECT_MIN = 1_000;
 /** Kayıttaki onboarding alanının sürümü */
 export const ONBOARDING_VERSION = 2;
+
+// ============================================================
+// YÜKSELTME NAKİT GÜVENLİK REZERVİ (dükkân küçük yükseltmeleri)
+// ============================================================
+/** Rezervde sayılan gider günü: kira + maaşın bu kadar günlüğü (upgradeSafetyReserve = 7 gün kira + 7 gün maaş + önerilen stok siparişi). */
+export const UPGRADE_RESERVE_DAYS = 7;
+/** Yükseltmeden sonra kalan nakit bu kadar günlük gideri karşılıyorsa YEŞİL. */
+export const UPGRADE_RESERVE_GREEN_DAYS = 14;
+/** En az bu kadar gün (ve yeşilin altı) SARI; bunun altı KIRMIZI. Stok yenileme parası da kalmıyorsa KRİTİK. */
+export const UPGRADE_RESERVE_YELLOW_DAYS = 7;

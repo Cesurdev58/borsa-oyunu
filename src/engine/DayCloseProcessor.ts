@@ -372,20 +372,8 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       );
     }
 
-    const activePlayerBankLoanDebt = (engine.state.activeLoans || [])
-      .filter(
-        (l) =>
-          (l.status === 'ACTIVE' || l.status === 'DELINQUENT') &&
-          (l.borrowerType === 'PLAYER' || l.borrowerType === 'HOLDING')
-      )
-      .reduce(
-        (sum, l) => sum + l.remainingPrincipal + l.accruedInterestUnpaid,
-        0
-      );
-    const nonBankPlayerDebt = Math.max(
-      0,
-      engine.state.totalDebt - activePlayerBankLoanDebt
-    );
+    // Banka kredilerinin faizi kendi sözleşmesinden (annuite taksiti) tahsil edilir; burada ikinci kez kesilmez.
+    const nonBankPlayerDebt = BankLoanEngine.playerDebtOutsideBankLoans(engine.state);
 
     if (nonBankPlayerDebt > 0) {
       const dailyDebtInterest = Number(

@@ -49,6 +49,7 @@ import { SHOP_EMOJI } from './ui/shopEmoji';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
 import { FirstShopGateCard } from './ui/FirstShopGateCard';
 import { listShopUpgrades } from '../../engine/ShopUpgrades';
+import { assessUpgradeCash, type UpgradeCashAssessment, type UpgradeReserveLevel } from '../../engine/ShopUpgradeReserve';
 import {
   LogisticsVehicleType,
   PaymentTermType,
@@ -170,6 +171,26 @@ const ALL_VEHICLES = Object.entries(VEHICLE_CATALOG) as Array<
   ]
 >;
 
+/** Yükseltme nakit rezervi eşik rozetleri: Yeşil (14+ gün), Sarı (7-13), Kırmızı (<7), Kritik (stok parası kalmıyor). */
+const UPGRADE_TIER_STYLE: Record<UpgradeReserveLevel, string> = {
+  GREEN: 'bg-[#ecfaf3] text-[var(--g-green-dark)]',
+  YELLOW: 'bg-amber-100 text-amber-800',
+  RED: 'bg-rose-100 text-rose-700',
+  CRITICAL: 'bg-rose-700 text-white',
+};
+function upgradeTierLabel(a: UpgradeCashAssessment): string {
+  switch (a.level) {
+    case 'GREEN':
+      return `Yeşil · ${a.coverageDays} gün yeter`;
+    case 'YELLOW':
+      return `Sarı · ${a.coverageDays} gün yeter`;
+    case 'RED':
+      return `Kırmızı · ${a.coverageDays} gün yeter`;
+    default:
+      return 'Kritik · stok parası kalmıyor';
+  }
+}
+
 export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   state,
   spendableCash,
@@ -228,6 +249,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const [newShopCashFloat, setNewShopCashFloat] = useState<number>(8_000);
   // Düşük sermayeyle açılışta ikinci onay: ilk basışta uyarı çıkar, aynı seçimle ikinci basışta dükkân açılır
   const [lowCashArmedKey, setLowCashArmedKey] = useState<string | null>(null);
+  // Küçük yükseltme: rezervin altında kalınacaksa ilk dokunuş uyarıyı açar, ikinci dokunuş alır (engel yok)
+  const [upgradeArmedKey, setUpgradeArmedKey] = useState<string | null>(null);
 
   // Tedarik sipariş formu
   const [selectedResourceId, setSelectedResourceId] = useState<string>(
@@ -297,6 +320,18 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
     () => (activeShop && activeShop.ownerWorks ? getFirstEmployeeQuote(state, activeShop, reservedForAdvice) : null),
     [state, activeShop, reservedForAdvice]
   );
+
+  // Her küçük yükseltme için "alırsam elimde ne kalır" hesabı (engel değil, yalnızca uyarı verisi)
+  const upgradeAssessments = useMemo(() => {
+    const out: Record<string, UpgradeCashAssessment> = {};
+    if (!activeShop || activeShop.isCompanyBranch) return out;
+    for (const u of listShopUpgrades(activeShop)) {
+      if (u.status !== 'AVAILABLE') continue;
+      const a = assessUpgradeCash(state, activeShop.shopId, u.def.id, reservedForAdvice);
+      if (a) out[u.def.id] = a;
+    }
+    return out;
+  }, [state, activeShop, reservedForAdvice]);
 
   const supplierOffers = useMemo(
     () => TradeAndShopEngine.getSupplierOffers(state, selectedResourceId),
@@ -1328,15 +1363,19 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <div className="g-section-title">Küçük yükseltmeler</div>
                   {listShopUpgrades(activeShop).map((u) => {
                     const canPay = spendableCash + activeShop.cashAccountBalance >= u.cost;
+                    const assess = upgradeAssessments[u.def.id];
+                    const armKey = `${activeShop.shopId}|${u.def.id}`;
+                    const armed = upgradeArmedKey === armKey && !!assess?.belowReserve;
                     return (
                       <div
                         key={u.def.id}
                         data-testid={`shop-small-upgrade-${u.def.id}`}
                         data-status={u.status}
-                        className={`flex items-center gap-3 p-3 rounded-2xl ${
+                        className={`p-3 rounded-2xl space-y-2 ${
                           u.status === 'OWNED' ? 'bg-[#ecfaf3]' : 'g-card-soft'
                         }`}
                       >
+                      <div className="flex items-center gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="font-extrabold text-[var(--g-ink)] leading-tight">{u.def.name}</div>
                           <div className="text-[13px] font-bold text-[var(--g-green-dark)]">{u.def.effectLabel}</div>
@@ -1344,6 +1383,15 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             <div data-testid={`shop-small-upgrade-used-${u.def.id}`} className="text-[13px] font-bold text-[var(--g-gold-dark,#b7791f)]">
                               İkinci el · {Math.max(0, u.usedUntilDay - state.day + 1)} gün kaldı
                             </div>
+                          )}
+                          {u.status === 'AVAILABLE' && assess && assess.affordable && (
+                            <span
+                              data-testid={`shop-small-upgrade-tier-${u.def.id}`}
+                              data-level={assess.level}
+                              className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[13px] font-extrabold ${UPGRADE_TIER_STYLE[assess.level]}`}
+                            >
+                              {upgradeTierLabel(assess)}
+                            </span>
                           )}
                         </div>
                         {u.status === 'OWNED' ? (
@@ -1361,12 +1409,54 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             type="button"
                             data-testid={`shop-small-upgrade-buy-${u.def.id}`}
                             disabled={!canPay || !onBuyShopUpgrade}
-                            onClick={() => onBuyShopUpgrade?.(activeShop.shopId, u.def.id)}
-                            className="g-btn g-btn-primary g-btn-sm shrink-0 px-3 tabular-nums"
+                            onClick={() => {
+                              // Rezervin altında kalınacaksa ilk dokunuş güçlü uyarıyı açar; yükseltme ENGELLENMEZ
+                              if (assess?.belowReserve && !armed) {
+                                setUpgradeArmedKey(armKey);
+                                return;
+                              }
+                              setUpgradeArmedKey(null);
+                              onBuyShopUpgrade?.(activeShop.shopId, u.def.id);
+                            }}
+                            className={`g-btn g-btn-sm shrink-0 px-3 tabular-nums ${armed ? 'g-btn-danger' : 'g-btn-primary'}`}
                           >
-                            {formatCurrency(u.cost).replace(/,00$/, '')}
+                            {armed ? 'Yine de al' : formatCurrency(u.cost).replace(/,00$/, '')}
                           </button>
                         )}
+                      </div>
+                      {armed && assess && (
+                        <div
+                          data-testid={`shop-upgrade-reserve-warning-${u.def.id}`}
+                          data-level={assess.level}
+                          className="rounded-2xl bg-rose-50 border-2 border-rose-400 p-3 text-sm font-bold text-rose-800 space-y-1"
+                        >
+                          <div>
+                            Dikkat: bu yükseltmeden sonra nakdin önerilen rezervin altında kalacak.
+                            {!assess.stockRefillPossible && ' Stok yenilemeye para kalmayacak.'}
+                          </div>
+                          <div className="flex justify-between font-semibold">
+                            <span>Kalan nakit</span>
+                            <span data-testid={`shop-upgrade-reserve-cash-${u.def.id}`} className="tabular-nums">
+                              {formatCurrency(Math.max(0, assess.cashAfter)).replace(/,00$/, '')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-semibold">
+                            <span>Önerilen rezerv</span>
+                            <span data-testid={`shop-upgrade-reserve-reserve-${u.def.id}`} className="tabular-nums">
+                              {formatCurrency(assess.upgradeSafetyReserve).replace(/,00$/, '')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-semibold">
+                            <span>7 günlük gider tahmini</span>
+                            <span data-testid={`shop-upgrade-reserve-expenses-${u.def.id}`} className="tabular-nums">
+                              {formatCurrency(assess.nextSevenDaysExpenses).replace(/,00$/, '')}
+                            </span>
+                          </div>
+                          <div className="text-[13px] font-semibold text-rose-700">
+                            Yine de almak istiyorsan düğmeye bir kez daha bas.
+                          </div>
+                        </div>
+                      )}
                       </div>
                     );
                   })}

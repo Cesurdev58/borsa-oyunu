@@ -43,6 +43,8 @@ interface HowToPlayModalProps {
   onGoTab: (tab: GameBottomTab) => void;
   onOpenBuilding: (id: CityBuildingId) => void;
   formatCurrency: (v: number) => string;
+  /** Açılış rehberini baştan başlatır (kayıttaki onboarding sıfırlanır) */
+  onRestartGuide?: () => void;
 }
 
 type SectionId = 'start' | 'market' | 'shop' | 'company' | 'holding' | 'money' | 'tips';
@@ -62,6 +64,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
   onGoTab,
   onOpenBuilding,
   formatCurrency,
+  onRestartGuide,
 }) => {
   const [active, setActive] = useState<SectionId>('start');
   if (!open) return null;
@@ -283,6 +286,16 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
               className="g-btn g-btn-navy w-full min-h-[52px]"
             >
               {current.go.label}
+            </button>
+          )}
+          {onRestartGuide && (
+            <button
+              type="button"
+              data-testid="how-to-play-restart-guide-btn"
+              onClick={onRestartGuide}
+              className="g-btn g-btn-secondary w-full min-h-[48px]"
+            >
+              Açılış rehberini yeniden başlat
             </button>
           )}
         </div>

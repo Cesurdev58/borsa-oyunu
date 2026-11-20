@@ -31,6 +31,8 @@ interface GameTopBarProps {
   /** Ticari itibar (0–100) ve lüks alışveriş penceresi */
   reputation?: number;
   onOpenLifestyle?: () => void;
+  /** İlk aşama: yalnızca nakit, net değer ve gün/saat öne çıkar; aşama yıldızı ve ayrıntılar gizlenir */
+  simpleMode?: boolean;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
@@ -50,6 +52,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     onOpenRichList,
     reputation,
     onOpenLifestyle,
+    simpleMode = false,
   }) => {
     const sessionMeta = getMarketSessionBadgeMeta(marketSession);
     const prevCashRef = useRef(cash);
@@ -132,7 +135,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
             onClick={() => setInfoOpen((v) => !v)}
             aria-label={cashMeta.ariaLabel}
             aria-expanded={infoOpen}
-            className={`relative flex-1 min-w-0 max-w-[210px] h-11 pl-1 pr-3 rounded-full flex items-center gap-1.5 cursor-pointer transition-transform ${
+            className={`relative flex-1 min-w-0 max-w-[210px] h-12 pl-1 pr-3 rounded-full flex items-center gap-1.5 cursor-pointer transition-transform ${
               cashDeltaDirection ? 'motion-safe:scale-[1.04]' : ''
             }`}
             style={{
@@ -147,11 +150,12 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
             >
               <Coins className="w-[18px] h-[18px] text-[#7a4f00]" strokeWidth={2.4} />
             </span>
+            <span className="flex-1 min-w-0 flex flex-col items-start justify-center">
             <span
               data-testid="tycoon-top-cash"
               data-full-value={cashMeta.full}
               data-abbreviated-value={cashMeta.abbreviated}
-              className={`g-display flex-1 min-w-0 text-left text-[17px] font-extrabold tabular-nums whitespace-nowrap truncate leading-none pt-0.5 ${
+              className={`g-display max-w-full text-left text-[17px] font-extrabold tabular-nums whitespace-nowrap truncate leading-none pt-0.5 ${
                 cashDeltaDirection === 'up'
                   ? 'text-[#7dffbc]'
                   : cashDeltaDirection === 'down'
@@ -160,6 +164,13 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               }`}
             >
               {shownCash}
+            </span>
+            <span
+              data-testid="tycoon-top-networth-inline"
+              className="text-[13px] font-bold text-white/70 leading-none tabular-nums whitespace-nowrap truncate max-w-full"
+            >
+              Net {netWorthMeta.abbreviated}
+            </span>
             </span>
             <ChevronDown
               aria-hidden="true"
@@ -183,6 +194,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
 
           {/* Sağ: seviye, bildirim, ayarlar */}
           <div className="flex items-center gap-1 shrink-0">
+            {!simpleMode && (
             <span
               data-testid="tycoon-top-stage"
               className="relative w-9 h-9 flex items-center justify-center"
@@ -191,12 +203,13 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               <Star className="absolute inset-0 w-9 h-9 fill-[var(--g-gold)] text-[var(--g-gold-dark)]" strokeWidth={1.5} aria-hidden="true" />
               <span className="g-display relative text-[15px] font-extrabold text-[#5a3a00] pt-0.5">{stage}</span>
             </span>
+            )}
             <button
               type="button"
               data-testid="top-notifications-btn"
               onClick={onOpenNotifications}
               aria-label={`Bildirimler (${unreadNotificationsCount} yeni)`}
-              className="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center"
+              className="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1 before:rounded-full"
             >
               <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
@@ -213,7 +226,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="top-settings-btn"
               onClick={onOpenSettings}
               aria-label="Oyun Ayarları ve Geliştirici Araçları"
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center"
+              className="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1 before:rounded-full"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -237,10 +250,12 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               <div className="text-[13px] text-white/60 font-bold">Nakit</div>
               <div className="g-display font-extrabold tabular-nums text-base">{cashMeta.full}</div>
             </div>
+            {!simpleMode && (
             <div className="rounded-xl bg-white/[0.06] p-2.5">
               <div className="text-[13px] text-white/60 font-bold">Aşama</div>
               <div className="g-display font-extrabold text-base">{stage}. aşama</div>
             </div>
+            )}
             <div data-testid="tycoon-market-session-badge" className="rounded-xl bg-white/[0.06] p-2.5">
               <div className="text-[13px] text-white/60 font-bold">Borsa</div>
               <div className="g-display font-extrabold text-base">{sessionMeta.shortLabel}</div>

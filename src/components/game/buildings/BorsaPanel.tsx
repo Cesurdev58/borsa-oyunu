@@ -288,7 +288,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
       </div>
 
       {/* Hızlı al/sat kartı */}
-      <div className="g-card p-4 space-y-3">
+      <div data-testid="borsa-quick-trade-card" className="g-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <SectorIcon sector={selectedStock.sector} size="lg" />
@@ -420,7 +420,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             className="min-h-[36px] w-32 px-3 rounded-full bg-slate-100 text-xs text-slate-900"
           />
         </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div data-testid="borsa-sector-filter" className="flex items-center gap-1.5 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => setSectorFilter('ALL')}
@@ -456,6 +456,8 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               <button
                 key={st.ticker}
                 type="button"
+                data-testid={`borsa-stock-card-${st.ticker}`}
+                data-guide="stock-card"
                 onClick={() => onSelectTicker(st.ticker)}
                 className={`w-full p-3 rounded-2xl border-2 text-left flex items-center gap-3 min-h-[64px] active:scale-[0.99] ${
                   isSelected

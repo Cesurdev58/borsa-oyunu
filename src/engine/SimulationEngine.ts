@@ -9,6 +9,15 @@
  * hem de kontrollü gün sonu kapanışıyla (closeCurrentDay / tickDay) koordine eder.
  */
 
+import {
+  defaultOnboarding,
+  hasProgress as hasOnboardingProgress,
+  migrateOnboarding,
+  readLegacyGuideDone,
+  restartedOnboarding,
+  withCompletedStep,
+  withDismissed,
+} from './OnboardingRules';
 import { migrateLegacyLoanContract } from './LoanAmortization';
 import { stepShopsIntraday } from './ShopSales';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
@@ -418,6 +427,7 @@ export class SimulationEngine {
         GameClockEngine.DEFAULT_REAL_MINUTES_PER_GAME_DAY,
       fastStartTempo: true,
       careerGoals: { claimed: [], totalRewards: 0 },
+      onboarding: defaultOnboarding(),
       timeScale: 1,
       isPaused: false,
       marketSession: initialClock.marketSession,
@@ -734,6 +744,11 @@ export class SimulationEngine {
       tradeState: cloned.tradeState,
       decisionEvents: cloned.decisionEvents,
       careerGoals: cloned.careerGoals,
+      onboarding: migrateOnboarding(cloned.onboarding, {
+        day,
+        hasProgress: hasOnboardingProgress(cloned),
+        legacyGuideDone: readLegacyGuideDone(),
+      }),
       lifestyle: cloned.lifestyle,
       autoInvest: cloned.autoInvest,
       records: cloned.records,
@@ -1859,6 +1874,17 @@ export class SimulationEngine {
       this.pendingDailyActions.push(`[Hedef] ${res.message}`);
     }
     return res;
+  }
+
+  /** Rehberin kayıtlı durumunu günceller (tamamlanan adım, atla, yeniden başlat). */
+  public updateOnboarding(
+    action: { type: 'complete'; stepId: string } | { type: 'dismiss' } | { type: 'restart' } | { type: 'marketUpdateSeen' }
+  ): void {
+    const cur = this.state.onboarding ?? defaultOnboarding();
+    if (action.type === 'complete') this.state.onboarding = withCompletedStep(cur, action.stepId);
+    else if (action.type === 'dismiss') this.state.onboarding = withDismissed(cur);
+    else if (action.type === 'restart') this.state.onboarding = restartedOnboarding(cur);
+    else this.state.onboarding = { ...cur, firstMarketUpdateSeen: true };
   }
 
   public resolveDecisionEvent(choiceId: 'A' | 'B'): { success: boolean; message: string } {

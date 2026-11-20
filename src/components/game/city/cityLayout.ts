@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SHOP_CASH_KEEP, SHOP_COLLECT_MIN } from '../../../data/gameBalance';
 import {
   IPOEligibilityResult,
   MarketSession,
@@ -640,10 +641,8 @@ export function deriveCityUrbanBlocks(
   return withCityServices(state, withShopBubbles(state, deriveCityUrbanBlocksWithSlots(state, shops)));
 }
 
-/** Dükkân kasasında bırakılan işletme parası; fazlası şehirde "para baloncuğu" ile toplanır */
-export const SHOP_CASH_KEEP = 5_000;
-/** Bundan küçük kasa fazlası baloncuk çıkarmaz */
-export const SHOP_COLLECT_MIN = 1_000;
+// Dükkân kasası eşikleri artık src/data/gameBalance.ts içinde (alt menü rozeti de kullanır)
+export { SHOP_CASH_KEEP, SHOP_COLLECT_MIN };
 
 function withShopBubbles(state: SimulationState, blocks: CityUrbanBlockNode[]): CityUrbanBlockNode[] {
   const shops = state.tradeState?.shops ?? [];

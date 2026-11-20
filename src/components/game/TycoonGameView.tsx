@@ -13,7 +13,10 @@ import { CityServicesModal, type CityServiceHandlers } from './CityServicesModal
 import type { CityServiceId } from './city/cityVisualTypes';
 import { PrestigeModal } from './PrestigeModal';
 import { buildRichList, founderNameForTicker } from '../../engine/RichListEngine';
-import { FirstRunGuide } from './FirstRunGuide';
+import { FirstRunGuide, type OnboardingAction } from './FirstRunGuide';
+import { navTabStatuses, shopTabIndicators } from '../../engine/OnboardingRules';
+import { firstShopGateStatus } from '../../engine/FirstShopGate';
+import { anyOverlayOpen, welcomeGuideMayShow, type OverlayFlags, type OverlayId } from './ui/overlayCoordinator';
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Clock,
@@ -76,6 +79,8 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onStartNewCity?: () => void;
   /** Kariyer hedefinin ödülünü al (engine/CareerGoals.ts) */
   onClaimCareerGoal?: (goalId: string, hasOpenedBorsa: boolean) => void;
+  /** Rehberin kayıtlı durumunu günceller (adım bitti, atla, yeniden başlat) */
+  onUpdateOnboarding?: (action: OnboardingAction) => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -106,6 +111,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   notifications,
   onResolveDecision,
   onClaimCareerGoal,
+  onUpdateOnboarding,
   onBuyLifestyleItem,
   onSellShopStock,
   onBuyUsedUpgrade,
@@ -173,22 +179,78 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   formatCurrency,
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
-  const [selectedBuildingId, setSelectedBuildingId] =
+  const [selectedBuildingId, setSelectedBuildingIdRaw] =
     useState<CityBuildingId | null>(null);
   const [highlightedBuildingId, setHighlightedBuildingId] =
     useState<CityBuildingId | null>(null);
   const [initialCompanySubTab, setInitialCompanySubTab] =
     useState<CompanySubTabRoute>('OZET');
-  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpenRaw] =
     useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isRichListOpen, setIsRichListOpen] = useState(false);
-  const [isLifestyleOpen, setIsLifestyleOpen] = useState(false);
-  const [openCityService, setOpenCityService] = useState<CityServiceId | null>(null);
-  const [isPrestigeOpen, setIsPrestigeOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpenRaw] = useState(false);
+  const [isRichListOpen, setIsRichListOpenRaw] = useState(false);
+  const [isLifestyleOpen, setIsLifestyleOpenRaw] = useState(false);
+  const [openCityService, setOpenCityServiceRaw] = useState<CityServiceId | null>(null);
+  const [isPrestigeOpen, setIsPrestigeOpenRaw] = useState(false);
+
+  // Pencere koordinasyonu (plan 4-H): biri açılırken diğerleri kapanır; üst üste açılmaz.
+  const closeOverlaysExcept = (keep: OverlayId) => {
+    if (keep !== 'guide') setIsGuideOpenRaw(false);
+    if (keep !== 'settings') setIsSettingsModalOpenRaw(false);
+    if (keep !== 'notifications') setIsNotificationDrawerOpenRaw(false);
+    if (keep !== 'building') setSelectedBuildingIdRaw(null);
+    if (keep !== 'richList') setIsRichListOpenRaw(false);
+    if (keep !== 'lifestyle') setIsLifestyleOpenRaw(false);
+    if (keep !== 'cityService') setOpenCityServiceRaw(null);
+    if (keep !== 'prestige') setIsPrestigeOpenRaw(false);
+  };
+  const setIsGuideOpen = (v: boolean) => { if (v) closeOverlaysExcept('guide'); setIsGuideOpenRaw(v); };
+  const setSelectedBuildingId = (v: CityBuildingId | null) => { if (v) closeOverlaysExcept('building'); setSelectedBuildingIdRaw(v); };
+  const setIsNotificationDrawerOpen = (v: boolean) => { if (v) closeOverlaysExcept('notifications'); setIsNotificationDrawerOpenRaw(v); };
+  const setIsSettingsModalOpen = (v: boolean) => { if (v) closeOverlaysExcept('settings'); setIsSettingsModalOpenRaw(v); };
+  const setIsRichListOpen = (v: boolean) => { if (v) closeOverlaysExcept('richList'); setIsRichListOpenRaw(v); };
+  const setIsLifestyleOpen = (v: boolean) => { if (v) closeOverlaysExcept('lifestyle'); setIsLifestyleOpenRaw(v); };
+  const setOpenCityService = (v: CityServiceId | null) => { if (v) closeOverlaysExcept('cityService'); setOpenCityServiceRaw(v); };
+  const setIsPrestigeOpen = (v: boolean) => { if (v) closeOverlaysExcept('prestige'); setIsPrestigeOpenRaw(v); };
+  const overlayFlags: OverlayFlags = {
+    guide: isGuideOpen,
+    settings: isSettingsModalOpen,
+    notifications: isNotificationDrawerOpen,
+    building: selectedBuildingId !== null,
+    richList: isRichListOpen,
+    lifestyle: isLifestyleOpen,
+    cityService: openCityService !== null,
+    prestige: isPrestigeOpen,
+  };
+  const overlayOpen = anyOverlayOpen(overlayFlags);
+
+  // Geri tuşu: açık pencereyi kapatır (sayfadan çıkmaz)
+  const overlayPushedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (overlayOpen && !overlayPushedRef.current) {
+      overlayPushedRef.current = true;
+      window.history.pushState({ gameOverlay: true }, '');
+    } else if (!overlayOpen && overlayPushedRef.current) {
+      overlayPushedRef.current = false;
+      if (window.history.state?.gameOverlay) window.history.back();
+    }
+  }, [overlayOpen]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPop = () => {
+      if (overlayPushedRef.current) {
+        overlayPushedRef.current = false;
+        closeOverlaysExcept('guide');
+        setIsGuideOpenRaw(false);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  });
   // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
   const richRank = buildRichList(state).playerRank;
 
@@ -254,12 +316,6 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         (o) => o.status === 'PENDING' || o.status === 'PARTIALLY_FILLED'
       ),
     [state.pendingOrders]
-  );
-
-  const portfolioPositionsCount = useMemo(
-    () =>
-      Object.values(state.portfolio).filter((pos) => pos.shares > 0).length,
-    [state.portfolio]
   );
 
   const unreadNotificationsCount = useMemo(
@@ -357,6 +413,18 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const handleCloseNotifications = useCallback(() => {
     setIsNotificationDrawerOpen(false);
   }, []);
+
+  const tabStatuses = useMemo(() => navTabStatuses(state), [state]);
+  const shopIndicators = useMemo(() => shopTabIndicators(state), [state]);
+  const hasShop = shopIndicators.ownedShopCount > 0;
+  const handleSelectTab = useCallback(
+    (tab: GameBottomTab) => {
+      // Kilitli ya da gizli sekme panel açmaz (eski çağrılar, rehber düğmeleri için de geçerli)
+      if (tabStatuses[tab].mode !== 'active') return;
+      setActiveBottomTab(tab);
+    },
+    [tabStatuses]
+  );
 
   const offlineModalOpen = Boolean(
     state.lastOfflineSummary &&
@@ -469,9 +537,15 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         formatCurrency={formatCurrency}
       />
       <FirstRunGuide
-        day={state.day}
+        state={state}
+        activeTab={activeBottomTab}
+        onboarding={state.onboarding}
         formatCurrency={formatCurrency}
-        onGoToMarket={() => setActiveBottomTab('market')}
+        blocked={!welcomeGuideMayShow(overlayFlags, offlineModalOpen)}
+        onAction={(a) => onUpdateOnboarding?.(a)}
+        onSelectTab={handleSelectTab}
+        timeScale={state.timeScale}
+        onSetTimeScale={onSetTimeScale}
       />
 
       {/* 1. ÜST HUD (Aşama, Gün, Saat, Kısaltılmış Nakit & Net Varlık, Piyasa Durumu, Bildirim ve Ayarlar) */}
@@ -487,9 +561,10 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         wealthTaxNote={wealthTaxNote}
         onOpenNotifications={handleOpenNotifications}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
-        richRank={richRank}
+        simpleMode={!hasShop}
+        richRank={hasShop ? richRank : undefined}
         onOpenRichList={() => setIsRichListOpen(true)}
-        reputation={state.tradeState?.tradeReputationScore}
+        reputation={hasShop ? state.tradeState?.tradeReputationScore : undefined}
         onOpenLifestyle={() => setIsLifestyleOpen(true)}
         onSwitchToDeveloperDashboard={onSwitchToDeveloperDashboard}
         formatCurrency={formatCurrency}
@@ -682,9 +757,10 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       {/* 4. ALT MOBİL NAVİGASYON (Şehir, Borsa, Şirket, Haberler, Portföy) */}
       <GameBottomNavigation
         activeTab={activeBottomTab}
-        onSelectTab={setActiveBottomTab}
+        onSelectTab={handleSelectTab}
         openOrdersCount={activePendingOrders.length}
-        portfolioPositionsCount={portfolioPositionsCount}
+        tabStatuses={tabStatuses}
+        shopIndicators={shopIndicators}
         hasPlayerCompany={state.playerCompany !== null}
         onOpenGuide={() => setIsGuideOpen(true)}
       />
@@ -692,7 +768,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       <HowToPlayModal
         open={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
-        onGoTab={setActiveBottomTab}
+        onGoTab={handleSelectTab}
+        onRestartGuide={() => {
+          setIsGuideOpen(false);
+          onUpdateOnboarding?.({ type: 'restart' });
+        }}
         onOpenBuilding={handleOpenBuildingDetailSheet}
         formatCurrency={formatCurrency}
       />

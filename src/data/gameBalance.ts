@@ -188,3 +188,13 @@ export const RECOMMENDED_WORKING_CAPITAL_SETUP_BASE = 35_000;
  * her kart 2 günde (4 dk) cevapsız kalıp B'ye düştüğü için ilk dükkân, ilk yükseltme ve ilk çalışan sırasında kartlar yığılıyordu.
  */
 export const ONBOARDING_QUIET_DAYS = 5;
+
+// ============================================================
+// ARAYÜZ VE İLK OYUNCU DENEYİMİ (plan Bölüm 4)
+// ============================================================
+/** Dükkân kasasında işletme parası olarak bırakılan tutar; fazlası "tahsil edilebilir kâr" sayılır */
+export const SHOP_CASH_KEEP = 5_000;
+/** Bundan küçük kasa fazlası tahsil edilebilir sayılmaz */
+export const SHOP_COLLECT_MIN = 1_000;
+/** Kayıttaki onboarding alanının sürümü */
+export const ONBOARDING_VERSION = 2;

@@ -47,6 +47,8 @@ export interface CityInfoSheetProps {
   onGoToCity: (cityId: CityDefinition['id']) => void;
   /** İlk (ya da yeni) mağazayı bu şehirde aç. */
   onOpenShop: (cityId: CityDefinition['id'], shopType: ShopType) => void;
+  /** Yeni kariyer şehir seçimi: verilirse eylem alanında yalnızca "Bu Şehirde Başla" gösterilir. */
+  onStartHere?: (cityId: CityDefinition['id']) => void;
 }
 
 export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
@@ -57,6 +59,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
   onClose,
   onGoToCity,
   onOpenShop,
+  onStartHere,
 }) => {
   const quoteRef = useRef<HTMLDivElement>(null);
   const presenceRef = useRef<HTMLDivElement>(null);
@@ -238,7 +241,11 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
 
         {/* Eylemler */}
         <div className="grid gap-2" data-testid="city-info-actions">
-          {hasShop ? (
+          {onStartHere ? (
+            <button type="button" className="g-btn g-btn-primary min-h-[56px] text-[17px]" data-testid="city-start-here-btn" onClick={() => onStartHere(city.id)}>
+              Bu Şehirde Başla
+            </button>
+          ) : hasShop ? (
             <>
               <button type="button" className="g-btn g-btn-navy min-h-[52px]" data-testid="city-go-btn" onClick={() => onGoToCity(city.id)}>
                 <MapPin size={18} /> Şehre Git

@@ -84,6 +84,7 @@ interface BuildingDetailSheetProps extends BuildingDetailActions {
   buildingId: CityBuildingId | null;
   state: SimulationState;
   initialCompanySubTab?: 'OZET' | 'URETIM' | 'CALISANLAR' | 'FINANS' | 'GELISIM';
+  manageRequest?: BuildingDetailContentProps['manageRequest'];
   onClose: () => void;
   onOpenBuilding: (id: CityBuildingId) => void;
 }

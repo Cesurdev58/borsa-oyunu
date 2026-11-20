@@ -36,6 +36,7 @@ import { TakeoverHoldingView } from './components/TakeoverHoldingView';
 import { MathAndSimulationLabView } from './components/MathAndSimulationLabView';
 import { TycoonGameView } from './components/game/TycoonGameView';
 import { HeadquartersSelectionModal } from './components/game/HeadquartersSelectionModal';
+import { StartCityScreen } from './components/game/turkeyMap/StartCityScreen';
 import {
   AppViewMode,
   GameNotificationCategory,
@@ -399,6 +400,10 @@ export default function App() {
       lastRealTickMsRef.current = nowMs;
 
       if (st.isPaused || st.timeScale === 0 || deltaRealSeconds <= 0) {
+        return;
+      }
+      // Yeni kariyerde başlangıç şehri seçilene kadar oyun zamanı akmaz.
+      if (engine.needsStartCitySelection()) {
         return;
       }
 
@@ -1276,6 +1281,16 @@ export default function App() {
   }, [engine, refreshUIOnly]);
 
   /** Eski kayıt: oyuncunun seçtiği şehri merkez yapar, dükkânları o şehre taşır (engine/CityMigration.ts). */
+  const handleChooseStartCity = useCallback(
+    (cityId: string) => {
+      const res = engineRef.current!.chooseStartCity(cityId);
+      lastRealTickMsRef.current = Date.now();
+      if (res.applied) setStatusBanner({ type: 'success', text: res.message });
+      persistAndRefreshUI();
+    },
+    [persistAndRefreshUI]
+  );
+
   const handleSelectHeadquarters = useCallback(
     (cityId: string) => {
       const res = engineRef.current!.completeHeadquartersSelection(cityId);
@@ -1436,6 +1451,14 @@ export default function App() {
         formattedTime={formattedTime}
         formatCurrency={(v) => engine.formatCurrency(v)}
       />
+      {engine.needsStartCitySelection() && (
+        <StartCityScreen
+          state={state}
+          formatCurrency={(v) => engine.formatCurrency(v)}
+          reservedCash={engine.getReservedCash()}
+          onConfirm={handleChooseStartCity}
+        />
+      )}
       {engine.isCitySelectionPending() && (
         <HeadquartersSelectionModal
           shopCount={state.tradeState?.shops.length ?? 0}

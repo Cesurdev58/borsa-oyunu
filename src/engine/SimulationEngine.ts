@@ -27,6 +27,7 @@ import {
   type HeadquartersSelectionResult,
 } from './CityMigration';
 import { isCityId } from '../data/cityDefinitions';
+import { chooseStartCity, needsStartCitySelection, type StartCityChoiceResult } from './CityStartSelection';
 import { CURRENT_BALANCE_VERSION, migrateBalance } from './BalanceMigration';
 import * as SectorMarket from './SectorMarket';
 import * as DecisionEventEngine from './DecisionEventEngine';
@@ -808,6 +809,16 @@ export class SimulationEngine {
     nowISO: string = new Date().toISOString()
   ): HeadquartersSelectionResult {
     return applyHeadquartersSelection(this.state, cityId, nowISO);
+  }
+
+  /** Yeni kariyer: başlangıç şehri henüz seçilmedi mi? */
+  public needsStartCitySelection(): boolean {
+    return needsStartCitySelection(this.state);
+  }
+
+  /** Başlangıç şehrini seçer (bir kez uygulanır; tekrar çağrı etkisizdir). */
+  public chooseStartCity(cityId: string): StartCityChoiceResult {
+    return chooseStartCity(this.state, cityId);
   }
 
   /** Harita kamerası (kayıtta saklanır; sınırlar `clampMapView` ile haritada uygulanır). */

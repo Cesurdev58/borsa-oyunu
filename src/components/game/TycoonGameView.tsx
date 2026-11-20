@@ -58,7 +58,8 @@ import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
 import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
-import { TurkeyMapScreen } from './turkeyMap/TurkeyMapScreen';
+import { TurkeyMapFlow } from './turkeyMap/TurkeyMapFlow';
+import type { ShopManageTab } from './turkeyMap/CityShopsScreen';
 import type { CityId, TurkeyMapViewState } from '../../models/cities';
 import type { ShopType } from '../../models/trade';
 import { DecisionCard } from './DecisionCard';
@@ -197,6 +198,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     setMapMode(next);
     try { window.localStorage.setItem('city_map_mode', next ? 'harita' : 'sehir'); } catch { /* yok say */ }
   };
+  // Şehir Mağazaları ekranından belirli bir dükkânın yönetimini açma isteği.
+  const [manageRequest, setManageRequest] = useState<{ shopId: string; tab?: ShopManageTab; nonce: number } | null>(null);
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
   const [selectedBuildingId, setSelectedBuildingIdRaw] =
@@ -646,15 +649,19 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         />
 
         {activeBottomTab === 'city' && mapMode && onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
-          <TurkeyMapScreen
+          <TurkeyMapFlow
             state={state}
             formatCurrency={formatCurrency}
             reservedCash={reservedCash}
+            detailOpen={selectedBuildingId !== null}
             onExit={() => changeMapMode(false)}
             onSetMapView={onSetTurkeyMapView}
             onSelectMapCity={onSelectMapCity}
             onOpenShopInCity={onOpenShopInCity}
-            onGoToCity={() => handleSelectTab('portfolio')}
+            onManageShop={(shopId, tab) => {
+              setManageRequest({ shopId, tab, nonce: Date.now() });
+              setSelectedBuildingId('OYUNCU_OFISI');
+            }}
           />
         ) : activeBottomTab === 'city' ? (
           <>
@@ -823,6 +830,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         buildingId={selectedBuildingId}
         state={state}
         initialCompanySubTab={initialCompanySubTab}
+        manageRequest={manageRequest}
         onClose={handleCloseBuildingSheet}
         onOpenBuilding={handleOpenBuildingDetailSheet}
       />

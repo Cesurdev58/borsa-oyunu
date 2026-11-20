@@ -5,7 +5,7 @@
  * OYUNCU_OFISI bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   EsnafAndTradePanel,
 } from '../EsnafAndTradePanel';
@@ -36,10 +36,14 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   onBuyShopUpgrade,
   onFireShopManager,
   onSetShopManagerSweep,
+  manageRequest,
 }) => {
-  const [managing, setManaging] = useState<{ shopId: string | null } | null>(
-    null
+  const [managing, setManaging] = useState<{ shopId: string | null; tab?: NonNullable<typeof manageRequest>['tab'] } | null>(
+    manageRequest ? { shopId: manageRequest.shopId, tab: manageRequest.tab } : null
   );
+  useEffect(() => {
+    if (manageRequest) setManaging({ shopId: manageRequest.shopId, tab: manageRequest.tab });
+  }, [manageRequest?.nonce]);
 
   return (
     <div
@@ -76,6 +80,7 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
             formatCurrency={formatCurrency}
             initialSection="SHOPS"
             initialShopId={managing.shopId}
+            initialActionTab={managing.tab}
             startWithOpenBranch={managing.shopId === null}
             onOpenShop={(params) => {
               onOpenShop(params);

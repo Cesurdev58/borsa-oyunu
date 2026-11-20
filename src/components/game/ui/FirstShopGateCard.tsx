@@ -1,5 +1,5 @@
 /**
- * İlk dükkân kapısı kartı: "borsayı tanı" görevlerinin üçü bitince ilk dükkân açılır
+ * İlk dükkân kapısı kartı: "borsayı tanı" görevleri bitince ilk dükkân açılır
  * (engine/FirstShopGate.ts). Dükkân ekranında ve dükkân yönetiminde aynı kart görünür.
  */
 import { Check } from 'lucide-react';
@@ -16,7 +16,7 @@ export const FirstShopGateCard: React.FC<{
     <div data-testid="first-shop-progress" className="g-hero p-5 space-y-3">
       <div className="g-display flex items-center gap-3 font-extrabold text-xl leading-tight">
         <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 flex items-center justify-center text-[28px]">🏪</span>
-        {gate.open ? 'Hazırsın! İlk dükkânını aç' : 'İlk dükkânın için 3 adım'}
+        {gate.open ? 'Hazırsın! İlk dükkânını aç' : `İlk dükkânın için ${gate.steps.length} adım`}
       </div>
       <div className="g-track h-4">
         <div className="g-fill" style={{ width: `${gate.pct}%` }} />
@@ -48,7 +48,7 @@ export const FirstShopGateCard: React.FC<{
         ) : null
       ) : (
         <p className="text-sm font-semibold text-white/70">
-          Borsa ekranından hisse al ve sat. Üç adım bitince dükkân kurabilirsin!
+          Borsa ekranından hisse al ve sat, sonra piyasayı bir gün izle. Adımlar bitince dükkân kurabilirsin!
         </p>
       )}
     </div>

@@ -425,6 +425,8 @@ export interface ShopInstance {
   trainedStaff?: number;
   /** Sağlık Merkezi çalışan sigortası açık mı (eski kayıtlarda yoktur) */
   staffInsurance?: boolean;
+  /** İlk dükkân (BUFE) onboarding: oyuncu kendisi çalışır, çalışan sayısı 0 ve kapasite OWNER_STAFF_CAPACITY. İlk çalışan alınınca false olur (eski kayıtta yok = false). */
+  ownerWorks?: boolean;
   /** Lojistik kargo anlaşması: siparişler ucuz ve erken gelir, günlük ücret (eski kayıtlarda yoktur) */
   cargoContract?: boolean;
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */

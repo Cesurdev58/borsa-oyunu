@@ -7,6 +7,7 @@
  */
 
 import { firstShopGateStatus } from './FirstShopGate';
+import { startsWithOwnerWorking } from './ShopOnboarding';
 import {
   SimulationState,
 } from '../models/simulation';
@@ -76,6 +77,8 @@ export class ShopOperations {
       };
     }
 
+    // İlk dükkân BUFE ise oyuncu kendisi çalışır (çalışan 0, kapasite %65); "İlk çalışanını işe al" ücretlidir.
+    const ownerWorks = startsWithOwnerWorking(state, params.shopType);
     const setupCost = Number((tpl.openingCost + tpl.decorationCost).toFixed(2));
     const initialWorkingCash = Number(
       Math.max(0, params.initialWorkingCash ?? Math.round(setupCost * 0.25)).toFixed(2)
@@ -180,7 +183,8 @@ export class ShopOperations {
       cashAccountBalance: isCompanyBranch ? 0 : initialWorkingCash,
       totalInvestedCapital: setupCost,
       dailyRent: tpl.dailyRentBase,
-      staffCount: tpl.minStaffRequired,
+      staffCount: ownerWorks ? 0 : tpl.minStaffRequired,
+      ...(ownerWorks ? { ownerWorks: true } : {}),
       minStaffRequired: tpl.minStaffRequired,
       staffDailyWagePerPerson: tpl.staffDailyWagePerPerson,
       maxCustomerCapacity: tpl.baseCustomerCapacity,
@@ -327,6 +331,7 @@ export class ShopOperations {
     shop.minStaffRequired =
       tpl.minStaffRequired + Math.floor((shop.level - 1) * 1.5);
     shop.staffCount = Math.max(shop.staffCount, shop.minStaffRequired);
+    if (shop.staffCount > 0) shop.ownerWorks = false;
     shop.dailyRent = Math.round(tpl.dailyRentBase * (1 + (shop.level - 1) * 0.35));
     shop.customerSatisfaction = Number(
       Math.min(98, shop.customerSatisfaction + 3).toFixed(1)
@@ -449,6 +454,11 @@ export class ShopOperations {
     }
 
     const messages: string[] = [];
+
+    if (typeof params.targetStaffCount === 'number' && shop.ownerWorks && shop.staffCount <= 0) {
+      // Oyuncu kendisi çalışırken ilk çalışan ücretsiz eklenemez: "İlk çalışanını işe al" yolu kullanılır
+      return { success: false, message: 'Önce "İlk çalışanını işe al" düğmesiyle ilk çalışanını al.' };
+    }
 
     if (typeof params.targetStaffCount === 'number') {
       const nextStaff = Math.max(

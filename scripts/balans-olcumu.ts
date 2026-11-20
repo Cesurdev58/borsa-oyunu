@@ -23,13 +23,19 @@ const HEDEF_GERI_DONUS: Record<string, number> = {
   MARKET: 120,
   OTOMOBIL_GALERISI: 180,
 };
+/** Dükkânı açar; ilk dükkân BUFE'de oyuncu kendisi çalıştığı için (kapasite %65) ölçüm normal personelle olsun diye ilk çalışanı da alır. */
+const openStaffed = (eng: SimulationEngine, type: string) => {
+  const r = eng.openShop({ shopType: type as never });
+  if (r.success && r.shop?.ownerWorks) eng.hireFirstEmployee(r.shop.shopId);
+  return r;
+};
 const fmt = (n: number) => Math.round(n).toLocaleString('tr-TR');
 
 console.log('=== DÜKKÂNLAR (90 gün, düzenli sipariş) ===');
 for (const type of Object.keys(SHOP_TEMPLATES)) {
   const tpl = SHOP_TEMPLATES[type as keyof typeof SHOP_TEMPLATES];
   const eng = new SimulationEngine(20261104, 8_000_000);
-  const r = eng.openShop({ shopType: type as never });
+  const r = openStaffed(eng, type);
   if (!r.success) {
     console.log(type.padEnd(20), 'AÇILAMADI:', r.message);
     continue;
@@ -62,7 +68,7 @@ console.log('\n=== MÜDÜR (2. seviye dükkân, 90 gün): elle yönetim vs müd�
 for (const type of Object.keys(SHOP_TEMPLATES)) {
   const run = (withManager: boolean) => {
     const eng = new SimulationEngine(20261104, 8_000_000);
-    const r = eng.openShop({ shopType: type as never });
+    const r = openStaffed(eng, type);
     if (!r.success) return null;
     const shopId = eng.getState().tradeState!.shops[0].shopId;
     eng.upgradeShopLevel(shopId);
@@ -102,7 +108,7 @@ console.log('Hedef: 6 yükseltmenin hepsi, dükkânın hedef geri dönüş süre
 for (const type of Object.keys(SHOP_TEMPLATES)) {
   const run = (withUpgrades: boolean) => {
     const eng = new SimulationEngine(20261104, 8_000_000);
-    if (!eng.openShop({ shopType: type as never }).success) return null;
+    if (!openStaffed(eng, type).success) return null;
     const shopId = eng.getState().tradeState!.shops[0].shopId;
     eng.upgradeShopLevel(shopId);
     eng.upgradeShopLevel(shopId);
@@ -144,7 +150,7 @@ console.log('Eğitim: bir kez ödenir, hedef geri dönüş ~%80 (yükseltmelerle
   for (const type of Object.keys(SHOP_TEMPLATES)) {
     const runSeed = (mode: 'yok' | 'egitim' | 'sigorta' | 'kargo', seed: number) => {
       const eng = new SimulationEngine(seed, 8_000_000);
-      if (!eng.openShop({ shopType: type as never }).success) return null;
+      if (!openStaffed(eng, type).success) return null;
       const shopId = eng.getState().tradeState!.shops[0].shopId;
       eng.upgradeShopLevel(shopId);
       let cost = 0;
@@ -252,7 +258,7 @@ console.log('\n=== ŞEHİR HİZMETLERİ (Belediye projeleri, 4 dükkânlı oyunc
   const { CITY_PROJECTS } = await import('../src/data/cityServices');
   const run = (projects: string[]) => {
     const eng = new SimulationEngine(20261104, 8_000_000);
-    for (const t of ['BUFE', 'MANAV', 'KAFE', 'GIYIM_MAGAZASI']) eng.openShop({ shopType: t as never });
+    for (const t of ['BUFE', 'MANAV', 'KAFE', 'GIYIM_MAGAZASI']) openStaffed(eng, t);
     eng.getState().tradeState!.cityProjects = projects;
     let total = 0;
     for (let d = 1; d <= 120; d++) {

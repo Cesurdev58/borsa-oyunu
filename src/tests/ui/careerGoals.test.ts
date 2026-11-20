@@ -29,6 +29,7 @@ test('Borsa görevleri bitince sırayla ödül alınır ve ilk dükkân açılı
   eng.buyStock(a.ticker, 20);
   eng.buyStock(b.ticker, 20);
   eng.sellStock(a.ticker, 5);
+  eng.advanceDaysWithoutPlayerDecisions(1, true); // "Piyasayı bir gün izle" adımı
   for (const id of ['quest-01-open-borsa', 'quest-02-first-order', 'quest-03-two-sectors', 'quest-04-first-shop-gate']) {
     const r = eng.claimCareerGoal(id, { hasOpenedBorsa: true });
     assert.equal(r.success, true, `${id}: ${r.message}`);

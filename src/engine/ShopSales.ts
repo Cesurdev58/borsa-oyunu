@@ -22,6 +22,7 @@ import {
   SHOP_SAME_TYPE_CROWDING,
 } from '../data/gameBalance';
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
+import { shopStaffRatio } from './ShopOnboarding';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
 import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
@@ -103,7 +104,7 @@ export function computeShopDailyDemand(
   );
   shop.specificState.activeCategoryCount = stockedResourceIds.length;
 
-  const staffAdequacyRatio = Math.min(1.25, shop.staffCount / Math.max(1, shop.minStaffRequired));
+  const staffAdequacyRatio = shopStaffRatio(shop);
   const satisfactionFactor = 0.65 + (shop.customerSatisfaction / 100) * 0.55;
   const reputationFactor = 0.75 + (ts.tradeReputationScore / 100) * 0.45;
   const macroFactor = Math.max(

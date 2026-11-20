@@ -509,6 +509,9 @@ export class TradeAndShopEngine {
       } else if (totalUnitsLeft < Math.round(shop.shelfCapacity * 0.2)) {
         shop.mainIssueTR = `Kritik stok seviyesi (${totalUnitsLeft} birim kaldı).`;
         shop.recommendedActionTR = 'Stok bitmeden yeni ürün siparişi verin.';
+      } else if (shop.ownerWorks && shop.staffCount <= 0) {
+        shop.mainIssueTR = 'Dükkânı tek başına sen yürütüyorsun (kapasite %65).';
+        shop.recommendedActionTR = 'Satışı artırmak için ilk çalışanını işe al.';
       } else if (shop.staffCount < shop.minStaffRequired) {
         shop.mainIssueTR = `Çalışan sayısı yetersiz (${shop.staffCount}/${shop.minStaffRequired}).`;
         shop.recommendedActionTR = 'Müşteri kaçırmamak için yeni çalışan alın.';

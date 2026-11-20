@@ -289,6 +289,8 @@ describe('V7 Ticaret Evreni & Borsa->Esnaf->Şirket->IPO->Holding 18 Kapsamlı K
     });
 
     for (const shop of engine.getState().tradeState!.shops) {
+      // İlk dükkân BUFE'de oyuncu kendisi çalışır: önce ücretli ilk çalışan alınır
+      if (shop.ownerWorks) assert.equal(engine.hireFirstEmployee(shop.shopId).success, true);
       engine.configureShopParameters({
         shopId: shop.shopId,
         targetStaffCount: 4,

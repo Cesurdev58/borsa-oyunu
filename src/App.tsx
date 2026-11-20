@@ -875,6 +875,14 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleUpdateOnboarding = useCallback(
+    (action: Parameters<typeof engine.updateOnboarding>[0]) => {
+      engine.updateOnboarding(action);
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI]
+  );
+
   const handleShopManagerResult = useCallback(
     (res: { success: boolean; message: string }) => {
       setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
@@ -1320,6 +1328,7 @@ export default function App() {
         notifications={notifications}
         onResolveDecision={handleResolveDecision}
         onClaimCareerGoal={handleClaimCareerGoal}
+        onUpdateOnboarding={handleUpdateOnboarding}
         onBuyLifestyleItem={handleBuyLifestyleItem}
         onSellShopStock={handleSellShopStock}
         onBuyUsedUpgrade={handleBuyUsedUpgrade}

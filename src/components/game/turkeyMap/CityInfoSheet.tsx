@@ -84,6 +84,8 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
   const [dragY, setDragY] = useState(0);
   const startY = useRef<number | null>(null);
   const onDown = (e: React.PointerEvent) => {
+    // Kapat düğmesine basılırsa sürükleme başlamaz: işaretçi yakalanırsa düğmenin tıklaması kaybolur.
+    if ((e.target as Element).closest?.('button')) return;
     startY.current = e.clientY;
     try { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); } catch { /* yok say */ }
   };

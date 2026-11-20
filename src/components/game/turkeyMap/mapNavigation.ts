@@ -72,7 +72,7 @@ export function summarizeCityShops(state: SimulationState, cityId: CityId): City
     staff += s.staffCount + (s.ownerWorks ? 1 : 0);
     used += s.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
     cap += Math.max(1, s.shelfCapacity);
-    if (shopHasIssue(s)) issues += 1;
+    if (shopHasIssue(s, state.day)) issues += 1;
   }
   return {
     shopCount: shops.length,

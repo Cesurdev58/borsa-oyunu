@@ -4,6 +4,7 @@
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { Crosshair, Store } from 'lucide-react';
+import { DEFAULT_MAP_FILTER, MAP_FILTERS, cityMatchesFilter, mapFilterCounts, type MapFilterId } from './mapFilters';
 import type { CityId, TurkeyMapViewState } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
@@ -14,7 +15,7 @@ import { TurkeyMap } from './TurkeyMap';
 import { CityInfoSheet } from './CityInfoSheet';
 import { DEFAULT_MAP_VIEW, clampMapView, fitViewToPoints, type MapMarkerModel } from './mapView';
 
-export function buildMapMarkers(state: SimulationState): MapMarkerModel[] {
+export function buildMapMarkers(state: SimulationState, filter: MapFilterId = DEFAULT_MAP_FILTER): MapMarkerModel[] {
   return getAllCityDefinitions().map((c) => {
     const p = getCityPresence(state, c.id);
     return {
@@ -25,6 +26,7 @@ export function buildMapMarkers(state: SimulationState): MapMarkerModel[] {
       markerState: p.markerState,
       hasIssue: p.shopCount > 0 && cityHasIssue(state, c.id),
       shopCount: p.shopCount,
+      dimmed: !cityMatchesFilter(state, c.id, filter),
     };
   });
 }
@@ -39,6 +41,9 @@ export interface TurkeyMapScreenProps {
   onGoToCity: (cityId: CityId) => void;
   /** 3D şehre dönüş (verilmezse düğme çıkmaz). */
   onExit?: () => void;
+  /** Etkin filtre (verilmezse ekran kendi içinde tutar). Filtre kamerayı ve seçimi değiştirmez. */
+  filter?: MapFilterId;
+  onFilterChange?: (f: MapFilterId) => void;
   /** Test/sunucu için sabit harita ölçüsü. */
   fixedSize?: { width: number; height: number };
 }
@@ -52,9 +57,21 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
   onOpenShopInCity,
   onGoToCity,
   onExit,
+  filter: filterProp,
+  onFilterChange,
   fixedSize,
 }) => {
-  const markers = useMemo(() => buildMapMarkers(state), [state, state.tradeState?.shops, state.headquartersCityId]);
+  const [localFilter, setLocalFilter] = useState<MapFilterId>(DEFAULT_MAP_FILTER);
+  const filter = filterProp ?? localFilter;
+  const changeFilter = (f: MapFilterId) => {
+    setLocalFilter(f);
+    onFilterChange?.(f);
+  };
+  const markers = useMemo(
+    () => buildMapMarkers(state, filter),
+    [state, state.tradeState?.shops, state.tradeState?.warehouses, state.playerCompany?.productionCapacity, state.headquartersCityId, state.day, filter]
+  );
+  const counts = useMemo(() => mapFilterCounts(state, markers.map((m) => m.cityId)), [state, markers]);
   const aspect = fixedSize ? fixedSize.height / fixedSize.width : 560 / 390;
   const view = clampMapView(state.turkeyMapView, aspect);
   const [revision, setRevision] = useState(0);
@@ -83,7 +100,42 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
         fixedSize={fixedSize}
         viewRevision={revision}
       />
-      <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-2">
+      <div
+        className="absolute inset-x-0 top-0 z-10 flex gap-2 overflow-x-auto px-3 py-2"
+        data-testid="map-filter-bar"
+        role="group"
+        aria-label="Harita filtreleri"
+      >
+        {MAP_FILTERS.map((f) => {
+          const active = f.id === filter;
+          const isIssues = f.id === 'ISSUES';
+          return (
+            <button
+              key={f.id}
+              type="button"
+              data-testid={`map-filter-${f.id}`}
+              data-count={counts[f.id]}
+              aria-pressed={active}
+              onClick={() => changeFilter(f.id)}
+              className={`g-pill min-h-[44px] shrink-0 whitespace-nowrap px-3 text-[14px] font-bold ${
+                active ? 'bg-[var(--g-gold)] text-[#3b2a00]' : 'bg-white/90 text-[var(--g-navy-800,#0b1f36)]'
+              }`}
+            >
+              {f.labelTR}
+              {f.id !== 'ALL' && (
+                <span
+                  className={`ml-1.5 rounded-full px-1.5 text-[13px] ${
+                    isIssues && counts[f.id] > 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {counts[f.id]}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="pointer-events-none absolute left-3 top-[64px] flex flex-col gap-2">
         <button
           type="button"
           data-testid="turkey-map-recenter-btn"

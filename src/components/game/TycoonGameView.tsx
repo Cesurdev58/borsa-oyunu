@@ -59,6 +59,8 @@ import { GameBottomNavigation } from './GameBottomNavigation';
 import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
 import { TurkeyMapFlow } from './turkeyMap/TurkeyMapFlow';
+import { MapErrorBoundary } from './turkeyMap/MapErrorBoundary';
+import { isTurkeyMapEnabled, recordMapFallback } from '../../data/featureFlags';
 import type { ShopManageTab } from './turkeyMap/CityShopsScreen';
 import type { CityId, TurkeyMapViewState } from '../../models/cities';
 import type { ShopType } from '../../models/trade';
@@ -190,13 +192,15 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
   const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
-  // Türkiye haritası şimdilik 3D şehirle yan yana çalışır; seçim tarayıcıda saklanır (varsayılan: 3D şehir).
-  const [mapMode, setMapMode] = useState<boolean>(() => {
-    try { return typeof window !== 'undefined' && window.localStorage.getItem('city_map_mode') === 'harita'; } catch { return false; }
-  });
+  // Şehir sekmesi doğrudan Türkiye haritasıdır (bayrak `turkeyMapEnabled`, varsayılan açık).
+  // 3D şehir yalnızca bu oturumda "3D Şehre Dön" denirse ya da harita çökerse açılır; kalıcı seçim yoktur,
+  // bu yüzden uygulama yeniden açılınca Şehir sekmesi yine haritadır.
+  const [mapEnabled] = useState<boolean>(() => isTurkeyMapEnabled());
+  const [fellBackTo3d, setFellBackTo3d] = useState(false);
+  const mapMode = mapEnabled && !fellBackTo3d;
   const changeMapMode = (next: boolean) => {
-    setMapMode(next);
-    try { window.localStorage.setItem('city_map_mode', next ? 'harita' : 'sehir'); } catch { /* yok say */ }
+    if (!next) recordMapFallback('player-exit');
+    setFellBackTo3d(!next);
   };
   // Şehir Mağazaları ekranından belirli bir dükkânın yönetimini açma isteği.
   const [manageRequest, setManageRequest] = useState<{ shopId: string; tab?: ShopManageTab; nonce: number } | null>(null);
@@ -649,6 +653,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         />
 
         {activeBottomTab === 'city' && mapMode && onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
+          <MapErrorBoundary onFallback={() => setFellBackTo3d(true)}>
           <TurkeyMapFlow
             state={state}
             formatCurrency={formatCurrency}
@@ -663,6 +668,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               setSelectedBuildingId('OYUNCU_OFISI');
             }}
           />
+          </MapErrorBoundary>
         ) : activeBottomTab === 'city' ? (
           <>
           {onSetTurkeyMapView && (

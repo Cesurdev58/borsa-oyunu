@@ -78,7 +78,7 @@ export function getCityShopSummary(state: SimulationState, cityId: CityId): City
   for (const s of shops) {
     revenue += s.todaySalesRevenue ?? 0;
     profit += s.todayNetProfit ?? 0;
-    if (shopHasIssue(s)) issues += 1;
+    if (shopHasIssue(s, state.day)) issues += 1;
   }
   return {
     shopCount: shops.length,
@@ -88,18 +88,71 @@ export function getCityShopSummary(state: SimulationState, cityId: CityId): City
   };
 }
 
-/** "Sorun var" kuralı: rafı boş ve yolda malı yok, ya da kasası boş (müdürün `lowCash` uyarısı). */
-export function shopHasIssue(s: {
+/** Haritadaki kırmızı halkayı doğuran gerçek operasyon sorunları. */
+export type ShopIssueKind = 'STOCK_OUT' | 'LOSS' | 'STAFF_SHORT' | 'MANAGER_CASH';
+
+export const SHOP_ISSUE_LABEL_TR: Record<ShopIssueKind, string> = {
+  STOCK_OUT: 'Raflar boş, yolda mal yok',
+  LOSS: 'Dün zarar etti',
+  STAFF_SHORT: 'Çalışan eksik',
+  MANAGER_CASH: 'Müdürün kasası boş',
+};
+
+/** Yeni açılan dükkân ilk günlerde zarar sayılmaz (kira + kurulum dönemi). */
+export const SHOP_LOSS_GRACE_DAYS = 2;
+/** Küsurat farkı zarar sayılmasın diye eşik (₺). */
+const SHOP_LOSS_THRESHOLD_TL = 1;
+
+export interface ShopIssueInput {
   inventoryBatches: Array<{ availableQuantity: number }>;
   pendingDeliveriesCount?: number;
   manager?: { lowCash?: boolean } | null;
-}): boolean {
+  staffCount?: number;
+  minStaffRequired?: number;
+  ownerWorks?: boolean;
+  /** Biten günün net kârı (dükkân kartlarındaki "Dün" ile aynı kaynak). */
+  todayNetProfit?: number;
+  openedDay?: number;
+}
+
+/**
+ * Bir dükkândaki gerçek operasyon sorunları (yalnızca durumdan türetilir, kayıtta tutulmaz):
+ *  - STOCK_OUT: rafta mal yok ve yolda sipariş de yok
+ *  - LOSS: biten gün net zarar (`day` verilirse ve dükkân en az SHOP_LOSS_GRACE_DAYS gündür açıksa)
+ *  - STAFF_SHORT: çalışan sayısı gereken en azın altında (sahip çalışırken sayılmaz)
+ *  - MANAGER_CASH: müdürün kasası boş, mal alamıyor
+ */
+export function shopIssueKinds(s: ShopIssueInput, day?: number): ShopIssueKind[] {
+  const kinds: ShopIssueKind[] = [];
   const stock = s.inventoryBatches.reduce((sum, b) => sum + b.availableQuantity, 0);
-  if (stock <= 0 && (s.pendingDeliveriesCount ?? 0) === 0) return true;
-  return Boolean(s.manager?.lowCash);
+  if (stock <= 0 && (s.pendingDeliveriesCount ?? 0) === 0) kinds.push('STOCK_OUT');
+  if (
+    day !== undefined &&
+    s.openedDay !== undefined &&
+    day - s.openedDay >= SHOP_LOSS_GRACE_DAYS &&
+    Number.isFinite(s.todayNetProfit) &&
+    (s.todayNetProfit as number) < -SHOP_LOSS_THRESHOLD_TL
+  ) {
+    kinds.push('LOSS');
+  }
+  if (
+    s.staffCount !== undefined &&
+    s.minStaffRequired !== undefined &&
+    !s.ownerWorks &&
+    s.staffCount < s.minStaffRequired
+  ) {
+    kinds.push('STAFF_SHORT');
+  }
+  if (s.manager?.lowCash) kinds.push('MANAGER_CASH');
+  return kinds;
+}
+
+/** "Sorun var" kuralı: `shopIssueKinds` boş değilse. `day` verilmezse zarar kuralı atlanır. */
+export function shopHasIssue(s: ShopIssueInput, day?: number): boolean {
+  return shopIssueKinds(s, day).length > 0;
 }
 
 /** Şehirde sorunlu en az bir dükkân var mı? (kırmızı halka) */
 export function cityHasIssue(state: SimulationState, cityId: CityId): boolean {
-  return (state.tradeState?.shops ?? []).some((s) => s.cityId === cityId && shopHasIssue(s));
+  return (state.tradeState?.shops ?? []).some((s) => s.cityId === cityId && shopHasIssue(s, state.day));
 }

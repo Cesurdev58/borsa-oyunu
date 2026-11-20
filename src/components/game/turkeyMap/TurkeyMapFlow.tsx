@@ -7,6 +7,7 @@ import type { CityId, TurkeyMapViewState } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import type { ShopType } from '../../../models/trade';
 import { TurkeyMapScreen } from './TurkeyMapScreen';
+import { DEFAULT_MAP_FILTER, type MapFilterId } from './mapFilters';
 import { CityShopsScreen, type ShopManageTab } from './CityShopsScreen';
 import { attachMapBackHandler } from './mapBackController';
 import { MAP_ROOT, goToCity, resolveBack, type MapNavState } from './mapNavigation';
@@ -30,6 +31,8 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
   const { state, detailOpen = false, onSelectMapCity, onExit } = props;
   const [nav, setNav] = useState<MapNavState>(MAP_ROOT);
   const [exitConfirm, setExitConfirm] = useState(false);
+  // Filtre burada tutulur: Şehir Mağazaları'na gidip dönünce seçili filtre korunur.
+  const [filter, setFilter] = useState<MapFilterId>(DEFAULT_MAP_FILTER);
   const sheetOpen = Boolean(state.selectedMapCityId);
 
   // Şehir mağazaları açıkken o şehirde dükkân kalmadıysa (bozuk durum) ekran boş durumu gösterir; gezinme bozulmaz.
@@ -82,14 +85,16 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
           onOpenShopInCity={props.onOpenShopInCity}
           onGoToCity={(id) => setNav((n) => goToCity(n, state, id))}
           onExit={onExit}
+          filter={filter}
+          onFilterChange={setFilter}
           fixedSize={props.fixedSize}
         />
       )}
       {exitConfirm && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6" role="alertdialog" aria-label="Çıkış onayı" data-testid="map-exit-confirm">
           <div className="g-card w-full max-w-sm space-y-3 p-4 text-center">
-            <div className="g-display text-xl font-extrabold">Haritadan çıkmak istiyor musun?</div>
-            <p className="text-[14px] text-slate-500">3D şehir görünümüne dönersin. İlerlemen kayıtlı.</p>
+            <div className="g-display text-xl font-extrabold">3D şehre geçmek istiyor musun?</div>
+            <p className="text-[14px] text-slate-500">Eski 3D şehir görünümü açılır. İlerlemen kayıtlı.</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid="map-exit-stay-btn" onClick={() => setExitConfirm(false)}>Kal</button>
               <button type="button" className="g-btn g-btn-primary min-h-[48px]" data-testid="map-exit-confirm-btn" onClick={confirmExit}>Çık</button>

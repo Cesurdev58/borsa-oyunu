@@ -143,7 +143,7 @@ test('Rehber: adımlar sırayla, atla ve yeniden başlat çalışır', () => {
   assert.equal(currentGuideStep({ ...ob, dismissed: true }), null);
   assert.equal(currentGuideStep(restartedOnboarding({ ...ob, dismissed: true }))?.id, 'welcome');
   const ids = GUIDE_STEPS.map((s) => s.id);
-  assert.deepEqual(ids.slice(0, 8), ['welcome', 'open-market', 'pick-stock', 'buy', 'sectors', 'sell', 'market-day', 'shop-tab']);
+  assert.deepEqual(ids.slice(0, 8), ['welcome', 'open-market', 'pick-stock', 'buy', 'sectors', 'sell', 'market-day', 'city-tab']);
   assert.ok(ids.includes('opening-capital') && ids.includes('first-order') && ids.includes('first-hire'));
 });
 

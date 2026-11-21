@@ -12,7 +12,7 @@ import { ONBOARDING_VERSION, SHOP_CASH_KEEP, SHOP_COLLECT_MIN } from '../data/ga
 import type { SimulationState } from '../models/simulation';
 import { firstShopGateStatus } from './FirstShopGate';
 
-export type NavTabId = 'city' | 'market' | 'portfolio' | 'company' | 'news';
+export type NavTabId = 'city' | 'market' | 'portfolio' | 'company' | 'bank' | 'news';
 export type NavTabMode = 'active' | 'locked' | 'hidden';
 
 export interface NavTabStatus {
@@ -37,6 +37,8 @@ export function navTabStatuses(state: NavInput): Record<NavTabId, NavTabStatus> 
   const companyOpen = hasCompany || Boolean(state.stageUnlocks?.stage2Entrepreneur);
 
   const news: NavTabStatus = hasBought || shops > 0 || hasCompany ? { mode: 'active' } : { mode: 'hidden' };
+  // Banka (para taşıma, kredi, işlem defteri) ilk hisse alınınca Haberler ile birlikte görünür.
+  const bank: NavTabStatus = news;
   const portfolio: NavTabStatus = gate.open
     ? { mode: 'active' }
     : hasBought
@@ -54,6 +56,7 @@ export function navTabStatuses(state: NavInput): Record<NavTabId, NavTabStatus> 
     news,
     portfolio,
     company,
+    bank,
   };
 }
 

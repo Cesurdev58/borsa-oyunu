@@ -48,7 +48,7 @@ test('Yeni oyuncu ilk ekranda en çok 3 menü hedefi görür (Şehir, Borsa, Reh
   const eng = new SimulationEngine(20261104, 100_000);
   const html = renderNav(eng);
   for (const id of ['city', 'market', 'guide']) assert.ok(html.includes(`bottom-nav-${id}"`), id);
-  for (const id of ['portfolio', 'company', 'news']) assert.ok(!html.includes(`bottom-nav-${id}"`), `${id} gizli olmalı`);
+  for (const id of ['portfolio', 'company', 'news', 'bank']) assert.ok(!html.includes(`bottom-nav-${id}"`), `${id} gizli olmalı`);
   assert.equal(navTabStatuses(eng.getState()).company.mode, 'hidden');
 });
 
@@ -58,6 +58,7 @@ test('Aşamalı açılış: ilk alımda Haberler, kapı bitince Dükkân, sonra 
   assert.equal(eng.buyStock(a.ticker, 10).success, true);
   let s = navTabStatuses(eng.getState());
   assert.equal(s.news.mode, 'active');
+  assert.equal(s.bank.mode, 'active', 'Banka ilk hisse alınınca açılır');
   assert.equal(s.portfolio.mode, 'locked');
   assert.ok(s.portfolio.hint && s.portfolio.hint.length > 5);
   assert.equal(s.company.mode, 'hidden');

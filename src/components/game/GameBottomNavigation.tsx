@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Briefcase, Map as MapIcon, CandlestickChart, Lock, Newspaper, Store } from 'lucide-react';
+import { BookOpen, Briefcase, Landmark, Map as MapIcon, CandlestickChart, Lock, Newspaper, Store } from 'lucide-react';
 import type { NavTabId, NavTabStatus, ShopTabIndicators } from '../../engine/OnboardingRules';
 import { GameBottomTab } from './gameTypes';
 
@@ -54,6 +54,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
           dot: shopIndicators.ownedShopCount > 0 && shopIndicators.hasCollectable,
         },
         { id: 'company', label: 'Şirket', Icon: Briefcase, dot: hasPlayerCompany },
+        { id: 'bank', label: 'Banka', Icon: Landmark },
         { id: 'news', label: 'Haberler', Icon: Newspaper },
       ];
       const visibleTabs = tabs.filter((t) => tabStatuses[t.id].mode !== 'hidden');
@@ -71,7 +72,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
         <nav
           aria-label="Oyun Alt Navigasyon Çubuğu"
           data-testid="game-bottom-nav"
-          className="sticky bottom-0 z-30 px-2 pt-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))]"
+          className="sticky bottom-0 z-30 px-0.5 pt-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))]"
           style={{
             background: 'linear-gradient(180deg, var(--g-navy-800), var(--g-navy-900))',
             boxShadow: '0 -8px 24px -12px rgba(18,28,68,.55)',
@@ -87,7 +88,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
             </div>
           )}
           <div
-            className="max-w-5xl mx-auto grid gap-0.5"
+            className="max-w-5xl mx-auto grid gap-0"
             style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
           >
             {visibleTabs.map((tab) => {
@@ -133,7 +134,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                     />
                   )}
                   <span
-                    className={`text-[13px] leading-tight mt-1 truncate max-w-full ${
+                    className={`text-[13px] leading-tight mt-1 truncate max-w-full tracking-tighter ${
                       isActive ? 'text-white font-extrabold' : 'text-white/60 font-bold'
                     }`}
                   >
@@ -161,7 +162,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                 <span className="w-11 h-9 rounded-xl flex items-center justify-center" style={{ color: 'rgba(255,255,255,.6)' }}>
                   <BookOpen className="w-5 h-5" strokeWidth={2.1} />
                 </span>
-                <span className="text-[13px] leading-tight mt-1 truncate max-w-full text-white/60 font-bold">
+                <span className="text-[13px] leading-tight mt-1 truncate max-w-full tracking-tighter text-white/60 font-bold">
                   Rehber
                 </span>
               </button>

@@ -16,6 +16,7 @@ export type GameBottomTab =
   | 'city'
   | 'market'
   | 'company'
+  | 'bank'
   | 'news'
   | 'portfolio';
 

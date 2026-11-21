@@ -345,6 +345,12 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       if (companySubTab) {
         setInitialCompanySubTab(companySubTab);
       }
+      // Banka artık alt menüde kendi sekmesidir; sekme görünürse bina paneli yerine ona geçilir.
+      if (id === 'BANKA' && navTabStatuses(state).bank.mode === 'active') {
+        setSelectedBuildingId(null);
+        setActiveBottomTab('bank');
+        return;
+      }
       // Kilitli binalar işlem ekranını açmaz
       if (!isBuildingUnlocked(state, id)) {
         setSelectedBuildingId(null);
@@ -637,6 +643,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             <h2 className="g-display text-[26px] font-extrabold leading-none text-[var(--g-ink)] px-1 pt-1">
               {activeBottomTab === 'market' && 'Borsa'}
               {activeBottomTab === 'company' && 'Şirketim'}
+              {activeBottomTab === 'bank' && 'Banka'}
               {activeBottomTab === 'news' && 'Haberler'}
               {activeBottomTab === 'portfolio' && 'Dükkânlarım'}
             </h2>
@@ -707,6 +714,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   </>
                 )}
               </div>
+            )}
+
+            {activeBottomTab === 'bank' && (
+              <BuildingDetailContent
+                {...sharedActions}
+                buildingId="BANKA"
+                state={state}
+              />
             )}
 
             {activeBottomTab === 'news' && (

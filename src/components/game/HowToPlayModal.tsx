@@ -172,7 +172,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       title: 'Kasalar, kredi ve vergi',
       Icon: Coins,
       points: [
-        'Üç ayrı kasan var: cebin, dükkân kasaları ve şirket kasası. Aralarında Banka binasından para taşıyabilirsin.',
+        'Üç ayrı kasan var: cebin, dükkân kasaları ve şirket kasası. Aralarında alt menüdeki Banka sekmesinden para taşıyabilirsin (ilk hisseni alınca açılır).',
         'Banka kredi verir. Şirketin yoksa bireysel kredi pahalıdır; borcu zamanında ödemezsen faiz büyür.',
         'Şirket kârının bir kısmı vergiye gider. Kâr büyüdükçe vergi oranı %25\'ten yukarı çıkar.',
         `Servet vergisi: nakdin ve hisselerin toplamı ${fc(WEALTH_TAX_FREE_AMOUNT)}'yi geçerse, fazlasından yılda %${Math.round(WEALTH_TAX_ANNUAL_RATE * 100)} alınır (${WEALTH_TAX_PERIOD_DAYS} günde bir). Büyük parayı boşta tutmak yerine yatırıma çevir.`,

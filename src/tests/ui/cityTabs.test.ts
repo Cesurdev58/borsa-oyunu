@@ -159,3 +159,25 @@ test('Bina kilidi: şirket yokken Fabrika ve Ar-Ge kilitli, Borsa ve Dükkân a�
   assert.equal(isBuildingUnlocked(st, 'ARGE_MERKEZI'), false);
   assert.equal(isBuildingUnlocked(st, 'HOLDING_MERKEZI'), false);
 });
+
+test('Alt menüde Banka sekmesi: yeni oyuncuda gizli, ilk hisseden sonra görünür; Haberler ile Rehber arasında değil, Şirket\'ten sonra gelir', () => {
+  const eng = new SimulationEngine(20261121, 100_000);
+  const render = (e: SimulationEngine) =>
+    renderToStaticMarkup(
+      React.createElement(GameBottomNavigation, {
+        activeTab: 'bank',
+        onSelectTab: noop,
+        openOrdersCount: 0,
+        tabStatuses: navTabStatuses(e.getState()),
+        shopIndicators: shopTabIndicators(e.getState()),
+        hasPlayerCompany: false,
+        onOpenGuide: noop,
+      } as never)
+    );
+  assert.ok(!render(eng).includes('data-testid="bottom-nav-bank"'));
+  assert.equal(eng.buyStock(eng.getState().stocks[0].ticker, 10).success, true);
+  const html = render(eng);
+  assert.ok(html.includes('data-testid="bottom-nav-bank"'));
+  assert.ok(html.includes('>Banka<'));
+  assert.ok(html.indexOf('bottom-nav-bank') > html.indexOf('bottom-nav-market'));
+});

@@ -1,5 +1,6 @@
 /**
- * Türkiye harita çizimini üretir: src/data/turkeyMapGeometry.ts
+ * Türkiye haritasının KOMŞU ÜLKE zeminini üretir: src/data/turkeyMapGeometry.ts (`TURKEY_NEIGHBORS_PATH`).
+ * Türkiye'nin kendisi (81 il poligonu) ayrı üretilir: scripts/build-turkey-provinces.ts → src/data/turkeyProvinceGeometry.ts.
  *
  * Kaynak: Natural Earth (kamu malı) — "world-atlas" paketinin countries-10m.json dosyası (TopoJSON).
  * Kullanım:  npx tsx scripts/build-turkey-map.ts <countries-10m.json yolu>
@@ -127,11 +128,9 @@ function build(ids: string[], tol: number, minArea: number): { path: string; poi
   return { path: toPath(out), points: out.reduce((n, r) => n + r.length, 0) };
 }
 
-const TURKEY = ['792'];
 // Yunanistan, Bulgaristan, Gürcistan, Ermenistan, Azerbaycan, İran, Irak, Suriye, Kıbrıs, Romanya, Rusya, Ukrayna
 const NEIGHBORS = ['300', '100', '268', '051', '031', '364', '368', '760', '196', '642', '643', '804'];
 
-const turkey = build(TURKEY, 0.35, 1.5);
 const neighbors = build(NEIGHBORS, 0.8, 8);
 
 const src = `/**
@@ -143,11 +142,8 @@ const src = `/**
  *
  * Koordinatlar \`cityDefinitions.projectToMapPrecise\` ile aynı izdüşümdedir (genişlik ${MAP_WIDTH}, yükseklik ${MAP_HEIGHT}).
  */
-export const TURKEY_OUTLINE_PATH =
-  '${turkey.path}';
-
 export const TURKEY_NEIGHBORS_PATH =
   '${neighbors.path}';
 `;
 writeFileSync(new URL('../src/data/turkeyMapGeometry.ts', import.meta.url), src);
-console.log(`Türkiye: ${turkey.points} nokta, ${turkey.path.length} bayt · Komşular: ${neighbors.points} nokta, ${neighbors.path.length} bayt`);
+console.log(`Komşular: ${neighbors.points} nokta, ${neighbors.path.length} bayt`);

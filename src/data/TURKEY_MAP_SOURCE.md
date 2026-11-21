@@ -13,7 +13,7 @@
 ## Komşu ülkeler zemini
 
 - Natural Earth 1:10m ülke sınırları (kamu malı); `world-atlas` 2.0.2 (ISC, Mike Bostock) içindeki `countries-10m.json`.
-  `npx tsx scripts/build-turkey-map.ts <countries-10m.json>` → `src/data/turkeyMapGeometry.ts` (`TURKEY_NEIGHBORS_PATH`; aynı dosyadaki tek parça `TURKEY_OUTLINE_PATH` artık çizilmez).
+  `npx tsx scripts/build-turkey-map.ts <countries-10m.json>` → `src/data/turkeyMapGeometry.ts` (`TURKEY_NEIGHBORS_PATH`). Eski tek parça Türkiye silüeti (`TURKEY_OUTLINE_PATH`) kaldırıldı; Türkiye yalnızca 81 il poligonuyla çizilir.
 
 ## Genel
 

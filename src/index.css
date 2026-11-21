@@ -330,3 +330,18 @@ input[type='number'] {
 @keyframes city-bubble-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
 @keyframes city-bubble-pop { to { scale: 1.4; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .city-bubble { animation: none; } }
+
+/* Türkiye haritası: 81 il poligonu (TurkeyMap.tsx). Sınırlar yakınlaştırmada da aynı kalınlıkta (non-scaling-stroke). */
+.turkey-province {
+  stroke: #1e293b;
+  stroke-width: 1.1px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.12s ease;
+}
+.turkey-province.is-empty { fill: #8f96a1; }
+.turkey-province.is-owned { fill: #ffffff; }
+.turkey-province.is-empty:hover { fill: #aab1bb; }
+.turkey-province.is-owned:hover { fill: #e6effa; }
+.turkey-province.is-empty.is-selected { fill: #c2c9d3; }
+.turkey-province.is-owned.is-selected { fill: #d6e6fb; }

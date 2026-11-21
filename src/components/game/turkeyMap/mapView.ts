@@ -12,10 +12,6 @@ export const MAP_PAD = 30;
 export const MAP_MIN_ZOOM = 1;
 /** Bu yakınlıkta ekranda yaklaşık 3–6 şehir görünür (şehirler arası ortalama ~70–100 birim). */
 export const MAP_MAX_ZOOM = 8;
-/** Dokunma alanı: işaretin etrafındaki en az 44×44 px'lik görünmez daire/kare. */
-export const MARKER_HIT_PX = 44;
-/** Gözle görünen nokta çapı (px). */
-export const MARKER_DOT_PX = 14;
 
 export const DEFAULT_MAP_VIEW: TurkeyMapViewState = {
   panX: MAP_WIDTH / 2,

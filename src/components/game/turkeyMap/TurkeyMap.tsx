@@ -1,17 +1,17 @@
 /**
  * Etkileşimli Türkiye haritası (Faz 3). Yerel SVG; dış ağ ve harita SDK'sı yok.
  * - Tek parmak/fare sürükleme = kaydır, iki parmak/tekerlek = yakınlaştır.
- * - Şehir adları haritada yazılı durmaz (yalnızca ekran okuyucu etiketinde ve alt panelde).
- * - Gri işaret de tıklanabilirdir (mağaza yoksa bile şehir bilgisi açılır).
+ * - 81 ilin gerçek sınırları poligon olarak çizilir (Natural Earth, kamu malı); ilin üzerine dokunmak ilini seçer.
+ * - İl adları haritada yazılı durmaz (yalnızca ekran okuyucu etiketinde ve alt panelde).
+ * - Mağazasız (gri) il de tıklanabilirdir (mağaza yoksa bile il bilgisi açılır).
  */
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId, TurkeyMapViewState } from '../../../models/cities';
 import { MAP_HEIGHT } from '../../../data/cityDefinitions';
 import { MAP_WIDTH } from '../../../data/cityBalance';
-import { TURKEY_NEIGHBORS_PATH, TURKEY_OUTLINE_PATH } from '../../../data/turkeyMapGeometry';
+import { TURKEY_NEIGHBORS_PATH } from '../../../data/turkeyMapGeometry';
+import { TURKEY_PROVINCE_PATHS } from '../../../data/turkeyProvinceGeometry';
 import {
-  MARKER_DOT_PX,
-  MARKER_HIT_PX,
   clampMapView,
   markerAriaLabel,
   panByPixels,
@@ -21,17 +21,13 @@ import {
   type MapMarkerModel,
 } from './mapView';
 
-interface MarkerProps {
+interface ProvinceProps {
   marker: MapMarkerModel;
   selected: boolean;
-  /** 1 piksel = kaç harita birimi (yalnızca yakınlaştırma değişince değişir; sürüklemede sabit). */
-  upp: number;
 }
 
-const CityMarker = memo(function CityMarker({ marker, selected, upp }: MarkerProps) {
-  const r = (MARKER_DOT_PX / 2) * upp;
-  const hit = (MARKER_HIT_PX / 2) * upp;
-  const isHq = marker.markerState === 'HEADQUARTERS';
+/** İl poligonu: dokunulabilir, rengi duruma göre (CSS sınıfı; üzerine gelince hafif vurgu `index.css` içinde). */
+const Province = memo(function Province({ marker, selected }: ProvinceProps) {
   const owned = marker.markerState !== 'EMPTY';
   return (
     <g
@@ -40,54 +36,48 @@ const CityMarker = memo(function CityMarker({ marker, selected, upp }: MarkerPro
       data-marker-state={marker.markerState}
       data-has-issue={marker.hasIssue ? 'true' : 'false'}
       data-dimmed={marker.dimmed ? 'true' : 'false'}
-      data-hit-px={MARKER_HIT_PX}
+      data-selected={selected ? 'true' : 'false'}
       role="button"
       tabIndex={0}
       aria-label={markerAriaLabel(marker)}
       aria-pressed={selected}
-      style={{ cursor: 'pointer', outline: 'none', opacity: marker.dimmed && !selected ? 0.28 : 1 }}
+      style={{ cursor: 'pointer', outline: 'none', opacity: marker.dimmed && !selected ? 0.35 : 1 }}
     >
-      {/* Görünmez dokunma alanı: en az 44×44 px */}
-      <rect
-        x={marker.x - hit}
-        y={marker.y - hit}
-        width={hit * 2}
-        height={hit * 2}
-        fill="transparent"
-        data-testid={`turkey-city-hit-${marker.cityId}`}
+      <path
+        d={TURKEY_PROVINCE_PATHS[marker.cityId]}
+        className={`turkey-province ${owned ? 'is-owned' : 'is-empty'}${selected ? ' is-selected' : ''}`}
+        fillRule="evenodd"
+        data-testid={`turkey-province-${marker.cityId}`}
       />
+    </g>
+  );
+});
+
+/**
+ * Üst katman: altın merkez kenarlığı, kırmızı sorun kenarlığı ve seçili il çizgisi komşu ilin altında kalmasın diye
+ * ayrı çizilir. Dokunmayı engellemez (pointer-events: none).
+ */
+const ProvinceOutline = memo(function ProvinceOutline({ marker, selected, upp }: ProvinceProps & { upp: number }) {
+  const isHq = marker.markerState === 'HEADQUARTERS';
+  if (!isHq && !marker.hasIssue && !selected) return null;
+  const d = TURKEY_PROVINCE_PATHS[marker.cityId];
+  const base = { d, fill: 'none', fillRule: 'evenodd' as const, vectorEffect: 'non-scaling-stroke' as const, strokeLinejoin: 'round' as const, pointerEvents: 'none' as const };
+  const badge = 7 * upp;
+  return (
+    <g data-testid={`turkey-city-outline-${marker.cityId}`} style={{ opacity: marker.dimmed && !selected ? 0.35 : 1 }}>
+      {selected && <path {...base} stroke="#1d4ed8" strokeWidth={3.5} data-testid={`turkey-city-selected-${marker.cityId}`} />}
+      {isHq && <path {...base} stroke="var(--g-gold, #f5b301)" strokeWidth={3.5} data-testid={`turkey-city-hq-${marker.cityId}`} />}
       {marker.hasIssue && (
-        <circle
-          cx={marker.x}
-          cy={marker.y}
-          r={r + 4 * upp}
-          fill="none"
-          stroke="var(--g-red, #dc2626)"
-          strokeWidth={3 * upp}
-          data-testid={`turkey-city-issue-${marker.cityId}`}
-        />
+        <>
+          <path {...base} stroke="var(--g-red, #dc2626)" strokeWidth={isHq ? 1.8 : 3.5} strokeDasharray={isHq ? '6 4' : undefined} data-testid={`turkey-city-issue-${marker.cityId}`} />
+          {/* İl merkezinde küçük uyarı rozeti (küçük illerde kenarlık görünmese bile fark edilir) */}
+          <g pointerEvents="none" data-testid={`turkey-city-issue-badge-${marker.cityId}`}>
+            <circle cx={marker.x} cy={marker.y} r={badge} fill="var(--g-red, #dc2626)" stroke="#ffffff" strokeWidth={1.2 * upp} />
+            <rect x={marker.x - 0.8 * upp} y={marker.y - 4 * upp} width={1.6 * upp} height={4.8 * upp} rx={0.6 * upp} fill="#ffffff" />
+            <circle cx={marker.x} cy={marker.y + 5.2 * upp} r={1 * upp} fill="#ffffff" />
+          </g>
+        </>
       )}
-      {isHq && (
-        <circle
-          cx={marker.x}
-          cy={marker.y}
-          r={r + (marker.hasIssue ? 8 : 4) * upp}
-          fill="none"
-          stroke="var(--g-gold, #f5b301)"
-          strokeWidth={3 * upp}
-        />
-      )}
-      {selected && (
-        <circle cx={marker.x} cy={marker.y} r={r + 11 * upp} fill="none" stroke="var(--g-navy-600, #1e3a5f)" strokeWidth={2 * upp} strokeDasharray={`${4 * upp} ${3 * upp}`} />
-      )}
-      <circle
-        cx={marker.x}
-        cy={marker.y}
-        r={r}
-        fill={owned ? '#ffffff' : '#9ca3af'}
-        stroke={owned ? 'var(--g-navy-700, #14304f)' : '#6b7280'}
-        strokeWidth={1.5 * upp}
-      />
     </g>
   );
 });
@@ -232,11 +222,12 @@ export function TurkeyMap({ markers, view, selectedCityId, onViewCommit, onSelec
     }
   };
 
-  const markerNodes = useMemo(
-    () =>
-      markers.map((m) => (
-        <CityMarker key={m.cityId} marker={m} selected={m.cityId === selectedCityId} upp={stableUpp} />
-      )),
+  const provinceNodes = useMemo(
+    () => markers.map((m) => <Province key={m.cityId} marker={m} selected={m.cityId === selectedCityId} />),
+    [markers, selectedCityId]
+  );
+  const outlineNodes = useMemo(
+    () => markers.map((m) => <ProvinceOutline key={m.cityId} marker={m} selected={m.cityId === selectedCityId} upp={stableUpp} />),
     [markers, selectedCityId, stableUpp]
   );
 
@@ -261,12 +252,12 @@ export function TurkeyMap({ markers, view, selectedCityId, onViewCommit, onSelec
         viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
         preserveAspectRatio="xMidYMid meet"
         role="group"
-        aria-label="Türkiye haritası. Şehir işaretlerine dokunarak bilgi alabilirsin."
+        aria-label="Türkiye haritası. İllere dokunarak bilgi alabilirsin."
       >
         <rect x={-MAP_WIDTH} y={-MAP_HEIGHT} width={MAP_WIDTH * 3} height={MAP_HEIGHT * 3} fill="#0f2a47" />
         <path d={TURKEY_NEIGHBORS_PATH} fill="#1d3a5c" stroke="#2c4d75" strokeWidth={0.8 * Math.max(1, upp * 1.2)} fillRule="evenodd" />
-        <path d={TURKEY_OUTLINE_PATH} fill="#2f5a45" stroke="#7fb59a" strokeWidth={1.2 * Math.max(1, upp * 1.2)} fillRule="evenodd" data-testid="turkey-outline" />
-        {markerNodes}
+        <g data-testid="turkey-provinces">{provinceNodes}</g>
+        <g data-testid="turkey-province-outlines" pointerEvents="none">{outlineNodes}</g>
       </svg>
     </div>
   );

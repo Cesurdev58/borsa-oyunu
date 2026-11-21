@@ -212,10 +212,11 @@ test('Filtre çubuğu çizilir; seçili filtrede uymayan şehir soluk ama yine t
   assert.ok(g('ankara').includes('role="button"'));
   const bursa = g('bursa');
   assert.ok(bursa.includes('data-dimmed="false"'));
-  // Sorunlu şehir: kırmızı halka ayrı bir daire, işaretin beyaz dolgusu duruyor
-  assert.ok(bursa.includes('data-testid="turkey-city-issue-bursa"') && bursa.includes('fill="#ffffff"'));
-  // Merkez şehir: altın halka ayrı
-  assert.ok(g('izmir').includes('var(--g-gold'));
+  // Sorunlu il: beyaz dolgu (is-owned) + kırmızı kenarlık üst katmanda
+  assert.ok(bursa.includes('is-owned'));
+  assert.ok(html.includes('data-testid="turkey-city-issue-bursa"'));
+  // Merkez il: altın kenarlık üst katmanda
+  assert.ok(html.includes('data-testid="turkey-city-hq-izmir"') && html.includes('var(--g-gold'));
 });
 
 // ---------------------------------------------------------------------------

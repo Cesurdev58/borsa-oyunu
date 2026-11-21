@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
+import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SimulationEngine } from '../../engine/SimulationEngine';
 import { SimulationStore } from '../../state/simulationStore';
@@ -11,7 +12,6 @@ import {
   DEFAULT_MAP_VIEW,
   MAP_MAX_ZOOM,
   MAP_MIN_ZOOM,
-  MARKER_HIT_PX,
   clampMapView,
   fitViewToPoints,
   markerAriaLabel,
@@ -23,7 +23,7 @@ import { CITY_DEFINITIONS, CITY_IDS, MAP_HEIGHT } from '../../data/cityDefinitio
 import { MAP_WIDTH } from '../../data/cityBalance';
 import { SHOP_TEMPLATES } from '../../data/tradeCatalog';
 import { getCityOpeningQuote, getCityShopSummary, shopHasIssue } from '../../engine/CityOpeningQuote';
-import { TURKEY_OUTLINE_PATH } from '../../data/turkeyMapGeometry';
+import { TURKEY_PROVINCE_PATHS } from '../../data/turkeyProvinceGeometry';
 import type { SimulationState } from '../../models/simulation';
 
 const SIZE = { width: 390, height: 560 };
@@ -54,13 +54,57 @@ function renderMap(state: SimulationState, selected?: string, view = DEFAULT_MAP
 // Faz 3 — harita
 // ---------------------------------------------------------------------------
 
-test('Harita: yerel SVG çizimi var, 81 şehir için işaret çizilir, dış ağ adresi yok', () => {
+test('Harita: yerel SVG çizimi var, 81 il poligonu çizilir (nokta yok), dış ağ adresi yok', () => {
   const eng = richEngine();
   const html = renderMap(eng.getState());
-  assert.ok(TURKEY_OUTLINE_PATH.length > 1000, 'Türkiye ana hattı boş olmamalı');
-  assert.ok(html.includes('data-testid="turkey-outline"'));
   assert.equal((html.match(/data-testid="turkey-city-marker-/g) ?? []).length, 81);
+  assert.equal((html.match(/<path[^>]*data-testid="turkey-province-[a-z]+"/g) ?? []).length, 81, 'Her il için bir poligon');
+  assert.ok(!html.includes('turkey-city-hit-'), 'Eski görünmez dokunma karesi kalmamalı');
+  assert.ok(!html.includes('<circle'), 'Gri/beyaz nokta işaretleri tamamen kaldırıldı (rozet yalnızca sorunlu ilde)');
+  assert.ok(!html.includes('data-testid="turkey-outline"'), 'Tek parça yeşil silüet kalmamalı');
+  assert.ok(!html.includes('#2f5a45'), 'Yeşil silüet rengi kalmamalı');
   assert.ok(!/https?:\/\//.test(html.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')), 'Dış ağ adresi olmamalı');
+});
+
+/** "M x y L x y … Z" yolundaki halkaları ayrıştırır. */
+function parseRings(d: string): Array<Array<[number, number]>> {
+  return d.split('M').filter(Boolean).map((r) =>
+    r.replace('Z', '').split('L').map((p) => p.trim().split(' ').map(Number) as [number, number])
+  );
+}
+function inside(pt: [number, number], ring: Array<[number, number]>): boolean {
+  let c = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if (yi > pt[1] !== yj > pt[1] && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+
+test('İl poligonları: 81 ilin hepsi var, geçerli, sahne içinde ve il merkezi kendi poligonunun içinde', () => {
+  assert.equal(Object.keys(TURKEY_PROVINCE_PATHS).length, 81);
+  const seen = new Set<string>();
+  let centersInside = 0;
+  const outside: string[] = [];
+  for (const id of CITY_IDS) {
+    const d = TURKEY_PROVINCE_PATHS[id];
+    assert.ok(d && d.startsWith('M') && d.endsWith('Z'), `${id}: yol geçersiz`);
+    assert.ok(!seen.has(d), `${id}: başka bir ilin aynısı`);
+    seen.add(d);
+    const rings = parseRings(d);
+    for (const r of rings) {
+      assert.ok(r.length >= 3, `${id}: halka çok kısa`);
+      for (const [x, y] of r) {
+        assert.ok(Number.isFinite(x) && Number.isFinite(y), `${id}: sayı değil`);
+        assert.ok(x >= -5 && x <= MAP_WIDTH + 5 && y >= -5 && y <= MAP_HEIGHT + 5, `${id}: sahne dışı (${x}, ${y})`);
+      }
+    }
+    const { x, y } = CITY_DEFINITIONS[id].mapPosition;
+    if (rings.some((r) => inside([x, y], r))) centersInside++;
+    else outside.push(id);
+  }
+  // İl merkezi koordinatı kıyıda sadeleştirmeyle sınırın hemen dışında kalabilir; ama kimlik eşleşmesi yanlışsa çoğu dışarıda olur.
+  assert.ok(centersInside >= 78, `Merkezi kendi poligonunda olmayan iller: ${outside.join(', ')}`);
 });
 
 test('Harita: dükkânsız şehir gri ve TIKLANABİLİR (disabled / aria-disabled yok)', () => {
@@ -71,7 +115,8 @@ test('Harita: dükkânsız şehir gri ve TIKLANABİLİR (disabled / aria-disable
   assert.ok(m![0].includes('data-marker-state="EMPTY"'));
   assert.ok(m![0].includes('role="button"') && m![0].includes('tabindex="0"'));
   assert.ok(!html.includes('aria-disabled') && !/\sdisabled/.test(html));
-  assert.ok(html.includes('fill="#9ca3af"'), 'Gri dolgu kullanılmalı');
+  const province = html.match(/<path[^>]*data-testid="turkey-province-adana"[^>]*>/)![0];
+  assert.ok(province.includes('is-empty') && !province.includes('is-owned'), 'Gri (mağazasız) il sınıfı');
 });
 
 test('Harita: mağazası olan şehir beyaz, şirket merkezi altın çerçeveli, sorunlu şehir kırmızı halkalı', () => {
@@ -88,11 +133,16 @@ test('Harita: mağazası olan şehir beyaz, şirket merkezi altın çerçeveli, 
   assert.equal(by('bursa').hasIssue, true);
 
   const html = renderMap(st);
-  const g = (id: string) => html.match(new RegExp(`<g[^>]*data-testid="turkey-city-marker-${id}"[^>]*>([\\s\\S]*?)</g>`))![0];
-  assert.ok(g('bursa').includes('fill="#ffffff"'), 'Mağazalı şehir beyaz');
-  assert.ok(g('izmir').includes('var(--g-gold'), 'Merkez altın çerçeveli');
-  assert.ok(g('bursa').includes('data-testid="turkey-city-issue-bursa"') && g('bursa').includes('var(--g-red'), 'Sorunda kırmızı halka');
-  assert.ok(!g('ankara').includes('var(--g-red') && !g('ankara').includes('var(--g-gold'));
+  const prov = (id: string) => html.match(new RegExp(`<path[^>]*data-testid="turkey-province-${id}"[^>]*>`))![0];
+  const outline = (id: string) => html.match(new RegExp(`<g data-testid="turkey-city-outline-${id}"[^>]*>([\\s\\S]*?)</g></g>|<g data-testid="turkey-city-outline-${id}"[^>]*>([\\s\\S]*?)</g>`))?.[0] ?? '';
+  assert.ok(prov('bursa').includes('is-owned'), 'Mağazalı il beyaz dolgu');
+  assert.ok(prov('izmir').includes('is-owned'), 'Merkez il de beyaz dolgu');
+  assert.ok(prov('ankara').includes('is-empty'));
+  assert.ok(outline('izmir').includes('var(--g-gold') && outline('izmir').includes('turkey-city-hq-izmir'), 'Merkez altın kenarlık');
+  assert.ok(outline('bursa').includes('turkey-city-issue-bursa') && outline('bursa').includes('var(--g-red'), 'Sorunda kırmızı kenarlık');
+  assert.ok(html.includes('data-testid="turkey-city-issue-badge-bursa"'), 'Sorunda il merkezinde küçük rozet');
+  assert.equal(outline('ankara'), '', 'Mağazasız ilde özel kenarlık yok');
+  assert.ok(!html.includes('turkey-city-hq-bursa'));
 
   // Rafı dolu olan dükkânda sorun kalkar
   const shop = st.tradeState!.shops.find((s) => s.cityId === 'bursa')!;
@@ -100,20 +150,18 @@ test('Harita: mağazası olan şehir beyaz, şirket merkezi altın çerçeveli, 
   assert.equal(shopHasIssue({ ...shop, inventoryBatches: [], pendingDeliveriesCount: 2 }), false);
 });
 
-test('Harita: her işaretin dokunma alanı en az 44×44 px ve şehir adı haritada yazılı durmaz', () => {
+test('Harita: ilin kendisi dokunma alanıdır (data-city-id) ve il adı haritada yazılı durmaz', () => {
   const eng = richEngine();
   const st = eng.getState();
-  for (const zoom of [1, 3, 8]) {
-    const html = renderMap(st, undefined, { panX: 500, panY: 220, zoom });
-    // 1 px kaç birim? viewBox genişliği / ekran genişliği
-    const vb = viewBoxFor(clampMapView({ panX: 500, panY: 220, zoom }, SIZE.height / SIZE.width), SIZE.height / SIZE.width);
-    const unitsPerPx = vb.w / SIZE.width;
-    const rect = html.match(/<rect[^>]*data-testid="turkey-city-hit-ankara"[^>]*>/)![0];
-    const w = Number(/width="([\d.]+)"/.exec(rect)![1]);
-    const h = Number(/height="([\d.]+)"/.exec(rect)![1]);
-    assert.ok(w / unitsPerPx >= MARKER_HIT_PX - 0.5, `zoom ${zoom}: genişlik ${w / unitsPerPx}px`);
-    assert.ok(h / unitsPerPx >= MARKER_HIT_PX - 0.5, `zoom ${zoom}: yükseklik ${h / unitsPerPx}px`);
+  const html0 = renderMap(st);
+  for (const id of CITY_IDS) {
+    assert.ok(new RegExp(`<g[^>]*data-city-id="${id}"`).test(html0), `${id}: dokunulabilir grup yok`);
   }
+  // Sınır çizgisi yakınlaştırmada aynı kalınlıkta (non-scaling-stroke) olmalı: CSS kuralı var
+  const css = readFileSync(new URL('../../index.css', import.meta.url), 'utf8');
+  assert.ok(/\.turkey-province\s*\{[^}]*vector-effect:\s*non-scaling-stroke/.test(css));
+  assert.ok(/\.turkey-province\.is-empty\s*\{\s*fill:/.test(css) && /\.turkey-province\.is-owned\s*\{\s*fill:\s*#ffffff/.test(css));
+  assert.ok(/\.turkey-province[^{]*:hover/.test(css), 'Üzerine gelince hafif vurgu');
   const html = renderMap(st);
   assert.ok(!html.includes('<text'), 'Haritada sürekli görünen yazı olmamalı');
   const stripped = html.replace(/aria-label="[^"]*"/g, '');

@@ -4,11 +4,6 @@ import { SimulationEngine } from '../../engine/SimulationEngine';
 import { AccountingEngine } from '../../engine/AccountingEngine';
 import { SHOP_TEMPLATES } from '../../engine/TradeAndShopEngine';
 import { SimulationStore } from '../../state/simulationStore';
-import {
-  deriveCityUrbanBlocks,
-  deriveIsometricBuildings,
-  resolveCityBuildingNavigation,
-} from '../../components/game/city/cityLayout';
 import type { ShopTypeId } from '../../models/trade';
 
 describe('V7 Ticaret Evreni & Borsa->Esnaf->Şirket->IPO->Holding 18 Kapsamlı Kabul Testi', () => {
@@ -349,56 +344,6 @@ describe('V7 Ticaret Evreni & Borsa->Esnaf->Şirket->IPO->Holding 18 Kapsamlı K
       incRes2.success,
       false,
       'Zaten şirketleşmiş işletme ikinci kez şirketleştirilememeli'
-    );
-  });
-
-  it('Test 12 & Test 13: Şehirdeki binaların ACTIVE, LOCKED ve DECORATIVE durumları doğrudur ve aktif binalar doğru ekranı açar', () => {
-    const engine = new SimulationEngine(4242, 100_000);
-    const state = engine.getState();
-    const ipoElig = engine.checkIPOEligibility();
-    const coreBuildings = deriveIsometricBuildings(
-      state,
-      ipoElig,
-      (v) => `₺${v}`
-    );
-    const urbanBlocks = deriveCityUrbanBlocks(state);
-
-    // Başlangıçta Borsa, Banka, Haber Merkezi, Oyuncu Ofisi açık; Fabrika, Ar-Ge, Holding kilitli
-    const borsa = coreBuildings.find((b) => b.id === 'BORSA')!;
-    const fabrika = coreBuildings.find((b) => b.id === 'FABRIKA')!;
-    const holding = coreBuildings.find((b) => b.id === 'HOLDING_MERKEZI')!;
-    assert.equal(borsa.isUnlocked, true);
-    assert.equal(fabrika.isUnlocked, false);
-    assert.equal(holding.isUnlocked, false);
-    assert.ok(fabrika.lockedOverlayInfo, 'Kilitli fabrikanın açılma koşulu bilgisi olmalı');
-
-    // Şehir bloklarında ACTIVE, LOCKED ve DECORATIVE sınıflandırması
-    const activeShopBlock = urbanBlocks.find(
-      (b) => b.id === 'urban-ticaret-magaza-1'
-    )!;
-    const lockedIndustrialDepot = urbanBlocks.find(
-      (b) => b.id === 'urban-sanayi-depo-9'
-    )!;
-    const decorativeResidential = urbanBlocks.find(
-      (b) => b.id === 'urban-yasam-konut-17'
-    )!;
-
-    assert.equal(activeShopBlock.statusClassification, 'ACTIVE');
-    assert.equal(lockedIndustrialDepot.statusClassification, 'LOCKED');
-    assert.ok(lockedIndustrialDepot.unlockConditionTR);
-    assert.ok(lockedIndustrialDepot.requiredCapitalTR);
-    assert.equal(decorativeResidential.statusClassification, 'DECORATIVE');
-
-    // Aktif binaların ekran yönlendirmeleri
-    assert.equal(resolveCityBuildingNavigation('BORSA', state).buildingId, 'BORSA');
-    assert.equal(resolveCityBuildingNavigation('BANKA', state).bankSubTab, 'TRANSFER');
-    assert.equal(
-      resolveCityBuildingNavigation('OYUNCU_OFISI', state).buildingId,
-      'OYUNCU_OFISI'
-    );
-    assert.equal(
-      resolveCityBuildingNavigation('FABRIKA', state).companySubTab,
-      'URETIM'
     );
   });
 

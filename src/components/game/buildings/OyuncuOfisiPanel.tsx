@@ -13,6 +13,9 @@ import type {
   BuildingDetailContentProps,
 } from './buildingTypes';
 import { ShopDashboard } from './ShopDashboard';
+import { CitySwitcher } from '../ui/CitySwitcher';
+import { ExtraUpgrades } from '../ui/ExtraUpgrades';
+import { resolveViewCity } from '../ui/cityViewLogic';
 
 export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   state,
@@ -37,6 +40,9 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
   onFireShopManager,
   onSetShopManagerSweep,
   manageRequest,
+  viewCityId,
+  onChangeViewCity,
+  onOpenCityService,
 }) => {
   const [managing, setManaging] = useState<{ shopId: string | null; tab?: NonNullable<typeof manageRequest>['tab'] } | null>(
     manageRequest ? { shopId: manageRequest.shopId, tab: manageRequest.tab } : null
@@ -108,13 +114,22 @@ export const OyuncuOfisiPanel: React.FC<BuildingDetailContentProps> = ({
 
         </div>
       ) : (
-        <ShopDashboard
-          state={state}
-          spendableCash={spendableCash}
-          formatCurrency={formatCurrency}
-          onPlaceProcurementOrder={onPlaceProcurementOrder!}
-          onManage={(shopId) => setManaging({ shopId })}
-        />
+        <div className="space-y-3">
+          {(state.tradeState?.shops.length ?? 0) > 0 && (
+            <CitySwitcher state={state} scope="shops" value={viewCityId} onChange={onChangeViewCity} />
+          )}
+          <ShopDashboard
+            state={state}
+            spendableCash={spendableCash}
+            formatCurrency={formatCurrency}
+            onPlaceProcurementOrder={onPlaceProcurementOrder!}
+            onManage={(shopId) => setManaging({ shopId })}
+            cityFilter={resolveViewCity(state, viewCityId)}
+          />
+          {(state.tradeState?.shops.length ?? 0) > 0 && (
+            <ExtraUpgrades state={state} onOpenService={onOpenCityService} />
+          )}
+        </div>
       )}
 
     </div>

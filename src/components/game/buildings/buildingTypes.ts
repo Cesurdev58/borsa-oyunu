@@ -29,6 +29,11 @@ import {
 } from '../EsnafAndTradePanel';
 
 export interface BuildingDetailActions extends Partial<EsnafAndTradeActionsProps> {
+  /** Dükkân/Şirket sekmelerindeki şehir seçicinin seçili şehri (yoksa merkez şehir). */
+  viewCityId?: import('../../../models/cities').CityId | null;
+  onChangeViewCity?: (cityId: import('../../../models/cities').CityId) => void;
+  /** "Ek geliştirmeler" bölümünden bir şehir hizmeti penceresini açar. */
+  onOpenCityService?: (id: import('../../../data/cityServices').CityServiceId) => void;
   /** Portföy yöneticisi (borsa otomasyonu, engine/AutoInvestEngine.ts) */
   onHirePortfolioManager?: () => void;
   onConfigureAutoInvest?: (params: { enabled?: boolean; reserve?: number }) => void;

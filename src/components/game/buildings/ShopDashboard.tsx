@@ -8,9 +8,10 @@
 
 import { liveShopToday } from '../../../engine/ShopSales';
 import { shopOpenStatus } from '../../../data/shopHours';
-import { Check, Plus, UserCog } from 'lucide-react';
+import { Plus, UserCog } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SimulationState } from '../../../models/simulation';
+import type { CityId } from '../../../models/cities';
 import type { ShopType } from '../../../models/trade';
 import { TradeAndShopEngine } from '../../../engine/TradeAndShopEngine';
 import { planShopRestock } from '../../../engine/ShopRestockPlanner';
@@ -33,6 +34,8 @@ interface ShopDashboardProps {
   formatCurrency: (v: number) => string;
   onPlaceProcurementOrder: EsnafAndTradeActionsProps['onPlaceProcurementOrder'];
   onManage: (shopId: string | null) => void;
+  /** Seçili şehir (Dükkân sekmesindeki şehir butonu); verilmezse ya da 'ALL' ise bütün dükkânlar. */
+  cityFilter?: CityId | 'ALL';
 }
 
 export const ShopDashboard: React.FC<ShopDashboardProps> = ({
@@ -41,6 +44,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
   formatCurrency,
   onPlaceProcurementOrder,
   onManage,
+  cityFilter,
 }) => {
   const trade = useMemo(
     () => TradeAndShopEngine.ensureTradeUniverseState(state),
@@ -51,70 +55,21 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
     return <FirstShopGateCard state={state} onOpenShopPicker={() => onManage(null)} />;
   }
 
-  // Bugünün görevleri: kayıt tutmadan, dükkânların anlık durumundan türetilir.
-  // Müdürlü dükkânların rafını müdür doldurur; görev yalnızca oyuncunun yönettiği dükkânlara bakar.
-  const fills = trade.shops.filter((sh) => !sh.manager).map((sh) => {
-    const used = sh.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
-    return used / Math.max(1, sh.shelfCapacity);
-  });
-  const shelvesOk = fills.every((f) => f >= 0.5);
-  const lowCount = fills.filter((f) => f < 0.5).length;
   const nowMin = state.minutesIntoCurrentDay ?? 0;
-  const profitOk = trade.shops.some(
-    (sh) => liveShopToday(sh, state.day, nowMin).profit > 0
-  );
-  const dailyTasks = [
-    {
-      id: 'shelves',
-      done: shelvesOk,
-      text: shelvesOk
-        ? 'Raflar yarıdan fazla dolu'
-        : `${lowCount} dükkânın rafı yarıdan az dolu — mal al`,
-      emoji: '📦',
-    },
-    {
-      id: 'profit',
-      done: profitOk,
-      text: profitOk ? 'Bugün kâra geçtin' : 'Bugün kâra geç: raflar dolu olsun, satış gelsin',
-      emoji: '💰',
-    },
-  ];
-  const doneCount = dailyTasks.filter((t) => t.done).length;
+  // Şehir filtresi (Dükkân sekmesindeki şehir butonu): şehri olmayan eski dükkân merkez şehirde sayılır.
+  const shops = cityFilter && cityFilter !== 'ALL'
+    ? trade.shops.filter((sh) => (sh.cityId ?? state.headquartersCityId) === cityFilter)
+    : trade.shops;
 
   return (
     <div className="space-y-3" data-testid="shop-dashboard">
-      <div
-        data-testid="daily-tasks-card"
-        className="g-card p-3 space-y-2"
-      >
-        <div className="flex items-center justify-between">
-          <span className="g-section-title text-base">Bugünün görevleri</span>
-          <span className="g-pill bg-[#e8ecfb] text-[var(--g-navy-600)] tabular-nums">
-            {doneCount}/{dailyTasks.length}
-          </span>
+      {shops.length === 0 && (
+        <div data-testid="shop-dashboard-city-empty" className="g-card p-4 text-center text-sm font-bold text-[var(--g-muted)]">
+          Bu şehirde henüz dükkânın yok.
         </div>
-        {dailyTasks.map((t) => (
-          <div
-            key={t.id}
-            data-testid={`daily-task-${t.id}`}
-            data-done={t.done ? 'true' : 'false'}
-            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold ${
-              t.done ? 'bg-[#ecfaf3] text-[var(--g-green-dark)]' : 'bg-[var(--g-surface-2)] text-[var(--g-ink)]'
-            }`}
-          >
-            <span
-              className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center ${
-                t.done ? 'bg-[var(--g-green)] text-white' : 'border-2 border-[#c8cfdf]'
-              }`}
-            >
-              {t.done && <Check className="w-4 h-4" strokeWidth={3.2} />}
-            </span>
-            <span>{t.text}</span>
-          </div>
-        ))}
-      </div>
+      )}
 
-      {trade.shops.map((shop, i) => {
+      {shops.map((shop, i) => {
         const used = shop.inventoryBatches.reduce((s, b) => s + b.quantity, 0);
         const fillPct = Math.min(
           100,

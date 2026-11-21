@@ -22,15 +22,12 @@ export interface TurkeyMapFlowProps {
   onManageShop: (shopId: string, tab?: ShopManageTab) => void;
   /** Mağaza detay paneli (yönetim) açık mı? Açıkken geri tuşunu o panel karşılar. */
   detailOpen?: boolean;
-  /** Çıkış onayında "Çık" seçilirse (klasik şehre döner). */
-  onExit: () => void;
   fixedSize?: { width: number; height: number };
 }
 
 export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
-  const { state, detailOpen = false, onSelectMapCity, onExit } = props;
+  const { state, detailOpen = false, onSelectMapCity } = props;
   const [nav, setNav] = useState<MapNavState>(MAP_ROOT);
-  const [exitConfirm, setExitConfirm] = useState(false);
   // Filtre burada tutulur: Şehir Mağazaları'na gidip dönünce seçili filtre korunur.
   const [filter, setFilter] = useState<MapFilterId>(DEFAULT_MAP_FILTER);
   const sheetOpen = Boolean(state.selectedMapCityId);
@@ -45,25 +42,19 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
 
   /** Hem "Haritaya Dön" düğmesi hem geri tuşu aynı kuralı çalıştırır. */
   const runBack = useCallback((): 'handled' | 'exit-confirm' => {
+    // Harita ana ekranındayken geri tuşu bir şey yapmaz (sayfadan çıkmaz).
     const out = resolveBack({ nav: navRef.current, detailOpen: detailRef.current, sheetOpen: sheetRef.current });
     if (out.kind === 'TO_MAP') { setNav(out.nav); return 'handled'; }
     if (out.kind === 'CLOSE_SHEET') { onSelectMapCity(undefined); return 'handled'; }
-    if (out.kind === 'EXIT_CONFIRM') { setExitConfirm(true); return 'exit-confirm'; }
+    if (out.kind === 'EXIT_CONFIRM') return 'exit-confirm';
     return 'handled'; // CLOSE_DETAIL: panelin kendi geri tuşu kapatır
   }, [onSelectMapCity]);
 
   // Tarayıcı geçmişi / Android geri tuşu (kural `mapBackController` + `resolveBack`).
-  const allowExitRef = useRef(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    return attachMapBackHandler(window, runBack, () => allowExitRef.current);
+    return attachMapBackHandler(window, runBack);
   }, [runBack]);
-
-  const confirmExit = () => {
-    allowExitRef.current = true;
-    setExitConfirm(false);
-    onExit();
-  };
 
   return (
     <div className="relative" data-testid="turkey-map-flow" data-screen={nav.screen}>
@@ -84,23 +75,10 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
           onSelectMapCity={onSelectMapCity}
           onOpenShopInCity={props.onOpenShopInCity}
           onGoToCity={(id) => setNav((n) => goToCity(n, state, id))}
-          onExit={onExit}
           filter={filter}
           onFilterChange={setFilter}
           fixedSize={props.fixedSize}
         />
-      )}
-      {exitConfirm && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6" role="alertdialog" aria-label="Çıkış onayı" data-testid="map-exit-confirm">
-          <div className="g-card w-full max-w-sm space-y-3 p-4 text-center">
-            <div className="g-display text-xl font-extrabold">Klasik şehre geçmek istiyor musun?</div>
-            <p className="text-[14px] text-slate-500">Eski 2D şehir görünümü açılır. İlerlemen kayıtlı.</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid="map-exit-stay-btn" onClick={() => setExitConfirm(false)}>Kal</button>
-              <button type="button" className="g-btn g-btn-primary min-h-[48px]" data-testid="map-exit-confirm-btn" onClick={confirmExit}>Çık</button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

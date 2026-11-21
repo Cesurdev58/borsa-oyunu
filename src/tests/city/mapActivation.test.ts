@@ -19,12 +19,6 @@ import {
 } from '../../components/game/turkeyMap/mapFilters';
 import { CITY_IDS } from '../../data/cityDefinitions';
 import { SHOP_ISSUE_LABEL_TR, SHOP_LOSS_GRACE_DAYS, cityHasIssue, shopHasIssue, shopIssueKinds } from '../../engine/CityOpeningQuote';
-import {
-  TURKEY_MAP_ENABLED_DEFAULT,
-  getMapFallbackCount,
-  isTurkeyMapEnabled,
-  recordMapFallback,
-} from '../../data/featureFlags';
 import { GUIDE_STEPS, resolveGuideTarget } from '../../components/game/FirstRunGuide';
 import { firstShopGateStatus } from '../../engine/FirstShopGate';
 import type { SimulationState } from '../../models/simulation';
@@ -223,35 +217,6 @@ test('Filtre çubuğu çizilir; seçili filtrede uymayan şehir soluk ama yine t
 // Faz 11 — varsayılan harita
 // ---------------------------------------------------------------------------
 
-test('turkeyMapEnabled varsayılan olarak açık; fallback sayacı çökmeden artar', () => {
-  assert.equal(TURKEY_MAP_ENABLED_DEFAULT, true);
-  assert.equal(isTurkeyMapEnabled(), true);
-  const store = new Map<string, string>();
-  const fake = {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-  };
-  (globalThis as any).window = { localStorage: fake };
-  try {
-    assert.equal(isTurkeyMapEnabled(), true);
-    store.set('turkey_map_enabled', 'false');
-    assert.equal(isTurkeyMapEnabled(), false, 'acil durum çıkışı 3D açar');
-    store.delete('turkey_map_enabled');
-    assert.equal(getMapFallbackCount(), 0);
-    assert.equal(recordMapFallback('player-exit'), 1);
-    const origError = console.error;
-    console.error = () => {};
-    try {
-      assert.equal(recordMapFallback('error', new Error('x')), 2);
-    } finally {
-      console.error = origError;
-    }
-    assert.equal(getMapFallbackCount(), 2);
-  } finally {
-    delete (globalThis as any).window;
-  }
-});
-
 function renderGameView(engine: SimulationEngine, withMapProps: boolean) {
   return renderToStaticMarkup(
     React.createElement(TycoonGameView, {
@@ -293,14 +258,23 @@ function renderGameView(engine: SimulationEngine, withMapProps: boolean) {
   );
 }
 
-test('Şehir sekmesi doğrudan Türkiye haritasını açar; 3D şehir kendiliğinden açılmaz', () => {
+test('Şehir sekmesi doğrudan Türkiye haritasını açar; klasik şehir ve eski düğmeler yoktur', () => {
   const engine = SimulationStore.resetSharedEngine();
   engine.getState().headquartersCityId = 'ankara';
   const html = renderGameView(engine, true);
   assert.ok(html.includes('data-testid="turkey-map-flow"'), 'harita açık');
   assert.ok(html.includes('data-testid="turkey-map-screen"'));
   assert.ok(html.includes('data-testid="map-filter-bar"'));
-  assert.equal(html.includes('data-testid="city-open-turkey-map-btn"'), false, '3D ekrandaki geçiş düğmesi yok');
+  assert.equal(html.includes('city-open-turkey-map-btn'), false, 'klasik ekrandaki geçiş düğmesi yok');
+  assert.equal(html.includes('turkey-map-exit-btn'), false, '"Klasik Şehre Dön" düğmesi yok');
+  assert.equal(html.includes('turkey-map-mine-btn'), false, '"Mağazalarıma Git" düğmesi yok');
+  assert.equal(html.includes('city-neighborhood'), false);
+});
+
+test('Harita bağlantısı verilmezse oyun çökmez, kısa bir uyarı gösterilir (klasik şehre düşülmez)', () => {
+  const engine = SimulationStore.resetSharedEngine();
+  const html = renderGameView(engine, false);
+  assert.ok(html.includes('data-testid="turkey-map-unavailable"'));
   assert.equal(html.includes('city-neighborhood'), false);
 });
 

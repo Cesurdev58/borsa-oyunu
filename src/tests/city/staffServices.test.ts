@@ -13,24 +13,12 @@ import {
   untrainedStaffCount,
 } from '../../engine/CityServices';
 import { CARGO_SHIPPING_CUT, INSURANCE_BLOCKED_DECISIONS, INSURANCE_PREMIUM_RATE, TRAINING_BASKET_PCT } from '../../data/cityServices';
-import { deriveCityUrbanBlocks } from '../../components/game/city/cityLayout';
 
 function withShop(type = 'MANAV', seed = 20261104) {
   const eng = new SimulationEngine(seed, 2_000_000);
   assert.equal(eng.openShop({ shopType: type as never }).success, true);
   return eng;
 }
-
-test('Akademi ve Sağlık Merkezi şehirde kendi hizmetini açar', () => {
-  const eng = withShop();
-  const blocks = deriveCityUrbanBlocks(eng.getState());
-  const akademi = blocks.find((b) => b.id === 'urban-tekno-akademi-16');
-  const saglik = blocks.find((b) => b.id === 'urban-yasam-saglik-19');
-  assert.equal(akademi?.cityService, 'AKADEMI');
-  assert.equal(saglik?.cityService, 'SAGLIK');
-  assert.equal(akademi?.isUnlocked, true);
-  assert.equal(saglik?.isUnlocked, true);
-});
 
 test('Dükkân yokken eğitim ve sigorta alınamaz', () => {
   const eng = new SimulationEngine(20261104, 2_000_000);
@@ -148,13 +136,6 @@ test('Eğitim ve sigorta kayıttan geri yüklenir', () => {
 // ---------------------------------------------------------------------------
 // Lojistik: kargo anlaşması
 // ---------------------------------------------------------------------------
-
-test('Lojistik Merkezi şehirde kendi hizmetini açar', () => {
-  const eng = withShop();
-  const b = deriveCityUrbanBlocks(eng.getState()).find((x) => x.id === 'urban-sanayi-lojistik-10');
-  assert.equal(b?.cityService, 'LOJISTIK');
-  assert.equal(b?.isUnlocked, true);
-});
 
 test('Lojistik: anlaşmalı dükkânın siparişi yarı nakliyeyle ve 1 gün erken gelir, ücret giderlere eklenir', () => {
   const order = (contract: boolean) => {

@@ -10,7 +10,7 @@ import { CelebrationOverlay } from './CelebrationOverlay';
 import { RichListModal } from './RichListModal';
 import { LifestyleModal } from './LifestyleModal';
 import { CityServicesModal, type CityServiceHandlers } from './CityServicesModal';
-import type { CityServiceId } from './city/cityVisualTypes';
+import type { CityServiceId } from '../../data/cityServices';
 import { PrestigeModal } from './PrestigeModal';
 import { buildRichList, founderNameForTicker } from '../../engine/RichListEngine';
 import { FirstRunGuide, type OnboardingAction } from './FirstRunGuide';
@@ -47,20 +47,16 @@ import {
   BuildingDetailContent,
   BuildingDetailSheet,
 } from './BuildingDetailSheet';
-import { IsometricNeighborhoodView } from './city/IsometricNeighborhoodView';
-import { deriveIsometricBuildings } from './city/cityLayout';
-import {
-  CityCameraState,
-  CompanySubTabRoute,
-} from './city/cityVisualTypes';
+import { isBuildingUnlocked } from './ui/buildingLocks';
+import { CitySwitcher } from './ui/CitySwitcher';
+import { CompanyCityCard } from './ui/CompanyCityCard';
+import { companyBranchesInCity, resolveViewCity } from './ui/cityViewLogic';
 import { CityQuestStrip } from './CityQuestStrip';
 import { EventNotificationPanel } from './EventNotificationPanel';
 import { GameBottomNavigation } from './GameBottomNavigation';
 import { HowToPlayModal } from './HowToPlayModal';
 import { GameTopBar } from './GameTopBar';
 import { TurkeyMapFlow } from './turkeyMap/TurkeyMapFlow';
-import { MapErrorBoundary } from './turkeyMap/MapErrorBoundary';
-import { isTurkeyMapEnabled, recordMapFallback } from '../../data/featureFlags';
 import type { ShopManageTab } from './turkeyMap/CityShopsScreen';
 import type { CityId, TurkeyMapViewState } from '../../models/cities';
 import type { ShopType } from '../../models/trade';
@@ -70,6 +66,7 @@ import { WorldEventCard } from './WorldEventCard';
 import { play, setFeedbackSettings, vibrate } from './ui/feedback';
 import {
   CityBuildingId,
+  CompanySubTabRoute,
   GameBottomTab,
   GameNotificationItem,
 } from './gameTypes';
@@ -192,24 +189,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
   const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
-  // Şehir sekmesi doğrudan Türkiye haritasıdır (bayrak `turkeyMapEnabled`, varsayılan açık).
-  // Klasik (2D) şehir yalnızca bu oturumda "Klasik Şehre Dön" denirse ya da harita çökerse açılır; kalıcı seçim yoktur,
-  // bu yüzden uygulama yeniden açılınca Şehir sekmesi yine haritadır.
-  const [mapEnabled] = useState<boolean>(() => isTurkeyMapEnabled());
-  const [fellBackToClassic, setFellBackToClassic] = useState(false);
-  const mapMode = mapEnabled && !fellBackToClassic;
-  const changeMapMode = (next: boolean) => {
-    if (!next) recordMapFallback('player-exit');
-    setFellBackToClassic(!next);
-  };
   // Şehir Mağazaları ekranından belirli bir dükkânın yönetimini açma isteği.
   const [manageRequest, setManageRequest] = useState<{ shopId: string; tab?: ShopManageTab; nonce: number } | null>(null);
   const [activeBottomTab, setActiveBottomTab] =
     useState<GameBottomTab>('city');
   const [selectedBuildingId, setSelectedBuildingIdRaw] =
     useState<CityBuildingId | null>(null);
-  const [highlightedBuildingId, setHighlightedBuildingId] =
-    useState<CityBuildingId | null>(null);
+  // Dükkân ve Şirket sekmelerindeki şehir seçicinin seçili şehri (boşsa merkez şehir).
+  const [viewCityId, setViewCityId] = useState<CityId | null>(null);
   const [initialCompanySubTab, setInitialCompanySubTab] =
     useState<CompanySubTabRoute>('OZET');
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpenRaw] =
@@ -309,30 +296,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     return () => window.removeEventListener('pointerdown', onPointer);
   }, []);
 
-  // Kamera konumu sekme değişimlerinde ve sayfa yenilemelerinde korunur, ekonomik state'i değiştirmez
-  const [cameraState, setCameraState] = useState<CityCameraState>(() => ({
-    panX: uiSettings.lastCameraPanX ?? state.cityState?.lastCameraPanX ?? 0,
-    panY: uiSettings.lastCameraPanY ?? state.cityState?.lastCameraPanY ?? 0,
-    zoomPreset:
-      uiSettings.lastZoomPreset ??
-      state.cityState?.lastZoomPreset ??
-      'NORMAL',
-  }));
-
-  const handleUpdateCameraState = useCallback((next: CityCameraState) => {
-    setCameraState(next);
-    const updated = UISettingsStore.updateCameraState(next);
-    setUiSettings(updated);
-  }, []);
-
   // Panel açıkken isteğe bağlı otomatik duraklatma ayarı (Varsayılan: kapalı)
   const [autoPauseOnSheetOpen, setAutoPauseOnSheetOpen] = useState(false);
   const prevScaleBeforeSheetRef = useRef<TimeScaleOption | null>(null);
-
-  const cityBuildings = useMemo(
-    () => deriveIsometricBuildings(state, ipoEligibility, formatCurrency),
-    [state, ipoEligibility, formatCurrency]
-  );
 
   const activePendingOrders = useMemo(
     () =>
@@ -376,13 +342,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
 
   const handleOpenBuildingDetailSheet = useCallback(
     (id: CityBuildingId, companySubTab?: CompanySubTabRoute) => {
-      setHighlightedBuildingId(id);
       if (companySubTab) {
         setInitialCompanySubTab(companySubTab);
       }
-      const bNode = cityBuildings.find((b) => b.id === id);
-      // Bölüm 31.A.7: Kilitli binalar açılma koşulunu seçim kartında gösterir, işlem ekranını açmaz
-      if (bNode && !bNode.isUnlocked) {
+      // Kilitli binalar işlem ekranını açmaz
+      if (!isBuildingUnlocked(state, id)) {
         setSelectedBuildingId(null);
         return;
       }
@@ -399,18 +363,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     },
     [
       autoPauseOnSheetOpen,
-      cityBuildings,
       onSetTimeScale,
+      state,
       state.isPaused,
       state.timeScale,
     ]
-  );
-
-  const handleSelectBuildingOnMap = useCallback(
-    (id: CityBuildingId, companySubTab?: CompanySubTabRoute) => {
-      handleOpenBuildingDetailSheet(id, companySubTab);
-    },
-    [handleOpenBuildingDetailSheet]
   );
 
   const handleCloseBuildingSheet = useCallback(() => {
@@ -424,10 +381,6 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
       prevScaleBeforeSheetRef.current = null;
     }
   }, [autoPauseOnSheetOpen, onSetTimeScale]);
-
-  const handleClearHighlightedBuilding = useCallback(() => {
-    setHighlightedBuildingId(null);
-  }, []);
 
   const handleOpenNotifications = useCallback(() => {
     setIsNotificationDrawerOpen(true);
@@ -526,6 +479,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     ipoEligibility,
     formattedTime,
     formatCurrency,
+    viewCityId,
+    onChangeViewCity: setViewCityId,
+    onOpenCityService: setOpenCityService,
   };
 
   return (
@@ -652,63 +608,26 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           onClose={() => setIsLifestyleOpen(false)}
         />
 
-        {activeBottomTab === 'city' && mapMode && onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
-          <MapErrorBoundary onFallback={() => setFellBackToClassic(true)}>
-          <TurkeyMapFlow
-            state={state}
-            formatCurrency={formatCurrency}
-            reservedCash={reservedCash}
-            detailOpen={selectedBuildingId !== null}
-            onExit={() => changeMapMode(false)}
-            onSetMapView={onSetTurkeyMapView}
-            onSelectMapCity={onSelectMapCity}
-            onOpenShopInCity={onOpenShopInCity}
-            onManageShop={(shopId, tab) => {
-              setManageRequest({ shopId, tab, nonce: Date.now() });
-              setSelectedBuildingId('OYUNCU_OFISI');
-            }}
-          />
-          </MapErrorBoundary>
-        ) : activeBottomTab === 'city' ? (
-          <>
-          {onSetTurkeyMapView && (
-            <button
-              type="button"
-              data-testid="city-open-turkey-map-btn"
-              onClick={() => changeMapMode(true)}
-              className="g-btn g-btn-navy fixed right-3 top-[132px] z-20 min-h-[44px] px-3 text-[14px]"
-            >
-              Türkiye Haritası
-            </button>
-          )}
-          <IsometricNeighborhoodView
-            state={state}
-            ipoEligibility={ipoEligibility}
-            formatCurrency={formatCurrency}
-            camera={cameraState}
-            onChangeCamera={handleUpdateCameraState}
-            selectedBuildingId={selectedBuildingId}
-            activeHighlightedBuildingId={highlightedBuildingId}
-            graphicsQuality={uiSettings.graphicsQuality}
-            onSelectBuildingOnMap={handleSelectBuildingOnMap}
-            onOpenBuildingDetailSheet={handleOpenBuildingDetailSheet}
-            onClearHighlightedBuilding={handleClearHighlightedBuilding}
-            onSetTimeScale={onSetTimeScale}
-            onAdvanceToMarketOpen={onAdvanceToMarketOpen}
-            onAdvanceOneHour={onAdvanceOneHour}
-            onTickDay={onTickDay}
-            nextEventLabelTR={nextEvent.eventLabelTR}
-            nextEventFormattedRemaining={nextEvent.formattedRemaining}
-            onRestockShop={handleRestockShop}
-            onOpenCityService={setOpenCityService}
-            onCollectShopCash={(shopId, amount) => {
-              if (!onTransferShopCash || amount <= 0) return;
-              play('coin');
-              vibrate(15);
-              onTransferShopCash({ shopId, direction: 'FROM_SHOP', amount });
-            }}
-          />
-          </>
+        {activeBottomTab === 'city' ? (
+          onSetTurkeyMapView && onSelectMapCity && onOpenShopInCity ? (
+            <TurkeyMapFlow
+              state={state}
+              formatCurrency={formatCurrency}
+              reservedCash={reservedCash}
+              detailOpen={selectedBuildingId !== null}
+              onSetMapView={onSetTurkeyMapView}
+              onSelectMapCity={onSelectMapCity}
+              onOpenShopInCity={onOpenShopInCity}
+              onManageShop={(shopId, tab) => {
+                setManageRequest({ shopId, tab, nonce: Date.now() });
+                setSelectedBuildingId('OYUNCU_OFISI');
+              }}
+            />
+          ) : (
+            <div data-testid="turkey-map-unavailable" className="g-card p-4 text-center font-bold text-[var(--g-muted)]">
+              Harita şu an açılamıyor.
+            </div>
+          )
         ) : (
           <section
             key={activeBottomTab}
@@ -733,6 +652,17 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
 
             {activeBottomTab === 'company' && (
               <div className="space-y-4">
+                {(state.playerCompany !== null ||
+                  companyBranchesInCity(state, resolveViewCity(state, viewCityId)).length > 0) && (
+                  <div className="space-y-2">
+                    <CitySwitcher state={state} scope="company" value={viewCityId} onChange={setViewCityId} />
+                    <CompanyCityCard
+                      state={state}
+                      cityId={resolveViewCity(state, viewCityId)}
+                      formatCurrency={formatCurrency}
+                    />
+                  </div>
+                )}
                 <BuildingDetailContent
                   {...sharedActions}
                   buildingId="SIRKET_MERKEZI"

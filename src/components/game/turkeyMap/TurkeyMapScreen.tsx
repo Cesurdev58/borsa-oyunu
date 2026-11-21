@@ -1,9 +1,9 @@
 /**
- * Harita ekranı: harita + üstte iki düğme + alt panel. Oyun durumundan işaretleri türetir.
+ * Harita ekranı: harita + filtre çubuğu + "Haritayı Ortala" + alt panel. Oyun durumundan işaretleri türetir.
  * Kamera ve seçili şehir `state.turkeyMapView` / `state.selectedMapCityId` içinde saklanır (kayıtla birlikte).
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { Crosshair, Store } from 'lucide-react';
+import { Crosshair } from 'lucide-react';
 import { DEFAULT_MAP_FILTER, MAP_FILTERS, cityMatchesFilter, mapFilterCounts, type MapFilterId } from './mapFilters';
 import type { CityId, TurkeyMapViewState } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
@@ -13,7 +13,7 @@ import { getCityPresence } from '../../../engine/CityMigration';
 import { cityHasIssue } from '../../../engine/CityOpeningQuote';
 import { TurkeyMap } from './TurkeyMap';
 import { CityInfoSheet } from './CityInfoSheet';
-import { DEFAULT_MAP_VIEW, clampMapView, fitViewToPoints, type MapMarkerModel } from './mapView';
+import { DEFAULT_MAP_VIEW, clampMapView, type MapMarkerModel } from './mapView';
 
 export function buildMapMarkers(state: SimulationState, filter: MapFilterId = DEFAULT_MAP_FILTER): MapMarkerModel[] {
   return getAllCityDefinitions().map((c) => {
@@ -39,8 +39,6 @@ export interface TurkeyMapScreenProps {
   onSelectMapCity: (cityId: CityId | undefined) => void;
   onOpenShopInCity: (cityId: CityId, shopType: ShopType) => void;
   onGoToCity: (cityId: CityId) => void;
-  /** Klasik şehre dönüş (verilmezse düğme çıkmaz). */
-  onExit?: () => void;
   /** Etkin filtre (verilmezse ekran kendi içinde tutar). Filtre kamerayı ve seçimi değiştirmez. */
   filter?: MapFilterId;
   onFilterChange?: (f: MapFilterId) => void;
@@ -56,7 +54,6 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
   onSelectMapCity,
   onOpenShopInCity,
   onGoToCity,
-  onExit,
   filter: filterProp,
   onFilterChange,
   fixedSize,
@@ -77,17 +74,11 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
   const [revision, setRevision] = useState(0);
   const selectedId = isCityId(state.selectedMapCityId) ? state.selectedMapCityId : undefined;
   const selectedCity = selectedId ? CITY_DEFINITIONS[selectedId] : undefined;
-  const owned = markers.filter((m) => m.shopCount > 0);
 
   const recenter = useCallback(() => {
     onSetMapView(DEFAULT_MAP_VIEW);
     setRevision((r) => r + 1);
   }, [onSetMapView]);
-
-  const goMine = useCallback(() => {
-    onSetMapView(fitViewToPoints(owned.map((m) => ({ x: m.x, y: m.y })), aspect));
-    setRevision((r) => r + 1);
-  }, [onSetMapView, owned, aspect]);
 
   return (
     <div className="relative h-[calc(100dvh-236px)] min-h-[360px] w-full overflow-hidden" data-testid="turkey-map-screen">
@@ -144,21 +135,6 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
         >
           <Crosshair size={18} /> Haritayı Ortala
         </button>
-        {onExit && (
-          <button type="button" data-testid="turkey-map-exit-btn" onClick={onExit} className="g-btn g-btn-secondary pointer-events-auto min-h-[44px] min-w-[44px] px-3 text-[14px]">
-            Klasik Şehre Dön
-          </button>
-        )}
-        {owned.length > 0 && (
-          <button
-            type="button"
-            data-testid="turkey-map-mine-btn"
-            onClick={goMine}
-            className="g-btn g-btn-gold pointer-events-auto min-h-[44px] min-w-[44px] px-3 text-[14px]"
-          >
-            <Store size={18} /> Mağazalarıma Git
-          </button>
-        )}
       </div>
       {selectedCity && (
         <CityInfoSheet

@@ -9,7 +9,7 @@ import React, { useEffect, useRef } from 'react';
 import { Star, Trophy, X } from 'lucide-react';
 import { buildRichList } from '../../engine/RichListEngine';
 import type { SimulationState } from '../../models/simulation';
-import { formatHudCurrencyTR } from './city/questAndHudLogic';
+import { formatHudCurrencyTR } from './ui/questAndHudLogic';
 
 export const RichListModal: React.FC<{
   open: boolean;

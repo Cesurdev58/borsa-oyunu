@@ -8,10 +8,10 @@ import {
   solarPanelCost,
   usedUpgradeOffers,
   cityProjectCustomerMultiplier,
+  cityServicesOpen,
 } from '../../engine/CityServices';
 import { CITY_PROJECTS, SECONDHAND_SELL_RATE, USED_UPGRADE_DAYS } from '../../data/cityServices';
 import { shopUpgradeMultipliers } from '../../engine/ShopUpgrades';
-import { deriveCityUrbanBlocks } from '../../components/game/city/cityLayout';
 
 function withShop() {
   const eng = new SimulationEngine(20261104, 2_000_000);
@@ -19,14 +19,11 @@ function withShop() {
   return eng;
 }
 
-test('Şehir hizmeti binaları ilk dükkânla açılır', () => {
+test('Şehir hizmetleri ("Ek geliştirmeler") ilk kişisel dükkânla açılır', () => {
   const eng = new SimulationEngine(20261104, 2_000_000);
-  const svc = () => deriveCityUrbanBlocks(eng.getState()).filter((b) => b.cityService);
-  assert.equal(svc().length, 6);
-  assert.ok(svc().every((b) => !b.isUnlocked), 'dükkân yokken kapalı');
+  assert.equal(cityServicesOpen(eng.getState()), false, 'dükkân yokken kapalı');
   eng.openShop({ shopType: 'BUFE' });
-  assert.ok(svc().every((b) => b.isUnlocked), 'dükkânla açık');
-  assert.ok(svc().some((b) => b.nameTR === 'İkinci El Pazarı'));
+  assert.equal(cityServicesOpen(eng.getState()), true, 'dükkânla açık');
 });
 
 test('İkinci el pazarı: mal alış maliyetinin altında satılır, para dükkân kasasına girer', () => {

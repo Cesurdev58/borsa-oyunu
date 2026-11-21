@@ -7,7 +7,7 @@ import { useCountUp } from './ui/useCountUp';
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, ChevronDown, Coins, Settings, Star, Trophy, Crown } from 'lucide-react';
 import { MarketSession, SimulationStage } from '../../models/simulation';
-import { formatHudCurrencyTR } from './city/questAndHudLogic';
+import { formatHudCurrencyTR } from './ui/questAndHudLogic';
 import { formatDateTR, getMarketSessionBadgeMeta } from './gameTypes';
 
 interface GameTopBarProps {

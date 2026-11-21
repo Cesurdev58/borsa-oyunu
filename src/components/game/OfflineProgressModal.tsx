@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { Clock, Sparkles, X } from 'lucide-react';
 import { play } from './ui/feedback';
 import { OfflineProgressSummary } from '../../models/simulation';
-import { deriveDeterministicOfflineWarningItems } from './city/questAndHudLogic';
+import { deriveDeterministicOfflineWarningItems } from './ui/questAndHudLogic';
 
 interface OfflineProgressModalProps {
   summary: OfflineProgressSummary | null;

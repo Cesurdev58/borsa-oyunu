@@ -10,7 +10,7 @@ import { CityBuildingId } from './gameTypes';
 import {
   CityQuestStripModel,
   deriveCityQuestStripModel,
-} from './city/questAndHudLogic';
+} from './ui/questAndHudLogic';
 
 interface CityQuestStripProps {
   questModel?: CityQuestStripModel;

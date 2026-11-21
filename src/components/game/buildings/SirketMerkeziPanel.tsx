@@ -25,7 +25,7 @@ import {
 } from '../../../models/market';
 import {
   deriveDeterministicIpoReasonItems,
-} from '../city/questAndHudLogic';
+} from '../ui/questAndHudLogic';
 
 import {
   InvestmentPackageType,

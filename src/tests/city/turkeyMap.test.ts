@@ -337,20 +337,20 @@ test('Panel: şehir değişince içerik değişir; sayı biçimleri sade', () =>
   assert.equal(formatMultiplier(1), 'Ortalama');
 });
 
-test('Harita ekranı: seçili şehir varsa panel açılır, yoksa kapalı; mağaza yokken "Mağazalarıma Git" gösterilmez', () => {
+test('Harita ekranı: seçili şehir varsa panel açılır, yoksa kapalı; "Mağazalarıma Git" ve "Klasik Şehre Dön" düğmeleri yoktur', () => {
   const eng = richEngine(777005);
   const base = { formatCurrency: fmt, onSetMapView: noop, onSelectMapCity: noop, onOpenShopInCity: noop, onGoToCity: noop, fixedSize: SIZE };
   let html = renderToStaticMarkup(React.createElement(TurkeyMapScreen, { ...base, state: eng.getState() }));
   assert.ok(html.includes('data-testid="turkey-map"'));
   assert.ok(!html.includes('data-testid="city-info-sheet"'));
   assert.ok(html.includes('data-testid="turkey-map-recenter-btn"'));
-  assert.ok(!html.includes('data-testid="turkey-map-mine-btn"'));
+  assert.ok(!html.includes('turkey-map-mine-btn') && !html.includes('turkey-map-exit-btn'));
 
   eng.setSelectedMapCity('antalya');
   eng.openShop({ shopType: 'BUFE', cityId: 'izmir' });
   html = renderToStaticMarkup(React.createElement(TurkeyMapScreen, { ...base, state: eng.getState() }));
   assert.ok(html.includes('data-testid="city-info-sheet"') && html.includes('data-city-id="antalya"'));
-  assert.ok(html.includes('data-testid="turkey-map-mine-btn"'));
+  assert.ok(!html.includes('turkey-map-mine-btn'), 'Mağazalarıma Git düğmesi kaldırıldı');
   assert.ok(html.includes('aria-pressed="true"'));
 });
 

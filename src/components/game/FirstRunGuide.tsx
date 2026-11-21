@@ -106,9 +106,9 @@ export const GUIDE_STEPS: GuideStep[] = [
   },
   {
     id: 'city-tab',
-    title: 'Şehir haritası',
+    title: 'Harita',
     target: '[data-testid="bottom-nav-city"]',
-    text: () => 'İlk dükkân kapısı açıldı. Şehir sekmesine dokun: Türkiye haritası açılır, ilk dükkânını orada kuracaksın.',
+    text: () => 'İlk dükkân kapısı açıldı. Harita sekmesine dokun: Türkiye haritası açılır, ilk dükkânını orada kuracaksın.',
     done: ({ activeTab, state }) => activeTab === 'city' || personalShops(state).length > 0,
     available: ({ gate }) => gate.open,
   },
@@ -122,7 +122,7 @@ export const GUIDE_STEPS: GuideStep[] = [
     text: ({ activeTab }) =>
       activeTab === 'city'
         ? 'Altın halkalı nokta başlangıç şehrin. Dokununca şehir bilgisi ve ilk dükkânın maliyeti açılır.'
-        : 'Önce Şehir sekmesine dön, sonra haritada altın halkalı şehrine dokun.',
+        : 'Önce Harita sekmesine dön, sonra haritada altın halkalı şehrine dokun.',
     done: ({ state }) => state.selectedMapCityId === startCityId(state) || personalShops(state).length > 0,
     available: ({ gate, state }) => gate.open && personalShops(state).length === 0,
   },
@@ -137,7 +137,7 @@ export const GUIDE_STEPS: GuideStep[] = [
         : '[data-testid="bottom-nav-city"]',
     text: ({ activeTab, state }) =>
       activeTab !== 'city'
-        ? 'Şehir sekmesine dön; şehrinin bilgi kartında "İlk Mağazanı Aç" düğmesi var.'
+        ? 'Harita sekmesine dön; şehrinin bilgi kartında "İlk Mağazanı Aç" düğmesi var.'
         : !state.selectedMapCityId
         ? 'Şehrine yeniden dokun ki bilgi kartı açılsın.'
         : 'Kartta kurulum bedelini ve cebinde kalacak işletme parasını gör: ilk mal, kira ve maaş buradan çıkar. Hazırsan "İlk Mağazanı Aç" düğmesine bas.',

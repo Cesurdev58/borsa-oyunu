@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SimulationEngine } from '../../engine/SimulationEngine';
-import { deriveCityQuestStripModel } from '../../components/game/city/questAndHudLogic';
+import { deriveCityQuestStripModel } from '../../components/game/ui/questAndHudLogic';
 import { play, setFeedbackSettings, vibrate } from '../../components/game/ui/feedback';
 
 test('Hedef zinciri gerçek kariyer yolunu izler (gizli limit emri hedefi yok)', () => {

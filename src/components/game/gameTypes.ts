@@ -29,6 +29,13 @@ export type CityBuildingId =
   | 'ARGE_MERKEZI'
   | 'HOLDING_MERKEZI';
 
+export type CompanySubTabRoute =
+  | 'OZET'
+  | 'URETIM'
+  | 'CALISANLAR'
+  | 'FINANS'
+  | 'GELISIM';
+
 export type GameNotificationCategory =
   | 'ORDER_FILLED'
   | 'ORDER_PARTIAL'

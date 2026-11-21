@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Briefcase, Building2, CandlestickChart, Lock, Newspaper, Store } from 'lucide-react';
+import { BookOpen, Briefcase, Map as MapIcon, CandlestickChart, Lock, Newspaper, Store } from 'lucide-react';
 import type { NavTabId, NavTabStatus, ShopTabIndicators } from '../../engine/OnboardingRules';
 import { GameBottomTab } from './gameTypes';
 
@@ -39,7 +39,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
         badge?: number;
         dot?: boolean;
       }> = [
-        { id: 'city', label: 'Şehir', Icon: Building2 },
+        { id: 'city', label: 'Harita', Icon: MapIcon },
         {
           id: 'market',
           label: 'Borsa',

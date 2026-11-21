@@ -31,7 +31,7 @@ import {
   usedUpgradeOffers,
 } from '../../engine/CityServices';
 import type { SimulationState } from '../../models/simulation';
-import type { CityServiceId } from './city/cityVisualTypes';
+import type { CityServiceId } from '../../data/cityServices';
 
 export interface CityServiceHandlers {
   onSellShopStock?: (shopId: string, resourceId: string) => void;

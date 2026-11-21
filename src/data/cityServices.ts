@@ -12,6 +12,9 @@
 import type { ShopType } from '../models/trade';
 
 /** Fazla mal ikinci el pazarına alış maliyetinin bu kadarına satılır (hep zararına: kâr kapısı olmasın). */
+/** Şehir hizmetleri ("Ek geliştirmeler" penceresindeki altı bölüm). */
+export type CityServiceId = 'IKINCI_EL' | 'BELEDIYE' | 'ENERJI' | 'AKADEMI' | 'SAGLIK' | 'LOJISTIK';
+
 export const SECONDHAND_SELL_RATE = 0.6;
 /** İkinci el eşya, yenisinin bu kadarı fiyatına satılır */
 export const USED_UPGRADE_PRICE_SHARE = 0.5;

@@ -88,3 +88,51 @@ console.log(`En güçlü ${index[0].name} · en zayıf ${index[index.length - 1]
 const dominant = Object.entries(bestCount).filter(([, n]) => n === SHOP_ORDER.length);
 console.log(`\nHer dükkân türünde en iyi olan şehir: ${dominant.length ? dominant.map(([id]) => id).join(', ') + '  ← SORUN' : 'yok (iyi)'}`);
 console.log('Tür başına en iyi şehir sayısı: ' + Object.entries(bestCount).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${cities.find((c) => c.id === id)!.nameTR} ${n}`).join(', '));
+
+// ---------------------------------------------------------------------------
+// 3) ŞİRKET: genel merkez şehrinin sektör bonusu (Faz 3.3)
+// ---------------------------------------------------------------------------
+{
+  const { SimulationEngine } = await import('../src/engine/SimulationEngine');
+  const { growCompanyGreedy } = await import('../src/tests/balance/companyBot');
+  const { companyCitySectorMultiplier } = await import('../src/engine/CityEconomy');
+  const COMPANY_DAYS = Number(process.env.COMPANY_DAYS ?? 600);
+  const COMPANY_SEEDS = Number(process.env.COMPANY_SEEDS ?? 4);
+  const NEUTRAL_CITY = 'eskisehir'; // bonusu olmayan il: eski ölçümlerle aynı
+  const SECTORS = ['TEKNOLOJI', 'SAVUNMA', 'FINANS', 'LOJISTIK', 'ENERJI', 'MADENCILIK', 'BIYOTEKNOLOJI', 'PERAKENDE'] as const;
+  const runCompany = (cityId: string, sector: (typeof SECTORS)[number], seed: number) => {
+    const eng = new SimulationEngine(seed, 2_500_000);
+    eng.chooseStartCity(cityId);
+    eng.establishCompany('Ölçüm A.Ş.', 'OLCM', sector, 2_000_000, { initialStaffCount: 40, initialCapacity: 100, initialRdBudget: 10_000 });
+    // Ölçü: dönem boyunca ortalama günlük net kâr (yatırım zamanlamasının oynaklığını yumuşatır) ve son gün kârı
+    let sum = 0;
+    let last = 0;
+    for (let d = 1; d <= COMPANY_DAYS; d++) {
+      growCompanyGreedy(eng);
+      eng.advanceDaysWithoutPlayerDecisions(1, true);
+      last = eng.getState().playerCompany!.financials.netIncome / 120;
+      sum += last;
+    }
+    return { avg: sum / COMPANY_DAYS, last };
+  };
+  console.log(`\n--- 3) ŞİRKET: GENEL MERKEZİN SEKTÖR BONUSU (${COMPANY_SEEDS} tohum × ${COMPANY_DAYS} gün, hep büyüyen robot) ---`);
+  console.log('Kıyas: bonusu olmayan il (Eskişehir) ile en yüksek ve en düşük bonuslu şehir. "Ort. kâr" = dönem boyunca ortalama günlük net kâr; fark buna göre.');
+  console.log(`${pad('Sektör', 15)}${pad('Şehir', 12)}${padL('Çarpan', 8)}${padL('Ort. kâr', 13)}${padL(`${COMPANY_DAYS}. gün kâr`, 15)}${padL('Fark', 8)}`);
+  for (const sector of SECTORS) {
+    const ranked = cities
+      .map((c) => ({ id: c.id, name: c.nameTR, m: companyCitySectorMultiplier(c.id, sector) }))
+      .sort((a, b) => b.m - a.m);
+    const picks = [{ id: NEUTRAL_CITY, name: 'Eskişehir', m: 1 }];
+    if (ranked[0].m !== 1) picks.push(ranked[0]);
+    if (ranked[ranked.length - 1].m !== 1) picks.push(ranked[ranked.length - 1]);
+    let base = NaN;
+    for (const p of picks) {
+      const rs = seedList.slice(0, COMPANY_SEEDS).map((s) => runCompany(p.id, sector, s));
+      const avg = mean(rs.map((r) => r.avg));
+      const late = mean(rs.map((r) => r.last));
+      if (p.id === NEUTRAL_CITY) base = avg;
+      const diff = p.id === NEUTRAL_CITY || !(base > 0) ? '' : `%${(((avg - base) / base) * 100).toFixed(0)}`;
+      console.log(`${pad(sector, 15)}${pad(p.name, 12)}${padL(p.m.toFixed(2).replace('.', ','), 8)}${padL(money(avg), 13)}${padL(money(late), 15)}${padL(diff, 8)}`);
+    }
+  }
+}

@@ -31,6 +31,7 @@ import {
   CompanyInvestmentProjects,
 } from './CompanyInvestmentProjects';
 import { DEBT_INTEREST_DAYS_PER_YEAR } from '../data/gameBalance';
+import { COMPANY_CITY_COST_SHARE } from '../data/cityBalance';
 import { readMarketContext, saturatedPlayerDemand } from './SectorMarket';
 import { progressiveCorporateTax } from './TaxRules';
 
@@ -283,7 +284,10 @@ export class CompanyDailyStep {
       company.demandBoost && company.operatingDays < company.demandBoost.untilOperatingDay
         ? company.demandBoost.multiplier
         : 1;
-    const fullDayPotentialSales = rawPotentialSales <= 0 ? 0 : saturated.units * boost;
+    // Genel merkez şehrinin sektör bonusu (Faz 3.3; yoksa 1). Pazar tavanından SONRA uygulanır:
+    // o şehirde bu sektörün müşterisi gerçekten daha çok/az demektir.
+    const cityMult = ops.citySectorMultiplier ?? 1;
+    const fullDayPotentialSales = rawPotentialSales <= 0 ? 0 : saturated.units * boost * cityMult;
     ops.potentialSalesUnits = fullDayPotentialSales;
     ops.sectorMarketUnits = marketCtx.marketUnits;
     ops.rivalUnitsInMarket = Math.round(marketCtx.uncontrolledRivalUnits);
@@ -331,7 +335,9 @@ export class CompanyDailyStep {
       newInventoryUnits >= ops.maximumStorageUnits * 0.75;
 
     // 5. Gerçekçi Gelir ve Gider Kalemleri (Aşama 5)
-    const unitProductionCost = sectorCfg.unitCost;
+    // Genel merkez şehri bu sektörde güçlüyse üretim de ucuzlar (tedarikçi ve usta yakın): maliyet ÷ şehir çarpanı
+    const cityCostDivisor = 1 + (cityMult - 1) * COMPANY_CITY_COST_SHARE;
+    const unitProductionCost = Number((sectorCfg.unitCost / cityCostDivisor).toFixed(2));
     const unitStorageCost = Number((unitProductionCost * 0.015).toFixed(2));
     const unitLogisticsCost = Number((unitProductionCost * 0.04).toFixed(2));
     ops.unitProductionCost = unitProductionCost;

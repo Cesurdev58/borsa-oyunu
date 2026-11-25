@@ -79,6 +79,14 @@ export const CITY_COMPETITION_EXPONENT = 0.5;
 export const CITY_PURCHASING_POWER_EXPONENT = 0.5;
 /** Perakende sektör bonusu bütün kişisel dükkânlara bu oranda yansır. */
 export const CITY_RETAIL_BONUS_SHARE = 1;
+/**
+ * Şirketin sektör bonusu (Faz 3.3): oyuncu şirketinin satış talebi, genel merkez şehrinin o sektördeki
+ * bonusu × bu oran kadar artar/azalır (`CityEconomy.companyCitySectorMultiplier`). Bonusu olmayan şehir
+ * (69 il + 12 şehrin listede olmayan sektörleri) tam 1,0'dır, yani eski ölçümler değişmez.
+ */
+export const COMPANY_CITY_SECTOR_BONUS_SHARE = 1;
+/** Bonusun üretim maliyetine yansıyan payı: birim maliyet ÷ (1 + bonus × bu). */
+export const COMPANY_CITY_COST_SHARE = 0.35;
 
 /** Mevsimsellik: şehir başına genlik (0,25 = ±%25). Yıl 365 oyun günüdür, tepe noktası yaz ortası. */
 export const CITY_SEASON_DAYS = 365;

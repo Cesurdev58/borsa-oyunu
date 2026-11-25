@@ -18,6 +18,7 @@ import {
 } from '../data/gameBalance';
 import { SectorId } from '../models/market';
 import { SimulationState } from '../models/simulation';
+import { companyCitySectorMultiplier } from './CityEconomy';
 
 /** Rakiplerin kapasitesinin normalde satılan kısmı (NPC talep formülündeki ~0,84 × makro ~0,95) */
 const RIVAL_SELL_THROUGH = 0.8;
@@ -60,6 +61,11 @@ export function refreshPlayerMarketContext(state: SimulationState): void {
   pc.operations.sectorMarketUnits = baseSectorMarketUnits(pc.sector);
   pc.operations.rivalUnitsInMarket = Math.round(uncontrolled);
   pc.operations.controlledRivalUnits = Math.round(controlled);
+  // Genel merkez şehrinin sektör bonusu (Faz 3.3): şehir seçilmemişse 1
+  pc.operations.citySectorMultiplier = companyCitySectorMultiplier(
+    state.headquartersCityId ?? state.playerStartCityId,
+    pc.sector
+  );
 }
 
 /** Kayıtta bağlam yoksa (eski kayıt ya da doğrudan motor testi) varsayılan: rakipler başlangıç payında. */

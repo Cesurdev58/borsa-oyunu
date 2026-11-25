@@ -12,6 +12,7 @@
 import type { CityId, TurkeyRegion } from '../models/cities';
 import type { ShopInstance, ShopType, Warehouse } from '../models/trade';
 import type { SimulationState } from '../models/simulation';
+import type { SectorId } from '../models/market';
 import { clampCityBonus, clampCityMultiplier, getCityDefinition, isCityId } from '../data/cityDefinitions';
 import {
   CITY_COMPETITION_EXPONENT,
@@ -20,6 +21,7 @@ import {
   CITY_PURCHASING_POWER_EXPONENT,
   CITY_REFERENCE_ID,
   CITY_RETAIL_BONUS_SHARE,
+  COMPANY_CITY_SECTOR_BONUS_SHARE,
   CITY_SEASON_AMPLITUDE,
   CITY_SEASON_DAYS,
   CITY_SEASON_PEAK_DAY,
@@ -122,6 +124,17 @@ export function citySeasonFactor(cityId: string | undefined | null, shopType: Sh
   const phase = (2 * Math.PI * (day - CITY_SEASON_PEAK_DAY + CITY_SEASON_DAYS / 4)) / CITY_SEASON_DAYS;
   const v = 1 + amp * weight * Math.sin(phase);
   return Number.isFinite(v) && v > 0.3 ? v : 1;
+}
+
+/**
+ * Oyuncu şirketinin satış çarpanı: genel merkez şehrinin o sektördeki bonusu (Faz 3.3).
+ * Şehri olmayan oyuncu ya da bonus yazılmamış sektör/şehir → 1,0 (eski denge birebir korunur).
+ * Kişisel dükkânların perakende bonusundan farkı: Ankara'ya oranlanmaz; haritadaki "+%x" yazısı aynen uygulanır.
+ */
+export function companyCitySectorMultiplier(cityId: string | undefined | null, sector: SectorId): number {
+  if (!isCityId(cityId)) return 1;
+  const bonus = getCityDefinition(cityId).sectorBonuses[sector] ?? 0;
+  return safeMultiplier(1 + clampCityBonus(bonus * COMPANY_CITY_SECTOR_BONUS_SHARE));
 }
 
 export function cityDemandLayers(

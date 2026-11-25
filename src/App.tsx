@@ -30,6 +30,7 @@ import {
   VehicleTypeId,
 } from './models/trade';
 import { SimulationStore } from './state/simulationStore';
+import { resumeOfflineProgress } from './engine/OfflineResume';
 import { MarketTerminalView } from './components/MarketTerminalView';
 import { CompanyIpoView } from './components/CompanyIpoView';
 import { TakeoverHoldingView } from './components/TakeoverHoldingView';
@@ -119,6 +120,8 @@ export default function App() {
 
   const lastRealTickMsRef = useRef<number>(Date.now());
   const lastAutosaveRealMsRef = useRef<number>(Date.now());
+  /** Sekme gizlendiği an (ISO); dönüşte çevrimdışı süre buradan ölçülür */
+  const hiddenAtISORef = useRef<string | null>(null);
   const notificationSeqRef = useRef<number>(1);
 
   // Engine olay farklarını (diff) izleyerek UI bildirimlerini otomatik üreten referans
@@ -423,21 +426,73 @@ export default function App() {
       }
     }, 1000);
 
-    const handleVisibilityChange = () => {
+    // Arka plandan dönüş / sayfa açılışı: eşik aşıldıysa çevrimdışı kazanç işlenir ve
+    // "Tekrar hoş geldin" penceresi açılır. Çift tetiklenme ve duraklatılmış oyun
+    // korumaları `engine/OfflineResume.ts` içindedir.
+    const tryResumeOfflineProgress = (awayFromISO: string | null) => {
       const engine = engineRef.current!;
-      if (document.visibilityState === 'hidden') {
+      const summary = resumeOfflineProgress(engine, awayFromISO);
+      lastRealTickMsRef.current = Date.now();
+      if (summary) {
         SimulationStore.saveToStorage(engine);
         lastAutosaveRealMsRef.current = Date.now();
-      } else if (document.visibilityState === 'visible') {
+        syncEngineEventsToNotifications();
+        setTickVersion((v) => v + 1);
+      }
+    };
+
+    const markHidden = () => {
+      const engine = engineRef.current!;
+      const nowISO = new Date().toISOString();
+      SimulationStore.saveToStorage(engine, nowISO);
+      lastAutosaveRealMsRef.current = Date.now();
+      hiddenAtISORef.current = nowISO;
+    };
+
+    const markVisible = () => {
+      const awayFromISO = hiddenAtISORef.current;
+      hiddenAtISORef.current = null;
+      if (awayFromISO) {
+        tryResumeOfflineProgress(awayFromISO);
+      } else {
         lastRealTickMsRef.current = Date.now();
       }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        markHidden();
+      } else if (document.visibilityState === 'visible') {
+        markVisible();
+      }
+    };
+
+    const handlePageHide = () => {
+      markHidden();
+    };
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      // Geri/ileri önbelleğinden (bfcache) dönüş: sayfa yeniden yüklenmez, dönüş burada yakalanır
+      if (e.persisted) markVisible();
     };
 
     const handleBeforeUnload = () => {
       SimulationStore.saveToStorage(engineRef.current!);
     };
 
+    // Sayfa açılışı: kayıttaki son aktif andan bu yana geçen süre
+    if (
+      typeof document === 'undefined' ||
+      document.visibilityState !== 'hidden'
+    ) {
+      tryResumeOfflineProgress(engineRef.current!.getState().lastRealTimestampISO);
+    } else {
+      hiddenAtISORef.current = engineRef.current!.getState().lastRealTimestampISO;
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
@@ -446,6 +501,8 @@ export default function App() {
       }
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [syncEngineEventsToNotifications]);

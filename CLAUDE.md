@@ -155,6 +155,16 @@ Plan dosyası `ai-workflow/DUZELTME_PLANI.md` (Bölüm 1 ve 2 uygulandı; diğer
 ## Tekrar hoş geldin penceresi
 
 - `OfflineProgressModal.tsx`: lacivert kart, büyük altın "+₺" net varlık farkı, gelir/gider/temettü kutuları ve altın "Topla ve devam et" düğmesi (`offline-modal-continue-btn`).
+- **Ne zaman açılır** (`engine/OfflineResume.ts`, `App.tsx` gerçek zaman efekti): sayfa açılışında (kayıttaki son an → şimdi) ve sekme arka plandan dönünce (`visibilitychange` gizli → görünür, ayrıca geri/ileri önbelleği için `pagehide`/`pageshow`). Aradaki süre `OFFLINE_RESUME_MIN_REAL_SECONDS` (60 sn, `gameBalance.ts`) altındaysa hiçbir şey olmaz (eski davranış: süre sayılmaz). Korumalar: duraklatılmış oyun / hız 0 / şehir seçimi bekleyen kayıt ilerlemez; süre son işlenen çevrimdışı andan (`maxProcessedOfflineTimestampMs`) ölçüldüğü için aynı dönüş iki olayla iki kez işlenmez; kapatılmamış özet varken yeni dönüş onun üstüne toplanır. Pencere açıkken karar kartı gizlenir (kayıtta bekler). **Not:** eskiden sayfa açılışında da çevrimdışı ilerleme hiç işlenmiyordu (yalnızca geliştirici düğmesi vardı); 2026-11 Faz 1'de düzeltildi. Rehberin karşılama penceresi oyunu duraklattığı için yarım kalmış ilk oyun rehberinde açılışta ilerleme verilmez. Testi `src/tests/simulation/offlineResume.test.ts`.
+
+## Hata ekranı (ErrorBoundary)
+
+- `components/AppErrorBoundary.tsx`, `main.tsx` içinde `<App />`'i sarar. Ekran çizilirken hata olursa beyaz ekran yerine "Bir şeyler ters gitti" kartı: "Sayfayı Yenile", "Hata Detayını Kopyala" (mesaj + kısa yığın, `buildErrorReport`), "Kaydı Yedekle ve Sıfırla" (iki adım: önce kaydı JSON indir ya da kopyala; sil düğmesi yedek alınmadan açılmaz). Kimlikler `app-error-*`. Testi `src/tests/ui/appErrorBoundary.test.ts`. Gerçek Chrome'da (390×844) denendi.
+
+## Uygulama kabuğu (index.html)
+
+- Viewport `viewport-fit=cover` (iPhone çentik alanı; `env(safe-area-inset-*)` kullanan bileşenler için şart). Başlık ve paylaşım başlığı "Borsa Patronu". Favicon `public/favicon.svg`, PWA manifesti `public/manifest.webmanifest` (manifest içindeki yollar göreli; GitHub Pages alt yolunda `VITE_BASE` ile çalışır). PNG ikon (iOS ana ekran ikonu `apple-touch-icon`) henüz yok. Testi `src/tests/ui/appShellMeta.test.ts`.
+- Yayın hattı (`.github/workflows/yayinla.yml`): `npm ci` → `npm run lint` → `npm test` → `npm run build`.
 
 ## Alt menü ve şehir seçici (Harita / Dükkân / Şirket)
 
@@ -255,7 +265,7 @@ Plan: `ai-workflow/TURKIYE_GECIS_SARTNAMESI.md` (şartname), `ai-workflow/TURKIY
 ## Bilinen eksikler
 
 - Rakip patronlar karar kartları ve zenginler listesiyle sınırlı: kendi başlarına hisse toplamaz, şirket satın almazlar.
-- Gerçek uygulamada uzun süre kapalı kalıp açınca "Tekrar hoş geldin" penceresinin kendiliğinden çıkıp çıkmadığı denetlenmedi; pencere Ayarlar → Geliştirici araçları → "Çevrimdışı ilerlemeyi dene" ile görülebilir.
+- "Tekrar hoş geldin" penceresi masaüstü Chrome'da (açılış ve sahte arka plan dönüşü) denendi; gerçek telefonda uygulamayı arka plana atıp dönme henüz denenmedi.
 
 ## Çalışma kuralları
 

@@ -39,16 +39,19 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
 
   return (
     <div className="relative h-[calc(100dvh-236px)] min-h-[360px] w-full overflow-y-auto bg-[var(--g-bg,#f3f5fb)]" data-testid="city-shops-screen" data-city-id={cityId}>
-      {/* Sabit "Haritaya Dön": güvenli alanın altında, en az 44×44 px */}
-      <button
-        type="button"
-        data-testid="city-shops-back-btn"
-        onClick={onBackToMap}
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 'calc(env(safe-area-inset-left, 0px) + 8px)' }}
-        className="g-btn g-btn-navy fixed z-30 min-h-[44px] min-w-[44px] px-3 text-[14px]"
-      >
-        <ArrowLeft size={18} /> Haritaya Dön
-      </button>
+      {/* "Haritaya Dön": ekranın kendi üst köşesine yapışık durur (kaydırınca da görünür), en az 44×44 px.
+          Eskiden sayfanın en üstüne sabitlenmişti ve üst çubuğun / hedef şeridinin üstüne biniyordu. */}
+      <div className="sticky top-0 z-30 h-0">
+        <button
+          type="button"
+          data-testid="city-shops-back-btn"
+          onClick={onBackToMap}
+          style={{ left: 'calc(env(safe-area-inset-left, 0px) + 8px)' }}
+          className="g-btn g-btn-navy absolute top-2 min-h-[44px] min-w-[44px] px-3 text-[14px]"
+        >
+          <ArrowLeft size={18} /> Haritaya Dön
+        </button>
+      </div>
 
       <div className="g-hero rounded-none px-4 pb-4 pt-16" data-testid="city-shops-header">
         <div className="g-hero-label">Şehir Mağazaları</div>

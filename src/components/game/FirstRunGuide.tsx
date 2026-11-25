@@ -331,7 +331,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
         aria-label="Rehber adımı"
         data-testid="guide-step-card"
         data-step={step.id}
-        className={`fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-white p-3 shadow-2xl space-y-2 ${cardAtTop ? 'top-[128px]' : 'bottom-[calc(84px+env(safe-area-inset-bottom))]'}`}
+        className={`fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-white p-3 shadow-2xl space-y-2 ${cardAtTop ? 'top-[calc(128px+env(safe-area-inset-top,0px))]' : 'bottom-[calc(84px+env(safe-area-inset-bottom))]'}`}
       >
         <div className="flex items-center justify-between gap-2">
           <h3 className="g-section-title">{step.title}</h3>

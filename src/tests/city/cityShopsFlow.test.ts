@@ -176,8 +176,11 @@ test('Şehir Mağazaları ekranı: yalnızca o şehrin mağazaları, üst özet,
   for (const id of ['city-shops-count', 'city-shops-revenue', 'city-shops-profit', 'city-shops-staff', 'city-shops-stock', 'city-shops-reputation']) assert.ok(html.includes(`data-testid="${id}"`), id);
   assert.ok(/data-testid="city-shops-count">2</.test(html));
   const btn = html.match(/<button[^>]*data-testid="city-shops-back-btn"[^>]*>/)![0];
-  assert.ok(btn.includes('fixed') && btn.includes('min-h-[44px]') && btn.includes('min-w-[44px]'));
-  assert.ok(btn.includes('safe-area-inset-top') && btn.includes('safe-area-inset-left'));
+  assert.ok(btn.includes('min-h-[44px]') && btn.includes('min-w-[44px]'));
+  assert.ok(btn.includes('safe-area-inset-left'));
+  // Düğme ekranın kendi üstüne yapışıktır (sayfaya sabitlenmez: üst çubuğun/hedef şeridinin üstüne binmesin)
+  assert.ok(!btn.includes('fixed'));
+  assert.match(html, /<div class="sticky top-0 z-30 h-0"><button[^>]*data-testid="city-shops-back-btn"/);
   assert.ok(html.includes('Haritaya Dön'));
   for (const a of ['Yönet', 'Stok Sipariş Et', 'Yükselt', 'Çalışanlar', 'Müdür', 'Muhasebe']) assert.ok(html.includes(a), a);
   // Rafsız yeni dükkânlar sorun sayılır

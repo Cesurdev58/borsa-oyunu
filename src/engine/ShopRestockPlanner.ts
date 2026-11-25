@@ -16,6 +16,8 @@ const INBOUND_STATUSES = ['PREPARING', 'IN_TRANSIT', 'DELAYED', 'APPROVED'];
 
 /** Raf hedefi: kapasitenin bu kadarı (kalanı tezgâh payı olarak boş kalır). */
 const SHELF_FILL_TARGET = 0.9;
+/** Teslim süresi boyunca talep dalgalanmasına pay. */
+const LEAD_TIME_SAFETY = 1.15;
 
 export interface PlannedRestockOrder {
   supplierId: string;
@@ -58,9 +60,6 @@ export function planShopRestock(
           INBOUND_STATUSES.includes(o.status)
       )
       .reduce((sum, o) => sum + Math.max(0, o.orderedQuantity - o.deliveredQuantity), 0);
-    const need = perResource - have - inbound;
-    if (need < 5) continue;
-
     const offer = TradeAndShopEngine.getSupplierOffers(state, rid, shop)
       .filter((o) => o.maxAvailableQuantity >= o.minOrderQuantity)
       .sort(
@@ -68,6 +67,17 @@ export function planShopRestock(
           a.unitPrice + a.shippingCostPerUnit - (b.unitPrice + b.shippingCostPerUnit)
       )[0];
     if (!offer) continue;
+
+    // Mal ancak teslim süresi kadar sonra rafa gelir: dünkü talebe göre teslim süresi + 1 günlük mal
+    // bulundur (raf + depo kapasitesini aşmadan). Raf hedefi alt sınırdır.
+    const dailyNeed =
+      ((shop.todayUnitsSold + shop.todayUnmetCustomerDemand) / tpl.allowedResourceIds.length) * LEAD_TIME_SAFETY;
+    const capCeiling = Math.floor(
+      ((shop.shelfCapacity + shop.backroomCapacity) * SHELF_FILL_TARGET) / tpl.allowedResourceIds.length
+    );
+    const target = Math.max(perResource, Math.min(capCeiling, Math.ceil(dailyNeed * (offer.deliveryDays + 1))));
+    const need = target - have - inbound;
+    if (need < 5) continue;
 
     const unit = offer.unitPrice + offer.shippingCostPerUnit;
     const wanted = Math.max(

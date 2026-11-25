@@ -263,6 +263,31 @@ export function stepShopsIntraday(state: SimulationState, minutesIntoDay: number
   }
 }
 
+/**
+ * Günü kapatmadan önce dükkânların kalan satışını, canlı oyunun gün içi adımlarıyla AYNI dilimlerle
+ * (her `stepMinutes` dakikada bir) tamamlar. Hızlı ilerletme / çevrimdışı ilerleme böylece canlı oynanan
+ * günle kuruşu kuruşuna aynı sonucu verir: gün içinde bir ürün bitince talep raftaki diğer ürünlere
+ * kayar; tek parça satışta bu olmuyordu (Faz 3.4). Gün zaten bitmişse etkisizdir.
+ */
+export function completeShopsDay(
+  state: SimulationState,
+  fromMinute: number,
+  stepMinutes: number,
+  dayMinutes: number
+): void {
+  const ts = state.tradeState;
+  if (!ts || !ts.shops || ts.shops.length === 0) return;
+  const step = Math.max(1, Math.floor(stepMinutes));
+  const start = Math.max(0, Math.floor(fromMinute / step) * step + step);
+  for (let m = start; m <= dayMinutes; m += step) {
+    // Kapalı saatleri atla: hiçbir dükkânın satacağı pay kalmadıysa döngüyü bitir
+    stepShopsIntraday(state, m);
+    if (ts.shops.every((sh) => (sh.live?.processedFrac ?? 0) >= 1 - 1e-6)) break;
+  }
+  // Güvenlik: küsuratlı bir dakikadan kapanılırsa son dilim de satılsın
+  stepShopsIntraday(state, dayMinutes);
+}
+
 export interface ShopDayTotals {
   walkIn: number;
   served: number;

@@ -9,7 +9,7 @@ import type { CityId } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
 import { liveShopToday } from '../../../engine/ShopSales';
-import { SHOP_ISSUE_LABEL_TR, shopIssueKinds } from '../../../engine/CityOpeningQuote';
+import { SHOP_ISSUE_LABEL_TR, cityIssueLabels, shopIssueKindsInState } from '../../../engine/CityOpeningQuote';
 import { shopsInCity, summarizeCityShops } from './mapNavigation';
 import { SHOP_EMOJI } from '../buildings/ShopDashboard';
 
@@ -31,6 +31,7 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
   const nowMin = state.minutesIntoCurrentDay ?? 0;
   const [accountingOpen, setAccountingOpen] = useState<string | null>(null);
   const reputation = Math.round(state.tradeState?.tradeReputationScore ?? 0);
+  const issueLabels = cityIssueLabels(state, cityId);
 
   return (
     <div className="relative h-[calc(100dvh-236px)] min-h-[360px] w-full overflow-y-auto bg-[var(--g-bg,#f3f5fb)]" data-testid="city-shops-screen" data-city-id={cityId}>
@@ -58,9 +59,13 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             <div className="g-hero-tile"><div className="text-[13px] opacity-70">Ticari itibar</div><b data-testid="city-shops-reputation">{reputation}</b></div>
           </div>
         )}
-        {sum.issueCount > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-red-500/20 px-3 py-2 text-[14px] font-bold text-white" data-testid="city-shops-issues">
-            <AlertTriangle size={16} /> {sum.issueCount} mağazada sorun var (raf boş ya da kasa boş)
+        {issueLabels.length > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-500/20 px-3 py-2 text-[14px] font-bold text-white" data-testid="city-shops-issues">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>
+              {sum.issueCount > 0 ? `${sum.issueCount} mağazada sorun var: ` : 'Şehirde sorun var: '}
+              {issueLabels.join(' · ')}
+            </span>
           </div>
         )}
       </div>
@@ -79,7 +84,7 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             const t = liveShopToday(shop, state.day, nowMin);
             const used = shop.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
             const stockPct = Math.min(100, Math.round((used / Math.max(1, shop.shelfCapacity)) * 100));
-            const issueKinds = shopIssueKinds(shop, state.day);
+            const issueKinds = shopIssueKindsInState(state, shop);
             const issue = issueKinds.length > 0;
             const staffText = shop.ownerWorks ? 'Sen çalışıyorsun' : `${shop.staffCount} çalışan`;
             return (

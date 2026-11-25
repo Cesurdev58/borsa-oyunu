@@ -64,7 +64,7 @@ export class SimulationStore {
   /** Şehir geçişinden (şema v6) önceki orijinal kaydın yedeği; ilk yedek korunur, üzerine yazılmaz. */
   public static readonly BACKUP_PRE_CITY_KEY = CITY_MIGRATION_BACKUP_KEY;
   public static readonly CURRENT_SCHEMA_VERSION =
-    SimulationEngine.CURRENT_SCHEMA_VERSION; // 5
+    SimulationEngine.CURRENT_SCHEMA_VERSION; // şu an 6 (SimulationEngine.ts)
 
   private static lastError: StoreErrorReport | null = null;
   private static lastMigrationStats: MigrationStats | null = null;

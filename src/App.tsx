@@ -4,7 +4,7 @@
  */
 
 import * as PrestigeEngine from './engine/PrestigeEngine';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Suspense, lazy } from 'react';
 import {
   SimulationEngine,
   SimulationStage,
@@ -31,10 +31,6 @@ import {
 } from './models/trade';
 import { SimulationStore } from './state/simulationStore';
 import { resumeOfflineProgress } from './engine/OfflineResume';
-import { MarketTerminalView } from './components/MarketTerminalView';
-import { CompanyIpoView } from './components/CompanyIpoView';
-import { TakeoverHoldingView } from './components/TakeoverHoldingView';
-import { MathAndSimulationLabView } from './components/MathAndSimulationLabView';
 import { TycoonGameView } from './components/game/TycoonGameView';
 import { HeadquartersSelectionModal } from './components/game/HeadquartersSelectionModal';
 import { StartCityScreen } from './components/game/turkeyMap/StartCityScreen';
@@ -52,6 +48,20 @@ import {
   RotateCcw,
   Save,
 } from 'lucide-react';
+
+// Geliştirici (klasik) ekranları: normal oyuncu görmez, yalnızca açılınca ayrı dosyadan yüklenir
+const MarketTerminalView = lazy(() =>
+  import('./components/MarketTerminalView').then((m) => ({ default: m.MarketTerminalView }))
+);
+const CompanyIpoView = lazy(() =>
+  import('./components/CompanyIpoView').then((m) => ({ default: m.CompanyIpoView }))
+);
+const TakeoverHoldingView = lazy(() =>
+  import('./components/TakeoverHoldingView').then((m) => ({ default: m.TakeoverHoldingView }))
+);
+const MathAndSimulationLabView = lazy(() =>
+  import('./components/MathAndSimulationLabView').then((m) => ({ default: m.MathAndSimulationLabView }))
+);
 
 type ActiveDeveloperTab = 'market' | 'company' | 'takeover' | 'math';
 
@@ -1944,7 +1954,17 @@ export default function App() {
           </span>
         </div>
 
-        {/* Aktif Sekme Görünümü */}
+        {/* Aktif Sekme Görünümü (tembel yüklenir) */}
+        <Suspense
+          fallback={
+            <div
+              data-testid="developer-view-loading"
+              className="py-16 text-center text-sm text-slate-400"
+            >
+              Ekran yükleniyor…
+            </div>
+          }
+        >
         {activeTab === 'market' && (
           <MarketTerminalView
             stocks={state.stocks}
@@ -2010,6 +2030,7 @@ export default function App() {
             formatCurrency={(v) => engine.formatCurrency(v)}
           />
         )}
+        </Suspense>
       </main>
 
       <footer className="border-t border-slate-900 py-4 px-6 text-center text-xs text-slate-500">

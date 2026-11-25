@@ -19,6 +19,8 @@ Sahibi kod yazmıyor; açıklamalar ve raporlar Türkçe ve teknik terimsiz olma
 - Vite + React 19 + TypeScript + Tailwind 4. Sunucu yok; kayıt tarayıcı `localStorage` üzerinde.
 - Kurulum: `npm ci` (temiz kurulum; `package-lock.json` ile uyumludur, `--legacy-peer-deps` artık gerekmez: esbuild `^0.27` ile vite 8 çakışması PR #43'te giderildi).
 - Tip denetimi: `npm run lint` · Testler: `npm test` · Derleme: `npm run build`
+- Paket adı `borsa-patronu`, sürüm `0.9.0`. TypeScript 7 kullanılıyor: katı mod (`strict`) TS 7'de zaten varsayılan; `tsconfig.json` içinde ayrıca açıkça `"strict": true` yazılı (2026-11 ölçümü: 0 hata). Kullanılmayan `express`, `@types/express`, `dotenv`, `motion`, `autoprefixer` paketleri ve kullanılmayan `GameTimeControls.tsx` kaldırıldı.
+- **Geliştirici paneli tembel yüklenir** (`App.tsx`, `React.lazy` + `Suspense`): `MarketTerminalView`, `CompanyIpoView`, `TakeoverHoldingView`, `MathAndSimulationLabView` ayrı dosyalardır, yalnızca Ayarlar → Geliştirici paneli açılınca iner. Ana dosya 1.282,5 → 1.130,3 kB (gzip 364,4 → 330,9). `manualChunks` ile kütüphane/harita bölme denendi: harita açılış ekranı olduğu için ilk açılışta hepsi yine iniyor (toplam ~1.134 kB, kazanç yok), bu yüzden uygulanmadı; yalnızca güncelleme sonrası önbellek kazancı sağlardı.
 - Ölçüm/denetim komutları: `npm run balans`, `npm run kariyer`, `npm run city-audit`, `npm run city-balance`, `npm run prestij-sure` (kariyer robotunu 0/1/5 prestij yıldızıyla çalıştırıp 1 milyon, şirket kapısı ve şirketleşme şartı sürelerini karşılaştırır; `scripts/prestij-suresi.ts`, ~20 sn).
 - Proje Google AI Studio'da başlamıştı; sahibi AI Studio projesini sildi. Bundan sonra tüm geliştirme yalnızca bu depoda yapılır.
 

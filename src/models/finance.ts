@@ -200,6 +200,8 @@ export interface CompanyOperationsState {
   playerMarketSharePct?: number;
   /** Pazar doldu mu: kapasitenin önemli kısmı satılamıyor */
   marketSaturated?: boolean;
+  /** Genel merkez şehrinin bu sektöre verdiği satış çarpanı (yoksa 1; `SectorMarket.refreshPlayerMarketContext` yazar) */
+  citySectorMultiplier?: number;
   unitProductionCost: number;
   unitStorageCost: number;
   unitLogisticsCost: number;

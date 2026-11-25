@@ -63,6 +63,7 @@ import type {
 import { CompanyWallet } from './CompanyWallet';
 import { buildDayReport, markRecordDay } from './DayReportEngine';
 import { stepWorldEvents } from './WorldEventEngine';
+import { completeShopsDay } from './ShopSales';
 
 export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: number): DailyLogEntry {
     if (isCitySelectionPending(engine.state)) {
@@ -94,6 +95,17 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
       engine.processPendingOrders();
       engine.state.marketSession = prevSession;
     }
+
+    // 0B. Biten günün kalan dükkân satışı (Faz 3.4): canlı oynanan günle aynı koşullarda satılır —
+    // günün kendi makrosu, olayları ve mevsimiyle; yeni gelen maldan ve gün sonu firesinden ÖNCE.
+    // Eskiden hızlı ilerletmede bütün gün, ertesi günün koşullarıyla ve ertesi gün gelecek mal rafa
+    // konduktan sonra satılıyordu (manav/markette %2–10 fark). Canlı oyunda gün zaten bitmişse etkisizdir.
+    completeShopsDay(
+      engine.state,
+      Math.min(engine.state.minutesIntoCurrentDay, GameClockEngine.MINUTES_PER_GAME_DAY),
+      GameClockEngine.INTRADAY_SUBSTEP_MINUTES,
+      GameClockEngine.MINUTES_PER_GAME_DAY
+    );
 
     // 1. Yeni Gün Başlangıcı ve Saat Sıfırlaması (00:00)
     engine.state.day += 1;

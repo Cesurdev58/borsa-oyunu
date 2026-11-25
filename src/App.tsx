@@ -983,6 +983,21 @@ export default function App() {
     [engine, persistAndRefreshUI]
   );
 
+  const handleBuildCityDepot = useCallback(
+    (cityId: string) => {
+      const res = engine.buildCityDepot(cityId);
+      setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
+      pushNotification({
+        category: 'STAGE_UNLOCKED',
+        title: res.success ? 'Şehir deposu kuruldu' : 'Depo kurulamadı',
+        message: res.message,
+        severity: res.success ? 'success' : 'error',
+      });
+      persistAndRefreshUI();
+    },
+    [engine, persistAndRefreshUI, pushNotification]
+  );
+
   const handleShopManagerResult = useCallback(
     (res: { success: boolean; message: string }) => {
       setStatusBanner({ type: res.success ? 'success' : 'error', text: res.message });
@@ -1454,6 +1469,7 @@ export default function App() {
         onSetTurkeyMapView={handleSetTurkeyMapView}
         onSelectMapCity={handleSelectMapCity}
         onOpenShopInCity={handleOpenShopInCity}
+        onBuildCityDepot={handleBuildCityDepot}
         onBuyLifestyleItem={handleBuyLifestyleItem}
         onSellShopStock={handleSellShopStock}
         onBuyUsedUpgrade={handleBuyUsedUpgrade}

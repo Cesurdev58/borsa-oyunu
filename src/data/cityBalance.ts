@@ -79,6 +79,14 @@ export const CITY_COMPETITION_EXPONENT = 0.5;
 export const CITY_PURCHASING_POWER_EXPONENT = 0.5;
 /** Perakende sektör bonusu bütün kişisel dükkânlara bu oranda yansır. */
 export const CITY_RETAIL_BONUS_SHARE = 1;
+/**
+ * Şirketin sektör bonusu (Faz 3.3): oyuncu şirketinin satış talebi, genel merkez şehrinin o sektördeki
+ * bonusu × bu oran kadar artar/azalır (`CityEconomy.companyCitySectorMultiplier`). Bonusu olmayan şehir
+ * (69 il + 12 şehrin listede olmayan sektörleri) tam 1,0'dır, yani eski ölçümler değişmez.
+ */
+export const COMPANY_CITY_SECTOR_BONUS_SHARE = 1;
+/** Bonusun üretim maliyetine yansıyan payı: birim maliyet ÷ (1 + bonus × bu). */
+export const COMPANY_CITY_COST_SHARE = 0.35;
 
 /** Mevsimsellik: şehir başına genlik (0,25 = ±%25). Yıl 365 oyun günüdür, tepe noktası yaz ortası. */
 export const CITY_SEASON_DAYS = 365;
@@ -124,8 +132,14 @@ export const PORT_CITY_IDS: ReadonlySet<string> = new Set([
   'zonguldak', 'ordu', 'rize', 'giresun', 'sinop', 'canakkale', 'mugla', 'balikesir', 'yalova', 'bartin', 'aydin',
 ]);
 
-/** Şehir depo kurma bedeli ve kapasitesi. */
-export const CITY_DEPOT_COST = 450_000;
+/**
+ * Şehir depo kurma bedeli ve kapasitesi.
+ * Bedel ölçüldü (Faz 3.2, 35 gün, merkez Ankara): uzak şehirde 2 dükkân (manav + market, Samsun/İzmir)
+ * ayda ~10–11 bin ₺, galeri + market (Diyarbakır) ~27 bin ₺ nakliye tasarrufu. Eski 450 bin ₺ ile depo
+ * kendini 500–1.270 günde çıkarıyordu (hiç değmezdi); 60 bin ₺ ile 2 dükkânda ~70–170 gün (belediye
+ * projeleriyle aynı aralık), tek küçük dükkânda daha uzun. Arayüz gerçek geri dönüş süresini gösterir.
+ */
+export const CITY_DEPOT_COST = 60_000;
 export const CITY_DEPOT_CAPACITY_UNITS = 4000;
 
 /** Açılış teklifi bileşenleri. */

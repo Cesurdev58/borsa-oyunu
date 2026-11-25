@@ -10,7 +10,7 @@ import type { SimulationState } from '../../../models/simulation';
 import { SECTOR_CONFIGS } from '../../../data/sectors';
 import { SHOP_TEMPLATES } from '../../../data/tradeCatalog';
 import { getCityPresence } from '../../../engine/CityMigration';
-import { getCityOpeningQuote, getCityShopSummary } from '../../../engine/CityOpeningQuote';
+import { cityIssueLabels, getCityOpeningQuote, getCityShopSummary } from '../../../engine/CityOpeningQuote';
 import type { SectorId } from '../../../models/market';
 import type { ShopType } from '../../../models/trade';
 
@@ -66,6 +66,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
   const scrollTo = (el: HTMLElement | null) => el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
   const presence = getCityPresence(state, city.id);
   const summary = getCityShopSummary(state, city.id);
+  const issueLabels = cityIssueLabels(state, city.id);
   const hasShop = presence.shopCount > 0;
   const quote = getCityOpeningQuote(state, city.id, 'BUFE', reservedCash);
   const x = quote.expansion;
@@ -185,6 +186,15 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
                 </div>
               </div>
             </div>
+          )}
+          {issueLabels.length > 0 && (
+            <ul className="mt-2 space-y-1" data-testid="city-info-issue-list">
+              {issueLabels.map((label) => (
+                <li key={label} className="flex items-center gap-1.5 text-[13px] font-bold text-red-600">
+                  <AlertTriangle size={14} className="shrink-0" /> {label}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 

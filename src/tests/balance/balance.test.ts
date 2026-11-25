@@ -57,6 +57,10 @@ test('Denge: eşik kadar net değeri olan oyuncu (zengin kısayolu) ilk dükkân
 test('Denge: düzenli sipariş veren oyuncuda büfe kendini 25-90 günde çıkarır (eskiden ~5 gündü)', () => {
   const eng = new SimulationEngine(20261104, 1_000_000);
   assert.equal(eng.openShop({ shopType: 'BUFE' }).success, true);
+  // İlk büfede sahip tek başına çalışır (kapasite %65); `npm run balans` gibi ilk çalışanı al.
+  // (Sahip çalışırken kâr günde ~400–600 ₺; tek tohumda olaylara göre geri dönüş 70–125 gün oynar.)
+  const shopId = eng.getState().tradeState!.shops[0].shopId;
+  assert.equal(eng.hireFirstEmployee(shopId).success, true);
   const profits: number[] = [];
   for (let d = 1; d <= 50; d++) {
     restockShops(eng);

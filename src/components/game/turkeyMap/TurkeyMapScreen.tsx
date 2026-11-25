@@ -24,7 +24,8 @@ export function buildMapMarkers(state: SimulationState, filter: MapFilterId = DE
       x: c.mapPosition.x,
       y: c.mapPosition.y,
       markerState: p.markerState,
-      hasIssue: p.shopCount > 0 && cityHasIssue(state, c.id),
+      // Dükkân sorunları + şehir düzeyindeki sorunlar (merkezde geciken kredi, dolu depo)
+      hasIssue: cityHasIssue(state, c.id),
       shopCount: p.shopCount,
       dimmed: !cityMatchesFilter(state, c.id, filter),
     };

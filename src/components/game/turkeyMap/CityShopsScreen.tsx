@@ -9,8 +9,9 @@ import type { CityId } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
 import { liveShopToday } from '../../../engine/ShopSales';
-import { SHOP_ISSUE_LABEL_TR, shopIssueKinds } from '../../../engine/CityOpeningQuote';
+import { SHOP_ISSUE_LABEL_TR, cityIssueLabels, shopIssueKindsInState } from '../../../engine/CityOpeningQuote';
 import { shopsInCity, summarizeCityShops } from './mapNavigation';
+import { CityDepotCard } from './CityDepotCard';
 import { SHOP_EMOJI } from '../buildings/ShopDashboard';
 
 export type ShopManageTab = 'ORDER_PRODUCT' | 'EDIT_PRICES' | 'MANAGE_STAFF' | 'UPGRADE_SHOP';
@@ -22,28 +23,35 @@ export interface CityShopsScreenProps {
   onBackToMap: () => void;
   /** Mağaza yönetimini (detay paneli) açar; `tab` hangi bölümle açılacağını söyler. */
   onManageShop: (shopId: string, tab?: ShopManageTab) => void;
+  reservedCash?: number;
+  /** Şehir deposu kur (verilmezse depo kartı yalnızca bilgi gösterir). */
+  onBuildDepot?: (cityId: CityId) => void;
 }
 
-export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state, formatCurrency, onBackToMap, onManageShop }) => {
+export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state, formatCurrency, onBackToMap, onManageShop, reservedCash = 0, onBuildDepot }) => {
   const city = CITY_DEFINITIONS[cityId];
   const shops = shopsInCity(state, cityId);
   const sum = summarizeCityShops(state, cityId);
   const nowMin = state.minutesIntoCurrentDay ?? 0;
   const [accountingOpen, setAccountingOpen] = useState<string | null>(null);
   const reputation = Math.round(state.tradeState?.tradeReputationScore ?? 0);
+  const issueLabels = cityIssueLabels(state, cityId);
 
   return (
     <div className="relative h-[calc(100dvh-236px)] min-h-[360px] w-full overflow-y-auto bg-[var(--g-bg,#f3f5fb)]" data-testid="city-shops-screen" data-city-id={cityId}>
-      {/* Sabit "Haritaya Dön": güvenli alanın altında, en az 44×44 px */}
-      <button
-        type="button"
-        data-testid="city-shops-back-btn"
-        onClick={onBackToMap}
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 'calc(env(safe-area-inset-left, 0px) + 8px)' }}
-        className="g-btn g-btn-navy fixed z-30 min-h-[44px] min-w-[44px] px-3 text-[14px]"
-      >
-        <ArrowLeft size={18} /> Haritaya Dön
-      </button>
+      {/* "Haritaya Dön": ekranın kendi üst köşesine yapışık durur (kaydırınca da görünür), en az 44×44 px.
+          Eskiden sayfanın en üstüne sabitlenmişti ve üst çubuğun / hedef şeridinin üstüne biniyordu. */}
+      <div className="sticky top-0 z-30 h-0">
+        <button
+          type="button"
+          data-testid="city-shops-back-btn"
+          onClick={onBackToMap}
+          style={{ left: 'calc(env(safe-area-inset-left, 0px) + 8px)' }}
+          className="g-btn g-btn-navy absolute top-2 min-h-[44px] min-w-[44px] px-3 text-[14px]"
+        >
+          <ArrowLeft size={18} /> Haritaya Dön
+        </button>
+      </div>
 
       <div className="g-hero rounded-none px-4 pb-4 pt-16" data-testid="city-shops-header">
         <div className="g-hero-label">Şehir Mağazaları</div>
@@ -58,9 +66,13 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             <div className="g-hero-tile"><div className="text-[13px] opacity-70">Ticari itibar</div><b data-testid="city-shops-reputation">{reputation}</b></div>
           </div>
         )}
-        {sum.issueCount > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-red-500/20 px-3 py-2 text-[14px] font-bold text-white" data-testid="city-shops-issues">
-            <AlertTriangle size={16} /> {sum.issueCount} mağazada sorun var (raf boş ya da kasa boş)
+        {issueLabels.length > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-500/20 px-3 py-2 text-[14px] font-bold text-white" data-testid="city-shops-issues">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>
+              {sum.issueCount > 0 ? `${sum.issueCount} mağazada sorun var: ` : 'Şehirde sorun var: '}
+              {issueLabels.join(' · ')}
+            </span>
           </div>
         )}
       </div>
@@ -79,7 +91,7 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             const t = liveShopToday(shop, state.day, nowMin);
             const used = shop.inventoryBatches.reduce((a, b) => a + b.quantity, 0);
             const stockPct = Math.min(100, Math.round((used / Math.max(1, shop.shelfCapacity)) * 100));
-            const issueKinds = shopIssueKinds(shop, state.day);
+            const issueKinds = shopIssueKindsInState(state, shop);
             const issue = issueKinds.length > 0;
             const staffText = shop.ownerWorks ? 'Sen çalışıyorsun' : `${shop.staffCount} çalışan`;
             return (
@@ -126,6 +138,13 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
               </div>
             );
           })}
+          <CityDepotCard
+            cityId={cityId}
+            state={state}
+            formatCurrency={formatCurrency}
+            reservedCash={reservedCash}
+            onBuildDepot={onBuildDepot}
+          />
         </div>
       )}
     </div>

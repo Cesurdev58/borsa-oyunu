@@ -77,6 +77,13 @@ export const OFFLINE_RESUME_MIN_REAL_SECONDS = 60;
  * kârının yaklaşık %70–85'ini kazanır. Yani müdür zahmeti alır ama elle yönetmek hâlâ biraz daha kârlıdır.
  */
 export const MANAGER_MIN_SHOP_LEVEL = 2;
+/**
+ * Haritadaki "Müdür gerekli" uyarısı: müdür tutulabilecek, müdürü olmayan kişisel dükkân dün
+ * satabileceği malın en az bu kadarını raf boşaldığı için satamadıysa (`CityOpeningQuote.shopIssueKinds`).
+ */
+export const MANAGER_NEEDED_UNMET_SHARE = 0.1;
+/** Haritadaki "Depo kapasitesi dolu" uyarısı: depo bu oranda doluysa. */
+export const WAREHOUSE_FULL_SHARE = 0.95;
 /** Müdürün sabit günlük maaşı = dükkân türünün çalışan maaşı × bu katsayı */
 export const MANAGER_WAGE_MULTIPLIER = 0.2;
 /** Müdür primi: müdürden önceki günlük kârın bu payı (yalnızca kârlı günlerde) */

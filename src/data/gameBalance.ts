@@ -62,6 +62,12 @@ export const PRESTIGE_REWARD_PCT_PER_STAR = 20;
 /** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
 export const OFFLINE_MAX_REAL_MINUTES = 120;
 export const OFFLINE_MAX_GAME_DAYS_CAP = 60;
+/**
+ * Sekme arka plandan dönünce (ya da sayfa açılınca) en az bu kadar gerçek saniye geçtiyse
+ * çevrimdışı ilerleme işlenir ve "Tekrar hoş geldin" penceresi açılır (`engine/OfflineResume.ts`).
+ * Daha kısa aralar sessizce atlanır (eski davranış).
+ */
+export const OFFLINE_RESUME_MIN_REAL_SECONDS = 60;
 
 /**
  * DÜKKÂN MÜDÜRÜ

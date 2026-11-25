@@ -1,0 +1,20 @@
+{
+  "name": "Borsa Patronu",
+  "short_name": "Borsa Patronu",
+  "description": "Borsadan ilk dükkâna, şirketten holdinge uzanan tek kişilik patronluk oyunu.",
+  "lang": "tr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#121c44",
+  "background_color": "#121c44",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

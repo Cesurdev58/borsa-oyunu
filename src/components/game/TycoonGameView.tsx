@@ -507,11 +507,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
             founder: founderNameForTicker(state.stocks, s.ticker) ?? 'Kurucusu',
           }))}
       />
-      <DecisionCard
-        state={state}
-        reservedCash={Math.max(0, state.cash - spendableCash)}
-        onResolve={onResolveDecision}
-      />
+      {/* "Tekrar hoş geldin" penceresi açıkken karar kartı onun üstüne binmez; kart kayıtta bekler */}
+      {!offlineModalOpen && (
+        <DecisionCard
+          state={state}
+          reservedCash={Math.max(0, state.cash - spendableCash)}
+          onResolve={onResolveDecision}
+        />
+      )}
       <WorldEventCard
         worldEvents={state.worldEvents}
         day={state.day}

@@ -162,6 +162,7 @@ import * as CareerGoals from './CareerGoals';
 import * as ShopUpgrades from './ShopUpgrades';
 import * as LifestyleEngine from './LifestyleEngine';
 import * as CityServices from './CityServices';
+import { buildCityDepot } from './CityDepot';
 import * as AutoInvestEngine from './AutoInvestEngine';
 import { PROGRESSION_RULES } from './ProgressionRules';
 import {
@@ -1870,6 +1871,16 @@ export class SimulationEngine {
     if (res.success) {
       this.recalculateFinancialsAndStages();
       this.pendingDailyActions.push(`[Belediye] ${res.message}`);
+    }
+    return res;
+  }
+
+  /** Şehir deposu kurar (engine/CityDepot.ts); o şehirdeki dükkânların nakliyesi ucuzlar. */
+  public buildCityDepot(cityId: string): { success: boolean; message: string; duplicate?: boolean } {
+    const res = buildCityDepot(this.state, cityId, this.getReservedCash());
+    if (res.success) {
+      this.recalculateFinancialsAndStages();
+      this.pendingDailyActions.push(`[Depo] ${res.message}`);
     }
     return res;
   }

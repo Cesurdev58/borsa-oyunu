@@ -87,6 +87,8 @@ interface TycoonGameViewProps extends BuildingDetailActions, CityServiceHandlers
   onSetTurkeyMapView?: (view: TurkeyMapViewState) => void;
   onSelectMapCity?: (cityId: CityId | undefined) => void;
   onOpenShopInCity?: (cityId: CityId, shopType: ShopType) => void;
+  /** Şehir deposu kur (Harita → Şehir Mağazaları). */
+  onBuildCityDepot?: (cityId: CityId) => void;
   state: SimulationState;
   ipoEligibility: IPOEligibilityResult;
   nextEvent: {
@@ -121,6 +123,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   onSetTurkeyMapView,
   onSelectMapCity,
   onOpenShopInCity,
+  onBuildCityDepot,
   onBuyLifestyleItem,
   onSellShopStock,
   onBuyUsedUpgrade,
@@ -627,6 +630,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               onSetMapView={onSetTurkeyMapView}
               onSelectMapCity={onSelectMapCity}
               onOpenShopInCity={onOpenShopInCity}
+              onBuildCityDepot={onBuildCityDepot}
               onManageShop={(shopId, tab) => {
                 setManageRequest({ shopId, tab, nonce: Date.now() });
                 setSelectedBuildingId('OYUNCU_OFISI');

@@ -11,6 +11,7 @@ import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
 import { liveShopToday } from '../../../engine/ShopSales';
 import { SHOP_ISSUE_LABEL_TR, cityIssueLabels, shopIssueKindsInState } from '../../../engine/CityOpeningQuote';
 import { shopsInCity, summarizeCityShops } from './mapNavigation';
+import { CityDepotCard } from './CityDepotCard';
 import { SHOP_EMOJI } from '../buildings/ShopDashboard';
 
 export type ShopManageTab = 'ORDER_PRODUCT' | 'EDIT_PRICES' | 'MANAGE_STAFF' | 'UPGRADE_SHOP';
@@ -22,9 +23,12 @@ export interface CityShopsScreenProps {
   onBackToMap: () => void;
   /** Mağaza yönetimini (detay paneli) açar; `tab` hangi bölümle açılacağını söyler. */
   onManageShop: (shopId: string, tab?: ShopManageTab) => void;
+  reservedCash?: number;
+  /** Şehir deposu kur (verilmezse depo kartı yalnızca bilgi gösterir). */
+  onBuildDepot?: (cityId: CityId) => void;
 }
 
-export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state, formatCurrency, onBackToMap, onManageShop }) => {
+export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state, formatCurrency, onBackToMap, onManageShop, reservedCash = 0, onBuildDepot }) => {
   const city = CITY_DEFINITIONS[cityId];
   const shops = shopsInCity(state, cityId);
   const sum = summarizeCityShops(state, cityId);
@@ -131,6 +135,13 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
               </div>
             );
           })}
+          <CityDepotCard
+            cityId={cityId}
+            state={state}
+            formatCurrency={formatCurrency}
+            reservedCash={reservedCash}
+            onBuildDepot={onBuildDepot}
+          />
         </div>
       )}
     </div>

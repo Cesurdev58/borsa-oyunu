@@ -20,6 +20,8 @@ export interface TurkeyMapFlowProps {
   onSelectMapCity: (cityId: CityId | undefined) => void;
   onOpenShopInCity: (cityId: CityId, shopType: ShopType) => void;
   onManageShop: (shopId: string, tab?: ShopManageTab) => void;
+  /** Şehir deposu kur (Şehir Mağazaları ekranındaki depo kartı). */
+  onBuildCityDepot?: (cityId: CityId) => void;
   /** Mağaza detay paneli (yönetim) açık mı? Açıkken geri tuşunu o panel karşılar. */
   detailOpen?: boolean;
   fixedSize?: { width: number; height: number };
@@ -65,6 +67,8 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
           formatCurrency={props.formatCurrency}
           onBackToMap={runBack}
           onManageShop={props.onManageShop}
+          reservedCash={props.reservedCash}
+          onBuildDepot={props.onBuildCityDepot}
         />
       ) : (
         <TurkeyMapScreen

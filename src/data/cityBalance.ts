@@ -124,8 +124,14 @@ export const PORT_CITY_IDS: ReadonlySet<string> = new Set([
   'zonguldak', 'ordu', 'rize', 'giresun', 'sinop', 'canakkale', 'mugla', 'balikesir', 'yalova', 'bartin', 'aydin',
 ]);
 
-/** Şehir depo kurma bedeli ve kapasitesi. */
-export const CITY_DEPOT_COST = 450_000;
+/**
+ * Şehir depo kurma bedeli ve kapasitesi.
+ * Bedel ölçüldü (Faz 3.2, 35 gün, merkez Ankara): uzak şehirde 2 dükkân (manav + market, Samsun/İzmir)
+ * ayda ~10–11 bin ₺, galeri + market (Diyarbakır) ~27 bin ₺ nakliye tasarrufu. Eski 450 bin ₺ ile depo
+ * kendini 500–1.270 günde çıkarıyordu (hiç değmezdi); 60 bin ₺ ile 2 dükkânda ~70–170 gün (belediye
+ * projeleriyle aynı aralık), tek küçük dükkânda daha uzun. Arayüz gerçek geri dönüş süresini gösterir.
+ */
+export const CITY_DEPOT_COST = 60_000;
 export const CITY_DEPOT_CAPACITY_UNITS = 4000;
 
 /** Açılış teklifi bileşenleri. */

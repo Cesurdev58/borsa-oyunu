@@ -12,7 +12,7 @@ import { insuranceDailyPremium, trainedStaffCount } from '../../engine/CityServi
 import { shopHoursLabel, shopOpenStatus } from '../../data/shopHours';
 import { getManagerQuote } from '../../engine/ShopManager';
 import { getFirstEmployeeQuote, getOpeningAdvice } from '../../engine/ShopOnboarding';
-import { FIRST_EMPLOYEE_HIRE_FEE_BUFE, OWNER_STAFF_CAPACITY } from '../../data/gameBalance';
+import { FIRST_EMPLOYEE_HIRE_FEE_BUFE, OWNER_STAFF_CAPACITY, SHOP_CASH_KEEP, SHOP_COLLECT_MIN } from '../../data/gameBalance';
 import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
 import { NumberInput } from './ui/NumberInput';
 import React, { useMemo, useState } from 'react';
@@ -47,6 +47,7 @@ import { SimulationState } from '../../models/simulation';
 import { HelpTip } from './ui/HelpTip';
 import { SHOP_EMOJI } from './ui/shopEmoji';
 import { planShopRestock } from '../../engine/ShopRestockPlanner';
+import { liveShopToday } from '../../engine/ShopSales';
 import { FirstShopGateCard } from './ui/FirstShopGateCard';
 import { listShopUpgrades } from '../../engine/ShopUpgrades';
 import {
@@ -212,6 +213,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
       : 'ORDER_PRODUCT')
   );
   const [tradeTab, setTradeTab] = useState<TradeCenterTab>('TEDARIK');
+  // Toptan & Üretim: ilk dükkânlı esnafa karmaşık formlar gösterilmez (2 dükkân ya da şirket olunca açılır)
+  const canSeeTradeCenter = trade.shops.length >= 2 || state.playerCompany !== null;
+  const [showTransferTools, setShowTransferTools] = useState(false);
   const [showAdvancedOrder, setShowAdvancedOrder] = useState(false);
   const [showSummaryDetails, setShowSummaryDetails] = useState(false);
   const [showIncorp, setShowIncorp] = useState(false);
@@ -298,7 +302,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
     : 0;
   const restockPlan = activeShop
     ? planShopRestock(state, activeShop.shopId, spendableCash + activeShop.cashAccountBalance)
-    : { orders: [], totalCost: 0 };
+    : { orders: [], totalCost: 0, maxDeliveryDays: 0 };
   const inboundShipments = trade.shipments.filter(
     (sh) =>
       activeShop &&
@@ -314,6 +318,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
         (sh.actualArrivalDay ?? 0) >= state.day - 1
     )
     .slice(0, 3);
+  const activeLive = activeShop ? liveShopToday(activeShop, state.day, state.minutesIntoCurrentDay ?? 0) : null;
+  const activeCollectable = activeShop ? Math.max(0, Math.floor(activeShop.cashAccountBalance - SHOP_CASH_KEEP)) : 0;
+  const activeGroup: 'TEZGAH' | 'EKIP' | 'BUYUME' =
+    shopActionTab === 'ORDER_PRODUCT' || shopActionTab === 'EDIT_PRICES'
+      ? 'TEZGAH'
+      : shopActionTab === 'OPEN_BRANCH'
+      ? 'BUYUME'
+      : 'EKIP';
   const activeShopTotalCap = activeShop
     ? activeShop.shelfCapacity + activeShop.backroomCapacity
     : 1;
@@ -343,7 +355,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 w-full bg-slate-100 p-1 rounded-2xl border border-slate-200">
+        <div className={`grid ${canSeeTradeCenter ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 w-full bg-slate-100 p-1 rounded-2xl border border-slate-200`}>
           <button
             type="button"
             data-testid="mode-esnaf-shops-btn"
@@ -357,6 +369,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             <Store className="w-3.5 h-3.5" />
             <span>Dükkânlarım ({trade.shops.length})</span>
           </button>
+          {canSeeTradeCenter && (
           <button
             type="button"
             data-testid="mode-trade-center-btn"
@@ -370,10 +383,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             <Truck className="w-3.5 h-3.5" />
             <span>Toptan & Üretim</span>
           </button>
+          )}
         </div>
       </div>
 
-      {mainMode === 'SHOPS' ? (
+      {mainMode === 'SHOPS' || !canSeeTradeCenter ? (
         <div className="space-y-4">
           {/* ŞUBE SEÇİCİ + YENİ ŞUBE KISA YOLU */}
           <div
@@ -419,39 +433,6 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             </button>
           </div>
 
-          {activeShop && (
-            <div className="hidden p-3 rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-extrabold text-sm">Rafları doldur</div>
-                <div className="text-[13px] opacity-95">
-                  {restockPlan.orders.length === 0
-                    ? 'Raflar zaten dolu ya da paran yetmiyor.'
-                    : `En ucuz toptancıdan ${restockPlan.orders.length} ürün · yaklaşık ${formatCurrency(restockPlan.totalCost)}`}
-                </div>
-              </div>
-              <button
-                type="button"
-                data-testid="shop-restock-all-btn"
-                disabled={restockPlan.orders.length === 0}
-                onClick={() => {
-                  for (const o of restockPlan.orders) {
-                    onPlaceProcurementOrder({
-                      supplierId: o.supplierId,
-                      resourceId: o.resourceId,
-                      quantity: o.quantity,
-                      destinationType: 'SHOP',
-                      destinationId: activeShop.shopId,
-                      paymentTermType: 'CASH',
-                    });
-                  }
-                }}
-                className="min-h-[44px] px-4 rounded-2xl bg-white text-emerald-700 font-extrabold text-sm shadow disabled:opacity-50 active:scale-95 shrink-0"
-              >
-                Doldur
-              </button>
-            </div>
-          )}
-
           {/* SEÇİLİ DÜKKÂN: Ticarium mantığı — Mal al → raf → satış → kasa */}
           {activeShop ? (
             <div
@@ -469,6 +450,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     {activeShop.level}/5
                     {activeShop.isCompanyBranch ? ' · Şirket şubesi' : ''}
                   </div>
+                  <span
+                    data-testid="shop-level-badge"
+                    className="inline-block mr-1.5 mb-0.5 rounded-full bg-[var(--g-gold)] px-2 py-0.5 text-[13px] font-extrabold text-[#3b2a00]"
+                  >
+                    Seviye {activeShop.level}/5
+                  </span>
                   {(() => {
                     const st = shopOpenStatus(activeShop.shopType, state.minutesIntoCurrentDay ?? 0);
                     return (
@@ -482,6 +469,20 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     );
                   })()}
                 </div>
+                {activeLive && (
+                  <div className="text-right shrink-0">
+                    <div className="text-[13px] font-semibold text-white/65">Bugünkü kâr</div>
+                    <div
+                      data-testid="shop-live-profit"
+                      className={`g-display text-[17px] font-extrabold tabular-nums ${
+                        activeLive.profit >= 0 ? 'text-[#5ee6a5]' : 'text-[#ffb4b2]'
+                      }`}
+                    >
+                      {activeLive.profit >= 0 ? '+' : ''}
+                      {formatCurrency(activeLive.profit)}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-3 space-y-3">
@@ -530,7 +531,67 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   </div>
                 </div>
 
-                {/* Kasaya para koy / kâr al — her zaman görünür */}
+                {/* Canlı raf doluluk çubuğu */}
+                <div data-testid="shop-shelf-bar">
+                  <div className="flex justify-between text-[13px] font-bold text-slate-700">
+                    <span>Raf doluluğu</span>
+                    <span className="tabular-nums">
+                      {activeShopUsedUnits.toFixed(0)} / {activeShopTotalCap} ürün
+                    </span>
+                  </div>
+                  <div className="g-track mt-1 h-3">
+                    <div
+                      className={
+                        activeShopUsedUnits < activeShop.shelfCapacity * 0.1
+                          ? 'g-fill g-fill-danger'
+                          : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
+                          ? 'g-fill bg-amber-500'
+                          : 'g-fill'
+                      }
+                      style={{ width: `${Math.min(100, (activeShopUsedUnits / Math.max(1, activeShopTotalCap)) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Kasa ve hızlı tahsilat */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="shop-collect-profit-btn"
+                    disabled={activeCollectable < SHOP_COLLECT_MIN}
+                    onClick={() =>
+                      onTransferShopCash({
+                        shopId: activeShop.shopId,
+                        direction: 'FROM_SHOP',
+                        amount: activeCollectable,
+                      })
+                    }
+                    className="g-btn g-btn-gold flex-1 min-h-[48px] !px-2 text-sm"
+                  >
+                    Kârı Topla · {formatCurrency(activeCollectable)}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="shop-quick-deposit-btn"
+                    onClick={() =>
+                      onTransferShopCash({ shopId: activeShop.shopId, direction: 'TO_SHOP', amount: 10_000 })
+                    }
+                    className="g-btn g-btn-secondary min-h-[48px] !px-3 text-sm shrink-0"
+                  >
+                    +₺10B Aktar
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  data-testid="shop-transfer-tools-toggle"
+                  onClick={() => setShowTransferTools((v) => !v)}
+                  className="w-full text-center text-[13px] font-bold text-slate-500 min-h-[36px]"
+                >
+                  {showTransferTools ? '▲ Diğer aktarma seçenekleri' : 'Diğer aktarma seçenekleri'}
+                </button>
+
+                {/* Kasaya para koy / kâr al — ikincil */}
+                <div className={showTransferTools ? 'space-y-3' : 'hidden'}>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -582,6 +643,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       </button>
                     ))}
                   </div>
+                </div>
                 </div>
 
                 {/* Yoldaki siparişler: kuytuda kalmasın */}
@@ -700,15 +762,42 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
                 </div>
 
-                {/* 5 net işlem düğmesi: numarasız, kesilmeyen yazılarla */}
+                {/* 3 odaklı bölüm: Tezgâh / Ekip & Yükseltme / Büyüme */}
+                <div className="grid grid-cols-3 gap-1.5 rounded-2xl bg-slate-100 p-1" role="tablist" aria-label="Dükkân bölümleri">
+                  {(
+                    [
+                      { id: 'TEZGAH', label: 'Tezgâh', first: 'ORDER_PRODUCT' },
+                      { id: 'EKIP', label: 'Ekip & Yükseltme', first: 'MANAGE_STAFF' },
+                      { id: 'BUYUME', label: 'Büyüme', first: 'OPEN_BRANCH' },
+                    ] as const
+                  ).map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeGroup === g.id}
+                      data-testid={`shop-group-tab-${g.id}`}
+                      onClick={() => {
+                        if (activeGroup !== g.id) setShopActionTab(g.first);
+                      }}
+                      className={`min-h-[48px] rounded-xl px-1 text-[13px] font-extrabold leading-tight ${
+                        activeGroup === g.id ? 'bg-slate-900 text-white' : 'text-slate-700'
+                      }`}
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Seçili bölümün alt işlemleri (diğer bölümlerin düğmeleri DOM'da gizli durur) */}
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      { id: 'ORDER_PRODUCT', label: 'Mal al' },
-                      { id: 'EDIT_PRICES', label: 'Fiyatlar' },
-                      { id: 'MANAGE_STAFF', label: 'Çalışanlar' },
-                      { id: 'UPGRADE_SHOP', label: 'Geliştir' },
-                      { id: 'OPEN_BRANCH', label: 'Yeni şube' },
+                      { id: 'ORDER_PRODUCT', label: 'Mal al', group: 'TEZGAH' },
+                      { id: 'EDIT_PRICES', label: 'Fiyatlar', group: 'TEZGAH' },
+                      { id: 'MANAGE_STAFF', label: 'Çalışanlar & müdür', group: 'EKIP' },
+                      { id: 'UPGRADE_SHOP', label: 'Yükseltmeler', group: 'EKIP' },
+                      { id: 'OPEN_BRANCH', label: 'Yeni şube', group: 'BUYUME' },
                     ] as const
                   ).map((btn) => (
                     <button
@@ -716,9 +805,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       type="button"
                       data-testid={`shop-action-tab-${btn.id}`}
                       onClick={() => setShopActionTab(btn.id)}
-                      className={`min-h-[48px] px-2.5 rounded-2xl text-sm font-extrabold border-2 active:scale-95 ${
-                        btn.id === 'ORDER_PRODUCT' ? 'col-span-2' : ''
-                      } ${
+                      className={`${btn.group === activeGroup ? '' : 'hidden'} ${
+                        btn.group === 'BUYUME' ? 'col-span-2' : ''
+                      } min-h-[48px] px-2.5 rounded-2xl text-sm font-extrabold border-2 active:scale-95 ${
                         shopActionTab === btn.id
                           ? 'bg-slate-900 text-white border-slate-900'
                           : 'bg-white text-slate-800 border-slate-200'
@@ -727,6 +816,65 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       {btn.label}
                     </button>
                   ))}
+                </div>
+
+                {/* Tezgâh: tek dokunuş "Rafları Doldur" ana kartı */}
+                <div
+                  data-testid="shop-restock-card"
+                  className={`${activeGroup === 'TEZGAH' ? 'flex' : 'hidden'} items-center justify-between gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-3`}
+                >
+                  <div className="min-w-0">
+                    <div className="font-extrabold text-sm text-emerald-900">Rafları Doldur</div>
+                    <div className="text-[13px] text-emerald-800">
+                      {restockPlan.orders.length === 0
+                        ? 'Raflar zaten dolu ya da paran yetmiyor.'
+                        : `${restockPlan.orders.length} ürün · yaklaşık ${formatCurrency(restockPlan.totalCost)} · en ucuz toptancıdan, ${
+                            restockPlan.maxDeliveryDays <= 1 ? 'yarın' : `en geç ${restockPlan.maxDeliveryDays} gün içinde`
+                          } gelir`}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="shop-restock-all-btn"
+                    disabled={restockPlan.orders.length === 0}
+                    onClick={() => {
+                      for (const o of restockPlan.orders) {
+                        onPlaceProcurementOrder({
+                          supplierId: o.supplierId,
+                          resourceId: o.resourceId,
+                          quantity: o.quantity,
+                          destinationType: 'SHOP',
+                          destinationId: activeShop.shopId,
+                          paymentTermType: 'CASH',
+                        });
+                      }
+                    }}
+                    className="g-btn g-btn-primary min-h-[48px] px-4 shrink-0 disabled:opacity-50"
+                  >
+                    Doldur
+                  </button>
+                </div>
+
+                {/* Büyüme: seviye ilerlemesi */}
+                <div
+                  data-testid="shop-growth-card"
+                  className={`${activeGroup === 'BUYUME' ? 'block' : 'hidden'} rounded-2xl bg-slate-50 p-3 space-y-2`}
+                >
+                  <div className="flex justify-between text-sm font-extrabold text-slate-800">
+                    <span>Dükkân seviyesi</span>
+                    <span className="tabular-nums">{activeShop.level}/5</span>
+                  </div>
+                  <div className="g-track h-3">
+                    <div className="g-fill" style={{ width: `${(activeShop.level / 5) * 100}%` }} />
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="shop-growth-upgrade-btn"
+                    onClick={() => setShopActionTab('UPGRADE_SHOP')}
+                    className="g-btn g-btn-secondary w-full min-h-[44px]"
+                  >
+                    Seviye yükseltmeye git
+                  </button>
                 </div>
               </div>
             </div>

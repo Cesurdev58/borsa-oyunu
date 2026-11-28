@@ -198,7 +198,7 @@ export function deriveCityBuildingsFromState(
     },
     {
       id: 'OYUNCU_OFISI',
-      title: 'Oyuncu Ofisi',
+      title: 'Dükkân Yönetimi',
       shortTag: `Aşama ${state.stage}/4`,
       districtLabel: 'Merkez Plaza',
       level: state.stage,

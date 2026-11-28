@@ -11,6 +11,7 @@ import { DEFAULT_MAP_FILTER, type MapFilterId } from './mapFilters';
 import { CityShopsScreen, type ShopManageTab } from './CityShopsScreen';
 import { attachMapBackHandler } from './mapBackController';
 import { MAP_ROOT, goToCity, resolveBack, type MapNavState } from './mapNavigation';
+import { BACK_PRIORITY, registerBackHandler } from '../../../nativeBackButton';
 
 export interface TurkeyMapFlowProps {
   state: SimulationState;
@@ -56,6 +57,18 @@ export const TurkeyMapFlow: React.FC<TurkeyMapFlowProps> = (props) => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     return attachMapBackHandler(window, runBack);
+  }, [runBack]);
+
+  // Android donanım geri tuşu: Şehir Mağazaları → Harita, açık şehir paneli → kapanır (ana haritada işi bırakır)
+  useEffect(() => {
+    return registerBackHandler(BACK_PRIORITY.map, () => {
+      const out = resolveBack({ nav: navRef.current, detailOpen: detailRef.current, sheetOpen: sheetRef.current });
+      if (out.kind === 'TO_MAP' || out.kind === 'CLOSE_SHEET') {
+        runBack();
+        return true;
+      }
+      return false;
+    });
   }, [runBack]);
 
   return (

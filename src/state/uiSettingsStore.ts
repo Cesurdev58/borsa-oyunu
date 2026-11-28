@@ -27,6 +27,8 @@ export interface UISettingsState {
   hasOpenedBorsaBuilding: boolean;
   /** Gün dönünce (00:00) "Gün raporu" kapsülü çıksın mı? */
   showDayReport?: boolean;
+  /** Bina paneli açılınca oyun saati duraksın mı? (varsayılan kapalı) */
+  autoPauseOnSheetOpen?: boolean;
   lastCameraPanX?: number;
   lastCameraPanY?: number;
   lastZoomPreset?: CityZoomPresetSetting;
@@ -48,6 +50,7 @@ export class UISettingsStore {
       },
       hasOpenedBorsaBuilding: false,
       showDayReport: true,
+      autoPauseOnSheetOpen: false,
       lastCameraPanX: 0,
       lastCameraPanY: 0,
       lastZoomPreset: 'NORMAL',
@@ -114,6 +117,7 @@ export class UISettingsStore {
           : false,
       showDayReport:
         typeof candidate.showDayReport === 'boolean' ? candidate.showDayReport : true,
+      autoPauseOnSheetOpen: candidate.autoPauseOnSheetOpen === true,
       lastCameraPanX:
         typeof candidate.lastCameraPanX === 'number' &&
         Number.isFinite(candidate.lastCameraPanX)

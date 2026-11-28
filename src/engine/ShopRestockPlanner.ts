@@ -24,11 +24,15 @@ export interface PlannedRestockOrder {
   resourceId: string;
   quantity: number;
   estimatedCost: number;
+  /** Tahmini teslim süresi (gün). */
+  deliveryDays: number;
 }
 
 export interface ShopRestockPlan {
   orders: PlannedRestockOrder[];
   totalCost: number;
+  /** Siparişlerin en geç teslim süresi (gün); sipariş yoksa 0. */
+  maxDeliveryDays: number;
 }
 
 export function planShopRestock(
@@ -38,7 +42,7 @@ export function planShopRestock(
 ): ShopRestockPlan {
   const ts = state.tradeState;
   const shop = ts?.shops.find((s) => s.shopId === shopId);
-  if (!ts || !shop) return { orders: [], totalCost: 0 };
+  if (!ts || !shop) return { orders: [], totalCost: 0, maxDeliveryDays: 0 };
 
   const tpl = SHOP_TEMPLATES[shop.shopType];
   const perResource = Math.floor(
@@ -96,11 +100,13 @@ export function planShopRestock(
       resourceId: rid,
       quantity,
       estimatedCost,
+      deliveryDays: offer.deliveryDays,
     });
   }
 
   return {
     orders,
     totalCost: orders.reduce((sum, o) => sum + o.estimatedCost, 0),
+    maxDeliveryDays: orders.reduce((m, o) => Math.max(m, o.deliveryDays), 0),
   };
 }

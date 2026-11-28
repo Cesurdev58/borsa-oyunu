@@ -33,7 +33,7 @@ function tone(m: number, higherIsBetter: boolean): Tone {
 const TONE_CLASS: Record<Tone, string> = {
   good: 'text-emerald-600',
   bad: 'text-red-600',
-  neutral: 'text-slate-500',
+  neutral: 'text-[var(--g-muted)]',
 };
 
 export interface CityInfoSheetProps {
@@ -127,11 +127,11 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
       role="dialog"
       aria-modal="false"
       aria-label={`${city.nameTR} şehir bilgisi`}
-      className="absolute left-0 right-0 bottom-0 z-30 max-h-[78%] overflow-y-auto rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.35)] g-rise"
+      className="absolute left-0 right-0 bottom-0 z-30 max-h-[78%] overflow-y-auto rounded-t-3xl bg-[var(--g-surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.35)] g-rise"
       style={{ transform: `translateY(${dragY}px)`, transition: dragY ? 'none' : 'transform 0.2s' }}
     >
       <div
-        className="sticky top-0 z-10 bg-white pt-2 pb-1 touch-none"
+        className="sticky top-0 z-10 bg-[var(--g-surface)] pt-2 pb-1 touch-none"
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -142,7 +142,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
         <div className="flex items-start justify-between gap-3 px-4 pt-2">
           <div>
             <div className="g-display text-2xl text-[var(--g-navy-800,#0b1f36)]" data-testid="city-info-name">{city.nameTR}</div>
-            <div className="text-[13px] text-slate-500">
+            <div className="text-[13px] text-[var(--g-muted)]">
               <span data-testid="city-info-difficulty">{DIFFICULTY_LABEL[city.difficulty]}</span> · {city.playStyleTR}
             </div>
           </div>
@@ -151,7 +151,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
             data-testid="city-info-close-btn"
             aria-label="Paneli kapat"
             onClick={onClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 active:scale-90"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--g-surface-2)] text-[var(--g-ink)] active:scale-90"
           >
             <X size={22} />
           </button>
@@ -161,7 +161,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
       <div className="space-y-3 px-4 pb-5 pt-2">
         {/* Oyuncunun bu şehirdeki durumu */}
         <div ref={presenceRef} className="g-card-soft rounded-2xl p-3" data-testid="city-info-presence">
-          <div className="flex items-center gap-2 text-[15px] font-bold text-slate-800">
+          <div className="flex items-center gap-2 text-[15px] font-bold text-[var(--g-ink)]">
             <Store size={18} />
             {hasShop ? `${presence.shopCount} mağazan var` : 'Burada henüz mağazan yok'}
             {presence.isHeadquarters && <span className="g-pill" data-testid="city-info-hq">Şirket merkezi</span>}
@@ -169,18 +169,18 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
           {hasShop && (
             <div className="mt-2 grid grid-cols-3 gap-2 text-center">
               <div>
-                <div className="text-[13px] text-slate-500">Dünkü satış</div>
+                <div className="text-[13px] text-[var(--g-muted)]">Dünkü satış</div>
                 <div className="font-bold" data-testid="city-info-revenue">{formatCurrency(summary.yesterdayRevenue)}</div>
               </div>
               <div>
-                <div className="text-[13px] text-slate-500">Dünkü kâr</div>
+                <div className="text-[13px] text-[var(--g-muted)]">Dünkü kâr</div>
                 <div className={`font-bold ${summary.yesterdayNetProfit < 0 ? 'text-red-600' : 'text-emerald-600'}`} data-testid="city-info-profit">
                   {formatCurrency(summary.yesterdayNetProfit)}
                 </div>
               </div>
               <div>
-                <div className="text-[13px] text-slate-500">Sorun</div>
-                <div className={`font-bold ${summary.issueCount > 0 ? 'text-red-600' : 'text-slate-700'}`} data-testid="city-info-issues">
+                <div className="text-[13px] text-[var(--g-muted)]">Sorun</div>
+                <div className={`font-bold ${summary.issueCount > 0 ? 'text-red-600' : 'text-[var(--g-ink)]'}`} data-testid="city-info-issues">
                   {summary.issueCount > 0 && <AlertTriangle size={14} className="mr-1 inline" />}
                   {summary.issueCount}
                 </div>
@@ -206,7 +206,7 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
               const t = tone(r.value, r.higherIsBetter);
               return (
                 <div key={r.label} className="g-card-soft rounded-xl p-2.5" data-testid={`city-info-stat-${r.label}`}>
-                  <div className="text-[13px] text-slate-500">{r.label}</div>
+                  <div className="text-[13px] text-[var(--g-muted)]">{r.label}</div>
                   <div className={`text-[17px] font-extrabold ${TONE_CLASS[t]}`}>{formatMultiplier(r.value)}</div>
                 </div>
               );
@@ -258,22 +258,22 @@ export const CityInfoSheet: React.FC<CityInfoSheetProps> = ({
               <div className="flex justify-between text-green-700"><span>{x.discountKind === 'PRESTIGE' ? 'Prestij indirimi' : 'Kilometre taşı indirimi'}</span><b data-testid="city-info-quote-discount">−{formatCurrency(x.prestigeDiscount + x.milestoneDiscount)}</b></div>
             )}
             <div className="flex justify-between"><span>Dükkân kasasına konan para</span><b data-testid="city-info-quote-working">{formatCurrency(quote.workingCash)}</b></div>
-            <div className="flex justify-between border-t border-slate-200 pt-1"><span className="font-bold">Şimdi ödenecek toplam</span><b className="text-[var(--g-gold-dark,#b8860b)]" data-testid="city-info-quote-total">{formatCurrency(quote.totalUpfrontCost)}</b></div>
-            <div className="flex justify-between text-slate-600"><span>Rafları doldurma (yaklaşık)</span><span data-testid="city-info-quote-stock">{formatCurrency(quote.firstStockCost)}</span></div>
-            <div className="flex justify-between text-slate-600"><span>Önerilen güvenlik parası (7 gün)</span><span data-testid="city-info-quote-reserve">{formatCurrency(x.recommendedReserve)}</span></div>
-            <div className="flex justify-between text-slate-600">
+            <div className="flex justify-between border-t border-[var(--g-line)] pt-1"><span className="font-bold">Şimdi ödenecek toplam</span><b className="text-[var(--g-gold-dark,#b8860b)]" data-testid="city-info-quote-total">{formatCurrency(quote.totalUpfrontCost)}</b></div>
+            <div className="flex justify-between text-[var(--g-muted)]"><span>Rafları doldurma (yaklaşık)</span><span data-testid="city-info-quote-stock">{formatCurrency(quote.firstStockCost)}</span></div>
+            <div className="flex justify-between text-[var(--g-muted)]"><span>Önerilen güvenlik parası (7 gün)</span><span data-testid="city-info-quote-reserve">{formatCurrency(x.recommendedReserve)}</span></div>
+            <div className="flex justify-between text-[var(--g-muted)]">
               <span>İlk mal teslimatı</span>
               <span data-testid="city-info-quote-delivery">{quote.estimatedDeliveryDays === null ? 'Teklif yok' : `~${quote.estimatedDeliveryDays} gün`}</span>
             </div>
           </div>
           {x.logisticsNotesTR.length > 0 && (
-            <ul className="mt-2 space-y-0.5 text-[13px] text-slate-600" data-testid="city-info-logistics-notes">
+            <ul className="mt-2 space-y-0.5 text-[13px] text-[var(--g-muted)]" data-testid="city-info-logistics-notes">
               {x.logisticsNotesTR.map((n) => <li key={n}>🚚 {n}</li>)}
             </ul>
           )}
           {x.warningsTR.length > 0 && (
             <ul
-              className={`mt-2 space-y-0.5 text-[13px] font-semibold ${x.warningLevel === 'CRITICAL' || x.warningLevel === 'RED' || !x.affordable ? 'text-red-700' : x.warningLevel === 'YELLOW' ? 'text-amber-700' : 'text-slate-600'}`}
+              className={`mt-2 space-y-0.5 text-[13px] font-semibold ${x.warningLevel === 'CRITICAL' || x.warningLevel === 'RED' || !x.affordable ? 'text-red-700' : x.warningLevel === 'YELLOW' ? 'text-amber-700' : 'text-[var(--g-muted)]'}`}
               data-testid="city-info-quote-warnings"
               data-level={x.warningLevel}
             >

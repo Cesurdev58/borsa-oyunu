@@ -7,8 +7,9 @@
  */
 
 import { liveShopToday } from '../../../engine/ShopSales';
+import { getShopStarTier, shopStars } from '../../../engine/ShopRatingEngine';
 import { shopOpenStatus } from '../../../data/shopHours';
-import { Plus, UserCog } from 'lucide-react';
+import { Plus, Star, UserCog } from 'lucide-react';
 import React from 'react';
 import type { SimulationState } from '../../../models/simulation';
 import type { CityId } from '../../../models/cities';
@@ -105,6 +106,14 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                   </span>
                 </div>
               </div>
+              <span
+                data-testid={`shop-card-stars-${shop.shopId}`}
+                title={getShopStarTier(shopStars(shop)).labelTR}
+                className="g-pill shrink-0 bg-white/15 text-white"
+              >
+                <Star className="w-3.5 h-3.5 fill-[var(--g-gold)] text-[var(--g-gold)]" />
+                <span className="tabular-nums">{shopStars(shop).toFixed(1)}</span>
+              </span>
               {shop.manager && (
                 <span
                   data-testid={`shop-card-manager-badge-${shop.shopId}`}
@@ -118,16 +127,16 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
             <div className="p-3 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Bugünkü satış</div>
+                  <div className="text-[13px] text-[var(--g-muted)]">Bugünkü satış</div>
                   <div
                     data-testid={`shop-card-live-revenue-${shop.shopId}`}
-                    className="font-extrabold text-slate-900 tabular-nums"
+                    className="font-extrabold text-[var(--g-ink)] tabular-nums"
                   >
                     {formatCurrency(today.revenue)}
                   </div>
                 </div>
                 <div className="g-card-soft p-2.5">
-                  <div className="text-[13px] text-slate-500">Bugünkü kâr</div>
+                  <div className="text-[13px] text-[var(--g-muted)]">Bugünkü kâr</div>
                   <div
                     className={`font-extrabold tabular-nums ${
                       profit >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -140,7 +149,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
               </div>
               <div
                 data-testid={`shop-card-yesterday-${shop.shopId}`}
-                className="-mt-1 text-[13px] text-slate-500 tabular-nums"
+                className="-mt-1 text-[13px] text-[var(--g-muted)] tabular-nums"
               >
                 Dün: {formatCurrency(shop.todaySalesRevenue)} satış ·{' '}
                 <span className={shop.todayNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}>
@@ -150,7 +159,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
               </div>
 
               <div>
-                <div className="flex justify-between text-sm font-semibold text-slate-700">
+                <div className="flex justify-between text-sm font-semibold text-[var(--g-ink)]">
                   <span>Raf doluluğu</span>
                   <span className={low ? 'text-rose-600' : ''}>
                     %{fillPct}
@@ -210,7 +219,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
                 </button>
               </div>
               {plan.orders.length > 0 && (
-                <div className="text-[13px] text-slate-500 text-center">
+                <div className="text-[13px] text-[var(--g-muted)] text-center">
                   Yaklaşık {formatCurrency(plan.totalCost)}
                 </div>
               )}
@@ -223,7 +232,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
         type="button"
         data-testid="shop-dashboard-add"
         onClick={() => onManage(null)}
-        className="w-full min-h-[56px] rounded-[18px] border-2 border-dashed border-[#c8cfdf] bg-white/60 text-[var(--g-navy-600)] font-extrabold active:scale-[.98] inline-flex items-center justify-center gap-2"
+        className="w-full min-h-[56px] rounded-[18px] border-2 border-dashed border-[var(--g-line-strong)] bg-[var(--g-surface-2)] text-[var(--g-ink)] font-extrabold active:scale-[.98] inline-flex items-center justify-center gap-2"
       >
         <Plus className="w-5 h-5" strokeWidth={3} /> Yeni dükkân aç
       </button>

@@ -41,12 +41,12 @@ export const SHOP_UPGRADES: readonly ShopUpgradeDef[] = [
  * süresinin ~%80'inde kendini çıkaracağı şekilde ölçülerek verildi (`npm run balans`).
  */
 export const SHOP_UPGRADE_COST_MULTIPLIER: Record<string, number> = {
-  BUFE: 0.55,
-  MANAV: 0.8,
-  KAFE: 1.25,
-  GIYIM_MAGAZASI: 0.7,
-  ELEKTRONIK_MAGAZASI: 0.5,
-  MOBILYA_MAGAZASI: 0.55,
-  MARKET: 0.8,
-  OTOMOBIL_GALERISI: 0.95,
+  BUFE: 0.92,
+  MANAV: 1.28,
+  KAFE: 2.07,
+  GIYIM_MAGAZASI: 1.08,
+  ELEKTRONIK_MAGAZASI: 0.96,
+  MOBILYA_MAGAZASI: 0.87,
+  MARKET: 1.43,
+  OTOMOBIL_GALERISI: 1.04,
 };

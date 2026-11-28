@@ -110,7 +110,7 @@ export const MathAndSimulationLabView: React.FC<
                 <Landmark className="w-4 h-4 text-amber-400" />
                 Ticaret Evreni, Esnaf Kariyeri, Depo & Lojistik Bütünlük Denetimi (v{state.tradeState.schemaVersion})
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[var(--g-muted)] mt-0.5">
                 Birleşik kariyer aşaması, aktif esnaf dükkânları, depo stok partileri (FIFO), sevkiyatlar, reçeteli üretim, ticari sözleşmeler ve stok-nakit mutabakatı.
               </p>
             </div>
@@ -121,7 +121,7 @@ export const MathAndSimulationLabView: React.FC<
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Aktif Dükkân / Şube</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Aktif Dükkân / Şube</div>
               <div
                 data-testid="diag-trade-shops"
                 className="font-mono font-bold text-amber-400 text-sm mt-0.5"
@@ -130,7 +130,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Depolar & Stok Değeri</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Depolar & Stok Değeri</div>
               <div
                 data-testid="diag-trade-warehouses"
                 className="font-mono font-bold text-sky-400 text-sm mt-0.5"
@@ -139,7 +139,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Açık Sipariş & Yoldaki</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Açık Sipariş & Yoldaki</div>
               <div
                 data-testid="diag-trade-orders"
                 className="font-mono font-bold text-emerald-400 text-sm mt-0.5"
@@ -148,7 +148,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Lojistik Filosu</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Lojistik Filosu</div>
               <div
                 data-testid="diag-trade-fleet"
                 className="font-mono font-bold text-purple-400 text-sm mt-0.5"
@@ -157,7 +157,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Ticari Sözleşmeler</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Ticari Sözleşmeler</div>
               <div
                 data-testid="diag-trade-contracts"
                 className="font-mono font-bold text-slate-200 text-sm mt-0.5"
@@ -166,7 +166,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Stok & Ticaret Denetimi</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Stok & Ticaret Denetimi</div>
               <div
                 data-testid="diag-trade-audit-valid"
                 className={`font-mono font-bold text-sm mt-0.5 ${
@@ -196,7 +196,7 @@ export const MathAndSimulationLabView: React.FC<
                 <Database className="w-4 h-4 text-sky-400" />
                 Aşama 11: Merkezi Muhasebe Defteri, Banka Kredileri ve Ekonomik Bütünlük Denetimi (v{state.schemaVersion})
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-[var(--g-muted)] mt-1">
                 Çift kayıt (Double-Entry) hesap bakiyeleri, para arzı, kredi/stok metrikleri, idempotency denetimi ve şema v5 migration tanılama verileri.
               </p>
             </div>
@@ -216,7 +216,7 @@ export const MathAndSimulationLabView: React.FC<
           {/* 1. Üst Makro & Muhasebe Özet Metrikleri */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Toplam Sistem Para Arzı</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Toplam Sistem Para Arzı</div>
               <div
                 data-testid="audit-total-money-supply"
                 className="font-mono tabular-nums font-bold text-emerald-400 text-sm mt-0.5"
@@ -225,7 +225,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Toplam Kredi Anaparası</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Toplam Kredi Anaparası</div>
               <div
                 data-testid="audit-total-loan-principal"
                 className="font-mono tabular-nums font-bold text-amber-400 text-sm mt-0.5"
@@ -234,7 +234,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Toplam Birikmiş Faiz</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Toplam Birikmiş Faiz</div>
               <div
                 data-testid="audit-total-accrued-interest"
                 className="font-mono tabular-nums font-bold text-rose-400 text-sm mt-0.5"
@@ -243,7 +243,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Toplam Stok Değeri</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Toplam Stok Değeri</div>
               <div
                 data-testid="audit-total-inventory-value"
                 className="font-mono tabular-nums font-bold text-sky-400 text-sm mt-0.5"
@@ -252,7 +252,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Finansal Bütünlük Durumu</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Finansal Bütünlük Durumu</div>
               <div
                 data-testid="audit-integrity-status"
                 className={`font-mono font-bold text-sm mt-0.5 ${
@@ -267,7 +267,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <div className="text-slate-400 text-[11px]">Kayıt Şema Sürümü</div>
+              <div className="text-[var(--g-muted)] text-[11px]">Kayıt Şema Sürümü</div>
               <div
                 data-testid="audit-schema-version"
                 className="font-mono font-bold text-slate-100 text-sm mt-0.5"
@@ -284,20 +284,20 @@ export const MathAndSimulationLabView: React.FC<
                 Zamanlayıcı ve Tick İzleme
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Son Simülasyon Tick ID:</span>
+                <span className="text-[var(--g-muted)]">Son Simülasyon Tick ID:</span>
                 <span data-testid="audit-last-tick-id" className="text-slate-200">
                   {state.lastSimulationTickId || 'TICK-INIT'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Son İşlenen Oyun Dakikası:</span>
+                <span className="text-[var(--g-muted)]">Son İşlenen Oyun Dakikası:</span>
                 <span className="text-slate-200">
                   {state.lastProcessedGameMinuteTotal ?? state.totalElapsedGameMinutes} dk (Gün İçi:{' '}
                   {state.minutesIntoCurrentDay}. dk)
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Son İşlenen Gün Kapanışı:</span>
+                <span className="text-[var(--g-muted)]">Son İşlenen Gün Kapanışı:</span>
                 <span className="text-slate-200">
                   Gün {state.lastProcessedDayClose ?? state.day - 1}
                 </span>
@@ -309,7 +309,7 @@ export const MathAndSimulationLabView: React.FC<
                 Kayıt Migration Geçmişi & Denetim Özeti
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Son Migration Kaynağı:</span>
+                <span className="text-[var(--g-muted)]">Son Migration Kaynağı:</span>
                 <span className="text-slate-200">
                   {migrationStats
                     ? `v${migrationStats.migratedFromVersion} → v${migrationStats.migratedToVersion} (${migrationStats.totalTransactionsMigrated} TX)`
@@ -317,7 +317,7 @@ export const MathAndSimulationLabView: React.FC<
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">
+                <span className="text-[var(--g-muted)]">
                   Reddedilen / Mükerrer Idempotency:
                 </span>
                 <span className="text-amber-300">
@@ -326,7 +326,7 @@ export const MathAndSimulationLabView: React.FC<
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Otomatik Denge Test Paketi:</span>
+                <span className="text-[var(--g-muted)]">Otomatik Denge Test Paketi:</span>
                 <span className="text-emerald-400">
                   A(8) · B(8) · C(10) · D(6) · E(30/180/365/1095g) DOĞRULANDI
                 </span>
@@ -346,7 +346,7 @@ export const MathAndSimulationLabView: React.FC<
                   key={acc.id}
                   className="p-2.5 bg-slate-950 border border-slate-800/90 rounded-md"
                 >
-                  <div className="text-[10px] font-mono text-slate-400 truncate">
+                  <div className="text-[10px] font-mono text-[var(--g-muted)] truncate">
                     {acc.id}
                   </div>
                   <div className="text-[11px] text-slate-300 truncate">
@@ -372,13 +372,13 @@ export const MathAndSimulationLabView: React.FC<
                 <span className="font-semibold text-slate-200">
                   Son 100 Çift Kayıt Muhasebe İşlemi ({recentLedgerTransactions.length} Kayıt)
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">
+                <span className="text-[11px] font-mono text-[var(--g-muted)]">
                   Borç (Debit) === Alacak (Credit)
                 </span>
               </div>
               <div className="max-h-56 overflow-y-auto divide-y divide-slate-800/70 font-mono text-[11px]">
                 {recentLedgerTransactions.length === 0 ? (
-                  <div className="p-3 text-slate-500">
+                  <div className="p-3 text-[var(--g-muted)]">
                     Henüz merkezi defter işlemi kaydedilmedi.
                   </div>
                 ) : (
@@ -394,7 +394,7 @@ export const MathAndSimulationLabView: React.FC<
                         <span className="text-slate-300">
                           {tx.sourceAccountId} → {tx.destinationAccountId}
                         </span>
-                        <div className="text-[10px] text-slate-500 truncate">
+                        <div className="text-[10px] text-[var(--g-muted)] truncate">
                           Gün {tx.gameDay} · {tx.gameMinute}. dk · ID:{' '}
                           {tx.transactionId} · {tx.description}
                         </div>
@@ -426,7 +426,7 @@ export const MathAndSimulationLabView: React.FC<
                 <div className="max-h-56 overflow-y-auto divide-y divide-slate-800/70 p-2 space-y-1.5 font-mono text-[11px]">
                   {failedTransfersList.length === 0 &&
                   duplicateIdempotencyCount === 0 ? (
-                    <div className="text-slate-500 p-1">
+                    <div className="text-[var(--g-muted)] p-1">
                       Reddedilen transfer veya mükerrer idempotency denemesi yok (0).
                     </div>
                   ) : (
@@ -463,7 +463,7 @@ export const MathAndSimulationLabView: React.FC<
               <Terminal className="w-4 h-4 text-emerald-400" />
               30 Günlük Gerçek Simülasyon Motoru, Bütünlük Denetimi ve Konsol Çıktısı
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[var(--g-muted)] mt-1">
               Hiçbir sahte nakit veya gizli avantaj eklemeden mevcut bakiye ve portföy üzerinden 30 iş gününü atomik olarak ilerletir; sonuçları hem ekranda hem de tarayıcı konsolunda (`console.log`) raporlar.
             </p>
           </div>
@@ -494,7 +494,7 @@ export const MathAndSimulationLabView: React.FC<
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div>
-                <span className="text-slate-400">Başlangıç → Bitiş Net Varlık</span>
+                <span className="text-[var(--g-muted)]">Başlangıç → Bitiş Net Varlık</span>
                 <div className="font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
                   {formatCurrency(batchSummary.startNetWorth)} →{' '}
                   {formatCurrency(batchSummary.endNetWorth)}
@@ -513,29 +513,29 @@ export const MathAndSimulationLabView: React.FC<
               </div>
 
               <div>
-                <span className="text-slate-400">Nakit Değişimi</span>
+                <span className="text-[var(--g-muted)]">Nakit Değişimi</span>
                 <div className="font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
                   {batchSummary.cashChange >= 0 ? '+' : ''}
                   {formatCurrency(batchSummary.cashChange)}
                 </div>
-                <div className="text-[11px] text-slate-400 font-mono">
+                <div className="text-[11px] text-[var(--g-muted)] font-mono">
                   Son Nakit: {formatCurrency(batchSummary.endCash)}
                 </div>
               </div>
 
               <div>
-                <span className="text-slate-400">Portföy Değişimi</span>
+                <span className="text-[var(--g-muted)]">Portföy Değişimi</span>
                 <div className="font-mono tabular-nums font-semibold text-sky-400 mt-0.5">
                   {batchSummary.portfolioChange >= 0 ? '+' : ''}
                   {formatCurrency(batchSummary.portfolioChange)}
                 </div>
-                <div className="text-[11px] text-slate-400 font-mono">
+                <div className="text-[11px] text-[var(--g-muted)] font-mono">
                   Son Portföy: {formatCurrency(batchSummary.endPortfolioValue)}
                 </div>
               </div>
 
               <div>
-                <span className="text-slate-400">İşlem & Haber Sayısı</span>
+                <span className="text-[var(--g-muted)]">İşlem & Haber Sayısı</span>
                 <div className="font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
                   {batchSummary.executedTransactionsCount} İşlem ·{' '}
                   {batchSummary.generatedNewsCount} Haber
@@ -543,7 +543,7 @@ export const MathAndSimulationLabView: React.FC<
               </div>
 
               <div>
-                <span className="text-slate-400">Tahsil Edilen Temettü</span>
+                <span className="text-[var(--g-muted)]">Tahsil Edilen Temettü</span>
                 <div className="font-mono tabular-nums font-semibold text-amber-400 mt-0.5">
                   +{formatCurrency(batchSummary.totalDividendsCollected)}
                 </div>
@@ -552,7 +552,7 @@ export const MathAndSimulationLabView: React.FC<
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
               <div>
-                <span className="text-slate-400 block mb-1">
+                <span className="text-[var(--g-muted)] block mb-1">
                   En İyi Performans Gösteren Hisseler:
                 </span>
                 <div className="flex flex-wrap gap-3 font-mono">
@@ -565,7 +565,7 @@ export const MathAndSimulationLabView: React.FC<
                 </div>
               </div>
               <div>
-                <span className="text-slate-400 block mb-1">
+                <span className="text-[var(--g-muted)] block mb-1">
                   En Zayıf Performans Gösteren Hisseler:
                 </span>
                 <div className="flex flex-wrap gap-3 font-mono">
@@ -583,7 +583,7 @@ export const MathAndSimulationLabView: React.FC<
 
         {/* Konsol Çıktısı Terminali */}
         <div className="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-2 pb-2 border-b border-slate-800">
+          <div className="flex items-center justify-between text-xs text-[var(--g-muted)] mb-2 pb-2 border-b border-slate-800">
             <span className="font-mono">
               STDOUT / console.log Çıktısı ({consoleOutputLines.length} satır)
             </span>
@@ -647,7 +647,7 @@ Değerleme = AğırlıklıOrtalama(EV/FAVÖK, F/K, P/B, DCF, Sektör)`}
         <div className="overflow-x-auto max-h-80 overflow-y-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-[11px] text-slate-400 bg-slate-950/60">
+              <tr className="border-b border-slate-800 text-[11px] text-[var(--g-muted)] bg-slate-950/60">
                 <th className="py-2 px-3">Gün / Tarih</th>
                 <th className="py-2 px-3">Aşama</th>
                 <th className="py-2 px-3 text-right">Nakit</th>
@@ -661,7 +661,7 @@ Değerleme = AğırlıklıOrtalama(EV/FAVÖK, F/K, P/B, DCF, Sektör)`}
                 <tr key={log.day} className="hover:bg-slate-800/40">
                   <td className="py-2 px-3 font-mono tabular-nums font-semibold text-slate-200">
                     Gün {log.day}{' '}
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-[var(--g-muted)]">
                       ({log.dateISO})
                     </span>
                   </td>
@@ -677,11 +677,11 @@ Değerleme = AğırlıklıOrtalama(EV/FAVÖK, F/K, P/B, DCF, Sektör)`}
                   <td className="py-2 px-3 text-right font-mono tabular-nums font-semibold text-emerald-400">
                     {formatCurrency(log.netWorth)}
                   </td>
-                  <td className="py-2 px-3 text-slate-400">
+                  <td className="py-2 px-3 text-[var(--g-muted)]">
                     <div className="text-slate-200 font-medium">
                       {log.headlineNews}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
+                    <div className="text-[11px] text-[var(--g-muted)] mt-0.5">
                       {log.actionsTaken.join(' · ')}
                     </div>
                   </td>

@@ -18,6 +18,9 @@ export interface AudioSettingsState {
   isMuted: boolean;
 }
 
+/** Görünüm teması: Sıcak Tycoon (varsayılan) ya da Gece Patronu */
+export type UIThemeSetting = 'warm' | 'night';
+
 export type CityZoomPresetSetting = 'CLOSER' | 'NORMAL' | 'OVERVIEW';
 
 export interface UISettingsState {
@@ -29,6 +32,8 @@ export interface UISettingsState {
   showDayReport?: boolean;
   /** Bina paneli açılınca oyun saati duraksın mı? (varsayılan kapalı) */
   autoPauseOnSheetOpen?: boolean;
+  /** Görünüm teması (eski kayıtta yok = 'warm') */
+  theme?: UIThemeSetting;
   lastCameraPanX?: number;
   lastCameraPanY?: number;
   lastZoomPreset?: CityZoomPresetSetting;
@@ -51,6 +56,7 @@ export class UISettingsStore {
       hasOpenedBorsaBuilding: false,
       showDayReport: true,
       autoPauseOnSheetOpen: false,
+      theme: 'warm',
       lastCameraPanX: 0,
       lastCameraPanY: 0,
       lastZoomPreset: 'NORMAL',
@@ -118,6 +124,7 @@ export class UISettingsStore {
       showDayReport:
         typeof candidate.showDayReport === 'boolean' ? candidate.showDayReport : true,
       autoPauseOnSheetOpen: candidate.autoPauseOnSheetOpen === true,
+      theme: candidate.theme === 'night' ? 'night' : 'warm',
       lastCameraPanX:
         typeof candidate.lastCameraPanX === 'number' &&
         Number.isFinite(candidate.lastCameraPanX)

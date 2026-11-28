@@ -393,6 +393,20 @@ export interface ShopLiveDay {
   carry: Record<string, number>;
 }
 
+/** Dükkân Yıldızı'nın 4 sütunu (engine/ShopRatingEngine.ts) */
+export type ShopRatingPillar = 'VARIETY' | 'PRICE' | 'STOCK' | 'SERVICE';
+
+/** Gün sonunda üretilen müşteri yorumu (yalnızca görsel; ekonomiyi değiştirmez). */
+export interface ShopCustomerReview {
+  id: string;
+  day: number;
+  authorName: string;
+  stars: 1 | 2 | 3 | 4 | 5;
+  pillar: ShopRatingPillar;
+  textTR: string;
+  actionHint?: 'RESTOCK' | 'PRICE' | 'STAFF' | 'UPGRADE';
+}
+
 export interface ShopInstance {
   shopId: string;
   shopType: ShopType;
@@ -440,6 +454,8 @@ export interface ShopInstance {
   cargoContract?: boolean;
   /** Gün içinde biriken canlı satış (açık saatlere yayılır; eski kayıtlarda yoktur) */
   live?: ShopLiveDay;
+  /** Son müşteri yorumları (en çok SHOP_REVIEWS_MAX; eski kayıtlarda yoktur = boş) */
+  recentReviews?: ShopCustomerReview[];
   todayWalkInCustomers: number;
   todayServedCustomers: number;
   todayUnmetCustomerDemand: number;

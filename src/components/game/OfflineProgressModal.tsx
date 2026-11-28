@@ -56,7 +56,7 @@ export const OfflineProgressModal: React.FC<OfflineProgressModalProps> =
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="celebration-in w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] rounded-[26px] bg-white shadow-2xl"
+          className="celebration-in w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] rounded-[26px] bg-[var(--g-surface)] shadow-2xl"
         >
           <div className="g-hero rounded-none px-5 pt-6 pb-5 text-center">
             <button

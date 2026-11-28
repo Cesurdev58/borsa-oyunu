@@ -402,7 +402,7 @@ export const OrdersSection: React.FC<
                 ? 'bg-emerald-100 text-emerald-800'
                 : isOpenOrder(ord.status)
                 ? 'bg-amber-100 text-amber-800'
-                : 'bg-slate-100 text-slate-600'
+                : 'bg-[var(--g-surface-2)] text-[var(--g-muted)]'
             }`}
           >
             {STATUS_LABEL[ord.status]}

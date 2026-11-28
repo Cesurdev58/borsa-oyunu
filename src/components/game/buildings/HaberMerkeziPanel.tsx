@@ -51,7 +51,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             </div>
             <div className="p-3 space-y-2">
               <h4 className="font-extrabold text-[var(--g-ink)] text-sm leading-snug">{ev.title}</h4>
-              <p className="text-slate-600 text-[13px] leading-relaxed">{ev.body}</p>
+              <p className="text-[var(--g-muted)] text-[13px] leading-relaxed">{ev.body}</p>
               {active ? (
                 <WorldEventEffectsList ev={ev} day={state.day} />
               ) : (
@@ -78,11 +78,11 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             >
               <div className="flex flex-wrap items-center justify-between gap-1.5 text-[13px]">
                 <div className="flex items-center gap-1.5 tabular-nums">
-                  <span className="font-bold text-slate-900">
+                  <span className="font-bold text-[var(--g-ink)]">
                     Gün {news.day}
                   </span>
                   <span>·</span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold">
+                  <span className="px-1.5 py-0.5 rounded bg-[var(--g-surface-2)] text-[var(--g-ink)] font-semibold">
                     {news.sector}
                   </span>
                   {news.targetTicker && (
@@ -91,7 +91,7 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                     </span>
                   )}
                   <span>·</span>
-                  <span className="text-slate-500">{ageDays === 0 ? 'Bugün' : `${ageDays} gün önce`}</span>
+                  <span className="text-[var(--g-muted)]">{ageDays === 0 ? 'Bugün' : `${ageDays} gün önce`}</span>
                 </div>
 
                 <span
@@ -108,10 +108,10 @@ export const HaberMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
                 </span>
               </div>
 
-              <h4 className="font-bold text-slate-900 text-xs">
+              <h4 className="font-bold text-[var(--g-ink)] text-xs">
                 {news.headline}
               </h4>
-              <p className="text-slate-600 text-[13px] leading-relaxed">
+              <p className="text-[var(--g-muted)] text-[13px] leading-relaxed">
                 {news.summary}
               </p>
               {!showExpectation && news.reaction && (

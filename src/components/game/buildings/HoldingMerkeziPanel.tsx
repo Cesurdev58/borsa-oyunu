@@ -86,7 +86,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
       {selectedTarget && (
         <div className="g-card p-3.5 space-y-3">
           <div className="space-y-1.5">
-            <label className="block text-[13px] font-semibold text-slate-600">
+            <label className="block text-[13px] font-semibold text-[var(--g-muted)]">
               Hangi şirket?
             </label>
             <select
@@ -146,7 +146,7 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
             );
           })()}
 
-          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-[var(--g-ink)] cursor-pointer">
             <input
               type="checkbox"
               checked={useDebtForTakeover}
@@ -192,26 +192,26 @@ export const HoldingMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
 
       {/* İştirakler ve Sahiplik Tablosu */}
       <div className="space-y-1.5">
-        <h3 className="font-bold text-slate-900">
+        <h3 className="font-bold text-[var(--g-ink)]">
           Paylarım
         </h3>
         <div className="space-y-1.5 max-h-52 overflow-y-auto">
           {npcStocks.map((s) => (
             <div
               key={s.ticker}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2"
+              className="p-2.5 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] flex items-center justify-between gap-2"
             >
               <div>
-                <span className="tabular-nums font-bold text-slate-900">
+                <span className="tabular-nums font-bold text-[var(--g-ink)]">
                   {s.ticker}
                 </span>{' '}
-                <span className="text-slate-600">· {s.name}</span>
+                <span className="text-[var(--g-muted)]">· {s.name}</span>
               </div>
               <div className="tabular-nums text-right shrink-0">
-                <span className="font-bold text-slate-900">
+                <span className="font-bold text-[var(--g-ink)]">
                   %{s.playerOwnershipPct.toFixed(2)}
                 </span>{' '}
-                <span className="text-[13px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                <span className="text-[13px] px-1.5 py-0.5 rounded bg-[var(--g-surface)] border border-[var(--g-line)] text-[var(--g-ink)]">
                   {CONTROL_LABEL_TR[s.controlLevel] ?? '—'}
                 </span>
               </div>

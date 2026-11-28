@@ -27,14 +27,14 @@ export const ArgeMerkeziPanel: React.FC<BuildingDetailContentProps> = ({
         className="space-y-3 text-xs"
         data-testid="sheet-content-ARGE_MERKEZI-locked"
       >
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <div className="p-4 rounded-2xl bg-[var(--g-surface-2)] border border-[var(--g-line)] space-y-2">
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-violet-600" />
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-[var(--g-ink)]">
               Ar-Ge Merkezi kilitli
             </h3>
           </div>
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-[var(--g-muted)] leading-relaxed">
             Ürünlerini daha kaliteli yapmak için önce kendi şirketini kurmalısın.
           </p>
         </div>

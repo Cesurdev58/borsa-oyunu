@@ -5,6 +5,7 @@
  * BANKA bina paneli (BuildingDetailSheet.tsx dosyasından ayrıldı).
  */
 
+import { ChoicePills } from '../ui/ChoicePills';
 import { NumberInput } from '../ui/NumberInput';
 import React, {
   useState,
@@ -124,7 +125,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(state.personalCash || 0)}
           </div>
-          <div className="text-[13px] text-slate-500 mt-0.5">
+          <div className="text-[13px] text-[var(--g-muted)] mt-0.5">
             Holding: {formatCurrency(state.holdingCash || 0)}
           </div>
         </div>
@@ -136,7 +137,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="text-sm font-bold text-[var(--g-ink)] mt-0.5">
             {formatCurrency(pc ? pc.financials.cash : 0)}
           </div>
-          <div className="text-[13px] text-slate-500 mt-0.5">
+          <div className="text-[13px] text-[var(--g-muted)] mt-0.5">
             {pc ? pc.ticker : 'Şirket Yok'}
           </div>
         </div>
@@ -150,7 +151,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               state.totalDebt + (pc ? pc.financials.totalLiabilities : 0)
             )}
           </div>
-          <div className="text-[13px] text-slate-700 mt-0.5">
+          <div className="text-[13px] text-[var(--g-ink)] mt-0.5">
             Kredi notu: <strong>{loanQuote.creditScore}</strong> / 900
           </div>
         </div>
@@ -165,7 +166,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
       </div>
 
       {/* Finans Merkezi Alt Sekmeleri */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+      <div className="flex items-center gap-1.5 p-1 bg-[var(--g-surface-2)] rounded-2xl border border-[var(--g-line)]">
         {(
           [
             { id: 'TRANSFER', label: 'Para taşı' },
@@ -184,7 +185,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
             className={`flex-1 min-h-[44px] px-2.5 py-1 rounded-xl text-[13px] font-bold transition-colors ${
               bankTab === t.id
                 ? 'g-choice is-active'
-                : 'text-slate-700 hover:bg-white'
+                : 'text-[var(--g-ink)] hover:bg-white'
             }`}
           >
             {t.label}
@@ -196,7 +197,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
       {bankTab === 'TRANSFER' && (
         <div className="g-card p-3.5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">
+            <h3 className="font-bold text-[var(--g-ink)]">
               Hesaplar arası para taşı
             </h3>
             <span className="text-[13px] tabular-nums text-emerald-700">
@@ -230,63 +231,47 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
           <div className={showXferAdv ? 'grid grid-cols-1 gap-2.5' : 'hidden'}>
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                 Kaynak Hesap
               </label>
-              <select
-                data-testid="xfer-source-select"
+              <ChoicePills
+                testId="xfer-source-select"
+                ariaLabel="Kaynak hesap"
+                columns={1}
                 value={xferSource}
-                onChange={(e) => setXferSource(e.target.value)}
-                className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-semibold"
-              >
-                {ledgerAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} ({formatCurrency(acc.balance)})
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setXferSource(v)}
+                options={ledgerAccounts.map((acc) => ({ value: acc.id, label: acc.name, sub: formatCurrency(acc.balance) }))}
+              />
             </div>
 
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                 Hedef Hesap
               </label>
-              <select
-                data-testid="xfer-dest-select"
+              <ChoicePills
+                testId="xfer-dest-select"
+                ariaLabel="Hedef hesap"
+                columns={1}
                 value={xferDest}
-                onChange={(e) => setXferDest(e.target.value)}
-                className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-semibold"
-              >
-                {ledgerAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} ({formatCurrency(acc.balance)})
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setXferDest(v)}
+                options={ledgerAccounts.map((acc) => ({ value: acc.id, label: acc.name, sub: formatCurrency(acc.balance) }))}
+              />
             </div>
 
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+              <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                 İşlem Kategorisi (Hukuki & Muhasebe Nedeni)
               </label>
-              <select
-                data-testid="xfer-category-select"
+              <ChoicePills
+                testId="xfer-category-select"
+                ariaLabel="İşlem nedeni"
                 value={xferCategory}
-                onChange={(e) =>
-                  setXferCategory(e.target.value as TransactionCategory)
-                }
-                className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900"
-              >
-                {(
-                  Object.keys(
-                    TRANSFER_CATEGORY_LABELS_TR
-                  ) as TransactionCategory[]
-                ).map((cat) => (
-                  <option key={cat} value={cat}>
-                    {TRANSFER_CATEGORY_LABELS_TR[cat]}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setXferCategory(v)}
+                options={(Object.keys(TRANSFER_CATEGORY_LABELS_TR) as TransactionCategory[]).map((cat) => ({
+                  value: cat,
+                  label: TRANSFER_CATEGORY_LABELS_TR[cat],
+                }))}
+              />
             </div>
 
           </div>
@@ -319,8 +304,8 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           {/* Vergi, Tampon ve İşlem Sonrası Bakiye Önizlemesi */}
-          <div className="rounded-3xl bg-slate-50 p-3 text-center tabular-nums">
-            <div className="text-[13px] text-slate-500">Hedefe geçecek</div>
+          <div className="rounded-3xl bg-[var(--g-surface-2)] p-3 text-center tabular-nums">
+            <div className="text-[13px] text-[var(--g-muted)]">Hedefe geçecek</div>
             <div className="text-2xl font-extrabold text-emerald-700">
               {formatCurrency(estNetAmount)}
             </div>
@@ -330,15 +315,15 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
             )}
           </div>
-          <div className="hidden p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
+          <div className="hidden p-2.5 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
             <div>
-              <div className="text-slate-500">Kaynak Ham Bakiye</div>
-              <div className="font-bold text-slate-900">
+              <div className="text-[var(--g-muted)]">Kaynak Ham Bakiye</div>
+              <div className="font-bold text-[var(--g-ink)]">
                 {formatCurrency(safeMaxInfo.rawBalance)}
               </div>
             </div>
             <div>
-              <div className="text-slate-500">Korunan Tampon/Bloke</div>
+              <div className="text-[var(--g-muted)]">Korunan Tampon/Bloke</div>
               <div className="font-bold text-[var(--g-muted)]">
                 {formatCurrency(
                   safeMaxInfo.reservedAmount +
@@ -348,13 +333,13 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-slate-500">Vergi / Stopaj Kesintisi</div>
+              <div className="text-[var(--g-muted)]">Vergi / Stopaj Kesintisi</div>
               <div className="font-bold text-rose-700">
                 {formatCurrency(estTaxAmount)} (%{(estTaxRate * 100).toFixed(0)})
               </div>
             </div>
             <div>
-              <div className="text-slate-500">Hedefe Geçecek Net</div>
+              <div className="text-[var(--g-muted)]">Hedefe Geçecek Net</div>
               <div className="font-bold text-emerald-700">
                 {formatCurrency(estNetAmount)}
               </div>
@@ -409,29 +394,23 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                   Kredi türü
                 </label>
-                <select
-                  data-testid="loan-type-select"
+                <ChoicePills
+                  testId="loan-type-select"
+                  ariaLabel="Kredi türü"
                   value={selectedLoanType}
-                  onChange={(e) =>
-                    setSelectedLoanType(e.target.value as BankLoanType)
-                  }
-                  className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-semibold"
-                >
-                  {(Object.keys(LOAN_TYPE_CATALOG) as BankLoanType[]).map(
-                    (lt) => (
-                      <option key={lt} value={lt}>
-                        {LOAN_TYPE_CATALOG[lt].labelTR}
-                      </option>
-                    )
-                  )}
-                </select>
+                  onChange={(v) => setSelectedLoanType(v)}
+                  options={(Object.keys(LOAN_TYPE_CATALOG) as BankLoanType[]).map((lt) => ({
+                    value: lt,
+                    label: LOAN_TYPE_CATALOG[lt].labelTR,
+                  }))}
+                />
               </div>
 
               <div>
-                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                   Ne kadar? (en fazla{' '}
                   {formatCurrency(loanQuote.maxEligibleAmount)})
                 </label>
@@ -446,27 +425,22 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                       Math.max(10_000, Number(e.target.value) || 10_000)
                     )
                   }
-                  className="w-full min-h-[56px] px-3 rounded-2xl bg-slate-50 border border-slate-200 text-2xl font-extrabold tabular-nums text-slate-900 text-center"
+                  className="w-full min-h-[56px] px-3 rounded-2xl bg-[var(--g-surface-2)] border border-[var(--g-line)] text-2xl font-extrabold tabular-nums text-[var(--g-ink)] text-center"
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-semibold text-slate-700 mb-1">
+                <label className="block text-[13px] font-semibold text-[var(--g-ink)] mb-1">
                   Kaç günde ödeyeceksin?
                 </label>
-                <select
+                <ChoicePills
+                  testId="loan-term-select"
+                  ariaLabel="Vade"
+                  columns={5}
                   value={loanTermDaysInput}
-                  onChange={(e) =>
-                    setLoanTermDaysInput(Number(e.target.value))
-                  }
-                  className="w-full min-h-[42px] px-2.5 rounded-xl bg-slate-50 border border-slate-300 tabular-nums text-slate-900"
-                >
-                  {[60, 90, 120, 180, 360].map((d) => (
-                    <option key={d} value={d}>
-                      {d} İş Günü
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setLoanTermDaysInput(v)}
+                  options={[60, 90, 120, 180, 360].map((d) => ({ value: d, label: `${d}`, sub: 'gün' }))}
+                />
               </div>
             </div>
 
@@ -515,24 +489,24 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
               )}
             </div>
-            <div className="hidden p-2.5 rounded-xl bg-slate-50 border border-slate-200 grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
+            <div className="hidden p-2.5 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
               <div>
-                <div className="text-slate-500">Yıllık / Efektif Faiz</div>
-                <div className="font-bold text-slate-900">
+                <div className="text-[var(--g-muted)]">Yıllık / Efektif Faiz</div>
+                <div className="font-bold text-[var(--g-ink)]">
                   %{(loanQuote.annualInterestRate * 100).toFixed(1)} / %
                   {(loanQuote.effectiveInterestRate * 100).toFixed(1)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">
+                <div className="text-[var(--g-muted)]">
                   Taksit ({loanQuote.installmentFrequency} günde bir)
                 </div>
-                <div className="font-bold text-slate-900">
+                <div className="font-bold text-[var(--g-ink)]">
                   {formatCurrency(loanQuote.installmentAmount)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">
+                <div className="text-[var(--g-muted)]">
                   Toplam Geri Ödeme & Masraf
                 </div>
                 <div className="font-bold text-[var(--g-muted)]">
@@ -541,7 +515,7 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">
+                <div className="text-[var(--g-muted)]">
                   Borç/Özkaynak & Risk
                 </div>
                 <div className="font-bold text-[var(--g-ink)]">
@@ -577,11 +551,11 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
           {/* Aktif Krediler ve Ödeme Yönetimi */}
           <div className="space-y-2">
-            <h4 className="font-bold text-slate-900">
+            <h4 className="font-bold text-[var(--g-ink)]">
               Aktif kredilerin ({activeLoansList.length})
             </h4>
             {activeLoansList.length === 0 ? (
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-center">
+              <div className="p-3 rounded-2xl bg-[var(--g-surface-2)] border border-[var(--g-line)] text-[var(--g-muted)] text-center">
                 Hiç borcun yok
               </div>
             ) : (
@@ -593,10 +567,10 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="tabular-nums font-bold text-slate-900">
+                      <span className="tabular-nums font-bold text-[var(--g-ink)]">
                         {loan.loanId}
                       </span>{' '}
-                      <span className="text-slate-600">
+                      <span className="text-[var(--g-muted)]">
                         · {LOAN_TYPE_CATALOG[loan.loanType].labelTR}
                       </span>
                     </div>
@@ -613,21 +587,21 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums text-[13px]">
                     <div>
-                      <span className="text-slate-500">Kalan Anapara:</span>{' '}
+                      <span className="text-[var(--g-muted)]">Kalan Anapara:</span>{' '}
                       <strong>{formatCurrency(loan.remainingPrincipal)}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500">Biriken Faiz:</span>{' '}
+                      <span className="text-[var(--g-muted)]">Biriken Faiz:</span>{' '}
                       <strong>
                         {formatCurrency(loan.accruedInterestUnpaid)}
                       </strong>
                     </div>
                     <div>
-                      <span className="text-slate-500">Taksit Tutarı:</span>{' '}
+                      <span className="text-[var(--g-muted)]">Taksit Tutarı:</span>{' '}
                       <strong>{formatCurrency(loan.installmentAmount)}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500">Sıradaki Ödeme:</span>{' '}
+                      <span className="text-[var(--g-muted)]">Sıradaki Ödeme:</span>{' '}
                       <strong>Gün {loan.nextPaymentGameDay}</strong>
                     </div>
                   </div>
@@ -663,35 +637,35 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
       {/* 3. HESAPLAR VE MAKRO GÖSTERGELER */}
       {bankTab === 'LEDGER' && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <h3 className="font-bold text-slate-900">
+          <div className="p-3.5 rounded-2xl bg-[var(--g-surface-2)] border border-[var(--g-line)] space-y-2">
+            <h3 className="font-bold text-[var(--g-ink)]">
               Makroekonomik Gösterge Paneli
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 tabular-nums">
               <div>
-                <span className="text-slate-500 text-[13px]">
+                <span className="text-[var(--g-muted)] text-[13px]">
                   Politika Faizi
                 </span>
-                <div className="font-bold text-slate-900">
+                <div className="font-bold text-[var(--g-ink)]">
                   %{(state.macro.policyInterestRate * 100).toFixed(1)}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[13px]">
+                <span className="text-[var(--g-muted)] text-[13px]">
                   Yıllık Enflasyon
                 </span>
-                <div className="font-bold text-slate-900">
+                <div className="font-bold text-[var(--g-ink)]">
                   %{(state.macro.inflationRate * 100).toFixed(1)}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[13px]">GSYH Büyüme</span>
+                <span className="text-[var(--g-muted)] text-[13px]">GSYH Büyüme</span>
                 <div className="font-bold text-emerald-700">
                   %{(state.macro.gdpGrowthRate * 100).toFixed(2)}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 text-[13px]">Konjonktür</span>
+                <span className="text-[var(--g-muted)] text-[13px]">Konjonktür</span>
                 <div className="font-bold text-indigo-700">
                   {state.macro.cyclePhase}
                 </div>
@@ -700,24 +674,24 @@ export const BankaPanel: React.FC<BuildingDetailContentProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <h4 className="font-bold text-slate-900">
+            <h4 className="font-bold text-[var(--g-ink)]">
               Merkezi Muhasebe Hesap Bakiyeleri ({ledgerAccounts.length})
             </h4>
             {ledgerAccounts.map((acc) => (
               <div
                 key={acc.id}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between tabular-nums text-[13px]"
+                className="p-2.5 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] flex items-center justify-between tabular-nums text-[13px]"
               >
                 <div>
-                  <div className="font-bold text-slate-900 font-sans">
+                  <div className="font-bold text-[var(--g-ink)] font-sans">
                     {acc.name}
                   </div>
-                  <div className="text-[13px] text-slate-500">
+                  <div className="text-[13px] text-[var(--g-muted)]">
                     {acc.id} · {acc.ownerType}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-slate-900">
+                  <div className="font-bold text-[var(--g-ink)]">
                     {formatCurrency(acc.balance)}
                   </div>
                   {acc.reservedBalance > 0 && (

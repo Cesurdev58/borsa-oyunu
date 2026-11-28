@@ -8,6 +8,7 @@
  *   Hammadde -> Tedarikçi -> Satın Alma -> Sevkiyat -> Depo -> Üretim -> Mamul Deposu -> Dağıtım -> Mağaza / Kurumsal Müşteri -> Satış -> Tahsilat
  */
 
+import { updateShopRatingAtDayClose } from './ShopRatingEngine';
 import { effectiveDailyRent, effectiveWagePerPerson } from './CityEconomy';
 import { activeCargoFee, activeInsurancePremium, solarOpexMultiplier } from './CityServices';
 import { SHOP_SAME_TYPE_CROWDING } from '../data/gameBalance';
@@ -283,6 +284,7 @@ export class TradeAndShopEngine {
     }
 
     // 4. Her Bir Esnaf Dükkânı / Mağaza Şubesi İçin Günlük Operasyon, Fire, Müşteri Talebi ve Gerçek Stoktan Satış
+    let legendReputationBonus = 0;
     for (const shop of ts.shops) {
       const tpl = SHOP_TEMPLATES[shop.shopType];
       shop.todayWalkInCustomers = 0;
@@ -370,19 +372,10 @@ export class TradeAndShopEngine {
       shop.todayUnitsSold = dayTotals.units;
       shop.todaySalesRevenue = dayTotals.revenue;
       shop.todayCogs = dayTotals.cogs;
-      if (shop.todayUnitsSold === 0 && shop.todayUnmetCustomerDemand > 0 && shop.inventoryBatches.every((bt) => bt.availableQuantity <= 0)) {
-        shop.customerSatisfaction = Number(
-          Math.max(35, shop.customerSatisfaction - 1.5).toFixed(1)
-        );
-      } else if (shop.todayUnmetCustomerDemand === 0 && shop.todayUnitsSold > 0) {
-        shop.customerSatisfaction = Number(
-          Math.min(98, shop.customerSatisfaction + 0.8).toFixed(1)
-        );
-      } else if (shop.todayUnmetCustomerDemand > shop.todayUnitsSold) {
-        shop.customerSatisfaction = Number(
-          Math.max(40, shop.customerSatisfaction - 1.0).toFixed(1)
-        );
-      }
+      // Memnuniyet artık yalnızca Dükkân Yıldızı'nın 4 sütununa yumuşakça yaklaşır (eski ±0,8/1,5 günlük kurallar bunun içinde: Raf Sürekliliği).
+      // 4d-2. Dükkân Yıldızı: memnuniyet 4 sütun puanına yumuşakça yaklaşır, müşteri yorumları üretilir
+      const starTier = updateShopRatingAtDayClose(shop, state.day - 1);
+      if (!shop.isCompanyBranch) legendReputationBonus = Math.max(legendReputationBonus, starTier.dailyReputation);
 
       // 4e. Günlük kira, personel ve işletme giderleri
       shop.todayPayrollCost = Number(
@@ -543,6 +536,10 @@ export class TradeAndShopEngine {
       ts.todaySummary.shopNetProfit = Number(
         (ts.todaySummary.shopNetProfit + shop.todayNetProfit).toFixed(2)
       );
+    }
+    // Efsane Mekân: günde bir kez +1 ticari itibar (100 tavanlı)
+    if (legendReputationBonus > 0) {
+      ts.tradeReputationScore = Math.min(100, ts.tradeReputationScore + legendReputationBonus);
     }
 
     const ownShopsChannel = ts.salesChannels.find(

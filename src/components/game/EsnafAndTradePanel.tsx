@@ -15,6 +15,9 @@ import { getFirstEmployeeQuote, getOpeningAdvice } from '../../engine/ShopOnboar
 import { FIRST_EMPLOYEE_HIRE_FEE_BUFE, OWNER_STAFF_CAPACITY, SHOP_CASH_KEEP, SHOP_COLLECT_MIN } from '../../data/gameBalance';
 import { MANAGER_MIN_SHOP_LEVEL, MANAGER_PROFIT_SHARE } from '../../data/gameBalance';
 import { NumberInput } from './ui/NumberInput';
+import { ShopStorefront } from './ui/ShopStorefront';
+import { ShopReviewsSheet, StarRow, REVIEW_ACTION_LABEL_TR, type ReviewActionHint } from './ShopReviewsSheet';
+import { priceRatioScore, shopStars } from '../../engine/ShopRatingEngine';
 import React, { useMemo, useState } from 'react';
 import {
   ArrowRightLeft,
@@ -33,6 +36,7 @@ import {
   Lock,
   UserCog,
   Check,
+  Info,
 } from 'lucide-react';
 import {
   RECIPE_CATALOG,
@@ -218,6 +222,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const [showTransferTools, setShowTransferTools] = useState(false);
   const [showAdvancedOrder, setShowAdvancedOrder] = useState(false);
   const [showSummaryDetails, setShowSummaryDetails] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  // Fiyat kaydırıcısı: sürüklerken taslak, bırakınca kaydedilir
+  const [priceDrafts, setPriceDrafts] = useState<Record<string, number>>({});
   const [showIncorp, setShowIncorp] = useState(false);
 
   // Yeni şube açılış formu
@@ -323,9 +330,33 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const activeGroup: 'TEZGAH' | 'EKIP' | 'BUYUME' =
     shopActionTab === 'ORDER_PRODUCT' || shopActionTab === 'EDIT_PRICES'
       ? 'TEZGAH'
-      : shopActionTab === 'OPEN_BRANCH'
+      : shopActionTab === 'OPEN_BRANCH' || shopActionTab === 'UPGRADE_SHOP'
       ? 'BUYUME'
       : 'EKIP';
+  const placeRestock = () => {
+    if (!activeShop) return;
+    for (const o of restockPlan.orders) {
+      onPlaceProcurementOrder({
+        supplierId: o.supplierId,
+        resourceId: o.resourceId,
+        quantity: o.quantity,
+        destinationType: 'SHOP',
+        destinationId: activeShop.shopId,
+        paymentTermType: 'CASH',
+      });
+    }
+  };
+  const handleReviewAction = (hint: ReviewActionHint) => {
+    setReviewsOpen(false);
+    if (hint === 'RESTOCK') {
+      placeRestock();
+      setShopActionTab('ORDER_PRODUCT');
+    } else if (hint === 'PRICE') {
+      setShopActionTab('ORDER_PRODUCT');
+    } else {
+      setShopActionTab('MANAGE_STAFF');
+    }
+  };
   const activeShopTotalCap = activeShop
     ? activeShop.shelfCapacity + activeShop.backroomCapacity
     : 1;
@@ -333,8 +364,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   return (
     <div
       data-testid="esnaf-and-trade-panel"
-      className="space-y-4 text-slate-900"
+      className="space-y-4 text-[var(--g-ink)]"
     >
+      {reviewsOpen && activeShop && (
+        <ShopReviewsSheet shop={activeShop} onClose={() => setReviewsOpen(false)} onAction={handleReviewAction} />
+      )}
       {/* 1. KARİYER İLERLEME BARI & ANA MOD SEÇİCİ */}
       <div className="rounded-2xl flex flex-wrap items-center justify-between gap-2">
         <div className="hidden">
@@ -343,19 +377,19 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
           </div>
           <div
             data-testid="career-stage-badge"
-            className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 mt-0.5"
+            className="text-sm font-extrabold text-[var(--g-ink)] flex items-center gap-1.5 mt-0.5"
           >
             <Award className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
               {CAREER_STAGE_LABELS[trade.careerStage] || trade.careerStage}
             </span>
-            <span className="text-xs tabular-nums font-semibold text-slate-600">
+            <span className="text-xs tabular-nums font-semibold text-[var(--g-muted)]">
               · Ticari İtibar: {trade.tradeReputationScore.toFixed(0)}/100
             </span>
           </div>
         </div>
 
-        <div className={`grid ${canSeeTradeCenter ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 w-full bg-slate-100 p-1 rounded-2xl border border-slate-200`}>
+        <div className={`grid ${canSeeTradeCenter ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 w-full bg-[var(--g-surface-2)] p-1 rounded-2xl border border-[var(--g-line)]`}>
           <button
             type="button"
             data-testid="mode-esnaf-shops-btn"
@@ -363,7 +397,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             className={`min-h-[44px] px-3 py-1.5 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
               mainMode === 'SHOPS'
                 ? 'bg-slate-900 text-white shadow-2xs'
-                : 'text-slate-700 hover:bg-white'
+                : 'text-[var(--g-ink)] hover:bg-white'
             }`}
           >
             <Store className="w-3.5 h-3.5" />
@@ -377,7 +411,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             className={`min-h-[44px] px-3 py-1.5 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
               mainMode === 'TRADE_CENTER'
                 ? 'bg-slate-900 text-white shadow-2xs'
-                : 'text-slate-700 hover:bg-white'
+                : 'text-[var(--g-ink)] hover:bg-white'
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
@@ -410,7 +444,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer transition-colors flex items-center gap-1.5 ${
                     activeShop?.shopId === sh.shopId
                       ? 'bg-amber-600 text-white border-amber-700 shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      : 'bg-[var(--g-surface)] text-[var(--g-ink)] border-[var(--g-line)] hover:bg-slate-50'
                   }`}
                 >
                   <Store className="w-3.5 h-3.5" />
@@ -433,285 +467,102 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             </button>
           </div>
 
-          {/* SEÇİLİ DÜKKÂN: Ticarium mantığı — Mal al → raf → satış → kasa */}
+          {/* SEÇİLİ DÜKKÂN: vitrin → durum şeridi → kasa → 3 sekme */}
           {activeShop ? (
-            <div
-              data-testid="active-shop-summary-card"
-              className="g-card overflow-hidden"
-            >
-              <div className="g-hero rounded-none rounded-t-[17px] p-3 flex items-center gap-3">
-                <span className="w-12 h-12 shrink-0 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[28px]">{SHOP_EMOJI[activeShop.shopType] ?? '🏪'}</span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="g-display text-[17px] font-extrabold leading-tight truncate">
-                    {activeShop.nameTR}
-                  </h4>
-                  <div className="text-[13px] font-semibold text-white/65">
-                    {activeShopTemplate?.nameTR || activeShop.shopType} · Seviye{' '}
-                    {activeShop.level}/5
-                    {activeShop.isCompanyBranch ? ' · Şirket şubesi' : ''}
-                  </div>
-                  <span
-                    data-testid="shop-level-badge"
-                    className="inline-block mr-1.5 mb-0.5 rounded-full bg-[var(--g-gold)] px-2 py-0.5 text-[13px] font-extrabold text-[#3b2a00]"
-                  >
-                    Seviye {activeShop.level}/5
-                  </span>
-                  {(() => {
-                    const st = shopOpenStatus(activeShop.shopType, state.minutesIntoCurrentDay ?? 0);
-                    return (
-                      <div
-                        data-testid="active-shop-hours"
-                        className={`text-[13px] font-bold inline-flex items-center gap-1 ${st.open ? 'text-[#5ee6a5]' : 'text-white/60'}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${st.open ? 'bg-[#5ee6a5]' : 'bg-white/40'}`} />
-                        {st.label} · {shopHoursLabel(activeShop.shopType)}
-                      </div>
-                    );
-                  })()}
-                </div>
-                {activeLive && (
-                  <div className="text-right shrink-0">
-                    <div className="text-[13px] font-semibold text-white/65">Bugünkü kâr</div>
-                    <div
-                      data-testid="shop-live-profit"
-                      className={`g-display text-[17px] font-extrabold tabular-nums ${
-                        activeLive.profit >= 0 ? 'text-[#5ee6a5]' : 'text-[#ffb4b2]'
-                      }`}
-                    >
-                      {activeLive.profit >= 0 ? '+' : ''}
-                      {formatCurrency(activeLive.profit)}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div data-testid="active-shop-summary-card" className="g-card overflow-hidden p-2.5 space-y-3">
+              {(() => {
+                const st = shopOpenStatus(activeShop.shopType, state.minutesIntoCurrentDay ?? 0);
+                return (
+                  <ShopStorefront
+                    shopType={activeShop.shopType}
+                    name={activeShop.nameTR}
+                    typeLabel={activeShopTemplate?.nameTR}
+                    level={activeShop.level}
+                    fillRatio={activeShopUsedUnits / Math.max(1, activeShopTotalCap)}
+                    open={st.open}
+                    openLabel={`${st.label} · ${shopHoursLabel(activeShop.shopType)}`}
+                    stars={shopStars(activeShop)}
+                    liveProfit={activeLive?.profit}
+                    formatCurrency={formatCurrency}
+                    onOpenRating={() => setReviewsOpen(true)}
+                  />
+                );
+              })()}
 
-              <div className="p-3 space-y-3">
-                {/* 3 büyük sayı: Kasa / Raf / Yolda */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="g-card-soft p-2.5">
-                    <div className="text-[13px] text-sky-800 font-semibold">Kasa</div>
-                    <div
-                      data-testid="shop-metric-cash"
-                      className="text-sm tabular-nums font-extrabold text-slate-900"
-                    >
+              <div className="px-1 space-y-3">
+                {/* Tek satır durum şeridi: kasa · raf · yolda (raf sayısı yalnızca burada yazılır) */}
+                <div className="flex items-center gap-2 text-[13px] font-bold text-[var(--g-muted)]" data-testid="shop-status-strip">
+                  <span>
+                    Kasa{' '}
+                    <b data-testid="shop-metric-cash" className="g-display text-[15px] text-[var(--g-gold-dark)] tabular-nums">
                       {formatCurrency(activeShop.cashAccountBalance)}
-                    </div>
-                  </div>
-                  <div
-                    className={`rounded-2xl p-2.5 ${
-                      activeShopUsedUnits <= 0
-                        ? 'bg-rose-50'
-                        : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
-                        ? 'bg-amber-50'
-                        : 'bg-emerald-50'
-                    }`}
-                  >
-                    <div className="text-[13px] text-slate-700 font-semibold">Raf</div>
-                    <div
+                    </b>
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    Raf{' '}
+                    <b
                       data-testid="shop-metric-critical-stock"
-                      className={`text-sm tabular-nums font-extrabold ${
+                      className={`tabular-nums ${
                         activeShopUsedUnits <= 0
-                          ? 'text-rose-700'
+                          ? 'text-[var(--g-red)]'
                           : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
-                          ? 'text-amber-700'
-                          : 'text-emerald-700'
+                          ? 'text-[var(--g-gold-dark)]'
+                          : 'text-[var(--g-green-dark)]'
                       }`}
                     >
                       {activeShopUsedUnits.toFixed(0)}/{activeShopTotalCap}
-                    </div>
-                  </div>
-                  <div className="g-card-soft p-2.5">
-                    <div className="text-[13px] text-indigo-800 font-semibold">Yolda</div>
-                    <div
-                      data-testid="shop-metric-pending-deliveries"
-                      className="text-sm tabular-nums font-extrabold text-slate-900"
-                    >
-                      {activeShop.pendingDeliveriesCount} sipariş
-                    </div>
-                  </div>
-                </div>
-
-                {/* Canlı raf doluluk çubuğu */}
-                <div data-testid="shop-shelf-bar">
-                  <div className="flex justify-between text-[13px] font-bold text-slate-700">
-                    <span>Raf doluluğu</span>
-                    <span className="tabular-nums">
-                      {activeShopUsedUnits.toFixed(0)} / {activeShopTotalCap} ürün
-                    </span>
-                  </div>
-                  <div className="g-track mt-1 h-3">
-                    <div
-                      className={
-                        activeShopUsedUnits < activeShop.shelfCapacity * 0.1
-                          ? 'g-fill g-fill-danger'
-                          : activeShopUsedUnits < activeShop.shelfCapacity * 0.25
-                          ? 'g-fill bg-amber-500'
-                          : 'g-fill'
-                      }
-                      style={{ width: `${Math.min(100, (activeShopUsedUnits / Math.max(1, activeShopTotalCap)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Kasa ve hızlı tahsilat */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    data-testid="shop-collect-profit-btn"
-                    disabled={activeCollectable < SHOP_COLLECT_MIN}
-                    onClick={() =>
-                      onTransferShopCash({
-                        shopId: activeShop.shopId,
-                        direction: 'FROM_SHOP',
-                        amount: activeCollectable,
-                      })
-                    }
-                    className="g-btn g-btn-gold flex-1 min-h-[48px] !px-2 text-sm"
-                  >
-                    Kârı Topla · {formatCurrency(activeCollectable)}
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="shop-quick-deposit-btn"
-                    onClick={() =>
-                      onTransferShopCash({ shopId: activeShop.shopId, direction: 'TO_SHOP', amount: 10_000 })
-                    }
-                    className="g-btn g-btn-secondary min-h-[48px] !px-3 text-sm shrink-0"
-                  >
-                    +₺10B Aktar
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  data-testid="shop-transfer-tools-toggle"
-                  onClick={() => setShowTransferTools((v) => !v)}
-                  className="w-full text-center text-[13px] font-bold text-slate-500 min-h-[36px]"
-                >
-                  {showTransferTools ? '▲ Diğer aktarma seçenekleri' : 'Diğer aktarma seçenekleri'}
-                </button>
-
-                {/* Kasaya para koy / kâr al — ikincil */}
-                <div className={showTransferTools ? 'space-y-3' : 'hidden'}>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    data-testid="shop-cash-deposit-btn"
-                    onClick={() =>
-                      onTransferShopCash({
-                        shopId: activeShop.shopId,
-                        direction: 'TO_SHOP',
-                        amount: shopTransferAmount,
-                      })
-                    }
-                    className="g-btn g-btn-secondary flex-1 !px-2 text-sm"
-                  >
-                    Kasaya {formatCurrency(shopTransferAmount)} koy
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="shop-cash-withdraw-btn"
-                    onClick={() =>
-                      onTransferShopCash({
-                        shopId: activeShop.shopId,
-                        direction: 'FROM_SHOP',
-                        amount: shopTransferAmount,
-                      })
-                    }
-                    className="g-btn g-btn-gold flex-1 !px-2 text-sm"
-                  >
-                    Kâr al
-                  </button>
-                </div>
-                <div className="flex items-center justify-between gap-2 text-[13px] text-slate-500">
-                  <span>
-                    Aktarma tutarı
-                    <HelpTip text="Kişisel paranla dükkân kasası ayrıdır. Mal almak için dükkân kasasında para olmalı; kazandığın kârı da kasadan kendi cebine çekebilirsin." />
+                    </b>
                   </span>
-                  <div className="flex items-center gap-1">
-                    {[5_000, 25_000, 100_000].map((amt) => (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => setShopTransferAmount(amt)}
-                        className={`min-h-[36px] px-2.5 rounded-xl text-[13px] font-bold ${
-                          shopTransferAmount === amt
-                            ? 'g-choice is-active'
-                            : 'g-choice'
-                        }`}
-                      >
-                        {amt >= 1000 ? `${amt / 1000}B` : amt}
-                      </button>
-                    ))}
-                  </div>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    Yolda <b data-testid="shop-metric-pending-deliveries" className="tabular-nums text-[var(--g-ink)]">{activeShop.pendingDeliveriesCount}</b>
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="shop-summary-details-toggle"
+                    aria-label={showSummaryDetails ? 'Dünkü özeti gizle' : 'Dünkü özeti göster'}
+                    aria-expanded={showSummaryDetails}
+                    onClick={() => setShowSummaryDetails((v) => !v)}
+                    className="ml-auto relative w-9 h-9 shrink-0 rounded-full bg-[var(--g-surface-2)] text-[var(--g-ink)] flex items-center justify-center before:content-[''] before:absolute before:-inset-1"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
                 </div>
-                </div>
-
-                {/* Yoldaki siparişler: kuytuda kalmasın */}
-                <div
-                  data-testid="shop-inbound-strip"
-                  className="rounded-2xl bg-indigo-50 border border-indigo-100 p-2.5 space-y-1.5"
-                >
-                  <div className="text-sm font-extrabold text-indigo-900">
-                    Yoldaki siparişler
-                    <HelpTip text="Sipariş verdiğin mallar toptancıdan dükkâna yola çıkar. Vardığında otomatik olarak rafa dizilir ve satışa başlar." />
-                  </div>
-                  {inboundShipments.length === 0 ? (
-                    <div className="text-[13px] text-indigo-800">
-                      Şu an yolda sipariş yok.
-                    </div>
-                  ) : (
-                    inboundShipments.slice(0, 4).map((sh) => (
-                      <div
-                        key={sh.shipmentId}
-                        className="flex items-center justify-between gap-2 text-[13px]"
-                      >
-                        <span className="font-bold text-slate-900 truncate">
-                          {sh.resourceNameTR} · {sh.quantity} adet
-                        </span>
-                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-white text-indigo-800 font-bold">
-                          {sh.estimatedArrivalDay <= state.day
-                            ? 'Bugün gelir'
-                            : `${sh.estimatedArrivalDay - state.day} gün sonra`}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                  {recentDeliveredShipments.length > 0 && (
-                    <div className="pt-1 text-[13px] text-emerald-800 font-semibold">
-                      Son gelen:{' '}
-                      {recentDeliveredShipments
-                        .map((sh) => `${sh.resourceNameTR} (${sh.quantity})`)
-                        .join(', ')}
-                    </div>
-                  )}
+                <div data-testid="shop-shelf-bar" className="g-track h-2.5" aria-hidden="true">
+                  <div
+                    className={
+                      activeShopUsedUnits < activeShop.shelfCapacity * 0.1
+                        ? 'g-fill g-fill-danger'
+                        : 'g-fill'
+                    }
+                    style={{
+                      width: `${Math.min(100, (activeShopUsedUnits / Math.max(1, activeShopTotalCap)) * 100)}%`,
+                      ...(activeShopUsedUnits >= activeShop.shelfCapacity * 0.1 && activeShopUsedUnits < activeShop.shelfCapacity * 0.25
+                        ? { background: 'var(--g-gold)' }
+                        : {}),
+                    }}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  data-testid="shop-summary-details-toggle"
-                  onClick={() => setShowSummaryDetails((v) => !v)}
-                  className="g-btn g-btn-secondary w-full"
-                >
-                  {showSummaryDetails ? '▲ Özeti gizle' : 'Bugünün özeti ve ipucu'}
-                </button>
-                <div className={showSummaryDetails ? 'space-y-3' : 'hidden'}>
+                <div className={showSummaryDetails ? 'space-y-3' : 'hidden'} data-testid="shop-summary-details">
                 {/* Bugünün özeti */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl bg-slate-50 p-2.5">
-                    <div className="text-[13px] text-slate-500">Dünkü satış</div>
+                  <div className="rounded-2xl bg-[var(--g-surface-2)] p-2.5">
+                    <div className="text-[13px] text-[var(--g-muted)]">Dünkü satış</div>
                     <div
                       data-testid="shop-metric-daily-revenue"
-                      className="text-sm tabular-nums font-extrabold text-slate-900"
+                      className="text-sm tabular-nums font-extrabold text-[var(--g-ink)]"
                     >
                       {formatCurrency(activeShop.todaySalesRevenue)}
-                      <span className="text-[13px] font-semibold text-slate-500">
+                      <span className="text-[13px] font-semibold text-[var(--g-muted)]">
                         {' '}
                         ({activeShop.todayUnitsSold} adet)
                       </span>
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-2.5">
-                    <div className="text-[13px] text-slate-500">
+                  <div className="rounded-2xl bg-[var(--g-surface-2)] p-2.5">
+                    <div className="text-[13px] text-[var(--g-muted)]">
                       Dünkü kâr
                       <HelpTip text="Satıştan elde edilen para eksi malın maliyeti, personel ve kira giderleri." />
                     </div>
@@ -729,14 +580,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm">
-                  <span className="font-semibold text-slate-700">
+                <div className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--g-surface-2)] px-3 py-2 text-sm">
+                  <span className="font-semibold text-[var(--g-ink)]">
                     Müşteri memnuniyeti
                     <HelpTip text="Müşteriler raflar doluysa, fiyatlar makulse ve dükkân gelişmişse memnun olur. Memnuniyet yüksekse daha çok müşteri gelir." />
                   </span>
                   <strong
                     data-testid="shop-metric-satisfaction"
-                    className="tabular-nums text-slate-900"
+                    className="tabular-nums text-[var(--g-ink)]"
                   >
                     %{activeShop.customerSatisfaction.toFixed(0)}
                     <span className="hidden"> · İtibar {activeShop.reputationScore.toFixed(0)}</span>
@@ -748,13 +599,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <div className="text-sm font-extrabold text-amber-900">İpucu</div>
                   <div
                     data-testid="shop-metric-main-issue"
-                    className="text-[13px] font-semibold text-slate-800"
+                    className="text-[13px] font-semibold text-[var(--g-ink)]"
                   >
                     {activeShop.mainIssueTR}
                   </div>
                   <div
                     data-testid="shop-metric-recommended-action"
-                    className="text-[13px] text-slate-700"
+                    className="text-[13px] text-[var(--g-ink)]"
                   >
                     {activeShop.recommendedActionTR}
                   </div>
@@ -762,13 +613,60 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
                 </div>
 
-                {/* 3 odaklı bölüm: Tezgâh / Ekip & Yükseltme / Büyüme */}
-                <div className="grid grid-cols-3 gap-1.5 rounded-2xl bg-slate-100 p-1" role="tablist" aria-label="Dükkân bölümleri">
+                {/* Kasa: Kârı Topla + küçük "+Aktar" */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="shop-collect-profit-btn"
+                    disabled={activeCollectable < SHOP_COLLECT_MIN}
+                    onClick={() =>
+                      onTransferShopCash({
+                        shopId: activeShop.shopId,
+                        direction: 'FROM_SHOP',
+                        amount: activeCollectable,
+                      })
+                    }
+                    className="g-btn g-btn-gold flex-1 min-h-[52px] !px-2"
+                  >
+                    Kârı Topla · {formatCurrency(activeCollectable)}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="shop-transfer-open-btn"
+                    aria-expanded={showTransferTools}
+                    onClick={() => setShowTransferTools((v) => !v)}
+                    className="g-btn g-btn-secondary min-h-[52px] !px-3 shrink-0"
+                  >
+                    +Aktar
+                  </button>
+                  <HelpTip text="Kişisel paranla dükkân kasası ayrıdır. Mal almak için kasada para olmalı; kârı da kasadan cebine çekersin." />
+                </div>
+                {showTransferTools && (
+                  <div className="grid grid-cols-4 gap-1.5" data-testid="shop-transfer-amounts">
+                    {[5_000, 10_000, 25_000, 100_000].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        data-testid={`shop-transfer-amount-${amt}`}
+                        onClick={() => {
+                          onTransferShopCash({ shopId: activeShop.shopId, direction: 'TO_SHOP', amount: amt });
+                          setShowTransferTools(false);
+                        }}
+                        className="g-choice min-h-[44px] text-[13px] tabular-nums"
+                      >
+                        +{amt / 1000}B
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 3 ana sekme (iç içe ikinci sekme çubuğu yok) */}
+                <div className="grid grid-cols-3 gap-1.5 rounded-2xl bg-[var(--g-surface-2)] p-1" role="tablist" aria-label="Dükkân bölümleri">
                   {(
                     [
                       { id: 'TEZGAH', label: 'Tezgâh', first: 'ORDER_PRODUCT' },
-                      { id: 'EKIP', label: 'Ekip & Yükseltme', first: 'MANAGE_STAFF' },
-                      { id: 'BUYUME', label: 'Büyüme', first: 'OPEN_BRANCH' },
+                      { id: 'EKIP', label: 'Ekip & Geliştir', first: 'MANAGE_STAFF' },
+                      { id: 'BUYUME', label: 'Büyüme', first: 'UPGRADE_SHOP' },
                     ] as const
                   ).map((g) => (
                     <button
@@ -781,100 +679,22 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         if (activeGroup !== g.id) setShopActionTab(g.first);
                       }}
                       className={`min-h-[48px] rounded-xl px-1 text-[13px] font-extrabold leading-tight ${
-                        activeGroup === g.id ? 'bg-slate-900 text-white' : 'text-slate-700'
+                        activeGroup === g.id
+                          ? 'bg-[var(--g-navy-800)] text-white shadow-[0_3px_0_var(--g-navy-900)]'
+                          : 'text-[var(--g-muted)]'
                       }`}
                     >
                       {g.label}
                     </button>
                   ))}
                 </div>
-
-                {/* Seçili bölümün alt işlemleri (diğer bölümlerin düğmeleri DOM'da gizli durur) */}
-                <div className="grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      { id: 'ORDER_PRODUCT', label: 'Mal al', group: 'TEZGAH' },
-                      { id: 'EDIT_PRICES', label: 'Fiyatlar', group: 'TEZGAH' },
-                      { id: 'MANAGE_STAFF', label: 'Çalışanlar & müdür', group: 'EKIP' },
-                      { id: 'UPGRADE_SHOP', label: 'Yükseltmeler', group: 'EKIP' },
-                      { id: 'OPEN_BRANCH', label: 'Yeni şube', group: 'BUYUME' },
-                    ] as const
-                  ).map((btn) => (
-                    <button
-                      key={btn.id}
-                      type="button"
-                      data-testid={`shop-action-tab-${btn.id}`}
-                      onClick={() => setShopActionTab(btn.id)}
-                      className={`${btn.group === activeGroup ? '' : 'hidden'} ${
-                        btn.group === 'BUYUME' ? 'col-span-2' : ''
-                      } min-h-[48px] px-2.5 rounded-2xl text-sm font-extrabold border-2 active:scale-95 ${
-                        shopActionTab === btn.id
-                          ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-white text-slate-800 border-slate-200'
-                      }`}
-                    >
-                      {btn.label}
+                {/* Eski alt işlem kimlikleri (testler ve kısayollar için DOM'da gizli durur) */}
+                <div className="hidden">
+                  {(['ORDER_PRODUCT', 'EDIT_PRICES', 'MANAGE_STAFF', 'UPGRADE_SHOP', 'OPEN_BRANCH'] as const).map((id) => (
+                    <button key={id} type="button" data-testid={`shop-action-tab-${id}`} onClick={() => setShopActionTab(id)}>
+                      {id}
                     </button>
                   ))}
-                </div>
-
-                {/* Tezgâh: tek dokunuş "Rafları Doldur" ana kartı */}
-                <div
-                  data-testid="shop-restock-card"
-                  className={`${activeGroup === 'TEZGAH' ? 'flex' : 'hidden'} items-center justify-between gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-3`}
-                >
-                  <div className="min-w-0">
-                    <div className="font-extrabold text-sm text-emerald-900">Rafları Doldur</div>
-                    <div className="text-[13px] text-emerald-800">
-                      {restockPlan.orders.length === 0
-                        ? 'Raflar zaten dolu ya da paran yetmiyor.'
-                        : `${restockPlan.orders.length} ürün · yaklaşık ${formatCurrency(restockPlan.totalCost)} · en ucuz toptancıdan, ${
-                            restockPlan.maxDeliveryDays <= 1 ? 'yarın' : `en geç ${restockPlan.maxDeliveryDays} gün içinde`
-                          } gelir`}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    data-testid="shop-restock-all-btn"
-                    disabled={restockPlan.orders.length === 0}
-                    onClick={() => {
-                      for (const o of restockPlan.orders) {
-                        onPlaceProcurementOrder({
-                          supplierId: o.supplierId,
-                          resourceId: o.resourceId,
-                          quantity: o.quantity,
-                          destinationType: 'SHOP',
-                          destinationId: activeShop.shopId,
-                          paymentTermType: 'CASH',
-                        });
-                      }
-                    }}
-                    className="g-btn g-btn-primary min-h-[48px] px-4 shrink-0 disabled:opacity-50"
-                  >
-                    Doldur
-                  </button>
-                </div>
-
-                {/* Büyüme: seviye ilerlemesi */}
-                <div
-                  data-testid="shop-growth-card"
-                  className={`${activeGroup === 'BUYUME' ? 'block' : 'hidden'} rounded-2xl bg-slate-50 p-3 space-y-2`}
-                >
-                  <div className="flex justify-between text-sm font-extrabold text-slate-800">
-                    <span>Dükkân seviyesi</span>
-                    <span className="tabular-nums">{activeShop.level}/5</span>
-                  </div>
-                  <div className="g-track h-3">
-                    <div className="g-fill" style={{ width: `${(activeShop.level / 5) * 100}%` }} />
-                  </div>
-                  <button
-                    type="button"
-                    data-testid="shop-growth-upgrade-btn"
-                    onClick={() => setShopActionTab('UPGRADE_SHOP')}
-                    className="g-btn g-btn-secondary w-full min-h-[44px]"
-                  >
-                    Seviye yükseltmeye git
-                  </button>
                 </div>
               </div>
             </div>
@@ -882,15 +702,100 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             <FirstShopGateCard state={state} />
           )}
 
+          {/* TEZGÂH: son yorum, rafları doldur, yoldakiler */}
+          {activeGroup === 'TEZGAH' && activeShop && (() => {
+            const latest = activeShop.recentReviews?.[0];
+            const allowedIds = activeShopTemplate?.allowedResourceIds ?? [];
+            const missingKinds = allowedIds.filter(
+              (id) =>
+                !activeShop.inventoryBatches.some((b) => b.resourceId === id && b.availableQuantity > 0) &&
+                !inboundShipments.some((sh) => sh.resourceId === id)
+            );
+            return (
+              <div className="space-y-3">
+                {latest && (
+                  <div data-testid="shop-latest-review" className="g-card p-3 flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setReviewsOpen(true)}
+                      className="min-w-0 flex-1 text-left"
+                      aria-label="Bütün yorumları aç"
+                    >
+                      <div className="flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--g-ink)]">
+                        {latest.authorName} <StarRow stars={latest.stars} size="w-3.5 h-3.5" />
+                      </div>
+                      <div className="text-[13px] text-[var(--g-muted)] truncate">“{latest.textTR}”</div>
+                    </button>
+                    {latest.actionHint && (
+                      <button
+                        type="button"
+                        data-testid="shop-latest-review-action"
+                        onClick={() => handleReviewAction(latest.actionHint as ReviewActionHint)}
+                        className="g-btn g-btn-secondary g-btn-sm shrink-0"
+                      >
+                        {REVIEW_ACTION_LABEL_TR[latest.actionHint]}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div data-testid="shop-restock-card" className="g-card p-3 space-y-2" style={{ background: 'var(--g-soft-green)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="g-display text-lg font-extrabold text-[var(--g-ink)]">Rafları Doldur</div>
+                      <div className="text-[13px] font-semibold text-[var(--g-muted)]">
+                        {restockPlan.orders.length === 0
+                          ? 'Raflar zaten dolu ya da paran yetmiyor.'
+                          : `${restockPlan.orders.length} ürün · ${formatCurrency(restockPlan.totalCost)} · ${
+                              restockPlan.maxDeliveryDays <= 1 ? 'yarın gelir' : `en geç ${restockPlan.maxDeliveryDays} günde gelir`
+                            }`}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="shop-restock-all-btn"
+                      disabled={restockPlan.orders.length === 0}
+                      onClick={placeRestock}
+                      className="g-btn g-btn-primary min-h-[52px] px-5 shrink-0"
+                    >
+                      Doldur
+                    </button>
+                  </div>
+                  {missingKinds.length > 0 && (
+                    <div data-testid="shop-restock-missing" className="text-[13px] font-bold text-[var(--g-red)]">
+                      Rafta yok: {missingKinds.map((id) => RESOURCE_CATALOG[id]?.nameTR ?? id).join(', ')}
+                    </div>
+                  )}
+                </div>
+
+                {inboundShipments.length > 0 && (
+                  <div data-testid="shop-inbound-strip" className="g-card-soft p-2.5 space-y-1.5">
+                    <div className="text-[13px] font-extrabold text-[var(--g-ink)]">Yoldaki siparişler</div>
+                    {inboundShipments.slice(0, 4).map((sh) => (
+                      <div key={sh.shipmentId} className="flex items-center justify-between gap-2 text-[13px]">
+                        <span className="font-bold text-[var(--g-ink)] truncate">
+                          {sh.resourceNameTR} · {sh.quantity} adet
+                        </span>
+                        <span className="g-pill shrink-0 bg-[var(--g-surface)] text-[var(--g-ink)]">
+                          {sh.estimatedArrivalDay <= state.day ? 'Bugün' : `${sh.estimatedArrivalDay - state.day} gün`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* SEÇİLİ İŞLEM SEKMESİ İÇERİĞİ */}
-          {shopActionTab === 'ORDER_PRODUCT' && activeShop && (
+          {activeGroup === 'TEZGAH' && activeShop && (
             <div
               data-testid="shop-order-product-box"
               className="g-card p-4 space-y-3"
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h5 className="g-section-title">Mal al</h5>
-                <span className="text-[13px] tabular-nums text-slate-600">
+                <span className="text-[13px] tabular-nums text-[var(--g-muted)]">
                   Kasa: {formatCurrency(activeShop.cashAccountBalance)} · Cebin:{' '}
                   {formatCurrency(spendableCash)}
                 </span>
@@ -918,10 +823,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       className="g-card-soft p-3 space-y-2"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-extrabold text-slate-900 truncate">
+                        <div className="text-sm font-extrabold text-[var(--g-ink)] truncate">
                           {resDef?.nameTR || prodId}
                         </div>
-                        <div className="text-[13px] text-slate-600">
+                        <div className="text-[13px] text-[var(--g-muted)]">
                           Rafta:{' '}
                           <strong
                             className={qty <= 5 ? 'text-rose-600' : 'text-emerald-700'}
@@ -936,6 +841,56 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           )}
                         </div>
                       </div>
+                      {(() => {
+                        const fairP = Number(((resDef?.baseMarketPrice ?? 100) * (1 + (activeShopTemplate?.defaultGrossMarginPct ?? 30) / 100)).toFixed(2));
+                        const saved = (activeShop.sellingPrices[prodId] ?? fairP) / Math.max(1, fairP);
+                        const mult = priceDrafts[prodId] ?? saved;
+                        const price = fairP * mult;
+                        const margin = unit > 0 ? Math.round(((price - unit) / Math.max(1, price)) * 100) : null;
+                        const fairScore = priceRatioScore(mult);
+                        const commit = () => {
+                          const v = priceDrafts[prodId];
+                          if (v === undefined) return;
+                          onConfigureShop({ shopId: activeShop.shopId, priceMultipliers: { [prodId]: v } });
+                          setPriceDrafts((d) => {
+                            const n = { ...d };
+                            delete n[prodId];
+                            return n;
+                          });
+                        };
+                        return (
+                          <div className="space-y-1" data-testid={`shop-price-slider-box-${prodId}`}>
+                            <div className="flex items-center justify-between text-[13px] font-bold">
+                              <span className="text-[var(--g-muted)]">Satış fiyatı</span>
+                              <span className="tabular-nums text-[var(--g-ink)]">
+                                {formatCurrency(price)}
+                                {margin !== null && <span className="text-[var(--g-muted)]"> · kâr %{margin}</span>}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0.8}
+                              max={1.6}
+                              step={0.01}
+                              value={mult}
+                              data-testid={`shop-price-slider-${prodId}`}
+                              aria-label={`${resDef?.nameTR ?? prodId} satış fiyatı`}
+                              onChange={(e) => setPriceDrafts((d) => ({ ...d, [prodId]: Number(e.target.value) }))}
+                              onPointerUp={commit}
+                              onKeyUp={commit}
+                              onBlur={commit}
+                              className="w-full accent-[var(--g-gold)]"
+                            />
+                            <div
+                              className={`text-[13px] font-bold ${
+                                fairScore >= 85 ? 'text-[var(--g-green-dark)]' : fairScore >= 65 ? 'text-[var(--g-gold-dark)]' : 'text-[var(--g-red)]'
+                              }`}
+                            >
+                              {fairScore >= 85 ? 'Adil fiyat' : fairScore >= 65 ? 'Biraz pahalı' : fairScore >= 35 ? 'Pahalı: müşteri kaçar' : 'Aşırı pahalı'}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {best ? (
                         <div className="grid grid-cols-3 gap-2">
                           {[10, 50, 100].map((n) => {
@@ -1015,13 +970,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
                           selectedResourceId === prodId
                             ? 'bg-sky-50 border-sky-400'
-                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                            : 'bg-[var(--g-surface-2)] border-[var(--g-line)] hover:bg-slate-100'
                         }`}
                       >
-                        <div className="text-xs font-bold text-slate-900">
+                        <div className="text-xs font-bold text-[var(--g-ink)]">
                           {resDef?.nameTR || prodId}
                         </div>
-                        <div className="text-[13px] tabular-nums text-slate-600 mt-0.5">
+                        <div className="text-[13px] tabular-nums text-[var(--g-muted)] mt-0.5">
                           Raf Stoku:{' '}
                           <strong
                             className={
@@ -1044,14 +999,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* Tedarikçi Teklifleri ve Sipariş Butonu */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                     Tedarikçi Seçimi
                   </label>
                   <select
                     data-testid="shop-order-supplier-select"
                     value={activeOffer?.supplierId ?? ''}
                     onChange={(e) => setSelectedSupplierId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] text-xs font-semibold text-[var(--g-ink)]"
                   >
                     {supplierOffers.map((off) => (
                       <option key={off.supplierId} value={off.supplierId}>
@@ -1063,7 +1018,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                     Sipariş Miktarı (Birim)
                   </label>
                   <NumberInput
@@ -1078,12 +1033,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         Math.max(1, Number(e.target.value) || 10)
                       )
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs tabular-nums font-bold text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] text-xs tabular-nums font-bold text-[var(--g-ink)]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1">
+                  <label className="block text-[13px] font-semibold text-[var(--g-muted)] mb-1">
                     Ödeme Şekli
                   </label>
                   <select
@@ -1092,7 +1047,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     onChange={(e) =>
                       setOrderPaymentTerm(e.target.value as PaymentTermType)
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] text-xs font-semibold text-[var(--g-ink)]"
                   >
                     <option value="CASH">Peşin Ödeme</option>
                     <option value="CREDIT">Vadeli Tedarikçi Faturası</option>
@@ -1102,17 +1057,17 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
 
               {activeOffer && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="p-3 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div>
-                    <span className="text-slate-600">Tahmini Toplam: </span>
-                    <strong className="tabular-nums text-slate-900">
+                    <span className="text-[var(--g-muted)]">Tahmini Toplam: </span>
+                    <strong className="tabular-nums text-[var(--g-ink)]">
                       {formatCurrency(
                         orderQuantity *
                           (activeOffer.unitPrice +
                             activeOffer.shippingCostPerUnit)
                       )}
                     </strong>
-                    <span className="text-slate-500 ml-2">
+                    <span className="text-[var(--g-muted)] ml-2">
                       (Teslim Süresi: {activeOffer.deliveryDays} oyun günü ·
                       Kalite {activeOffer.qualityScore}/100)
                     </span>
@@ -1140,79 +1095,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             </div>
           )}
 
-          {shopActionTab === 'EDIT_PRICES' && activeShop && (
-            <div
-              data-testid="shop-edit-prices-box"
-              className="g-card p-4 space-y-4"
-            >
-              <div className="g-section-title">
-                Fiyatlar
-              </div>
-              <div className="space-y-3">
-                {(activeShopTemplate?.allowedResourceIds ?? []).map(
-                  (prodId) => {
-                    const resDef = RESOURCE_CATALOG[prodId];
-                    const fairPrice = Number(
-                      (
-                        (resDef?.baseMarketPrice ?? 100) *
-                        (1 +
-                          (activeShopTemplate?.defaultGrossMarginPct ?? 30) /
-                            100)
-                      ).toFixed(2)
-                    );
-                    const currentSellPrice =
-                      activeShop.sellingPrices[prodId] ?? fairPrice;
-                    const currentMult = currentSellPrice / Math.max(1, fairPrice);
-                    return (
-                      <div
-                        key={prodId}
-                        className="p-3 rounded-2xl bg-slate-50 space-y-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="font-bold text-slate-900 text-base">
-                            {resDef?.nameTR || prodId}
-                          </div>
-                          <div className="font-extrabold text-emerald-700 tabular-nums shrink-0">
-                            {formatCurrency(currentSellPrice)}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { label: 'Ucuz', val: 0.9 },
-                            { label: 'Normal', val: 1.0 },
-                            { label: 'Pahalı', val: 1.18 },
-                          ].map((preset) => (
-                            <button
-                              key={preset.label}
-                              type="button"
-                              onClick={() =>
-                                onConfigureShop({
-                                  shopId: activeShop.shopId,
-                                  priceMultipliers: { [prodId]: preset.val },
-                                })
-                              }
-                              className={`min-h-[48px] rounded-2xl text-sm font-extrabold active:scale-95 ${
-                                Math.abs(currentMult - preset.val) < 0.04
-                                  ? 'g-choice is-active'
-                                  : 'g-choice'
-                              }`}
-                            >
-                              {preset.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-              <div className="text-[13px] text-slate-500 text-center">
-                Ucuz: çok müşteri, az kâr · Pahalı: az müşteri, çok kâr
-              </div>
-            </div>
-          )}
-
-          {shopActionTab === 'MANAGE_STAFF' && activeShop && !activeShop.isCompanyBranch && (() => {
+          {activeGroup === 'EKIP' && activeShop && !activeShop.isCompanyBranch && (() => {
             const mq = getManagerQuote(state, activeShop, Math.max(0, state.cash - spendableCash));
             const mgr = activeShop.manager;
             return (
@@ -1319,7 +1202,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             );
           })()}
 
-          {shopActionTab === 'MANAGE_STAFF' && activeShop && (
+          {activeGroup === 'EKIP' && activeShop && (
             <div
               data-testid="shop-manage-staff-box"
               className="g-card p-4 space-y-4"
@@ -1339,12 +1222,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
               {firstEmployeeQuote && activeShop.staffCount <= 0 && (
                 <div data-testid="shop-first-hire-card" className="g-card-soft p-4 space-y-3 text-center">
-                  <div className="font-extrabold text-slate-900">İlk çalışanını işe al</div>
-                  <div className="text-sm text-slate-700">
+                  <div className="font-extrabold text-[var(--g-ink)]">İlk çalışanını işe al</div>
+                  <div className="text-sm text-[var(--g-ink)]">
                     Şu an dükkân kapasitenin %{Math.round(OWNER_STAFF_CAPACITY * 100)}'ı ile çalışıyor. Çalışan alınca müşteri
                     sayısı tam kapasiteye çıkar.
                   </div>
-                  <div className="text-sm font-bold tabular-nums text-slate-800">
+                  <div className="text-sm font-bold tabular-nums text-[var(--g-ink)]">
                     İşe alma {formatCurrency(firstEmployeeQuote.fee)} · sonra günde {formatCurrency(firstEmployeeQuote.dailyWage)} maaş
                   </div>
                   <button
@@ -1411,19 +1294,21 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               >
                 1 kişiyi çıkar
               </button>
-              <div className="text-[13px] text-slate-500 text-center">
+              <div className="text-[13px] text-[var(--g-muted)] text-center">
                 Çok çalışan = hızlı satış, ama maaş gideri de artar.
               </div>
             </div>
           )}
 
-          {shopActionTab === 'UPGRADE_SHOP' && activeShop && (
+          {(activeGroup === 'EKIP' || activeGroup === 'BUYUME') && activeShop && (
             <div
               data-testid="shop-upgrade-box"
               className="g-card p-4 space-y-4"
             >
+              {activeGroup === 'BUYUME' && (
+              <>
               <div className="g-section-title">
-                Dükkânı geliştir
+                Dükkân seviyesi
               </div>
               <div className="g-hero p-5 text-center">
                 <div className="text-4xl font-extrabold g-hero-value">
@@ -1447,10 +1332,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   ? 'En üst seviye'
                   : `Seviye ${activeShop.level + 1}'e yükselt`}
               </button>
+              </>
+              )}
 
-              {!activeShop.isCompanyBranch && (
+              {activeGroup === 'EKIP' && !activeShop.isCompanyBranch && (
                 <div data-testid="shop-small-upgrades" className="space-y-2 pt-1">
                   <div className="g-section-title">Küçük yükseltmeler</div>
+                  <div className="grid grid-cols-2 gap-2">
                   {listShopUpgrades(activeShop).map((u) => {
                     const canPay = spendableCash + activeShop.cashAccountBalance >= u.cost;
                     return (
@@ -1458,11 +1346,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                         key={u.def.id}
                         data-testid={`shop-small-upgrade-${u.def.id}`}
                         data-status={u.status}
-                        className={`flex items-center gap-3 p-3 rounded-2xl ${
-                          u.status === 'OWNED' ? 'bg-[#ecfaf3]' : 'g-card-soft'
+                        className={`flex flex-col justify-between gap-2 p-3 rounded-2xl border ${
+                          u.status === 'OWNED'
+                            ? 'border-[var(--g-green)] bg-[var(--g-soft-green)]'
+                            : 'border-[var(--g-line)] bg-[var(--g-surface-2)] shadow-[0_3px_0_var(--g-line-strong)]'
                         }`}
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0">
                           <div className="font-extrabold text-[var(--g-ink)] leading-tight">{u.def.name}</div>
                           <div className="text-[13px] font-bold text-[var(--g-green-dark)]">{u.def.effectLabel}</div>
                           {u.usedUntilDay !== undefined && (
@@ -1472,14 +1362,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           )}
                         </div>
                         {u.status === 'OWNED' ? (
-                          <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                          <span className="g-pill self-start bg-[var(--g-surface)] text-[var(--g-green-dark)] shrink-0">
                             <Check size={14} strokeWidth={3} /> Var
                           </span>
                         ) : u.status === 'LOCKED' ? (
-                          <span className="text-[13px] font-bold text-[var(--g-muted)] shrink-0 text-right">
-                            Seviye {u.def.minLevel}
-                            <br />
-                            gerekir
+                          <span className="text-[13px] font-bold text-[var(--g-muted)] shrink-0">
+                            Seviye {u.def.minLevel} gerekir
                           </span>
                         ) : (
                           <button
@@ -1487,7 +1375,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                             data-testid={`shop-small-upgrade-buy-${u.def.id}`}
                             disabled={!canPay || !onBuyShopUpgrade}
                             onClick={() => onBuyShopUpgrade?.(activeShop.shopId, u.def.id)}
-                            className="g-btn g-btn-primary g-btn-sm shrink-0 px-3 tabular-nums"
+                            className="g-btn g-btn-primary g-btn-sm w-full px-3 tabular-nums"
                           >
                             {formatCurrency(u.cost).replace(/,00$/, '')}
                           </button>
@@ -1495,12 +1383,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {shopActionTab === 'OPEN_BRANCH' && (
+          {activeGroup === 'BUYUME' && (
             <div
               data-testid="shop-open-branch-box"
               className="g-card p-4 space-y-4"
@@ -1532,7 +1421,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       }`}
                     >
                       <div className="text-4xl">{SHOP_EMOJI[tpl.shopType] ?? '🏪'}</div>
-                      <div className="text-sm font-extrabold text-slate-900 mt-1">
+                      <div className="text-sm font-extrabold text-[var(--g-ink)] mt-1">
                         {tpl.nameTR}
                       </div>
                       <div className="text-sm tabular-nums text-amber-800 font-bold mt-0.5">
@@ -1540,7 +1429,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       </div>
                       <div
                         data-testid={`shop-type-hours-${tpl.shopType}`}
-                        className="text-[13px] tabular-nums text-slate-500 font-semibold"
+                        className="text-[13px] tabular-nums text-[var(--g-muted)] font-semibold"
                       >
                         {shopHoursLabel(tpl.shopType)}
                       </div>
@@ -1556,14 +1445,14 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
 
               <div className="rounded-3xl bg-[var(--g-surface-2)] p-4 space-y-3">
-                <div className="font-extrabold text-slate-900 text-base">
+                <div className="font-extrabold text-[var(--g-ink)] text-base">
                   {SHOP_EMOJI[selectedShopTemplateForNew.shopType] ?? '🏪'}{' '}
                   {selectedShopTemplateForNew.nameTR}
                 </div>
-                <div className="text-sm text-slate-700">
+                <div className="text-sm text-[var(--g-ink)]">
                   {selectedShopTemplateForNew.specificMechanicDescriptionTR}
                 </div>
-                <div className="text-sm text-slate-700">
+                <div className="text-sm text-[var(--g-ink)]">
                   Açık saatler: <b className="tabular-nums">{shopHoursLabel(selectedShopTemplateForNew.shopType)}</b>
                 </div>
                 <div className="flex justify-between text-sm font-bold">
@@ -1584,7 +1473,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onChange={(e) => setNewShopCustomName(e.target.value)}
                   className="w-full g-input text-sm"
                 />
-                <label className="block text-[13px] font-semibold text-slate-600">
+                <label className="block text-[13px] font-semibold text-[var(--g-muted)]">
                   Kasaya başlangıç parası
                   <NumberInput
                     data-testid="new-shop-cash-float-input"
@@ -1599,7 +1488,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className="g-card mt-1 w-full min-h-[48px] px-3 text-sm tabular-nums font-bold"
                   />
                 </label>
-                <div data-testid="shop-opening-advice" className="g-card-soft p-3 space-y-1 text-sm text-slate-700">
+                <div data-testid="shop-opening-advice" className="g-card-soft p-3 space-y-1 text-sm text-[var(--g-ink)]">
                   <div className="flex justify-between font-bold">
                     <span>Önerilen işletme sermayesi</span>
                     <span data-testid="shop-opening-recommended" className="tabular-nums text-amber-800">
@@ -1612,12 +1501,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       {formatCurrency(openingAdvice.liquidAfterOpening)}
                     </span>
                   </div>
-                  <div data-testid="shop-opening-runway" className="text-[13px] font-semibold text-slate-600">
+                  <div data-testid="shop-opening-runway" className="text-[13px] font-semibold text-[var(--g-muted)]">
                     İlk stok (~{formatCurrency(openingAdvice.firstStockCost)}), kira ve maaş düşünce yaklaşık{' '}
                     {openingAdvice.runwayDays} gün dayanır.
                   </div>
                   {openingAdvice.ownerWorks && (
-                    <div data-testid="shop-opening-owner-note" className="text-[13px] font-semibold text-slate-600">
+                    <div data-testid="shop-opening-owner-note" className="text-[13px] font-semibold text-[var(--g-muted)]">
                       İlk dükkânda sen çalışırsın (kapasite %{Math.round(OWNER_STAFF_CAPACITY * 100)}). Çalışanı sonradan{' '}
                       {formatCurrency(FIRST_EMPLOYEE_HIRE_FEE_BUFE)} ile işe alırsın.
                     </div>
@@ -1657,8 +1546,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
             </div>
           )}
 
-          {/* BÖLÜM 8: ESNAFTAN ŞİRKETE GEÇİŞ (ŞİRKETLEŞME KARTI) */}
-          {!state.playerCompany && (
+          {/* BÖLÜM 8: ESNAFTAN ŞİRKETE GEÇİŞ (ŞİRKETLEŞME KARTI) — Büyüme sekmesinde */}
+          {!state.playerCompany && (activeGroup === 'BUYUME' || !activeShop) && (
             <div
               data-testid="incorporation-transition-card"
               className="p-3 rounded-3xl bg-[var(--g-surface-2)] border border-teal-300 space-y-3"
@@ -1667,7 +1556,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 type="button"
                 data-testid="incorporation-toggle"
                 onClick={() => setShowIncorp((v) => !v)}
-                className="w-full min-h-[48px] flex items-center justify-between gap-2 text-left font-extrabold text-slate-900"
+                className="w-full min-h-[48px] flex items-center justify-between gap-2 text-left font-extrabold text-[var(--g-ink)]"
               >
                 <span>Şirket kur</span>
                 <span className="text-sm text-teal-700">
@@ -1681,7 +1570,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   <span className="text-[13px] font-bold uppercase tracking-wider text-teal-800">
                     Esnaftan şirkete geçiş
                   </span>
-                  <h5 className="text-sm font-extrabold text-slate-900">
+                  <h5 className="text-sm font-extrabold text-[var(--g-ink)]">
                     İşletmeni Kurumsal Şirkete Dönüştür
                   </h5>
                 </div>
@@ -1744,7 +1633,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className={`p-2 rounded-xl border flex items-center gap-1.5 ${
                       c.ok
                         ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
-                        : 'bg-white border-slate-200 text-slate-600'
+                        : 'bg-[var(--g-surface)] border-[var(--g-line)] text-[var(--g-muted)]'
                     }`}
                   >
                     <CheckCircle2
@@ -1763,7 +1652,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   type="text"
                   value={incorpName}
                   onChange={(e) => setIncorpName(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-semibold"
+                  className="px-3 py-2 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] text-xs font-semibold"
                   placeholder="Şirket Adı"
                 />
                 <input
@@ -1774,7 +1663,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                   onChange={(e) =>
                     setIncorpTicker(e.target.value.toUpperCase())
                   }
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
+                  className="px-3 py-2 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] text-xs tabular-nums font-bold"
                   placeholder="Borsa Kodu"
                 />
                 <NumberInput
@@ -1788,7 +1677,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       Math.max(0, Number(e.target.value) || 0)
                     )
                   }
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs tabular-nums font-bold"
+                  className="px-3 py-2 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] text-xs tabular-nums font-bold"
                   placeholder="Ek Nakit Sermaye"
                 />
                 <button
@@ -1877,7 +1766,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className="g-card p-4 space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">
+                      <span className="text-xs font-bold text-[var(--g-ink)]">
                         {wh.nameTR}
                       </span>
                       <span className="text-[13px] tabular-nums font-bold text-sky-700">
@@ -1887,7 +1776,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     </div>
                     <div className="space-y-1 max-h-24 overflow-y-auto">
                       {wh.batches.length === 0 ? (
-                        <div className="text-[13px] text-slate-400">
+                        <div className="text-[13px] text-[var(--g-muted)]">
                           Depo boş
                         </div>
                       ) : (
@@ -1896,12 +1785,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                           return (
                             <div
                               key={b.batchId}
-                              className="flex items-center justify-between text-[13px] bg-slate-50 px-2 py-0.5 rounded"
+                              className="flex items-center justify-between text-[13px] bg-[var(--g-surface-2)] px-2 py-0.5 rounded"
                             >
-                              <span className="font-medium text-slate-700 truncate">
+                              <span className="font-medium text-[var(--g-ink)] truncate">
                                 {rDef?.nameTR || b.resourceNameTR}
                               </span>
-                              <span className="tabular-nums font-bold text-slate-900">
+                              <span className="tabular-nums font-bold text-[var(--g-ink)]">
                                 {b.quantity.toFixed(0)} br (K.{b.qualityScore})
                               </span>
                             </div>
@@ -1915,7 +1804,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
               {/* Tedarikçi Sipariş ve Düzenli Alım Sözleşmesi */}
               <div className="g-card p-4 space-y-3">
-                <h5 className="text-base font-extrabold text-slate-900">
+                <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                   Toptan sipariş ver
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
@@ -1988,7 +1877,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
                 {activeOffer && (
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <div className="text-xs text-slate-600">
+                    <div className="text-xs text-[var(--g-muted)]">
                       Birim:{' '}
                       <strong>{formatCurrency(activeOffer.unitPrice)}</strong> ·
                       Nakliye/br:{' '}
@@ -2050,10 +1939,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* Lojistik Filo & Araç Satın Alma */}
               <div className="g-card p-4 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <h5 className="text-base font-extrabold text-slate-900">
+                  <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                     Araçların ({trade.vehicles.length} Araç)
                   </h5>
-                  <span className="text-[13px] text-slate-500">
+                  <span className="text-[13px] text-[var(--g-muted)]">
                     Kargo masrafını düşürür
                   </span>
                 </div>
@@ -2064,15 +1953,15 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                       type="button"
                       data-testid={`buy-vehicle-${vehType}`}
                       onClick={() => onPurchaseLogisticsVehicle(vehType)}
-                      className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 text-left cursor-pointer"
+                      className="p-2.5 rounded-xl bg-[var(--g-surface-2)] hover:bg-amber-50 border border-[var(--g-line)] text-left cursor-pointer"
                     >
-                      <div className="text-xs font-bold text-slate-900">
+                      <div className="text-xs font-bold text-[var(--g-ink)]">
                         {spec.nameTR}
                       </div>
                       <div className="text-[13px] tabular-nums text-amber-800 font-bold">
                         {formatCurrency(spec.purchaseCost)}
                       </div>
-                      <div className="text-[13px] text-slate-500">
+                      <div className="text-[13px] text-[var(--g-muted)]">
                         Kapasite: {spec.capacityUnits} br
                       </div>
                     </button>
@@ -2083,7 +1972,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               {/* Depodan Şubeye Sevkiyat */}
               {trade.shops.length > 0 && (
                 <div className="g-card p-4 space-y-2.5">
-                  <h5 className="text-base font-extrabold text-slate-900">
+                  <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                     Depodan dükkâna mal gönder
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
@@ -2145,11 +2034,11 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
               {/* Aktif Sevkiyatlar Listesi */}
               <div className="g-card p-4 space-y-2">
-                <h5 className="text-base font-extrabold text-slate-900">
+                <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                   Teslimatlar ({trade.shipments.length})
                 </h5>
                 {trade.shipments.length === 0 ? (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--g-muted)]">
                     Henüz kayıtlı sevkiyat bulunmuyor.
                   </p>
                 ) : (
@@ -2157,13 +2046,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     {trade.shipments.slice(0, 12).map((sh) => (
                       <div
                         key={sh.shipmentId}
-                        className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                        className="p-2.5 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] flex items-center justify-between text-xs"
                       >
                         <div>
-                          <span className="font-bold text-slate-900">
+                          <span className="font-bold text-[var(--g-ink)]">
                             {sh.resourceNameTR} ({sh.quantity} br)
                           </span>
-                          <span className="text-slate-500 ml-2">
+                          <span className="text-[var(--g-muted)] ml-2">
                             {sh.sourceNameTR} → {sh.destinationNameTR}
                           </span>
                         </div>
@@ -2193,7 +2082,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
               </div>
               {/* Reçeteli Üretim Zinciri */}
               <div className="g-card p-4 space-y-3">
-                <h5 className="text-base font-extrabold text-slate-900">
+                <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                   Üretim: hammaddeden ürüne
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2249,10 +2138,10 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     className="g-card p-3 flex items-center justify-between"
                   >
                     <div>
-                      <div className="text-sm font-extrabold text-slate-900">
+                      <div className="text-sm font-extrabold text-[var(--g-ink)]">
                         {ch.nameTR}
                       </div>
-                      <div className="text-[13px] text-slate-500">
+                      <div className="text-[13px] text-[var(--g-muted)]">
                         {ch.paymentTermDays === 0
                           ? 'Parası hemen gelir'
                           : `Parası ${ch.paymentTermDays} günde gelir`}
@@ -2273,7 +2162,7 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                 Toptan anlaşma: önceden sabit fiyatla mal satma sözü.
               </div>
               <div className="g-card p-4 space-y-2.5">
-                <h5 className="text-base font-extrabold text-slate-900">
+                <h5 className="text-base font-extrabold text-[var(--g-ink)]">
                   Kurumsal ve Kamu Tedarik Sözleşmeleri (
                   {trade.commercialContracts.length})
                 </h5>
@@ -2282,13 +2171,13 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
                     <div
                       key={ct.contractId}
                       data-testid={`commercial-contract-${ct.contractId}`}
-                      className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2"
+                      className="p-3 rounded-xl bg-[var(--g-surface-2)] border border-[var(--g-line)] flex flex-wrap items-center justify-between gap-2"
                     >
                       <div>
-                        <div className="text-xs font-extrabold text-slate-900">
+                        <div className="text-xs font-extrabold text-[var(--g-ink)]">
                           {ct.buyerNameTR} — {ct.resourceNameTR}
                         </div>
-                        <div className="text-[13px] text-slate-600 tabular-nums">
+                        <div className="text-[13px] text-[var(--g-muted)] tabular-nums">
                           Teslim: {ct.deliveredUnits}/{ct.totalRequiredUnits} br
                           · Birim Fiyat: {formatCurrency(ct.unitSalePrice)} ·
                           Vade: G.{ct.dueDay}

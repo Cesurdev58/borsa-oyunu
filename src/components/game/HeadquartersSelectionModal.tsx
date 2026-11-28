@@ -48,7 +48,7 @@ export const HeadquartersSelectionModal: React.FC<HeadquartersSelectionModalProp
       data-testid="hq-selection-modal"
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(18,28,68,.72)] p-4"
     >
-      <div className="w-full max-w-md max-h-[92vh] overflow-hidden flex flex-col rounded-[26px] bg-white shadow-2xl">
+      <div className="w-full max-w-md max-h-[92vh] overflow-hidden flex flex-col rounded-[26px] bg-[var(--g-surface)] shadow-2xl">
         <div className="g-hero rounded-none px-5 pt-5 pb-4 text-center">
           <div
             className="mx-auto w-12 h-12 rounded-full flex items-center justify-center"

@@ -52,7 +52,7 @@ function getSeverityStyle(severity: GameNotificationItem['severity']) {
     case 'info':
     default:
       return {
-        bg: 'bg-sky-50/90 border-sky-200 text-slate-800',
+        bg: 'bg-sky-50/90 border-sky-200 text-[var(--g-ink)]',
         badge: 'bg-sky-600 text-white',
         Icon: Info,
         iconColor: 'text-sky-600',
@@ -173,7 +173,7 @@ export const EventNotificationPanel: React.FC<EventNotificationPanelProps> =
 
                 <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
                   {notifications.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-8">
+                    <p className="text-xs text-[var(--g-muted)] text-center py-8">
                       Henüz bildirim yok.
                     </p>
                   ) : (

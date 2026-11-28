@@ -180,7 +180,7 @@ export const CityServicesModal: React.FC<
                   </div>
                 </div>
                 {o.sold ? (
-                  <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                  <span className="g-pill bg-[var(--g-surface)] text-[var(--g-green-dark)] shrink-0">
                     <Check size={14} strokeWidth={3} /> Satıldı
                   </span>
                 ) : (
@@ -221,7 +221,7 @@ export const CityServicesModal: React.FC<
               data-done={isDone ? 'true' : 'false'}
               className={`flex items-center gap-3 p-3 rounded-2xl ${isDone ? 'bg-[#ecfaf3]' : 'bg-[var(--g-surface-2)]'}`}
             >
-              <span className="w-12 h-12 shrink-0 rounded-2xl bg-white flex items-center justify-center text-[26px]">{p.emoji}</span>
+              <span className="w-12 h-12 shrink-0 rounded-2xl bg-[var(--g-surface)] flex items-center justify-center text-[26px]">{p.emoji}</span>
               <div className="min-w-0 flex-1">
                 <div className="font-extrabold text-[var(--g-ink)] leading-tight">{p.name}</div>
                 <div className="text-[13px] font-bold text-[var(--g-green-dark)]">
@@ -229,7 +229,7 @@ export const CityServicesModal: React.FC<
                 </div>
               </div>
               {isDone ? (
-                <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                <span className="g-pill bg-[var(--g-surface)] text-[var(--g-green-dark)] shrink-0">
                   <Check size={14} strokeWidth={3} /> Yapıldı
                 </span>
               ) : isNext ? (
@@ -243,7 +243,7 @@ export const CityServicesModal: React.FC<
                   {fc(p.price)}
                 </button>
               ) : (
-                <span className="g-pill bg-white text-[var(--g-muted)] shrink-0">
+                <span className="g-pill bg-[var(--g-surface)] text-[var(--g-muted)] shrink-0">
                   <Lock size={14} /> Sırada
                 </span>
               )}
@@ -280,7 +280,7 @@ export const CityServicesModal: React.FC<
                 </div>
               </div>
               {done ? (
-                <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+                <span className="g-pill bg-[var(--g-surface)] text-[var(--g-green-dark)] shrink-0">
                   <Check size={14} strokeWidth={3} /> Eğitimli
                 </span>
               ) : (
@@ -391,7 +391,7 @@ export const CityServicesModal: React.FC<
               <div className="text-[13px] font-bold text-[var(--g-green-dark)]">Günlük gider −{fc(solarDailySaving(s))}</div>
             </div>
             {s.solarPanel ? (
-              <span className="g-pill bg-white text-[var(--g-green-dark)] shrink-0">
+              <span className="g-pill bg-[var(--g-surface)] text-[var(--g-green-dark)] shrink-0">
                 <Check size={14} strokeWidth={3} /> Kurulu
               </span>
             ) : (
@@ -423,7 +423,7 @@ export const CityServicesModal: React.FC<
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="g-rise w-full max-w-md max-h-[85vh] bg-white rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
+        className="g-rise w-full max-w-md max-h-[85vh] bg-[var(--g-surface)] rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
       >
         <div className="g-hero rounded-none px-4 py-4 space-y-2 shrink-0">
           <div className="flex items-center justify-between gap-2">

@@ -48,8 +48,9 @@ test('Hız kontrolü: 1x ↔ 2x geçişi ve duraklat/devam', () => {
   );
   assert.match(locked, /data-disabled="true"/);
   assert.match(locked, /disabled=""/);
-  const view = read('src/components/game/TycoonGameView.tsx');
-  assert.match(view, /<GameSpeedControl/);
+  // Hız kontrolü üst çubukta, gün/saatin yanında
+  assert.match(read('src/components/game/GameTopBar.tsx'), /<GameSpeedControl/);
+  assert.match(read('src/components/game/TycoonGameView.tsx'), /onSetTimeScale=\{onSetTimeScale\}/);
   assert.match(read('src/components/game/HowToPlayModal.tsx'), /hız kapsülünde/);
 });
 
@@ -126,9 +127,11 @@ test('Dükkân yönetimi: Toptan & Üretim sekmesi tek dükkânda gizli, başlı
   const panel = read('src/components/game/EsnafAndTradePanel.tsx');
   assert.match(panel, /canSeeTradeCenter = trade\.shops\.length >= 2 \|\| state\.playerCompany !== null/);
   assert.match(panel, /\{canSeeTradeCenter && \(\s*\n\s*<button\s*\n\s*type="button"\s*\n\s*data-testid="mode-trade-center-btn"/);
-  for (const id of ['shop-shelf-bar', 'shop-collect-profit-btn', 'shop-level-badge', 'shop-group-tab-', "id: 'TEZGAH'", "id: 'EKIP'", "id: 'BUYUME'", 'shop-restock-all-btn']) {
+  for (const id of ['shop-shelf-bar', 'shop-collect-profit-btn', '<ShopStorefront', 'shop-group-tab-', "id: 'TEZGAH'", "id: 'EKIP'", "id: 'BUYUME'", 'shop-restock-all-btn']) {
     assert.ok(panel.includes(id), id);
   }
+  const front = read('src/components/game/ui/ShopStorefront.tsx');
+  for (const id of ['shop-level-badge', 'shop-star-badge', 'shop-live-profit', 'active-shop-hours']) assert.ok(front.includes(id), id);
   for (const id of ['ORDER_PRODUCT', 'EDIT_PRICES', 'MANAGE_STAFF', 'UPGRADE_SHOP', 'OPEN_BRANCH']) {
     assert.ok(panel.includes(`'${id}'`), id);
   }

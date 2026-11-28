@@ -16,6 +16,7 @@ import {
   withCompletedStep,
 } from '../../engine/OnboardingRules';
 import { GameBottomNavigation } from '../../components/game/GameBottomNavigation';
+import { GameTopBar } from '../../components/game/GameTopBar';
 import { GUIDE_STEPS, currentGuideStep } from '../../components/game/FirstRunGuide';
 import { ALL_OVERLAYS, overlaysToClose, welcomeGuideMayShow, type OverlayFlags } from '../../components/game/ui/overlayCoordinator';
 
@@ -27,6 +28,30 @@ function passGate(eng: SimulationEngine): void {
   assert.equal(eng.buyStock(b.ticker, 10).success, true);
   assert.equal(eng.sellStock(a.ticker, 5).success, true);
   eng.advanceDaysWithoutPlayerDecisions(1, true);
+}
+
+function renderTop(eng: SimulationEngine): string {
+  const st = eng.getState();
+  return renderToStaticMarkup(
+    React.createElement(GameTopBar, {
+      day: st.day,
+      dateISO: st.dateISO,
+      formattedTime: '00:00',
+      marketSession: st.marketSession,
+      cash: st.cash,
+      netWorth: st.netWorth,
+      unreadNotificationsCount: 0,
+      onOpenNotifications: () => {},
+      onOpenSettings: () => {},
+      onSwitchToDeveloperDashboard: () => {},
+      formatCurrency: (v: number) => String(v),
+      newsVisible: navTabStatuses(st).news.mode !== 'hidden',
+      onOpenNews: () => {},
+      onOpenGuide: () => {},
+      timeScale: st.timeScale,
+      onSetTimeScale: () => {},
+    })
+  );
 }
 
 function renderNav(eng: SimulationEngine): string {
@@ -44,11 +69,15 @@ function renderNav(eng: SimulationEngine): string {
   );
 }
 
-test('Yeni oyuncu ilk ekranda en çok 3 menü hedefi görür (Şehir, Borsa, Rehber)', () => {
+test('Yeni oyuncu ilk ekranda en çok 3 menü hedefi görür (Harita, Borsa ve üst çubukta Rehber)', () => {
   const eng = new SimulationEngine(20261104, 100_000);
   const html = renderNav(eng);
-  for (const id of ['city', 'market', 'guide']) assert.ok(html.includes(`bottom-nav-${id}"`), id);
-  for (const id of ['portfolio', 'company', 'news', 'bank']) assert.ok(!html.includes(`bottom-nav-${id}"`), `${id} gizli olmalı`);
+  for (const id of ['city', 'market']) assert.ok(html.includes(`bottom-nav-${id}"`), id);
+  for (const id of ['portfolio', 'company', 'news', 'bank', 'guide']) assert.ok(!html.includes(`bottom-nav-${id}"`), `${id} alt menüde olmamalı`);
+  // Rehber ve Haberler üst çubukta; Haberler yeni oyuncuda gizli
+  const top = renderTop(eng);
+  assert.ok(top.includes('data-testid="top-guide-btn"'));
+  assert.ok(!top.includes('data-testid="top-news-btn"'));
   assert.equal(navTabStatuses(eng.getState()).company.mode, 'hidden');
 });
 
@@ -162,4 +191,18 @@ test('Pencere koordinasyonu: biri açılınca diğerleri kapanır, rehber giriş
   assert.equal(welcomeGuideMayShow(none, true), false, 'çevrimdışı özet açıkken rehber çıkmaz');
   assert.equal(welcomeGuideMayShow({ ...none, settings: true }, false), false);
   assert.equal(welcomeGuideMayShow({ ...none, building: true }, false), false);
+});
+
+test('Ferah alt menü: en çok 5 sekme; Haberler ilk alımdan sonra üst çubukta görünür', () => {
+  const eng = new SimulationEngine(20261104, 100_000);
+  passGate(eng);
+  const nav = renderNav(eng);
+  const count = (nav.match(/data-testid="bottom-nav-(city|market|portfolio|company|bank|news|guide)"/g) ?? []).length;
+  assert.ok(count <= 5, `alt menüde ${count} sekme`);
+  assert.ok(!nav.includes('bottom-nav-news"'));
+  const top = renderTop(eng);
+  assert.ok(top.includes('data-testid="top-news-btn"'));
+  assert.ok(top.includes('data-testid="game-speed-toggle"'));
+  assert.ok(top.includes('data-testid="top-notifications-btn"'));
+  assert.ok(top.includes('data-testid="top-settings-btn"'));
 });

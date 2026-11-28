@@ -211,3 +211,49 @@ export const SHOP_CASH_KEEP = 5_000;
 export const SHOP_COLLECT_MIN = 1_000;
 /** Kayıttaki onboarding alanının sürümü */
 export const ONBOARDING_VERSION = 2;
+
+/**
+ * DÜKKÂN YILDIZI (1.0 ★ – 5.0 ★) VE MÜŞTERİ YORUMLARI (engine/ShopRatingEngine.ts)
+ * 4 sütun (Ürün Dengesi, Fiyat Adaleti, Raf Sürekliliği, Hizmet & Ortam), her biri 0–100, eşit ağırlık.
+ * Gün kapanışında memnuniyet (`customerSatisfaction`) bu puana doğru SHOP_RATING_BLEND kadar yaklaşır (tek günde sıçramaz).
+ * Yıldız = 1 + memnuniyet / 100 × 4. Kademe çarpanı ESKİ memnuniyet çarpanının (0,65 + memnuniyet × 0,55) YERİNE geçer;
+ * üstüne eklenmez. Kademeler arası geçiş yumuşaktır (SHOP_STAR_CUSTOMER_CURVE noktaları arasında doğrusal).
+ */
+export const SHOP_RATING_BLEND = 0.2;
+/**
+ * Denge ayarı: yıldız kademesinin müşteri × sepet çarpanı bununla çarpılır. Böylece tipik iyi yönetilen dükkân
+ * (≈4,3–4,6 ★) eski memnuniyet çarpanıyla (memnuniyet ~95 → ×1,17) aynı yerde durur; `npm run balans` geri dönüşleri
+ * değişmez. Kademe farkı (kötü dükkân −, efsane +) korunur. Ölçülerek ayarlandı.
+ */
+export const SHOP_STAR_DEMAND_CALIBRATION = 0.98;
+/**
+ * Hizmet & Ortam sütunu ağırlıkları (toplam 1). Yalnızca çalışanı tam, yükseltmesiz dükkân ~50 puan alır:
+ * böylece temel iyi dükkân ~4,4 ★ (Semtin Gözdesi) olur; Efsane Mekân yükseltme + eğitim + sigorta ister.
+ */
+export const SHOP_SERVICE_WEIGHTS = { staff: 0.6, trained: 0.12, insurance: 0.08, upgrades: 0.2 } as const;
+export const SHOP_REVIEWS_MAX = 10;
+export interface ShopStarTierDef {
+  id: 'BAD' | 'STANDARD' | 'LOVED' | 'FAVORITE' | 'LEGEND';
+  minStars: number;
+  labelTR: string;
+  customerMult: number;
+  basketMult: number;
+  /** Günlük ticari itibar bonusu (100 tavanlı) */
+  dailyReputation: number;
+}
+export const SHOP_STAR_TIERS: readonly ShopStarTierDef[] = [
+  { id: 'BAD', minStars: 1.0, labelTR: 'Kötü Şöhret', customerMult: 0.72, basketMult: 1.0, dailyReputation: 0 },
+  { id: 'STANDARD', minStars: 2.5, labelTR: 'Standart Esnaf', customerMult: 1.0, basketMult: 1.0, dailyReputation: 0 },
+  { id: 'LOVED', minStars: 3.5, labelTR: 'Sevilen Mekân', customerMult: 1.08, basketMult: 1.0, dailyReputation: 0 },
+  { id: 'FAVORITE', minStars: 4.3, labelTR: 'Semtin Gözdesi', customerMult: 1.15, basketMult: 1.05, dailyReputation: 0 },
+  { id: 'LEGEND', minStars: 4.8, labelTR: 'Efsane Mekân', customerMult: 1.22, basketMult: 1.1, dailyReputation: 1 },
+];
+/** Yumuşak geçiş: [yıldız, müşteri çarpanı, sepet çarpanı] — kademelerin ortası; aradaki yıldızlar doğrusal. */
+export const SHOP_STAR_CURVE: ReadonlyArray<readonly [number, number, number]> = [
+  [1.0, 0.72, 1.0],
+  [2.0, 0.72, 1.0],
+  [3.0, 1.0, 1.0],
+  [3.85, 1.08, 1.0],
+  [4.5, 1.15, 1.05],
+  [4.9, 1.22, 1.1],
+];

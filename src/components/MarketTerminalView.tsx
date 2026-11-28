@@ -170,7 +170,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
               <strong className="text-amber-400">{macro.cyclePhase}</strong>
             </span>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono">
+          <span className="text-[11px] text-[var(--g-muted)] font-mono">
             Kurumlar Vergisi: %{(macro.corporateTaxRate * 100).toFixed(0)}
           </span>
         </div>
@@ -187,7 +187,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                 sectorFilter === 'TUMU'
                   ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                  : 'text-[var(--g-muted)] hover:text-slate-100 hover:bg-slate-800'
               }`}
             >
               Tüm Sektörler ({stocks.length})
@@ -200,7 +200,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   sectorFilter === secId
                     ? 'bg-emerald-600 text-white'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                    : 'text-[var(--g-muted)] hover:text-slate-100 hover:bg-slate-800'
                 }`}
               >
                 {secId}
@@ -209,7 +209,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[var(--g-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               aria-label="Hisse Kodu veya Şirket Ara"
@@ -231,11 +231,11 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
               <h2 className="text-sm font-semibold text-slate-100">
                 Piyasa Tahtası (Çok Faktörlü GBM Fiyat Motoru & 5-Yöntemli Temel Değer)
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[var(--g-muted)] mt-0.5">
                 Alış/Satış makası (Bid/Ask), 5-yöntemli adil değer (Fair Value), haber duyarlılığı ve ortaklık paylarını inceleyin.
               </p>
             </div>
-            <span className="text-xs text-slate-400 font-mono tabular-nums">
+            <span className="text-xs text-[var(--g-muted)] font-mono tabular-nums">
               Gösterilen: {filteredStocks.length} / {stocks.length} Şirket
             </span>
           </div>
@@ -243,7 +243,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-[11px] text-slate-400 bg-slate-950/60">
+                <tr className="border-b border-slate-800 text-[11px] text-[var(--g-muted)] bg-slate-950/60">
                   <th className="py-2.5 px-3">Kod / Şirket</th>
                   <th className="py-2.5 px-3">Sektör</th>
                   <th className="py-2.5 px-3 text-right">Fiyat (TL)</th>
@@ -273,11 +273,11 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                           <span className="font-mono font-semibold text-slate-100">
                             {stock.ticker}
                           </span>
-                          <span className="text-slate-400 truncate max-w-[165px]">
+                          <span className="text-[var(--g-muted)] truncate max-w-[165px]">
                             {stock.name}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-[var(--g-muted)] mt-0.5">
                           {stock.isPlayerCompany
                             ? 'Oyuncu Şirketi (Halka Açık)'
                             : stock.isControlledByPlayer
@@ -357,8 +357,8 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   <h3 className="text-base font-bold font-mono text-slate-100">
                     {activeStock.ticker}
                   </h3>
-                  <span className="text-xs text-slate-400">·</span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-[var(--g-muted)]">·</span>
+                  <span className="text-xs text-[var(--g-muted)]">
                     {activeStock.sector}
                   </span>
                 </div>
@@ -370,7 +370,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                 <div className="text-lg font-bold font-mono tabular-nums text-slate-100">
                   {activeStock.price.toFixed(2)} TL
                 </div>
-                <div className="text-[11px] font-mono tabular-nums text-slate-400">
+                <div className="text-[11px] font-mono tabular-nums text-[var(--g-muted)]">
                   Alış (Bid): {activeStock.bidPrice.toFixed(2)} · Satış (Ask):{' '}
                   {activeStock.askPrice.toFixed(2)}
                 </div>
@@ -379,7 +379,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
 
             {/* SVG Fiyat Grafiği */}
             <div className="my-3 bg-slate-950 border border-slate-800/80 rounded p-2.5">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono tabular-nums mb-1">
+              <div className="flex items-center justify-between text-[11px] text-[var(--g-muted)] font-mono tabular-nums mb-1">
                 <span>
                   Son {activeStock.priceHistory.length} Günlük Fiyat Yolu
                 </span>
@@ -431,19 +431,19 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
             {/* Şirket Bilanço ve Değerleme Özeti */}
             <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-800 text-[11px]">
               <div>
-                <div className="text-slate-400">Yıllık Ciro</div>
+                <div className="text-[var(--g-muted)]">Yıllık Ciro</div>
                 <div className="font-mono tabular-nums text-slate-200 mt-0.5">
                   {formatCurrency(activeStock.financials.revenue)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400">FAVÖK / Net Kâr</div>
+                <div className="text-[var(--g-muted)]">FAVÖK / Net Kâr</div>
                 <div className="font-mono tabular-nums text-emerald-400 mt-0.5">
                   {formatCurrency(activeStock.financials.EBITDA)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400">Özkaynak (Defter)</div>
+                <div className="text-[var(--g-muted)]">Özkaynak (Defter)</div>
                 <div className="font-mono tabular-nums text-sky-400 mt-0.5">
                   {formatCurrency(activeStock.financials.shareholdersEquity)}
                 </div>
@@ -459,7 +459,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                 >
                   Emir Miktarı (Lot)
                 </label>
-                <span className="text-slate-400 font-mono tabular-nums">
+                <span className="text-[var(--g-muted)] font-mono tabular-nums">
                   Alınabilir Maks: {maxAffordableLots.toLocaleString('tr-TR')} lot
                 </span>
               </div>
@@ -511,7 +511,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                       className={`px-2 py-1 rounded text-[11px] font-medium ${
                         orderMode === 'LIMIT'
                           ? 'bg-sky-600 text-white'
-                          : 'bg-slate-800 text-slate-400'
+                          : 'bg-slate-800 text-[var(--g-muted)]'
                       }`}
                     >
                       Limit Emir
@@ -522,7 +522,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                       className={`px-2 py-1 rounded text-[11px] font-medium ${
                         orderMode === 'MARKET'
                           ? 'bg-sky-600 text-white'
-                          : 'bg-slate-800 text-slate-400'
+                          : 'bg-slate-800 text-[var(--g-muted)]'
                       }`}
                     >
                       Piyasa Emri
@@ -534,7 +534,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   <div className="flex items-center justify-between gap-2">
                     <label
                       htmlFor="limit-price-input"
-                      className="text-slate-400"
+                      className="text-[var(--g-muted)]"
                     >
                       Limit Fiyatı (TL):
                     </label>
@@ -598,7 +598,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
 
               <div className="bg-slate-950/80 border border-slate-800/80 rounded p-2.5 text-xs space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Tahmini Alış Tutarı (Ask + %0.15 Komisyon):
                   </span>
                   <span className="font-mono tabular-nums text-slate-100 font-medium">
@@ -606,7 +606,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Kullanılabilir / Rezerve Nakit:
                   </span>
                   <span className="font-mono tabular-nums text-slate-200">
@@ -615,7 +615,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Portföydeki Mevcut Lotunuz:
                   </span>
                   <span className="font-mono tabular-nums text-slate-200">
@@ -660,7 +660,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
               Borsa Emir Defteri (Bekleyen & Gerçekleşen Emirler)
             </h3>
           </div>
-          <div className="text-xs font-mono tabular-nums text-slate-400 flex items-center gap-4">
+          <div className="text-xs font-mono tabular-nums text-[var(--g-muted)] flex items-center gap-4">
             <span>
               Seans:{' '}
               <strong
@@ -682,14 +682,14 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
         </div>
 
         {pendingOrders.length === 0 ? (
-          <div className="p-5 text-center text-xs text-slate-400">
+          <div className="p-5 text-center text-xs text-[var(--g-muted)]">
             Henüz oluşturulmuş bir piyasa veya limit emri bulunmuyor. Piyasa kapalıyken verilen emirler açılışı (10:00) bekler.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-[11px] text-slate-400 bg-slate-950/60">
+                <tr className="border-b border-slate-800 text-[11px] text-[var(--g-muted)] bg-slate-950/60">
                   <th className="py-2 px-3">Emir No / Gün</th>
                   <th className="py-2 px-3">Hisse</th>
                   <th className="py-2 px-3">Tür</th>
@@ -742,7 +742,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                               ? 'text-emerald-400 font-semibold'
                               : isActive
                               ? 'text-amber-400 font-semibold'
-                              : 'text-slate-500'
+                              : 'text-[var(--g-muted)]'
                           }
                         >
                           {ord.status}
@@ -777,14 +777,14 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
             <h3 className="text-sm font-semibold text-slate-100">
               Açık Portföy Pozisyonları & Temettü Getirileri
             </h3>
-            <span className="text-xs text-slate-400 font-mono tabular-nums">
+            <span className="text-xs text-[var(--g-muted)] font-mono tabular-nums">
               {portfolioList.length} Aktif Pozisyon
             </span>
           </div>
 
           {portfolioList.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--g-muted)]">
                 Portföyünüzde henüz hisse senedi bulunmuyor. Sağ üstteki emir panelinden hisse satın alarak başlayabilirsiniz.
               </p>
             </div>
@@ -792,7 +792,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[11px] text-slate-400 bg-slate-950/60">
+                  <tr className="border-b border-slate-800 text-[11px] text-[var(--g-muted)] bg-slate-950/60">
                     <th className="py-2 px-3">Hisse</th>
                     <th className="py-2 px-3 text-right">Adet (Lot)</th>
                     <th className="py-2 px-3 text-right">Ort. Maliyet</th>
@@ -853,7 +853,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
             <h3 className="text-sm font-semibold text-slate-100">
               Dinamik Haber Akışı (Sentiment Decay)
             </h3>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-[var(--g-muted)] font-mono">
               I(age) = I_0 · e^(-λ·age)
             </span>
           </div>
@@ -865,7 +865,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   key={news.id}
                   className="p-3.5 hover:bg-slate-800/30 transition-colors"
                 >
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                  <div className="flex items-center justify-between text-[11px] text-[var(--g-muted)] mb-1">
                     <span>
                       Gün {news.day} · Sektör: {news.sector}
                       {news.targetTicker ? ` (${news.targetTicker})` : ''} · λ:{' '}
@@ -888,7 +888,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
                   <h4 className="text-xs font-semibold text-slate-100">
                     {news.headline}
                   </h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-[var(--g-muted)] mt-1 leading-relaxed">
                     {news.summary}
                   </p>
                 </div>

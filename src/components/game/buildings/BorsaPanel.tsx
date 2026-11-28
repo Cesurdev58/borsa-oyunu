@@ -293,10 +293,10 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           <div className="flex items-center gap-2 min-w-0">
             <SectorIcon sector={selectedStock.sector} size="lg" />
             <div className="min-w-0">
-              <div className="font-extrabold text-slate-900 text-sm">
+              <div className="font-extrabold text-[var(--g-ink)] text-sm">
                 {selectedStock.ticker}
               </div>
-              <div className="text-[13px] text-slate-500 truncate">
+              <div className="text-[13px] text-[var(--g-muted)] truncate">
                 {selectedStock.name}
               </div>
             </div>
@@ -305,18 +305,18 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             <div className="g-section-title">
               <span className="whitespace-nowrap">{selectedStock.price.toFixed(2)} ₺</span>
             </div>
-            <div className="text-[13px] text-slate-500">
+            <div className="text-[13px] text-[var(--g-muted)]">
               {ownedShares > 0 ? `Sende ${ownedShares} lot` : 'Sende yok'}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 rounded-2xl bg-slate-50 p-2">
+        <div className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--g-surface-2)] p-2">
           <button
             type="button"
             aria-label="Azalt"
             onClick={() => setLotAmount((v) => Math.max(1, v - (v > 50 ? 50 : v > 10 ? 10 : 1)))}
-            className="w-12 h-12 rounded-xl bg-white border border-slate-200 text-xl font-extrabold text-slate-700 active:scale-95"
+            className="w-12 h-12 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] text-xl font-extrabold text-[var(--g-ink)] active:scale-95"
           >
             −
           </button>
@@ -330,9 +330,9 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
               onChange={(e) =>
                 setLotAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
               }
-              className="w-28 text-center text-2xl font-extrabold tabular-nums text-slate-900 bg-white rounded-xl border border-slate-200 min-h-[44px]"
+              className="w-28 text-center text-2xl font-extrabold tabular-nums text-[var(--g-ink)] bg-[var(--g-surface)] rounded-xl border border-[var(--g-line)] min-h-[44px]"
             />
-            <div className="text-[13px] text-slate-500">
+            <div className="text-[13px] text-[var(--g-muted)]">
               lot · yaklaşık {formatCurrency(lotAmount * selectedStock.askPrice)}
             </div>
           </div>
@@ -340,7 +340,7 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
             type="button"
             aria-label="Artır"
             onClick={() => setLotAmount((v) => v + (v >= 50 ? 50 : v >= 10 ? 10 : 1))}
-            className="w-12 h-12 rounded-xl bg-white border border-slate-200 text-xl font-extrabold text-slate-700 active:scale-95"
+            className="w-12 h-12 rounded-xl bg-[var(--g-surface)] border border-[var(--g-line)] text-xl font-extrabold text-[var(--g-ink)] active:scale-95"
           >
             +
           </button>
@@ -404,20 +404,20 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
           </button>
         </div>
         {tradeNote && (
-          <div className="text-[13px] text-center text-slate-600">{tradeNote}</div>
+          <div className="text-[13px] text-center text-[var(--g-muted)]">{tradeNote}</div>
         )}
       </div>
 
       {/* Hisse kartları */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-extrabold text-slate-900">Hisseler</h3>
+          <h3 className="text-sm font-extrabold text-[var(--g-ink)]">Hisseler</h3>
           <input
             type="search"
             placeholder="Ara..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="min-h-[36px] w-32 px-3 rounded-full bg-slate-100 text-xs text-slate-900"
+            className="min-h-[36px] w-32 px-3 rounded-full bg-[var(--g-surface-2)] text-xs text-[var(--g-ink)]"
           />
         </div>
         <div data-testid="borsa-sector-filter" className="flex items-center gap-1.5 overflow-x-auto pb-1">
@@ -461,24 +461,24 @@ export const BorsaPanel: React.FC<BuildingDetailContentProps> = ({
                 onClick={() => onSelectTicker(st.ticker)}
                 className={`w-full p-3 rounded-2xl border-2 text-left flex items-center gap-3 min-h-[64px] active:scale-[0.99] ${
                   isSelected
-                    ? 'bg-white border-[var(--g-navy-400)] shadow-md'
-                    : 'bg-white border-[var(--g-line)] shadow-sm'
+                    ? 'bg-[var(--g-surface)] border-[var(--g-navy-400)] shadow-md'
+                    : 'bg-[var(--g-surface)] border-[var(--g-line)] shadow-sm'
                 }`}
               >
                 <SectorIcon sector={st.sector} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-slate-900 text-sm">{st.ticker}</span>
+                    <span className="font-extrabold text-[var(--g-ink)] text-sm">{st.ticker}</span>
                     {myLots > 0 && (
                       <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold">
                         {myLots} lot
                       </span>
                     )}
                   </div>
-                  <div className="text-[13px] text-slate-500 truncate">{st.name}</div>
+                  <div className="text-[13px] text-[var(--g-muted)] truncate">{st.name}</div>
                 </div>
                 <div className="text-right tabular-nums tabular-nums shrink-0">
-                  <div className="text-sm font-extrabold text-slate-900">{st.price.toFixed(2)} ₺</div>
+                  <div className="text-sm font-extrabold text-[var(--g-ink)]">{st.price.toFixed(2)} ₺</div>
                   <div
                     className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[13px] font-bold ${
                       up ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'

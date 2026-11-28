@@ -52,7 +52,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({ state, reservedCash,
       data-testid="decision-card"
       className="fixed inset-0 z-[52] flex items-end sm:items-center justify-center bg-[rgba(18,28,68,.55)] p-3"
     >
-      <div className="celebration-in w-full max-w-sm rounded-[26px] bg-white shadow-2xl overflow-hidden">
+      <div className="celebration-in w-full max-w-sm rounded-[26px] bg-[var(--g-surface)] shadow-2xl overflow-hidden">
         <div className="g-hero rounded-none px-5 pt-5 pb-5 text-center">
           <div className="flex items-center justify-between text-[13px] font-extrabold text-white/60">
             <span className="inline-flex items-center gap-1">

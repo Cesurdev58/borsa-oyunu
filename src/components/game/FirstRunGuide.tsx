@@ -294,9 +294,9 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
         data-testid="first-run-guide"
         className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
       >
-        <div className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-4 text-center">
-          <h2 className="g-display text-xl font-extrabold text-slate-900">{step.title}</h2>
-          <p data-testid="first-run-text" className="text-base text-slate-600">{text}</p>
+        <div className="w-full max-w-sm rounded-3xl bg-[var(--g-surface)] p-5 shadow-2xl space-y-4 text-center">
+          <h2 className="g-display text-xl font-extrabold text-[var(--g-ink)]">{step.title}</h2>
+          <p data-testid="first-run-text" className="text-base text-[var(--g-muted)]">{text}</p>
           <div className="grid grid-cols-2 gap-2">
             <button type="button" data-testid="first-run-skip" onClick={() => onAction({ type: 'dismiss' })} className="g-btn g-btn-secondary min-h-[48px]">
               Atla
@@ -331,7 +331,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
         aria-label="Rehber adımı"
         data-testid="guide-step-card"
         data-step={step.id}
-        className={`fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-white p-3 shadow-2xl space-y-2 ${cardAtTop ? 'top-[calc(128px+env(safe-area-inset-top,0px))]' : 'bottom-[calc(84px+env(safe-area-inset-bottom))]'}`}
+        className={`fixed left-3 right-3 z-[56] mx-auto max-w-md rounded-2xl bg-[var(--g-surface)] p-3 shadow-2xl space-y-2 ${cardAtTop ? 'top-[calc(128px+env(safe-area-inset-top,0px))]' : 'bottom-[calc(84px+env(safe-area-inset-bottom))]'}`}
       >
         <div className="flex items-center justify-between gap-2">
           <h3 className="g-section-title">{step.title}</h3>
@@ -339,7 +339,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
             {index + 1}/{GUIDE_STEPS.length}
           </span>
         </div>
-        <p className="text-sm text-slate-600">{text}</p>
+        <p className="text-sm text-[var(--g-muted)]">{text}</p>
         <div className="grid grid-cols-2 gap-2">
           <button type="button" data-testid="guide-skip" onClick={() => onAction({ type: 'dismiss' })} className="g-btn g-btn-secondary min-h-[48px]">
             Atla

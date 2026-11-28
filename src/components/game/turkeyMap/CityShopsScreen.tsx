@@ -4,11 +4,12 @@
  * Şehirde dükkân yoksa (bozuk durum / doğrudan bağlantı) "Bu şehirde henüz mağazan yok" gösterilir.
  */
 import React, { useState } from 'react';
-import { ArrowLeft, UserCog, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, UserCog, AlertTriangle, Star } from 'lucide-react';
 import type { CityId } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
 import { liveShopToday } from '../../../engine/ShopSales';
+import { getShopStarTier, shopStars } from '../../../engine/ShopRatingEngine';
 import { SHOP_ISSUE_LABEL_TR, cityIssueLabels, shopIssueKindsInState } from '../../../engine/CityOpeningQuote';
 import { shopsInCity, summarizeCityShops } from './mapNavigation';
 import { CityDepotCard } from './CityDepotCard';
@@ -79,8 +80,8 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
 
       {shops.length === 0 ? (
         <div className="p-6 text-center" data-testid="city-shops-empty">
-          <div className="g-display text-xl font-extrabold text-slate-800">Bu şehirde henüz mağazan yok</div>
-          <p className="mt-1 text-[14px] text-slate-500">Haritadan şehre dokunup ilk mağazanı açabilirsin.</p>
+          <div className="g-display text-xl font-extrabold text-[var(--g-ink)]">Bu şehirde henüz mağazan yok</div>
+          <p className="mt-1 text-[14px] text-[var(--g-muted)]">Haritadan şehre dokunup ilk mağazanı açabilirsin.</p>
           <button type="button" data-testid="city-shops-empty-back-btn" onClick={onBackToMap} className="g-btn g-btn-primary mt-4 min-h-[52px] px-6">
             Haritaya Dön
           </button>
@@ -97,20 +98,27 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
             return (
               <div key={shop.shopId} className="g-card overflow-hidden" data-testid={`city-shop-card-${shop.shopId}`} data-shop-city={shop.cityId}>
                 <div className="flex items-center gap-3 p-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-[28px]">{SHOP_EMOJI[shop.shopType] ?? '🏪'}</span>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--g-surface-2)] text-[28px]">{SHOP_EMOJI[shop.shopType] ?? '🏪'}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[17px] font-extrabold text-slate-900">{shop.nameTR}</div>
-                    <div className="text-[13px] text-slate-500">Seviye {shop.level} · {staffText}</div>
+                    <div className="truncate text-[17px] font-extrabold text-[var(--g-ink)]">{shop.nameTR}</div>
+                    <div className="text-[13px] text-[var(--g-muted)]">Seviye {shop.level} · {staffText}</div>
                   </div>
+                  <span
+                    data-testid={`city-shop-stars-${shop.shopId}`}
+                    title={getShopStarTier(shopStars(shop)).labelTR}
+                    className="g-pill shrink-0 bg-[var(--g-gold)] text-[#3a2600]"
+                  >
+                    <Star className="h-3.5 w-3.5 fill-current" /> {shopStars(shop).toFixed(1)}
+                  </span>
                   {shop.manager && <span className="g-pill bg-[var(--g-gold)] text-[#5a3a00]"><UserCog className="h-3.5 w-3.5" /> Müdür</span>}
                 </div>
                 <div className="grid grid-cols-3 gap-2 px-3 text-center">
-                  <div className="g-card-soft p-2"><div className="text-[13px] text-slate-500">Ciro</div><b className="tabular-nums">{formatCurrency(t.revenue)}</b></div>
-                  <div className="g-card-soft p-2"><div className="text-[13px] text-slate-500">Kâr</div><b className={`tabular-nums ${t.profit < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(t.profit)}</b></div>
-                  <div className="g-card-soft p-2"><div className="text-[13px] text-slate-500">Memnuniyet</div><b>%{Math.round(shop.customerSatisfaction)}</b></div>
+                  <div className="g-card-soft p-2"><div className="text-[13px] text-[var(--g-muted)]">Ciro</div><b className="tabular-nums">{formatCurrency(t.revenue)}</b></div>
+                  <div className="g-card-soft p-2"><div className="text-[13px] text-[var(--g-muted)]">Kâr</div><b className={`tabular-nums ${t.profit < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(t.profit)}</b></div>
+                  <div className="g-card-soft p-2"><div className="text-[13px] text-[var(--g-muted)]">Yıldız</div><b className="tabular-nums">★ {shopStars(shop).toFixed(1)}</b></div>
                 </div>
                 <div className="px-3 pt-2">
-                  <div className="flex justify-between text-[13px] font-semibold text-slate-700"><span>Stok</span><span className={stockPct < 25 ? 'text-red-600' : ''}>%{stockPct}</span></div>
+                  <div className="flex justify-between text-[13px] font-semibold text-[var(--g-ink)]"><span>Stok</span><span className={stockPct < 25 ? 'text-red-600' : ''}>%{stockPct}</span></div>
                   <div className="g-track mt-1 h-2.5"><div className={stockPct < 25 ? 'g-fill g-fill-danger' : 'g-fill'} style={{ width: `${stockPct}%` }} /></div>
                 </div>
                 {(issue || shop.manager) && (
@@ -127,7 +135,7 @@ export const CityShopsScreen: React.FC<CityShopsScreenProps> = ({ cityId, state,
                   <button type="button" className="g-btn g-btn-secondary min-h-[48px]" data-testid={`city-shop-accounting-${shop.shopId}`} aria-expanded={accountingOpen === shop.shopId} onClick={() => setAccountingOpen(accountingOpen === shop.shopId ? null : shop.shopId)}>Muhasebe</button>
                 </div>
                 {accountingOpen === shop.shopId && (
-                  <div className="mx-3 mb-3 space-y-1 rounded-xl bg-slate-50 p-3 text-[14px]" data-testid={`city-shop-accounting-panel-${shop.shopId}`}>
+                  <div className="mx-3 mb-3 space-y-1 rounded-xl bg-[var(--g-surface-2)] p-3 text-[14px]" data-testid={`city-shop-accounting-panel-${shop.shopId}`}>
                     <div className="flex justify-between"><span>Dünkü satış</span><b>{formatCurrency(shop.todaySalesRevenue)}</b></div>
                     <div className="flex justify-between"><span>Dünkü kâr</span><b>{formatCurrency(shop.todayNetProfit)}</b></div>
                     <div className="flex justify-between"><span>Toplam satış</span><b>{formatCurrency(shop.cumulativeRevenue)}</b></div>

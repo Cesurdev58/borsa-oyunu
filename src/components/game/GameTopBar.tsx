@@ -5,7 +5,9 @@
 
 import { useCountUp } from './ui/useCountUp';
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronDown, Coins, Settings, Star, Trophy, Crown } from 'lucide-react';
+import { Bell, ChevronDown, Coins, HelpCircle, Newspaper, Settings, Trophy, Crown } from 'lucide-react';
+import { GameSpeedControl } from './GameSpeedControl';
+import type { TimeScaleOption } from '../../models/simulation';
 import { MarketSession, SimulationStage } from '../../models/simulation';
 import { formatHudCurrencyTR } from './ui/questAndHudLogic';
 import { formatDateTR, getMarketSessionBadgeMeta } from './gameTypes';
@@ -33,6 +35,17 @@ interface GameTopBarProps {
   onOpenLifestyle?: () => void;
   /** İlk aşama: yalnızca nakit, net değer ve gün/saat öne çıkar; aşama yıldızı ve ayrıntılar gizlenir */
   simpleMode?: boolean;
+  /** Haberler (üst çubuk düğmesi; aşamalı açılışta gizli olabilir) */
+  newsVisible?: boolean;
+  newsActive?: boolean;
+  onOpenNews?: () => void;
+  /** "Nasıl oynanır?" rehberi */
+  onOpenGuide?: () => void;
+  /** Hız kontrolü (1x/2x, duraklat) */
+  timeScale?: TimeScaleOption;
+  lastRunningScale?: TimeScaleOption;
+  speedDisabled?: boolean;
+  onSetTimeScale?: (scale: TimeScaleOption) => void;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
@@ -53,6 +66,14 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
     reputation,
     onOpenLifestyle,
     simpleMode = false,
+    newsVisible = false,
+    newsActive = false,
+    onOpenNews,
+    onOpenGuide,
+    timeScale,
+    lastRunningScale = 1,
+    speedDisabled = false,
+    onSetTimeScale,
   }) => {
     const sessionMeta = getMarketSessionBadgeMeta(marketSession);
     const prevCashRef = useRef(cash);
@@ -114,7 +135,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
           boxShadow: '0 8px 24px -14px rgba(18,28,68,.8)',
         }}
       >
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-1.5">
           {/* Sol: Gün ve saat */}
           <div className="flex flex-col shrink-0 text-white leading-tight">
             <span data-testid="tycoon-top-day" className="g-display text-lg font-extrabold leading-none">
@@ -128,6 +149,14 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               {formattedTime}
             </span>
           </div>
+          {onSetTimeScale && timeScale !== undefined && (
+            <GameSpeedControl
+              timeScale={timeScale}
+              lastRunningScale={lastRunningScale}
+              disabled={speedDisabled}
+              onSetTimeScale={onSetTimeScale}
+            />
+          )}
 
           {/* Orta: para kutusu; dokununca ayrıntı kartı açılır */}
           <button
@@ -135,7 +164,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
             onClick={() => setInfoOpen((v) => !v)}
             aria-label={cashMeta.ariaLabel}
             aria-expanded={infoOpen}
-            className={`relative flex-1 min-w-0 max-w-[210px] h-12 pl-1 pr-3 rounded-full flex items-center gap-1.5 cursor-pointer transition-transform ${
+            className={`relative flex-1 min-w-0 max-w-[210px] h-12 pl-1 pr-2 min-[400px]:pr-3 rounded-full flex items-center gap-1.5 cursor-pointer transition-transform ${
               cashDeltaDirection ? 'motion-safe:scale-[1.04]' : ''
             }`}
             style={{
@@ -145,7 +174,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
           >
             <span
               aria-hidden="true"
-              className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center"
+              className="hidden min-[400px]:flex w-8 h-8 shrink-0 rounded-full items-center justify-center"
               style={{ background: 'linear-gradient(180deg,#ffe08a,var(--g-gold))', boxShadow: '0 2px 0 var(--g-gold-dark)' }}
             >
               <Coins className="w-[18px] h-[18px] text-[#7a4f00]" strokeWidth={2.4} />
@@ -155,7 +184,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
               data-testid="tycoon-top-cash"
               data-full-value={cashMeta.full}
               data-abbreviated-value={cashMeta.abbreviated}
-              className={`g-display max-w-full text-left text-[17px] font-extrabold tabular-nums whitespace-nowrap truncate leading-none pt-0.5 ${
+              className={`g-display max-w-full text-left text-[16px] min-[400px]:text-[17px] font-extrabold tabular-nums whitespace-nowrap truncate leading-none pt-0.5 ${
                 cashDeltaDirection === 'up'
                   ? 'text-[#7dffbc]'
                   : cashDeltaDirection === 'down'
@@ -193,23 +222,27 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
           )}
 
           {/* Sağ: seviye, bildirim, ayarlar */}
-          <div className="flex items-center gap-1 shrink-0">
-            {!simpleMode && (
-            <span
-              data-testid="tycoon-top-stage"
-              className="relative w-9 h-9 flex items-center justify-center"
-              title={`Aşama ${stage}`}
-            >
-              <Star className="absolute inset-0 w-9 h-9 fill-[var(--g-gold)] text-[var(--g-gold-dark)]" strokeWidth={1.5} aria-hidden="true" />
-              <span className="g-display relative text-[15px] font-extrabold text-[#5a3a00] pt-0.5">{stage}</span>
-            </span>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {newsVisible && onOpenNews && (
+              <button
+                type="button"
+                data-testid="top-news-btn"
+                onClick={onOpenNews}
+                aria-label="Haberler"
+                aria-pressed={newsActive}
+                className={`relative w-8 h-8 rounded-full flex items-center justify-center before:content-[''] before:absolute before:-inset-1.5 before:rounded-full ${
+                  newsActive ? 'bg-[var(--g-gold)] text-[#3a2600]' : 'bg-white/10 hover:bg-white/15 text-white'
+                }`}
+              >
+                <Newspaper className="w-5 h-5" />
+              </button>
             )}
             <button
               type="button"
               data-testid="top-notifications-btn"
               onClick={onOpenNotifications}
               aria-label={`Bildirimler (${unreadNotificationsCount} yeni)`}
-              className="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1 before:rounded-full"
+              className="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1.5 before:rounded-full"
             >
               <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
@@ -221,12 +254,23 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
                 </span>
               )}
             </button>
+            {onOpenGuide && (
+              <button
+                type="button"
+                data-testid="top-guide-btn"
+                onClick={onOpenGuide}
+                aria-label="Nasıl oynanır? Rehber"
+                className="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1.5 before:rounded-full"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+            )}
             <button
               type="button"
               data-testid="top-settings-btn"
               onClick={onOpenSettings}
               aria-label="Oyun Ayarları ve Geliştirici Araçları"
-              className="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1 before:rounded-full"
+              className="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 text-white flex items-center justify-center before:content-[''] before:absolute before:-inset-1.5 before:rounded-full"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -253,7 +297,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = React.memo(
             {!simpleMode && (
             <div className="rounded-xl bg-white/[0.06] p-2.5">
               <div className="text-[13px] text-white/60 font-bold">Aşama</div>
-              <div className="g-display font-extrabold text-base">{stage}. aşama</div>
+              <div data-testid="tycoon-top-stage" className="g-display font-extrabold text-base">{stage}. aşama</div>
             </div>
             )}
             <div data-testid="tycoon-market-session-badge" className="rounded-xl bg-white/[0.06] p-2.5">

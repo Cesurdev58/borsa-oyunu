@@ -47,14 +47,14 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
         className="space-y-3 text-xs"
         data-testid="sheet-content-FABRIKA-locked"
       >
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <div className="p-4 rounded-2xl bg-[var(--g-surface-2)] border border-[var(--g-line)] space-y-2">
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-amber-600" />
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-[var(--g-ink)]">
               Fabrika Bölgesi Kilitli
             </h3>
           </div>
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-[var(--g-muted)] leading-relaxed">
             Fabrika üretim bantlarını çalıştırmak için önce Aşama 2’de (Net
             Varlık ≥ ₺2.000.000) kendi şirketinizi kurmanız gerekmektedir.
           </p>
@@ -106,16 +106,16 @@ export const FabrikaPanel: React.FC<BuildingDetailContentProps> = ({
       </div>
       <div className="grid grid-cols-3 gap-2 text-center tabular-nums">
         <div className="g-card p-3">
-          <div className="text-[13px] text-slate-500">Satılan</div>
+          <div className="text-[13px] text-[var(--g-muted)]">Satılan</div>
           <div className="font-extrabold text-emerald-700">{ops.actualSalesUnits.toFixed(0)}</div>
         </div>
         <div className="g-card p-3">
-          <div className="text-[13px] text-slate-500">Stok</div>
-          <div className="font-extrabold text-slate-900">{ops.inventoryUnits.toFixed(0)}</div>
+          <div className="text-[13px] text-[var(--g-muted)]">Stok</div>
+          <div className="font-extrabold text-[var(--g-ink)]">{ops.inventoryUnits.toFixed(0)}</div>
         </div>
         <div className="g-card p-3">
-          <div className="text-[13px] text-slate-500">Çalışan</div>
-          <div className="font-extrabold text-slate-900">{pc.staffCount}</div>
+          <div className="text-[13px] text-[var(--g-muted)]">Çalışan</div>
+          <div className="font-extrabold text-[var(--g-ink)]">{pc.staffCount}</div>
         </div>
       </div>
       <div className="hidden">

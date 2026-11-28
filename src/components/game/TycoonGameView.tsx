@@ -22,7 +22,6 @@ import {
   Clock,
   Code2,
   Compass,
-  Gauge,
   RotateCcw,
   Save,
   Settings,
@@ -38,7 +37,6 @@ import {
   TimeScaleOption,
 } from '../../models/simulation';
 import {
-  GraphicsQualityLevel,
   UISettingsState,
   UISettingsStore,
 } from '../../state/uiSettingsStore';
@@ -191,6 +189,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   formatCurrency,
 }) => {
   const [showFactoryDetails, setShowFactoryDetails] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpenRaw] = useState(false);
   // Şehir Mağazaları ekranından belirli bir dükkânın yönetimini açma isteği.
   const [manageRequest, setManageRequest] = useState<{ shopId: string; tab?: ShopManageTab; nonce: number } | null>(null);
@@ -303,12 +302,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   const [autoPauseOnSheetOpen, setAutoPauseOnSheetOpen] = useState(false);
   const prevScaleBeforeSheetRef = useRef<TimeScaleOption | null>(null);
 
-  const activePendingOrders = useMemo(
-    () =>
-      state.pendingOrders.filter(
-        (o) => o.status === 'PENDING' || o.status === 'PARTIALLY_FILLED'
-      ),
-    [state.pendingOrders]
+  // Not: `state` bellekte yerinde güncellenir (aynı referans), bu yüzden useMemo kullanılmaz.
+  const activePendingOrders = state.pendingOrders.filter(
+    (o) => o.status === 'PENDING' || o.status === 'PARTIALLY_FILLED'
   );
 
   const unreadNotificationsCount = useMemo(
@@ -326,14 +322,6 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           state.wealthTax?.lastAmount ? ` Son: ${formatCurrency(state.wealthTax.lastAmount)}.` : ''
         }`
       : undefined;
-
-  const handleSetGraphicsQuality = useCallback(
-    (quality: GraphicsQualityLevel) => {
-      const next = UISettingsStore.setGraphicsQuality(quality);
-      setUiSettings(next);
-    },
-    []
-  );
 
   const handleUpdateAudioSetting = useCallback(
     (patch: Partial<UISettingsState['audio']>) => {
@@ -400,8 +388,8 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     setIsNotificationDrawerOpen(false);
   }, []);
 
-  const tabStatuses = useMemo(() => navTabStatuses(state), [state]);
-  const shopIndicators = useMemo(() => shopTabIndicators(state), [state]);
+  const tabStatuses = navTabStatuses(state);
+  const shopIndicators = shopTabIndicators(state);
   const hasShop = shopIndicators.ownedShopCount > 0;
   const handleSelectTab = useCallback(
     (tab: GameBottomTab) => {
@@ -496,7 +484,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   return (
     <div
       data-testid="tycoon-game-view"
-      className="min-h-screen w-full overflow-x-hidden bg-[var(--g-bg)] text-[var(--g-ink)] flex flex-col justify-between"
+      className="min-h-[100dvh] w-full overflow-x-clip bg-[var(--g-bg)] text-[var(--g-ink)] flex flex-col justify-between"
     >
       <CelebrationOverlay
         shopCount={state.tradeState?.shops.length ?? 0}
@@ -809,7 +797,10 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
           aria-label="Oyun Ayarları"
           data-testid="game-settings-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-3 sm:p-4"
-          onClick={() => setIsSettingsModalOpen(false)}
+          onClick={() => {
+            setResetConfirmOpen(false);
+            setIsSettingsModalOpen(false);
+          }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -832,94 +823,114 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               </button>
             </div>
 
-            {/* Grafik Kalitesi (Performans Modu) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
-                  <Gauge className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Grafik</span>
-                </label>
-
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { id: 'LOW', label: 'Düşük', sub: 'Pil dostu' },
-                    { id: 'MEDIUM', label: 'Orta', sub: 'Dengeli' },
-                    { id: 'HIGH', label: 'Yüksek', sub: 'En canlı' },
-                  ] as const
-                ).map((item) => {
-                  const active = uiSettings.graphicsQuality === item.id;
-                  return (
+            {/* 1) Oyun Hızı ve Süre */}
+            <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-tempo">
+              <h3 className="font-extrabold text-[var(--g-ink)]">1) Oyun Hızı ve Süre</h3>
+              <div className="space-y-2">
+                <div className="text-[13px] font-bold text-slate-700">Bir oyun günü ne kadar sürsün?</div>
+                <div className="grid grid-cols-4 gap-2">
+                  {([15, 30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
                     <button
-                      key={`graphics-mode-${item.id}`}
+                      key={`day-duration-${mins}m`}
                       type="button"
-                      data-testid={`graphics-quality-${item.id}`}
-                      aria-pressed={active}
-                      onClick={() => handleSetGraphicsQuality(item.id)}
-                      data-active={active ? 'true' : 'false'}
-                      className="g-choice p-2 text-center"
+                      onClick={() => onSetRealMinutesPerDay(mins)}
+                      data-active={state.realMinutesPerGameDay === mins ? 'true' : 'false'}
+                      className="g-choice tabular-nums"
                     >
-                      <div className="font-bold">{item.label}</div>
-                      <div
-                        className="text-[13px] font-semibold opacity-75"
-                      >
-                        {item.sub}
-                      </div>
+                      {mins} dk
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Gün sonu raporu */}
-            <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-200">
-              <div>
-                <div className="font-extrabold text-[var(--g-ink)]">Gün sonu raporu</div>
-                <div className="text-[13px] text-[var(--g-muted)]">
-                  Gün 00:00'da dönünce günün özeti hazır olur.
+                  ))}
                 </div>
               </div>
-              <button
-                type="button"
-                data-testid="settings-day-report-toggle"
-                aria-pressed={uiSettings.showDayReport !== false}
-                onClick={() =>
-                  setUiSettings(
-                    UISettingsStore.saveSettings({
-                      ...UISettingsStore.loadSettings(),
-                      showDayReport: uiSettings.showDayReport === false,
-                    })
-                  )
-                }
-                className={`g-btn g-btn-sm shrink-0 ${
-                  uiSettings.showDayReport !== false ? 'g-btn-primary' : 'g-btn-secondary'
-                }`}
-              >
-                {uiSettings.showDayReport !== false ? 'Açık' : 'Kapalı'}
-              </button>
-            </div>
 
-            {/* Ses Yöneticisi (UI Audio Infrastructure) */}
-            <div className="space-y-2.5 pt-2.5 border-t border-slate-200">
+              {onSetFastStartTempo && (
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                  <div>
+                    <div className="font-extrabold text-[var(--g-ink)]">Hızlı başlangıç</div>
+                    <div className="text-[13px] text-slate-500" data-testid="settings-fast-start-note">
+                      {isFastStartOn(state)
+                        ? `Şirket kurana kadar 1 gün ${TEMPO_EARLY_MINUTES} dk, halka arza kadar ${TEMPO_COMPANY_MINUTES} dk. Şu an: ${effectiveRealMinutesPerGameDay(state)} dk`
+                        : `Kapalı: her zaman ${state.realMinutesPerGameDay} dk`}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="settings-fast-start-toggle"
+                    aria-pressed={isFastStartOn(state)}
+                    onClick={() => onSetFastStartTempo(!isFastStartOn(state))}
+                    className={`g-btn ${isFastStartOn(state) ? 'g-btn-primary' : 'g-btn-secondary'} px-4 min-h-[44px]`}
+                  >
+                    {isFastStartOn(state) ? 'Açık' : 'Kapalı'}
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <div className="font-extrabold text-[var(--g-ink)]">Panel Açıkken Otomatik Duraklat</div>
+                  <div className="text-[13px] text-slate-500">
+                    Bina yönetim penceresi açıldığında oyun saatini duraklatır
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="toggle-autopause-sheet-btn"
+                  aria-pressed={autoPauseOnSheetOpen}
+                  onClick={() => setAutoPauseOnSheetOpen((prev) => !prev)}
+                  className={`g-btn g-btn-sm shrink-0 ${autoPauseOnSheetOpen ? 'g-btn-primary' : 'g-btn-secondary'}`}
+                >
+                  {autoPauseOnSheetOpen ? 'Açık' : 'Kapalı'}
+                </button>
+              </div>
+            </section>
+
+            {/* 2) Raporlar ve Bildirimler */}
+            <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-reports">
+              <h3 className="font-extrabold text-[var(--g-ink)]">2) Raporlar ve Bildirimler</h3>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-extrabold text-[var(--g-ink)]">Gün sonu raporu</div>
+                  <div className="text-[13px] text-[var(--g-muted)]">
+                    Gün 00:00'da dönünce günün özeti hazır olur.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="settings-day-report-toggle"
+                  aria-pressed={uiSettings.showDayReport !== false}
+                  onClick={() =>
+                    setUiSettings(
+                      UISettingsStore.saveSettings({
+                        ...UISettingsStore.loadSettings(),
+                        showDayReport: uiSettings.showDayReport === false,
+                      })
+                    )
+                  }
+                  className={`g-btn g-btn-sm shrink-0 ${
+                    uiSettings.showDayReport !== false ? 'g-btn-primary' : 'g-btn-secondary'
+                  }`}
+                >
+                  {uiSettings.showDayReport !== false ? 'Açık' : 'Kapalı'}
+                </button>
+              </div>
+            </section>
+
+            {/* 3) Ses ve Titreşim */}
+            <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-audio">
               <div className="flex items-center justify-between">
-                <div className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
+                <h3 className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
                   {uiSettings.audio.isMuted ? (
                     <VolumeX className="w-3.5 h-3.5 text-rose-600" />
                   ) : (
                     <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
                   )}
-                  <span>Ses ve titreşim</span>
-                </div>
+                  <span>3) Ses ve Titreşim</span>
+                </h3>
                 <button
                   type="button"
                   data-testid="audio-mute-toggle"
                   aria-pressed={uiSettings.audio.isMuted}
-                  onClick={() =>
-                    handleUpdateAudioSetting({
-                      isMuted: !uiSettings.audio.isMuted,
-                    })
-                  }
+                  onClick={() => handleUpdateAudioSetting({ isMuted: !uiSettings.audio.isMuted })}
                   className={`min-h-[32px] px-2.5 rounded-lg text-[13px] font-bold border ${
                     uiSettings.audio.isMuted
                       ? 'bg-rose-600 text-white border-rose-700'
@@ -929,209 +940,128 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   {uiSettings.audio.isMuted ? 'Sessizde (Aç)' : 'Sessize Al'}
                 </button>
               </div>
-
-              <div className="space-y-3 g-card-soft p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <label
-                    htmlFor="audio-master-volume"
-                    className="text-[13px] text-slate-700 font-medium w-24"
-                  >
-                    Genel (%{uiSettings.audio.masterVolume})
-                  </label>
-                  <input
-                    id="audio-master-volume"
-                    data-testid="audio-master-volume"
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={uiSettings.audio.masterVolume}
-                    onChange={(e) =>
-                      handleUpdateAudioSetting({
-                        masterVolume: Number(e.target.value),
-                      })
-                    }
-                    className="flex-1 accent-[var(--g-green)]"
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <label
-                    htmlFor="audio-effects-volume"
-                    className="text-[13px] text-slate-700 font-medium w-24"
-                  >
-                    Efektler (%{uiSettings.audio.effectsVolume})
-                  </label>
-                  <input
-                    id="audio-effects-volume"
-                    data-testid="audio-effects-volume"
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={uiSettings.audio.effectsVolume}
-                    onChange={(e) =>
-                      handleUpdateAudioSetting({
-                        effectsVolume: Number(e.target.value),
-                      })
-                    }
-                    className="flex-1 accent-[var(--g-green)]"
-                  />
-                </div>
-                <div className="hidden">
-                  <label
-                    htmlFor="audio-music-volume"
-                    className="text-[13px] text-slate-700 font-medium w-24"
-                  >
-                    Müzik Sesi (%{uiSettings.audio.musicVolume})
-                  </label>
-                  <input
-                    id="audio-music-volume"
-                    data-testid="audio-music-volume"
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={uiSettings.audio.musicVolume}
-                    onChange={(e) =>
-                      handleUpdateAudioSetting({
-                        musicVolume: Number(e.target.value),
-                      })
-                    }
-                    className="flex-1 accent-[var(--g-green)]"
-                  />
-                </div>
-                              </div>
-            </div>
-
-            {/* 1 Oyun Günü Gerçek Süre Karşılığı */}
-            <div className="space-y-2 pt-2 border-t border-slate-200">
-              <label className="block font-extrabold text-[var(--g-ink)]">
-                Bir oyun günü ne kadar sürsün?
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {([15, 30, 45, 60] as RealMinutesPerGameDayOption[]).map((mins) => (
-                  <button
-                    key={`day-duration-${mins}m`}
-                    type="button"
-                    onClick={() => onSetRealMinutesPerDay(mins)}
-                    data-active={state.realMinutesPerGameDay === mins ? 'true' : 'false'}
-                    className="g-choice tabular-nums"
-                  >
-                    {mins} dk
-                  </button>
-                ))}
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="audio-master-volume" className="text-[13px] text-slate-700 font-medium w-24">
+                  Genel (%{uiSettings.audio.masterVolume})
+                </label>
+                <input
+                  id="audio-master-volume"
+                  data-testid="audio-master-volume"
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={uiSettings.audio.masterVolume}
+                  onChange={(e) => handleUpdateAudioSetting({ masterVolume: Number(e.target.value) })}
+                  className="flex-1 accent-[var(--g-green)]"
+                />
               </div>
-            </div>
-
-            {/* Hızlı başlangıç: kariyerin başında günler kısa */}
-            {onSetFastStartTempo && (
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
-                <div>
-                  <div className="font-extrabold text-[var(--g-ink)]">Hızlı başlangıç</div>
-                  <div className="text-[13px] text-slate-500" data-testid="settings-fast-start-note">
-                    {isFastStartOn(state)
-                      ? `Şirket kurana kadar 1 gün ${TEMPO_EARLY_MINUTES} dk, halka arza kadar ${TEMPO_COMPANY_MINUTES} dk. Şu an: ${effectiveRealMinutesPerGameDay(state)} dk`
-                      : `Kapalı: her zaman ${state.realMinutesPerGameDay} dk`}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  data-testid="settings-fast-start-toggle"
-                  aria-pressed={isFastStartOn(state)}
-                  onClick={() => onSetFastStartTempo(!isFastStartOn(state))}
-                  className={`g-btn ${isFastStartOn(state) ? 'g-btn-primary' : 'g-btn-secondary'} px-4 min-h-[44px]`}
-                >
-                  {isFastStartOn(state) ? 'Açık' : 'Kapalı'}
-                </button>
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="audio-effects-volume" className="text-[13px] text-slate-700 font-medium w-24">
+                  Efektler (%{uiSettings.audio.effectsVolume})
+                </label>
+                <input
+                  id="audio-effects-volume"
+                  data-testid="audio-effects-volume"
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={uiSettings.audio.effectsVolume}
+                  onChange={(e) => handleUpdateAudioSetting({ effectsVolume: Number(e.target.value) })}
+                  className="flex-1 accent-[var(--g-green)]"
+                />
               </div>
-            )}
+            </section>
 
-            {/* Bina Paneli Açıkken Otomatik Duraklatma Seçeneği */}
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
-              <div>
-                <div className="font-extrabold text-[var(--g-ink)]">
-                  Panel Açıkken Otomatik Duraklat
-                </div>
-                <div className="text-[13px] text-slate-500">
-                  Bina yönetim penceresi açıldığında oyun saatini duraklatır
-                </div>
-              </div>
+            {/* 4) Kayıt ve Veri */}
+            <section className="g-card-soft p-3 space-y-2" data-testid="settings-group-data">
+              <h3 className="font-extrabold text-[var(--g-ink)]">4) Kayıt ve Veri</h3>
               <button
                 type="button"
-                data-testid="toggle-autopause-sheet-btn"
-                aria-pressed={autoPauseOnSheetOpen}
-                onClick={() => setAutoPauseOnSheetOpen((prev) => !prev)}
-                className={`min-h-[38px] px-3 rounded-xl font-bold border ${
-                  autoPauseOnSheetOpen
-                    ? 'bg-emerald-600 text-white border-emerald-700'
-                    : 'bg-slate-100 text-slate-700 border-slate-300'
-                }`}
+                onClick={() => {
+                  onManualSave();
+                  setIsSettingsModalOpen(false);
+                }}
+                className="g-btn g-btn-secondary w-full"
               >
-                {autoPauseOnSheetOpen ? 'Açık' : 'Kapalı'}
+                <Save className="w-4 h-4" />
+                <span>Oyunu Kaydet</span>
               </button>
-            </div>
 
-            <div className="space-y-2 pt-2 border-t border-slate-200">
-              <div className="font-extrabold text-[var(--g-ink)]">
-                Kayıt
-              </div>
-              <div className="grid grid-cols-1 gap-2">
+              {!resetConfirmOpen ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    onManualSave();
-                    setIsSettingsModalOpen(false);
-                  }}
-                  className="g-btn g-btn-secondary w-full"
+                  data-testid="tycoon-reset-game-btn"
+                  onClick={() => setResetConfirmOpen(true)}
+                  className="w-full min-h-[48px] px-3 rounded-2xl text-[var(--g-red)] font-extrabold inline-flex items-center justify-center gap-1.5"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>Oyunu Kaydet</span>
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Oyunu Sıfırla (Yeni Oyun: ₺100.000)</span>
                 </button>
-              </div>
+              ) : (
+                <div
+                  className="rounded-2xl border border-rose-300 bg-rose-50 p-3 space-y-2"
+                  data-testid="tycoon-reset-confirm"
+                  role="alert"
+                >
+                  <div className="font-extrabold text-rose-700">Emin misin? Tüm ilerleme silinecek.</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      data-testid="tycoon-reset-cancel-btn"
+                      onClick={() => setResetConfirmOpen(false)}
+                      className="g-btn g-btn-secondary"
+                    >
+                      Vazgeç
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="tycoon-reset-confirm-btn"
+                      onClick={() => {
+                        setResetConfirmOpen(false);
+                        onResetSimulation();
+                        setIsSettingsModalOpen(false);
+                      }}
+                      className="g-btn bg-rose-600 text-white font-extrabold"
+                    >
+                      Evet, sıfırla
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <details className="group rounded-2xl bg-[var(--g-surface-2)] px-3 py-2">
                 <summary className="cursor-pointer list-none min-h-[40px] flex items-center justify-between text-[13px] font-extrabold text-[var(--g-muted)]">
                   Geliştirici araçları
                   <span className="transition-transform group-open:rotate-180">⌄</span>
                 </summary>
                 <div className="space-y-2 pb-1">
-                <button
-                  type="button"
-                  data-testid="tycoon-simulate-offline-btn"
-                  onClick={() => {
-                    onSimulateOfflineProgress();
-                    setIsSettingsModalOpen(false);
-                  }}
-                  className="g-btn g-btn-secondary g-btn-sm w-full"
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>Çevrimdışı ilerlemeyi dene</span>
-                </button>
-
-              <button
-                type="button"
-                data-testid="settings-switch-developer-btn"
-                onClick={() => {
-                  setIsSettingsModalOpen(false);
-                  onSwitchToDeveloperDashboard();
-                }}
-                className="g-btn g-btn-secondary g-btn-sm w-full"
-              >
-                <Code2 className="w-4 h-4" />
-                <span>Geliştirici paneli</span>
-              </button>
+                  <button
+                    type="button"
+                    data-testid="tycoon-simulate-offline-btn"
+                    onClick={() => {
+                      onSimulateOfflineProgress();
+                      setIsSettingsModalOpen(false);
+                    }}
+                    className="g-btn g-btn-secondary g-btn-sm w-full"
+                  >
+                    <Clock className="w-4 h-4" />
+                    <span>Çevrimdışı ilerlemeyi dene</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="settings-switch-developer-btn"
+                    onClick={() => {
+                      setIsSettingsModalOpen(false);
+                      onSwitchToDeveloperDashboard();
+                    }}
+                    className="g-btn g-btn-secondary g-btn-sm w-full"
+                  >
+                    <Code2 className="w-4 h-4" />
+                    <span>Geliştirici paneli</span>
+                  </button>
                 </div>
               </details>
-
-              <button
-                type="button"
-                data-testid="tycoon-reset-game-btn"
-                onClick={() => {
-                  onResetSimulation();
-                  setIsSettingsModalOpen(false);
-                }}
-                className="w-full min-h-[48px] px-3 rounded-2xl text-[var(--g-red)] font-extrabold inline-flex items-center justify-center gap-1.5"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Oyunu Sıfırla (Yeni Oyun: ₺100.000)</span>
-              </button>
-            </div>
+            </section>
           </div>
         </div>
       )}

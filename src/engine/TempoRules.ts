@@ -43,8 +43,8 @@ export function effectiveRealMinutesPerGameDay(state: TempoInput): number {
   return chosen;
 }
 
-/** Çevrimdışı en fazla kaç oyun günü işlenir: gerçek süre sınırı / gün uzunluğu (en az 8, en çok 60). */
+/** Çevrimdışı en fazla kaç oyun günü işlenir: gerçek süre sınırı / gün uzunluğu (en az 2, en çok OFFLINE_MAX_GAME_DAYS_CAP = 5). */
 export function maxOfflineGameDays(state: TempoInput): number {
   const perDay = effectiveRealMinutesPerGameDay(state);
-  return Math.max(8, Math.min(OFFLINE_MAX_GAME_DAYS_CAP, Math.round(OFFLINE_MAX_REAL_MINUTES / perDay)));
+  return Math.max(2, Math.min(OFFLINE_MAX_GAME_DAYS_CAP, Math.round(OFFLINE_MAX_REAL_MINUTES / perDay)));
 }

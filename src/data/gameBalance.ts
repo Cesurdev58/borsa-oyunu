@@ -27,8 +27,8 @@ export const FIRST_SHOP_MIN_NET_WORTH = 120_000;
  * Ayarlardan "Hızlı başlangıç" kapatılırsa her zaman seçilen gün uzunluğu geçerlidir.
  * Ölçüm: `npm run kariyer` (scripts/kariyer-hizi.ts) her önemli anın kaç gerçek dakikada geldiğini yazar.
  */
-export const TEMPO_EARLY_MINUTES = 2;
-export const TEMPO_COMPANY_MINUTES = 5;
+export const TEMPO_EARLY_MINUTES = 4;
+export const TEMPO_COMPANY_MINUTES = 8;
 /**
  * PORTFÖY YÖNETİCİSİ (borsa otomasyonu, engine/AutoInvestEngine.ts)
  * Bir kez işe alma ücreti; her gün sonunda kenardaki paranın fazlası eşit sepete yatırılır.
@@ -60,8 +60,8 @@ export const PRESTIGE_CUSTOMER_PCT_PER_STAR = 4;
 export const PRESTIGE_REWARD_PCT_PER_STAR = 20;
 
 /** Çevrimdışı ilerleme gerçek süreyle sınırlıdır (dakika); gün sayısı gün uzunluğundan hesaplanır. */
-export const OFFLINE_MAX_REAL_MINUTES = 120;
-export const OFFLINE_MAX_GAME_DAYS_CAP = 60;
+export const OFFLINE_MAX_REAL_MINUTES = 60;
+export const OFFLINE_MAX_GAME_DAYS_CAP = 5;
 /**
  * Sekme arka plandan dönünce (ya da sayfa açılınca) en az bu kadar gerçek saniye geçtiyse
  * çevrimdışı ilerleme işlenir ve "Tekrar hoş geldin" penceresi açılır (`engine/OfflineResume.ts`).

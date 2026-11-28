@@ -337,6 +337,8 @@ export class SimulationEngine {
     return out;
   }
   public maxProcessedOfflineTimestampMs: number = 0;
+  /** Çevrimdışı ilerleme işlenirken true: karar kartı üretilmez / otomatik ceza kesilmez. */
+  public isOfflineProcessing: boolean = false;
   public intradayTracking = {
     ordersExecuted: 0,
     ordersExpired: 0,

@@ -18,8 +18,8 @@ test('index.html: başlık ve paylaşım başlığı aynı ürün adı', () => {
 });
 
 test('Favicon ve manifest dosyaları var, index.html bağlıyor, manifest geçerli', () => {
-  assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="\/favicon\.svg" \/>/);
-  assert.match(html, /<link rel="manifest" href="\/manifest\.webmanifest" \/>/);
+  assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="\.\/favicon\.svg" \/>/);
+  assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest" \/>/);
   assert.equal(existsSync(path.join(root, 'public/favicon.svg')), true);
   const manifest = JSON.parse(readFileSync(path.join(root, 'public/manifest.webmanifest'), 'utf8')) as {
     name: string;

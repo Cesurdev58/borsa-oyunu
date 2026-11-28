@@ -50,21 +50,42 @@ export const CityDepotCard: React.FC<CityDepotCardProps> = ({
 
       {plan.exists && depot ? (
         <div className="mt-3" data-testid="city-depot-status">
-          <div className="flex justify-between text-[13px] font-semibold text-slate-700">
-            <span>Doluluk</span>
-            <span className={depot.usedPct >= 95 ? 'text-red-600' : ''}>
-              {depot.usedUnits.toLocaleString('tr-TR')} / {depot.maxUnits.toLocaleString('tr-TR')} birim
-            </span>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="g-card-soft p-2">
+              <div className="text-[13px] text-slate-500">Aktif nakliye indirimi</div>
+              <b className="tabular-nums text-emerald-600" data-testid="city-depot-active-discount">
+                %{plan.discountWithDepotPct}
+              </b>
+            </div>
+            <div className="g-card-soft p-2">
+              <div className="text-[13px] text-slate-500">Kapsanan dükkân</div>
+              <b className="tabular-nums" data-testid="city-depot-covered-shops">{plan.shopCount}</b>
+            </div>
+            <div className="g-card-soft p-2">
+              <div className="text-[13px] text-slate-500">Son 30 gün tasarruf</div>
+              <b className="tabular-nums text-emerald-600" data-testid="city-depot-active-saving">
+                {formatCurrency(plan.activeSaving30Days)}
+              </b>
+            </div>
           </div>
-          <div className="g-track mt-1 h-2.5">
-            <div
-              className={depot.usedPct >= 95 ? 'g-fill g-fill-danger' : 'g-fill'}
-              style={{ width: `${Math.min(100, depot.usedPct)}%` }}
-            />
-          </div>
+          {depot.usedUnits > 0 && (
+            <div className="mt-3" data-testid="city-depot-fill">
+              <div className="flex justify-between text-[13px] font-semibold text-slate-700">
+                <span>Depodaki mal</span>
+                <span className={depot.usedPct >= 95 ? 'text-red-600' : ''}>
+                  {depot.usedUnits.toLocaleString('tr-TR')} / {depot.maxUnits.toLocaleString('tr-TR')} birim
+                </span>
+              </div>
+              <div className="g-track mt-1 h-2.5">
+                <div
+                  className={depot.usedPct >= 95 ? 'g-fill g-fill-danger' : 'g-fill'}
+                  style={{ width: `${Math.min(100, depot.usedPct)}%` }}
+                />
+              </div>
+            </div>
+          )}
           <p className="g-tip mt-3 text-[13px]">
-            Nakliye indirimi: %{plan.discountWithDepotPct}
-            {plan.discountNowPct > 0 ? ' (liman dahil)' : ''}. Mal siparişlerinde kendiliğinden uygulanır.
+            {plan.discountNowPct > 0 ? 'Liman dahil indirim. ' : ''}Mal siparişlerinde kendiliğinden uygulanır.
           </p>
         </div>
       ) : (

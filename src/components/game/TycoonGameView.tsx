@@ -46,6 +46,10 @@ import {
   BuildingDetailSheet,
 } from './BuildingDetailSheet';
 import { isBuildingUnlocked } from './ui/buildingLocks';
+import { GameSpeedControl } from './GameSpeedControl';
+import { BACK_PRIORITY, createExitGuard, exitNativeApp, registerBackHandler } from '../../nativeBackButton';
+import { needsStartCitySelection } from '../../engine/CityStartSelection';
+import { isCitySelectionPending } from '../../engine/CityMigration';
 import { CitySwitcher } from './ui/CitySwitcher';
 import { CompanyCityCard } from './ui/CompanyCityCard';
 import { companyBranchesInCity, resolveViewCity } from './ui/cityViewLogic';
@@ -264,6 +268,57 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   });
+  // Android donanım geri tuşu kuralları (nativeBackButton.ts): pencere → harita (TurkeyMapFlow) → Harita sekmesi → çıkış
+  const [exitToastVisible, setExitToastVisible] = useState(false);
+  const exitGuardRef = useRef(createExitGuard());
+  const exitToastTimerRef = useRef<number | null>(null);
+  const nativeBackRef = useRef<Record<'overlay' | 'tab' | 'exit', () => boolean>>({
+    overlay: () => false,
+    tab: () => false,
+    exit: () => false,
+  });
+  nativeBackRef.current = {
+    overlay: () => {
+      if (!overlayOpen) return false;
+      setResetConfirmOpen(false);
+      setIsGuideOpenRaw(false);
+      setIsSettingsModalOpenRaw(false);
+      setIsNotificationDrawerOpenRaw(false);
+      setSelectedBuildingIdRaw(null);
+      setIsRichListOpenRaw(false);
+      setIsLifestyleOpenRaw(false);
+      setOpenCityServiceRaw(null);
+      setIsPrestigeOpenRaw(false);
+      return true;
+    },
+    tab: () => {
+      if (activeBottomTab === 'city') return false;
+      handleSelectTab('city');
+      return true;
+    },
+    exit: () => {
+      if (exitGuardRef.current.press() === 'exit') {
+        void exitNativeApp();
+        return true;
+      }
+      setExitToastVisible(true);
+      if (exitToastTimerRef.current !== null) window.clearTimeout(exitToastTimerRef.current);
+      exitToastTimerRef.current = window.setTimeout(() => setExitToastVisible(false), 2000);
+      return true;
+    },
+  };
+  useEffect(() => {
+    const offs = [
+      registerBackHandler(BACK_PRIORITY.overlay, () => nativeBackRef.current.overlay()),
+      registerBackHandler(BACK_PRIORITY.tab, () => nativeBackRef.current.tab()),
+      registerBackHandler(BACK_PRIORITY.exit, () => nativeBackRef.current.exit()),
+    ];
+    return () => {
+      offs.forEach((off) => off());
+      if (exitToastTimerRef.current !== null) window.clearTimeout(exitToastTimerRef.current);
+    };
+  }, []);
+
   // Zenginler listesi sırası (her çizimde hesaplanır; 29 kişilik küçük liste)
   const richRank = buildRichList(state).playerRank;
 
@@ -299,8 +354,11 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
   }, []);
 
   // Panel açıkken isteğe bağlı otomatik duraklatma ayarı (Varsayılan: kapalı)
-  const [autoPauseOnSheetOpen, setAutoPauseOnSheetOpen] = useState(false);
+  const autoPauseOnSheetOpen = uiSettings.autoPauseOnSheetOpen === true;
   const prevScaleBeforeSheetRef = useRef<TimeScaleOption | null>(null);
+  // Hız kapsülü: duraklatmadan önceki hızı hatırlar (state yerinde güncellendiği için ref ile)
+  const lastRunningScaleRef = useRef<TimeScaleOption>(1);
+  if (state.timeScale > 0) lastRunningScaleRef.current = state.timeScale;
 
   // Not: `state` bellekte yerinde güncellenir (aynı referans), bu yüzden useMemo kullanılmaz.
   const activePendingOrders = state.pendingOrders.filter(
@@ -747,6 +805,22 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
         />
       </main>
 
+      {exitToastVisible && (
+        <div
+          role="status"
+          data-testid="exit-toast"
+          className="fixed left-1/2 bottom-[96px] z-50 -translate-x-1/2 rounded-full bg-[var(--g-navy-900)] px-4 py-2.5 text-[14px] font-bold text-white shadow-lg"
+        >
+          Çıkmak için tekrar bas
+        </div>
+      )}
+      <GameSpeedControl
+        timeScale={state.timeScale}
+        lastRunningScale={lastRunningScaleRef.current}
+        disabled={needsStartCitySelection(state) || isCitySelectionPending(state)}
+        onSetTimeScale={onSetTimeScale}
+      />
+
       {/* 4. ALT MOBİL NAVİGASYON (Şehir, Borsa, Şirket, Haberler, Portföy) */}
       <GameBottomNavigation
         activeTab={activeBottomTab}
@@ -816,16 +890,19 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               <button
                 type="button"
                 aria-label="Ayarları Kapat"
-                onClick={() => setIsSettingsModalOpen(false)}
+                onClick={() => {
+                  setResetConfirmOpen(false);
+                  setIsSettingsModalOpen(false);
+                }}
                 className="w-10 h-10 rounded-full bg-[var(--g-surface-2)] flex items-center justify-center text-[var(--g-muted)]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* 1) Oyun Hızı ve Süre */}
+            {/* Oyun Hızı ve Süre */}
             <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-tempo">
-              <h3 className="font-extrabold text-[var(--g-ink)]">1) Oyun Hızı ve Süre</h3>
+              <h3 className="font-extrabold text-[var(--g-ink)]">Oyun Hızı ve Süre</h3>
               <div className="space-y-2">
                 <div className="text-[13px] font-bold text-slate-700">Bir oyun günü ne kadar sürsün?</div>
                 <div className="grid grid-cols-4 gap-2">
@@ -876,7 +953,14 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   type="button"
                   data-testid="toggle-autopause-sheet-btn"
                   aria-pressed={autoPauseOnSheetOpen}
-                  onClick={() => setAutoPauseOnSheetOpen((prev) => !prev)}
+                  onClick={() =>
+                    setUiSettings(
+                      UISettingsStore.saveSettings({
+                        ...UISettingsStore.loadSettings(),
+                        autoPauseOnSheetOpen: !autoPauseOnSheetOpen,
+                      })
+                    )
+                  }
                   className={`g-btn g-btn-sm shrink-0 ${autoPauseOnSheetOpen ? 'g-btn-primary' : 'g-btn-secondary'}`}
                 >
                   {autoPauseOnSheetOpen ? 'Açık' : 'Kapalı'}
@@ -884,9 +968,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               </div>
             </section>
 
-            {/* 2) Raporlar ve Bildirimler */}
+            {/* Raporlar ve Bildirimler */}
             <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-reports">
-              <h3 className="font-extrabold text-[var(--g-ink)]">2) Raporlar ve Bildirimler</h3>
+              <h3 className="font-extrabold text-[var(--g-ink)]">Raporlar ve Bildirimler</h3>
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="font-extrabold text-[var(--g-ink)]">Gün sonu raporu</div>
@@ -915,7 +999,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               </div>
             </section>
 
-            {/* 3) Ses ve Titreşim */}
+            {/* Ses ve Titreşim */}
             <section className="g-card-soft p-3 space-y-3" data-testid="settings-group-audio">
               <div className="flex items-center justify-between">
                 <h3 className="font-extrabold text-[var(--g-ink)] inline-flex items-center gap-1.5">
@@ -924,7 +1008,7 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
                   ) : (
                     <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
                   )}
-                  <span>3) Ses ve Titreşim</span>
+                  <span>Ses ve Titreşim</span>
                 </h3>
                 <button
                   type="button"
@@ -972,9 +1056,9 @@ export const TycoonGameView: React.FC<TycoonGameViewProps> = ({
               </div>
             </section>
 
-            {/* 4) Kayıt ve Veri */}
+            {/* Kayıt ve Veri */}
             <section className="g-card-soft p-3 space-y-2" data-testid="settings-group-data">
-              <h3 className="font-extrabold text-[var(--g-ink)]">4) Kayıt ve Veri</h3>
+              <h3 className="font-extrabold text-[var(--g-ink)]">Kayıt ve Veri</h3>
               <button
                 type="button"
                 onClick={() => {

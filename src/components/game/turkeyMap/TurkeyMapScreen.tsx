@@ -85,7 +85,24 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
     };
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    // Üst çubuk, hedef şeridi ve alt menü yüksekliği değişince (para kutusu açılır, şerit değişir) yeniden ölç.
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => measure());
+      const targets = [
+        document.querySelector('header[aria-label="Oyun Üst Bilgi Çubuğu"]'),
+        document.querySelector('[data-testid="city-quest-strip"]'),
+        document.querySelector('[data-testid="game-bottom-nav"]'),
+        document.body,
+      ];
+      targets.forEach((t) => {
+        if (t) observer?.observe(t);
+      });
+    }
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
   }, []);
   const selectedId = isCityId(state.selectedMapCityId) ? state.selectedMapCityId : undefined;
   const selectedCity = selectedId ? CITY_DEFINITIONS[selectedId] : undefined;

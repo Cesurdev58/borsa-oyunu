@@ -218,14 +218,8 @@ export default function App() {
       });
     };
 
-    // 1. Yeni gün başlangıcı
+    // 1. Yeni gün: rutin olduğu için zile eklenmez (gün/saat üst çubukta görünür)
     if (st.day > prev.day) {
-      addItem(
-        'NEW_DAY',
-        `Yeni İş Günü (Gün ${st.day})`,
-        `Gün ${st.day} (${st.dateISO}) başladı. Net Varlık: ${eng.formatCurrency(st.netWorth)}`,
-        'info'
-      );
       prev.day = st.day;
     }
 
@@ -267,25 +261,8 @@ export default function App() {
     }
 
     // 3. Piyasa açılış / kapanış geçişleri
+    // Rutin açılış/kapanış zile eklenmez (seans bilgisi üst çubukta görünür)
     if (st.marketSession !== prev.marketSession) {
-      if (st.marketSession === 'MARKET_OPEN') {
-        addItem(
-          'MARKET_OPENED',
-          'Piyasa ve Borsa Seansı Açıldı (10:00)',
-          'Piyasa açıldı; Borsa İstanbul seansı ve bekleyen uygun emirler eşleştiriliyor.',
-          'success'
-        );
-      } else if (
-        prev.marketSession === 'MARKET_OPEN' &&
-        st.marketSession === 'AFTER_HOURS'
-      ) {
-        addItem(
-          'MARKET_CLOSED',
-          'Piyasa ve Borsa Seansı Kapandı (18:00)',
-          'Gün içi piyasa seansı tamamlandı; kapanış sonrası işlemlere geçildi.',
-          'info'
-        );
-      }
       prev.marketSession = st.marketSession;
     }
 

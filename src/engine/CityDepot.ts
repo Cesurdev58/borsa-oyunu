@@ -47,6 +47,8 @@ export interface CityDepotPlan {
   shippingLast30Days: number;
   /** Depo o 30 günde olsaydı nakliyeden düşecek tutar (₺). */
   estimatedSaving30Days: number;
+  /** Depo kuruluysa: son 30 günde depo sayesinde ödenmeyen tahmini nakliye (kurulu değilse 0). */
+  activeSaving30Days: number;
   /** Kurulum bedelinin bu tasarrufla kaç günde çıkacağı (tasarruf yoksa null). */
   paybackDays: number | null;
   canBuild: boolean;
@@ -105,6 +107,8 @@ export function getCityDepotPlan(
     .reduce((sum, o) => sum + Math.max(0, o.shippingCost), 0);
   // Nakliye (1 − indirim) ile orantılıdır: depolu tutar = şimdiki × (1 − depolu) / (1 − şimdiki)
   const saving = exists ? 0 : shipping * (1 - (1 - withDepot) / (1 - now));
+  // Depo kuruluysa ödenen nakliye zaten indirimli; indirimsiz tutardan farkı tasarruftur.
+  const activeSaving = exists && withDepot < 1 ? (shipping * (withDepot - now)) / (1 - withDepot) : 0;
   const dailySaving = saving / CITY_DEPOT_LOOKBACK_DAYS;
   const paybackDays = dailySaving > 0 ? Math.ceil(CITY_DEPOT_COST / dailySaving) : null;
 
@@ -116,7 +120,7 @@ export function getCityDepotPlan(
     blockReasonTR = 'Şehir bulunamadı.';
   } else if (exists) {
     blockReason = 'EXISTS';
-    blockReasonTR = `${cityNameTR} şehrinde zaten deponun var.`;
+    blockReasonTR = `${cityNameTR} şehrinde zaten depon var.`;
   } else if (shops.length === 0) {
     blockReason = 'NO_SHOP';
     blockReasonTR = `Depo yalnızca dükkânlarına indirim verir: önce ${cityNameTR} şehrinde dükkân aç.`;
@@ -137,6 +141,7 @@ export function getCityDepotPlan(
     discountWithDepotPct: Math.round(withDepot * 100),
     shippingLast30Days: Math.round(shipping),
     estimatedSaving30Days: Math.round(saving),
+    activeSaving30Days: Math.round(activeSaving),
     paybackDays,
     canBuild: blockReason === undefined,
     blockReason,

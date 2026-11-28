@@ -121,8 +121,8 @@ const BUILDING_SHEET_HEADERS: Record<
     iconBoxClass: 'bg-orange-100 border-orange-300 text-orange-800',
   },
   OYUNCU_OFISI: {
-    title: 'Oyuncu Ofisi & Portföy Yönetimi',
-    subtitle: 'Net varlık denklemi, portföy pozisyonları ve işlem geçmişi',
+    title: 'Dükkânlarım & İşletme Yönetimi',
+    subtitle: 'Stok, ekip, fiyatlandırma ve şube büyümesi',
     Icon: Building2,
     accentClass: 'border-t-4 border-t-sky-600 bg-sky-50/40',
     iconBoxClass: 'bg-sky-100 border-sky-300 text-sky-800',
@@ -184,7 +184,15 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
 
     if (!buildingId) return null;
 
-    const header = BUILDING_SHEET_HEADERS[buildingId];
+    const baseHeader = BUILDING_SHEET_HEADERS[buildingId];
+    // Belirli bir dükkân yönetilirken başlıkta dükkânın adı ve seviyesi görünür
+    const managedShop =
+      buildingId === 'OYUNCU_OFISI' && props.manageRequest
+        ? props.state.tradeState?.shops?.find((s) => s.shopId === props.manageRequest?.shopId)
+        : undefined;
+    const header = managedShop
+      ? { ...baseHeader, title: `${managedShop.nameTR} · Seviye ${managedShop.level}/5` }
+      : baseHeader;
     const HeaderIcon = header.Icon;
 
     const handleDragStart = (e: React.PointerEvent<HTMLDivElement>) => {

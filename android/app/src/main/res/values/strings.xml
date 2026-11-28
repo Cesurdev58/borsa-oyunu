@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Borsa Patronu</string>
+    <string name="title_activity_main">Borsa Patronu</string>
+    <string name="package_name">com.cesur.borsapatronu</string>
+    <string name="custom_url_scheme">com.cesur.borsapatronu</string>
+</resources>

@@ -2,7 +2,7 @@
  * Yeni kariyer: başlangıç şehrini haritadan seç (Faz 5).
  * Şehre kilit yok; Ankara önerilir ama kendiliğinden seçilmez. Seçimden önce risk/maliyet özeti ve onay gelir.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import type { CityId, TurkeyMapViewState } from '../../../models/cities';
 import type { SimulationState } from '../../../models/simulation';
 import { CITY_DEFINITIONS } from '../../../data/cityDefinitions';
@@ -32,7 +32,7 @@ export const StartCityScreen: React.FC<StartCityScreenProps> = ({
   const [confirming, setConfirming] = useState<boolean>(initialConfirm);
   const [done, setDone] = useState(false);
   const [view, setView] = useState<TurkeyMapViewState>(DEFAULT_MAP_VIEW);
-  const markers = useMemo(() => buildMapMarkers(state), [state]);
+  const markers = buildMapMarkers(state);
   const city = selected ? CITY_DEFINITIONS[selected] : undefined;
   const summary = selected ? getStartCitySummary(state, selected, reservedCash) : undefined;
 

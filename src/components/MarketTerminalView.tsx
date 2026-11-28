@@ -1,5 +1,5 @@
 import { NumberInput } from './game/ui/NumberInput';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MarketStock,
   PortfolioPosition,
@@ -74,7 +74,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
   const [orderMode, setOrderMode] = useState<'LIMIT' | 'MARKET'>('LIMIT');
   const [limitPriceInput, setLimitPriceInput] = useState<number>(124.5);
 
-  const filteredStocks = useMemo(() => {
+  const filteredStocks = ((): typeof stocks => {
     return stocks.filter((s) => {
       const matchesSector =
         sectorFilter === 'TUMU' || s.sector === sectorFilter;
@@ -84,11 +84,9 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
         s.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSector && matchesQuery;
     });
-  }, [stocks, sectorFilter, searchQuery]);
+  })();
 
-  const activeStock = useMemo(() => {
-    return stocks.find((s) => s.ticker === selectedTicker) || stocks[0];
-  }, [stocks, selectedTicker]);
+  const activeStock = stocks.find((s) => s.ticker === selectedTicker) || stocks[0];
 
   useEffect(() => {
     if (activeStock) {
@@ -108,7 +106,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
     Math.floor(spendableCash / (activeStock.askPrice * 1.0015))
   );
 
-  const chartPoints = useMemo(() => {
+  const chartPoints = ((): { polyline: string; min: number; max: number } => {
     const history = activeStock.priceHistory;
     if (history.length < 2) {
       return {
@@ -128,7 +126,7 @@ export const MarketTerminalView: React.FC<MarketTerminalViewProps> = ({
       })
       .join(' ');
     return { polyline: pts, min, max };
-  }, [activeStock]);
+  })();
 
   const portfolioList = Object.values(portfolio).filter((p) => p.shares > 0);
   const isMarketOpen = marketSession === 'MARKET_OPEN';

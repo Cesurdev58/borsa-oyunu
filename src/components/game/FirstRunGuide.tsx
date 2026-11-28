@@ -9,7 +9,7 @@
  *   oyunu engellemeyen kartlardır. "Atla" her zaman vardır; Rehber penceresinden yeniden başlatılır.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { SimulationState, TimeScaleOption } from '../../models/simulation';
 import type { OnboardingState } from '../../engine/OnboardingRules';
 import { firstShopGateStatus } from '../../engine/FirstShopGate';
@@ -207,7 +207,7 @@ export const FirstRunGuide: React.FC<FirstRunGuideProps> = ({
   timeScale,
   onSetTimeScale,
 }) => {
-  const gate = useMemo(() => firstShopGateStatus(state), [state]);
+  const gate = firstShopGateStatus(state);
   const ctx: GuideContext = { state, activeTab, gate };
   const step = onboarding ? currentGuideStep(onboarding) : null;
   const [rect, setRect] = useState<Rect | null>(null);

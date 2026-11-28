@@ -21,7 +21,8 @@ export interface AudioSettingsState {
 export type CityZoomPresetSetting = 'CLOSER' | 'NORMAL' | 'OVERVIEW';
 
 export interface UISettingsState {
-  graphicsQuality: GraphicsQualityLevel;
+  /** Eski kayıtlarla uyum için duruyor; arayüzde gösterilmez. */
+  graphicsQuality?: GraphicsQualityLevel;
   audio: AudioSettingsState;
   hasOpenedBorsaBuilding: boolean;
   /** Gün dönünce (00:00) "Gün raporu" kapsülü çıksın mı? */
@@ -30,60 +31,6 @@ export interface UISettingsState {
   lastCameraPanY?: number;
   lastZoomPreset?: CityZoomPresetSetting;
 }
-
-export interface GraphicsQualityProfile {
-  level: GraphicsQualityLevel;
-  labelTR: string;
-  descriptionTR: string;
-  maxVehicles: number;
-  maxCityTrafficVehicles: number;
-  maxPedestrians: number;
-  reducedShadows: boolean;
-  reducedAtmosphereTransitions: boolean;
-  particlesEnabled: boolean;
-}
-
-export const GRAPHICS_QUALITY_PROFILES: Record<
-  GraphicsQualityLevel,
-  GraphicsQualityProfile
-> = {
-  LOW: {
-    level: 'LOW',
-    labelTR: 'Düşük',
-    descriptionTR:
-      'Yaya animasyonları kapalı · En fazla 1 ana / 6 şehir aracı · Azaltılmış gölge · Parçacık efekti kapalı',
-    maxVehicles: 1,
-    maxCityTrafficVehicles: 6,
-    maxPedestrians: 0,
-    reducedShadows: true,
-    reducedAtmosphereTransitions: true,
-    particlesEnabled: false,
-  },
-  MEDIUM: {
-    level: 'MEDIUM',
-    labelTR: 'Orta',
-    descriptionTR:
-      'En fazla 2 ana / 12 şehir aracı · 2 yaya · Standart gölgeler · Hafif atmosfer geçişleri (Varsayılan)',
-    maxVehicles: 2,
-    maxCityTrafficVehicles: 12,
-    maxPedestrians: 2,
-    reducedShadows: false,
-    reducedAtmosphereTransitions: false,
-    particlesEnabled: false,
-  },
-  HIGH: {
-    level: 'HIGH',
-    labelTR: 'Yüksek',
-    descriptionTR:
-      'En fazla 3 ana / 18 şehir aracı · 4 yaya · Tam çevre hareketleri · Kontrollü açılış ve kutlama efektleri',
-    maxVehicles: 3,
-    maxCityTrafficVehicles: 18,
-    maxPedestrians: 4,
-    reducedShadows: false,
-    reducedAtmosphereTransitions: false,
-    particlesEnabled: true,
-  },
-};
 
 export class UISettingsStore {
   public static readonly STORAGE_KEY = 'borsa_holding_ui_settings_v1';
@@ -223,28 +170,6 @@ export class UISettingsStore {
     return sanitized;
   }
 
-  public static getGraphicsProfile(
-    level: GraphicsQualityLevel
-  ): GraphicsQualityProfile {
-    return (
-      GRAPHICS_QUALITY_PROFILES[level] || GRAPHICS_QUALITY_PROFILES.MEDIUM
-    );
-  }
-
-  public static setGraphicsQuality(
-    quality: GraphicsQualityLevel,
-    customStorage?: Storage
-  ): UISettingsState {
-    const current = UISettingsStore.loadSettings(customStorage);
-    return UISettingsStore.saveSettings(
-      {
-        ...current,
-        graphicsQuality: quality,
-      },
-      customStorage
-    );
-  }
-
   public static updateCameraState(
     camera: {
       panX: number;
@@ -296,10 +221,3 @@ export class UISettingsStore {
     );
   }
 }
-
-export function getGraphicsQualityProfile(
-  level: GraphicsQualityLevel
-): GraphicsQualityProfile {
-  return UISettingsStore.getGraphicsProfile(level);
-}
-

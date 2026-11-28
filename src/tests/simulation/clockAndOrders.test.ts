@@ -229,7 +229,7 @@ test('12-15. Emir iptali rezervi serbest bırakır; aynı nakit/hisse iki emirde
   assert.equal(engine.serializeState(), snapshotBefore);
 });
 
-test('16-18. Çevrimdışı İlerleme: 3 oyun günü sınırını aşmaz, negatif zamanı reddeder ve aynı aralığı iki kez işlemez', () => {
+test('16-18. Çevrimdışı İlerleme: 5 oyun günü sınırını aşmaz, negatif zamanı reddeder ve aynı aralığı iki kez işlemez', () => {
   const engine = new SimulationEngine(20261104);
 engine.setFastStartTempo(false); // saat testi: hızlı başlangıç kapalı, 15 dk/gün
 
@@ -242,7 +242,7 @@ engine.setFastStartTempo(false); // saat testi: hızlı başlangıç kapalı, 15
   assert.equal(negSummary.gameDaysAdvanced, 0);
   assert.equal(engine.getState().day, 1);
 
-  // 16. 20 oyun gününe karşılık gelen süre (20 * 15 dk = 300 gerçek dk) verildiğinde maksimum 8 oyun günü (11520 dk) ilerler
+  // 16. 20 oyun gününe karşılık gelen süre (20 * 15 dk = 300 gerçek dk) verildiğinde en fazla 4 oyun günü (60 dk / 15 dk, 5760 dk) ilerler
   const startISO = '2026-01-02T00:00:00.000Z';
   const tenGameDaysLaterISO = new Date(
     Date.parse(startISO) + 20 * 15 * 60 * 1000
@@ -252,12 +252,10 @@ engine.setFastStartTempo(false); // saat testi: hızlı başlangıç kapalı, 15
     startISO,
     tenGameDaysLaterISO
   );
-  assert.equal(
-    cappedSummary.gameMinutesAdvanced,
-    GameClockEngine.MAX_OFFLINE_GAME_MINUTES
-  );
-  assert.equal(cappedSummary.gameDaysAdvanced, 8);
-  assert.equal(engine.getState().day, 9);
+  assert.equal(cappedSummary.gameMinutesAdvanced, 4 * 1440);
+  assert.ok(cappedSummary.gameMinutesAdvanced <= GameClockEngine.MAX_OFFLINE_GAME_MINUTES);
+  assert.equal(cappedSummary.gameDaysAdvanced, 4);
+  assert.equal(engine.getState().day, 5);
 
   // 18. Aynı çevrimdışı süre iki kez işlenmez
   const dayAfterFirstOffline = engine.getState().day;

@@ -324,8 +324,11 @@ export function closeCurrentDay(engine: SimulationEngine, expectedDayToClose?: n
     if (wealthMsg) engine.pendingDailyActions.push(`[Vergi] ${wealthMsg}`);
 
     // 5C. Karar kartları: ertelenmiş ödemeler, süresi geçen kart, yeni olay
-    for (const msg of DecisionEventEngine.onDayClosed(engine.state, engine.getReservedCash())) {
-      engine.pendingDailyActions.push(`[Karar] ${msg}`);
+    // Çevrimdışıyken atlanır: kartlar yalnızca oyuncu aktif oynarken çıkar ve süresi dolan kart cezası kesilmez.
+    if (!engine.isOfflineProcessing) {
+      for (const msg of DecisionEventEngine.onDayClosed(engine.state, engine.getReservedCash())) {
+        engine.pendingDailyActions.push(`[Karar] ${msg}`);
+      }
     }
 
     const todayTradeSummary = engine.state.tradeState?.todaySummary;
@@ -790,7 +793,7 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
 
     if (wasCapped) {
       warnings.push(
-        `Çevrimdışı ilerleme en fazla ${maxOfflineGameDays(engine.state)} oyun günü (yaklaşık 2 gerçek saat) ile sınırlandırıldı.`
+        `Çevrimdışı ilerleme en fazla ${maxOfflineGameDays(engine.state)} oyun günü ile sınırlandırıldı.`
       );
     }
 
@@ -806,10 +809,16 @@ export function processOfflineProgress(engine: SimulationEngine, lastTimestampIS
       newsGenerated: 0,
     };
 
-    const advanceRes =
-      cappedGameMinutes > 0
-        ? engine.advanceGameMinutes(cappedGameMinutes)
-        : { gameMinutesAdvanced: 0, daysClosed: 0 };
+    engine.isOfflineProcessing = true;
+    let advanceRes: { gameMinutesAdvanced: number; daysClosed: number };
+    try {
+      advanceRes =
+        cappedGameMinutes > 0
+          ? engine.advanceGameMinutes(cappedGameMinutes)
+          : { gameMinutesAdvanced: 0, daysClosed: 0 };
+    } finally {
+      engine.isOfflineProcessing = false;
+    }
 
     engine.maxProcessedOfflineTimestampMs = currentMs;
     engine.state.lastRealTimestampISO = effectiveCurrentISO;

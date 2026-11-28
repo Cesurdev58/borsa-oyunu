@@ -9,7 +9,7 @@
 import { liveShopToday } from '../../../engine/ShopSales';
 import { shopOpenStatus } from '../../../data/shopHours';
 import { Plus, UserCog } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { SimulationState } from '../../../models/simulation';
 import type { CityId } from '../../../models/cities';
 import type { ShopType } from '../../../models/trade';
@@ -46,10 +46,7 @@ export const ShopDashboard: React.FC<ShopDashboardProps> = ({
   onManage,
   cityFilter,
 }) => {
-  const trade = useMemo(
-    () => TradeAndShopEngine.ensureTradeUniverseState(state),
-    [state]
-  );
+  const trade = TradeAndShopEngine.ensureTradeUniverseState(state);
 
   if (trade.shops.length === 0) {
     return <FirstShopGateCard state={state} onOpenShopPicker={() => onManage(null)} />;

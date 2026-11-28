@@ -2,7 +2,7 @@
  * Harita ekranı: harita + filtre çubuğu + "Haritayı Ortala" + alt panel. Oyun durumundan işaretleri türetir.
  * Kamera ve seçili şehir `state.turkeyMapView` / `state.selectedMapCityId` içinde saklanır (kayıtla birlikte).
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Crosshair } from 'lucide-react';
 import { DEFAULT_MAP_FILTER, MAP_FILTERS, cityMatchesFilter, mapFilterCounts, type MapFilterId } from './mapFilters';
 import type { CityId, TurkeyMapViewState } from '../../../models/cities';
@@ -65,14 +65,28 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
     setLocalFilter(f);
     onFilterChange?.(f);
   };
-  const markers = useMemo(
-    () => buildMapMarkers(state, filter),
-    [state, state.tradeState?.shops, state.tradeState?.warehouses, state.playerCompany?.productionCapacity, state.headquartersCityId, state.day, filter]
-  );
-  const counts = useMemo(() => mapFilterCounts(state, markers.map((m) => m.cityId)), [state, markers]);
+  const markers = buildMapMarkers(state, filter);
+  const counts = mapFilterCounts(state, markers.map((m) => m.cityId));
   const aspect = fixedSize ? fixedSize.height / fixedSize.width : 560 / 390;
   const view = clampMapView(state.turkeyMapView, aspect);
   const [revision, setRevision] = useState(0);
+  // Harita, üstündeki şeritlerden alt menünün üstüne kadar kalan yüksekliği doldurur (alt menü kesilmesin).
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [availableHeight, setAvailableHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = rootRef.current;
+      if (!el) return;
+      const nav = document.querySelector('[data-testid="game-bottom-nav"]');
+      const navHeight = nav instanceof HTMLElement ? nav.offsetHeight : 64;
+      const top = el.getBoundingClientRect().top;
+      const next = Math.floor(window.innerHeight - top - navHeight - 8);
+      setAvailableHeight(next > 0 ? next : null);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
   const selectedId = isCityId(state.selectedMapCityId) ? state.selectedMapCityId : undefined;
   const selectedCity = selectedId ? CITY_DEFINITIONS[selectedId] : undefined;
 
@@ -82,7 +96,12 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
   }, [onSetMapView]);
 
   return (
-    <div className="relative h-[calc(100dvh-236px)] min-h-[360px] w-full overflow-hidden" data-testid="turkey-map-screen">
+    <div
+      ref={rootRef}
+      className="relative h-[calc(100dvh-236px)] min-h-[320px] w-full overflow-hidden"
+      style={availableHeight !== null ? { height: Math.max(320, availableHeight) } : undefined}
+      data-testid="turkey-map-screen"
+    >
       <TurkeyMap
         markers={markers}
         view={view}

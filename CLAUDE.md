@@ -282,3 +282,9 @@ Plan: `ai-workflow/TURKIYE_GECIS_SARTNAMESI.md` (şartname), `ai-workflow/TURKIY
 - Silinenler: `src/components/game/city3d/` (7 dosya), `public/models/`, `three` + `@types/three`. Sonra (Harita sekmesi işi) klasik 2D şehir de silindi: `components/game/city/*` (izometrik görünüm, `cityLayout.ts`, `buildingSprites.ts`), `public/buildings/*.png`, `data/featureFlags.ts`. `cleanup3d.test.ts` bunların geri gelmediğini denetler. `questAndHudLogic.ts` `components/game/ui/` altına taşındı.
 - Paket (`vite build`): ilk yüklenen `index` ~1.342,6 → 1.339,3 kB (gzip 365,8 → 364,5); tembel yüklenen 3D parçası 756 kB (gzip 198) tamamen gitti; `dist` 9,8 MB → 3,5 MB; `public` 7,4 MB → 1,8 MB.
 - Faz 13 eksikleri tamamlandı: `src/tests/balance/cityBalance.test.ts` (12 şehir × 3 tohum × 150 gün; iflas yok, en iyi/zayıf fark, ilk dükkân ≤ 5. gün, ilk yükseltme ≤ 90. gün), `cleanup3d.test.ts`, `economyFixes.test.ts` 36 (aynı çevrimdışı aralık iki kez işlenince çift tahsilat/faiz yok). Şartnamedeki `asset-audit` scripti depoda yoktur; yazılmadı.
+
+## Mobil/Android notları
+
+- **`state` yerinde güncellenir** (`SimulationEngine.getState()` hep aynı referans): bileşenlerde `useMemo(..., [state])` KULLANMA, önbellek sonsuza dek eski kalır (alt menü donma hatası). Doğrudan hesapla. Testi `src/tests/ui/mobileFixes.test.ts`.
+- Ana kapsayıcıda `overflow-x-clip` (hidden değil): `overflow-x-hidden` üst/alt çubukların `sticky` davranışını bozar. Harita yüksekliği alt menüye göre ölçülür (`TurkeyMapScreen`).
+- Durum çubuğu: `src/nativeStatusBar.ts` yalnızca `Capacitor.isNativePlatform()` iken çalışır; ayar `capacitor.config.ts` (`#121c44`), Android teması `styles.xml`. **Gerçek telefonda doğrulanmadı.**

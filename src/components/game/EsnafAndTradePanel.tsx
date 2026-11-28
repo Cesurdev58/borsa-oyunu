@@ -196,14 +196,8 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   startWithOpenBranch,
   initialActionTab,
 }) => {
-  const trade = useMemo(
-    () => TradeAndShopEngine.ensureTradeUniverseState(state),
-    [state]
-  );
-  const incorporationEligibility = useMemo(
-    () => TradeAndShopEngine.checkIncorporationEligibility(state),
-    [state]
-  );
+  const trade = TradeAndShopEngine.ensureTradeUniverseState(state);
+  const incorporationEligibility = TradeAndShopEngine.checkIncorporationEligibility(state);
 
   const [mainMode, setMainMode] = useState<'SHOPS' | 'TRADE_CENTER'>(
     initialSection
@@ -287,21 +281,12 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
 
   // Kişisel nakitten rezerve edilen kısım (bekleyen emirler) kullanılabilir paradan farkıdır
   const reservedForAdvice = Math.max(0, state.cash - spendableCash);
-  const openingAdvice = useMemo(
-    () => getOpeningAdvice(state, newShopType, newShopCashFloat, reservedForAdvice),
-    [state, newShopType, newShopCashFloat, reservedForAdvice]
-  );
+  const openingAdvice = getOpeningAdvice(state, newShopType, newShopCashFloat, reservedForAdvice);
   const openingKey = `${newShopType}|${newShopCashFloat}`;
   const lowCashArmed = lowCashArmedKey === openingKey;
-  const firstEmployeeQuote = useMemo(
-    () => (activeShop && activeShop.ownerWorks ? getFirstEmployeeQuote(state, activeShop, reservedForAdvice) : null),
-    [state, activeShop, reservedForAdvice]
-  );
+  const firstEmployeeQuote = (activeShop && activeShop.ownerWorks ? getFirstEmployeeQuote(state, activeShop, reservedForAdvice) : null);
 
-  const supplierOffers = useMemo(
-    () => TradeAndShopEngine.getSupplierOffers(state, selectedResourceId, activeShop),
-    [state, selectedResourceId, activeShop]
-  );
+  const supplierOffers = TradeAndShopEngine.getSupplierOffers(state, selectedResourceId, activeShop);
 
   const activeOffer =
     supplierOffers.find((o) => o.supplierId === selectedSupplierId) ??
@@ -311,17 +296,9 @@ export const EsnafAndTradePanel: React.FC<EsnafAndTradePanelProps> = ({
   const activeShopUsedUnits = activeShop
     ? activeShop.inventoryBatches.reduce((sum, b) => sum + b.quantity, 0)
     : 0;
-  const restockPlan = useMemo(
-    () =>
-      activeShop
-        ? planShopRestock(
-            state,
-            activeShop.shopId,
-            spendableCash + activeShop.cashAccountBalance
-          )
-        : { orders: [], totalCost: 0 },
-    [state, activeShop, spendableCash]
-  );
+  const restockPlan = activeShop
+    ? planShopRestock(state, activeShop.shopId, spendableCash + activeShop.cashAccountBalance)
+    : { orders: [], totalCost: 0 };
   const inboundShipments = trade.shipments.filter(
     (sh) =>
       activeShop &&

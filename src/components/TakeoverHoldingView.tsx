@@ -55,26 +55,26 @@ export const TakeoverHoldingView: React.FC<TakeoverHoldingViewProps> = ({
             <h2 className="text-base font-semibold text-slate-100">
               Aşama 4: Tekel & Holding — Düşmanca Devralma (Hostile Takeover) Masası
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[var(--g-muted)] mt-1">
               Rakip NPC şirketlerinin hisselerini piyasadan toplayarak veya zorunlu çağrı (tender offer) ile %51+ çoğunluk kontrolünü ele geçirin. %10 altı paylarda NPC yönetim savunması (Poison Pill) ek maliyet doğurur.
             </p>
           </div>
 
           <div className="flex items-center gap-6 text-right shrink-0">
             <div>
-              <div className="text-xs text-slate-400">Bağlı Ortaklık Sayısı</div>
+              <div className="text-xs text-[var(--g-muted)]">Bağlı Ortaklık Sayısı</div>
               <div className="text-lg font-bold font-mono tabular-nums text-emerald-400">
                 {controlledSubsidiaries.length} / {npcStocks.length} Şirket
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Holding Borcu</div>
+              <div className="text-xs text-[var(--g-muted)]">Holding Borcu</div>
               <div className="text-lg font-bold font-mono tabular-nums text-rose-400">
                 {formatCurrency(totalDebt)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-[var(--g-muted)]">
                 Toplam Holding Sinerji Geliri
               </div>
               <div className="text-lg font-bold font-mono tabular-nums text-sky-400">
@@ -85,7 +85,7 @@ export const TakeoverHoldingView: React.FC<TakeoverHoldingViewProps> = ({
         </div>
 
         <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="text-slate-400">
+          <div className="text-[var(--g-muted)]">
             Kontrol Eşikleri: %5 Bildirim · %10 Stratejik · %25 Azınlık · %33 Bloke Edici · &gt;%50 Kontrol · %67 Güçlendirilmiş · %100 Tam Sahiplik
           </div>
           <label className="inline-flex items-center gap-2 text-slate-200 cursor-pointer">
@@ -108,7 +108,7 @@ export const TakeoverHoldingView: React.FC<TakeoverHoldingViewProps> = ({
           <h3 className="text-sm font-semibold text-slate-100">
             Rakip NPC Şirketleri, Kontrol Seviyesi ve Çağrı (Tender Offer) Maliyetleri
           </h3>
-          <span className="text-xs text-slate-400 font-mono tabular-nums">
+          <span className="text-xs text-[var(--g-muted)] font-mono tabular-nums">
             Kullanılabilir Nakit: {formatCurrency(cash)}
           </span>
         </div>
@@ -116,7 +116,7 @@ export const TakeoverHoldingView: React.FC<TakeoverHoldingViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-[11px] text-slate-400 bg-slate-950/60">
+              <tr className="border-b border-slate-800 text-[11px] text-[var(--g-muted)] bg-slate-950/60">
                 <th className="py-2.5 px-3">Şirket</th>
                 <th className="py-2.5 px-3">Kontrol Seviyesi</th>
                 <th className="py-2.5 px-3 text-right">Özkaynak Değeri</th>
@@ -158,7 +158,7 @@ export const TakeoverHoldingView: React.FC<TakeoverHoldingViewProps> = ({
                       <div className="font-mono font-semibold text-slate-100">
                         {stock.ticker}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-[var(--g-muted)]">
                         {stock.name} ({stock.sector})
                       </div>
                     </td>

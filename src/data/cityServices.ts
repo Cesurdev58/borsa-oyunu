@@ -77,14 +77,14 @@ export const TRAINING_BASKET_PCT = 6;
  * (küçük yükseltmelerle aynı ölçü).
  */
 export const TRAINING_COST_SHARE: Record<ShopType, number> = {
-  BUFE: 0.14,
-  MANAV: 0.29,
-  KAFE: 0.45,
-  GIYIM_MAGAZASI: 0.16,
-  ELEKTRONIK_MAGAZASI: 0.32,
-  MOBILYA_MAGAZASI: 0.16,
-  MARKET: 0.27,
-  OTOMOBIL_GALERISI: 0.33,
+  BUFE: 0.21,
+  MANAV: 0.55,
+  KAFE: 0.94,
+  GIYIM_MAGAZASI: 0.37,
+  ELEKTRONIK_MAGAZASI: 0.53,
+  MOBILYA_MAGAZASI: 0.28,
+  MARKET: 0.54,
+  OTOMOBIL_GALERISI: 0.28,
 };
 
 // ---------------------------------------------------------------------------

@@ -153,7 +153,7 @@ export const TurkeyMapScreen: React.FC<TurkeyMapScreenProps> = ({
               {f.id !== 'ALL' && (
                 <span
                   className={`ml-1.5 rounded-full px-1.5 text-[13px] ${
-                    isIssues && counts[f.id] > 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
+                    isIssues && counts[f.id] > 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-[var(--g-ink)]'
                   }`}
                 >
                   {counts[f.id]}

@@ -25,6 +25,7 @@ import {
 import { RESOURCE_CATALOG, SHOP_TEMPLATES } from '../data/tradeCatalog';
 import { shopStaffRatio } from './ShopOnboarding';
 import { shopUpgradeMultipliers } from './ShopUpgrades';
+import { shopStars, starBasketMultiplier, starCustomerMultiplier } from './ShopRatingEngine';
 import { activeCargoFee, activeInsurancePremium, cityProjectCustomerMultiplier, insuranceCustomerMultiplier, trainingBasketMultiplier } from './CityServices';
 import { prestigeBonuses } from './PrestigeEngine';
 import { shopHoursFor } from '../data/shopHours';
@@ -106,7 +107,11 @@ export function computeShopDailyDemand(
   shop.specificState.activeCategoryCount = stockedResourceIds.length;
 
   const staffAdequacyRatio = shopStaffRatio(shop);
-  const satisfactionFactor = 0.65 + (shop.customerSatisfaction / 100) * 0.55;
+  // Dükkân Yıldızı kademesi (engine/ShopRatingEngine.ts): eski "0,65 + memnuniyet × 0,55" çarpanının YERİNE geçer,
+  // üstüne eklenmez. Kademeler arası yumuşak geçiş; sepet bonusu aşağıda müşteri başı birime bağlanır.
+  const stars = shopStars(shop);
+  const satisfactionFactor = starCustomerMultiplier(stars);
+  const starBasket = starBasketMultiplier(stars);
   const reputationFactor = 0.75 + (ts.tradeReputationScore / 100) * 0.45;
   const macroFactor = Math.max(
     0.75,
@@ -185,7 +190,7 @@ export function computeShopDailyDemand(
     }
     const shareOfCustomers = 1 / Math.max(1, stockedResourceIds.length);
     // Müşteri başına sepet tutarı (TL) ürünler arasında eşit bölünür.
-    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket * cityLayers.basket) / Math.max(1, fairRetailPrice);
+    const unitsPerCustomer = (tpl.avgBasketValueTL * upgradeMult.basket * trainingBasket * cityLayers.basket * starBasket) / Math.max(1, fairRetailPrice);
     const rawUnits = Math.round(customers * shareOfCustomers * unitsPerCustomer * priceElasticity);
     // Taban 1 birim yalnızca makul fiyat aralığında geçerli; aşırı fiyatta yuvarlama talebi canlı tutamaz
     const units = priceRatio <= PRICE_RATIO_ELASTIC_MAX ? Math.max(1, rawUnits) : Math.max(0, rawUnits);

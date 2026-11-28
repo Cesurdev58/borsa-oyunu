@@ -116,12 +116,12 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               <h2 className="text-base font-semibold text-slate-100">
                 Aşama 2: Girişimci — Şirket Kuruluş Merkezi
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-[var(--g-muted)] mt-1">
                 Toplam net varlığınız 2.000.000 TL eşiğine ulaştığında kendi şirketinizi kurabilir, çift kayıt muhasebe ile sermaye aktarabilir ve üretimi yönetebilirsiniz.
               </p>
             </div>
             <div className="text-right">
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-[var(--g-muted)]">
                 Gereken Net Varlık Eşiği
               </div>
               <div className="text-sm font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
@@ -137,7 +137,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               <h3 className="text-xs font-semibold text-amber-400">
                 Aşama 2 Kilitli: Net Varlık 2.000.000 TL Altında
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-[var(--g-muted)] mt-1">
                 Şirket kurma kilidinin açılması için Borsa & Portföy ekranında hisse alım-satımı ve temettü gelirleriyle toplam net varlığınızı 2.000.000 TL seviyesine çıkarmanız gerekmektedir.
               </p>
             </div>
@@ -313,7 +313,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               </h3>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     FAVÖK / F/K Değerleme Çarpanı:
                   </span>
                   <div className="font-mono tabular-nums text-slate-100 font-semibold mt-0.5">
@@ -322,7 +322,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Birim Satış Fiyatı / Maliyet:
                   </span>
                   <div className="font-mono tabular-nums text-slate-100 font-semibold mt-0.5">
@@ -331,7 +331,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Günlük Personel Maliyeti:
                   </span>
                   <div className="font-mono tabular-nums text-slate-100 font-semibold mt-0.5">
@@ -342,7 +342,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400">
+                  <span className="text-[var(--g-muted)]">
                     Birim Kapasite Yatırımı:
                   </span>
                   <div className="font-mono tabular-nums text-slate-100 font-semibold mt-0.5">
@@ -352,7 +352,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   </div>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-800">
+              <p className="text-[11px] text-[var(--g-muted)] pt-2 border-t border-slate-800">
                 Çift Kayıt Muhasebe Garantisi: Şirket kurulduğunda veya sermaye aktarıldığında kişisel nakdiniz azalır, şirket özkaynağınız aynı tutarda artar; yoktan varlık üretilmez.
               </p>
             </div>
@@ -383,18 +383,18 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                 <h2 className="text-base font-bold text-slate-100">
                   {playerCompany.name}
                 </h2>
-                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-[var(--g-muted)]">·</span>
                 <span className="font-mono text-xs text-emerald-400">
                   {playerCompany.ticker}
                 </span>
-                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-[var(--g-muted)]">·</span>
                 <span className="text-xs text-slate-300">
                   {playerCompany.isPubliclyListed
                     ? `Halka Açık (Payınız: %${playerCompany.playerOwnershipPct.toFixed(1)})`
                     : 'Özel Şirket (%100 Oyuncu Sahipliği)'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[var(--g-muted)] mt-0.5">
                 Sektör: {SECTOR_CONFIGS[playerCompany.sector].name} · Faaliyet Süresi:{' '}
                 {playerCompany.operatingDays} gün · Yönetişim Puanı:{' '}
                 {playerCompany.corporateGovernanceScore}/100 · Teknoloji Çarpanı (Q_t):{' '}
@@ -404,7 +404,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
           </div>
 
           <div className="text-right">
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-[var(--g-muted)]">
               5-Yöntem Ağırlıklı Özkaynak Değeri (Equity Value)
             </div>
             <div className="text-xl font-bold font-mono tabular-nums text-emerald-400">
@@ -416,37 +416,37 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
         {/* Gelir Tablosu & Bilanço Özeti (Varlıklar = Yükümlülükler + Özkaynaklar) */}
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-4 text-xs">
           <div>
-            <span className="text-slate-400">Şirket Kasası Nakdi</span>
+            <span className="text-[var(--g-muted)]">Şirket Kasası Nakdi</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
               {formatCurrency(fin.cash)}
             </div>
           </div>
           <div>
-            <span className="text-slate-400">Toplam Varlıklar</span>
+            <span className="text-[var(--g-muted)]">Toplam Varlıklar</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
               {formatCurrency(fin.totalAssets)}
             </div>
           </div>
           <div>
-            <span className="text-slate-400">Toplam Borç (Yükümlülük)</span>
+            <span className="text-[var(--g-muted)]">Toplam Borç (Yükümlülük)</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-rose-400 mt-0.5">
               {formatCurrency(fin.totalLiabilities)}
             </div>
           </div>
           <div>
-            <span className="text-slate-400">Özkaynaklar (Defter)</span>
+            <span className="text-[var(--g-muted)]">Özkaynaklar (Defter)</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-sky-400 mt-0.5">
               {formatCurrency(fin.shareholdersEquity)}
             </div>
           </div>
           <div>
-            <span className="text-slate-400">Yıllıklandırılmış Ciro</span>
+            <span className="text-[var(--g-muted)]">Yıllıklandırılmış Ciro</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-slate-100 mt-0.5">
               {formatCurrency(fin.revenue)}
             </div>
           </div>
           <div>
-            <span className="text-slate-400">Yıllık FAVÖK / Net Kâr</span>
+            <span className="text-[var(--g-muted)]">Yıllık FAVÖK / Net Kâr</span>
             <div className="text-sm font-mono tabular-nums font-semibold text-emerald-400 mt-0.5">
               {formatCurrency(fin.EBITDA)} / {formatCurrency(fin.netIncome)}
             </div>
@@ -456,31 +456,31 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
         {/* 5 Yöntemli Değerleme Motoru Kırılımı */}
         <div className="pt-3 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-5 gap-3 text-[11px]">
           <div className="p-2 bg-slate-950 rounded border border-slate-800/80">
-            <span className="text-slate-400">1. FAVÖK Çarpanı</span>
+            <span className="text-[var(--g-muted)]">1. FAVÖK Çarpanı</span>
             <div className="font-mono tabular-nums text-slate-200 font-medium mt-0.5">
               {formatCurrency(val.ebitdaMultipleValue)}
             </div>
           </div>
           <div className="p-2 bg-slate-950 rounded border border-slate-800/80">
-            <span className="text-slate-400">2. F/K Yaklaşımı</span>
+            <span className="text-[var(--g-muted)]">2. F/K Yaklaşımı</span>
             <div className="font-mono tabular-nums text-slate-200 font-medium mt-0.5">
               {formatCurrency(val.peMultipleValue)}
             </div>
           </div>
           <div className="p-2 bg-slate-950 rounded border border-slate-800/80">
-            <span className="text-slate-400">3. Defter Değeri (P/B)</span>
+            <span className="text-[var(--g-muted)]">3. Defter Değeri (P/B)</span>
             <div className="font-mono tabular-nums text-slate-200 font-medium mt-0.5">
               {formatCurrency(val.bookValue)}
             </div>
           </div>
           <div className="p-2 bg-slate-950 rounded border border-slate-800/80">
-            <span className="text-slate-400">4. İndirgenmiş Nakit (DCF)</span>
+            <span className="text-[var(--g-muted)]">4. İndirgenmiş Nakit (DCF)</span>
             <div className="font-mono tabular-nums text-slate-200 font-medium mt-0.5">
               {formatCurrency(val.dcfValue)}
             </div>
           </div>
           <div className="p-2 bg-slate-950 rounded border border-slate-800/80">
-            <span className="text-slate-400">5. Sektör Benzerleri</span>
+            <span className="text-[var(--g-muted)]">5. Sektör Benzerleri</span>
             <div className="font-mono tabular-nums text-slate-200 font-medium mt-0.5">
               {formatCurrency(val.sectorComparableValue)}
             </div>
@@ -496,7 +496,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
             <h3 className="text-sm font-semibold text-slate-100">
               Operasyon, Ar-Ge ve Çift Kayıt Sermaye Yönetimi
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[var(--g-muted)] mt-0.5">
               Kişisel nakdinizi şirkete sermaye olarak aktarabilir, kapasite ve Ar-Ge yatırımıyla üretimi büyütebilirsiniz.
             </p>
           </div>
@@ -508,7 +508,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                 <Landmark className="w-3.5 h-3.5 text-emerald-400" />
                 Kişisel Nakitten Şirkete Sermaye Aktar
               </span>
-              <span className="text-slate-400 font-mono tabular-nums">
+              <span className="text-[var(--g-muted)] font-mono tabular-nums">
                 Kişisel Nakit: {formatCurrency(cash)}
               </span>
             </div>
@@ -639,7 +639,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               <Rocket className="w-4 h-4 text-emerald-400" />
               Aşama 3: Halka Arz (IPO) Uygunluk ve Talep Toplama
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[var(--g-muted)] mt-0.5">
               SPK / Borsa kotasyon şartları sağlandığında birincil (bedelli sermaye artırımı) ve ikincil (ortak satışı) pay ihracıyla halka arz gerçekleştirilir.
             </p>
           </div>
@@ -647,7 +647,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
           {/* IPO Uygunluk Kriterleri */}
           <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-lg text-xs space-y-1.5">
             <div className="flex justify-between">
-              <span className="text-slate-400">
+              <span className="text-[var(--g-muted)]">
                 1. Asgari Faaliyet Süresi ({ipoEligibility.minOperatingDaysRequired} gün):
               </span>
               <span className="font-mono tabular-nums text-slate-100">
@@ -655,7 +655,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">
+              <span className="text-[var(--g-muted)]">
                 2. Asgari Yıllık Ciro ({formatCurrency(ipoEligibility.minAnnualRevenueRequired)}):
               </span>
               <span className="font-mono tabular-nums text-slate-100">
@@ -663,7 +663,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">
+              <span className="text-[var(--g-muted)]">
                 3. Asgari FAVÖK ({formatCurrency(ipoEligibility.minEbitdaRequired)}):
               </span>
               <span className="font-mono tabular-nums text-emerald-400">
@@ -671,7 +671,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">
+              <span className="text-[var(--g-muted)]">
                 4. Yönetişim Puanı (&ge;{ipoEligibility.minGovernanceScoreRequired}) & Borç/FAVÖK (&le;{ipoEligibility.maxDebtToEbitdaAllowed}x):
               </span>
               <span className="font-mono tabular-nums text-slate-100">
@@ -767,7 +767,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
 
           {/* 6 NPC Kurumsal Fon Tablosu */}
           <div className="border border-slate-800 rounded-lg overflow-hidden">
-            <div className="px-3 py-2 bg-slate-950 border-b border-slate-800 flex justify-between text-[11px] font-medium text-slate-400">
+            <div className="px-3 py-2 bg-slate-950 border-b border-slate-800 flex justify-between text-[11px] font-medium text-[var(--g-muted)]">
               <span>6 Kurumsal NPC Yatırım Fonu</span>
               <span className="font-mono">
                 Tahmini Brüt Arz: {formatCurrency(estimatedGrossProceeds)}
@@ -782,7 +782,7 @@ export const CompanyIpoView: React.FC<CompanyIpoViewProps> = ({
                   <div>
                     <div className="text-slate-200 font-medium">
                       {f.name}{' '}
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <span className="text-[11px] text-[var(--g-muted)] font-mono">
                         [{f.strategyType}]
                       </span>
                     </div>

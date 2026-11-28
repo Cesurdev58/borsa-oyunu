@@ -46,7 +46,7 @@ export const PrestigeModal: React.FC<{
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="g-rise w-full max-w-md max-h-[88vh] bg-white rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
+        className="g-rise w-full max-w-md max-h-[88vh] bg-[var(--g-surface)] rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
       >
         <div className="g-hero rounded-none px-4 py-4 space-y-3 shrink-0">
           <div className="flex items-center justify-between gap-2">

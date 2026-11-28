@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Briefcase, Landmark, Map as MapIcon, CandlestickChart, Lock, Newspaper, Store } from 'lucide-react';
+import { Briefcase, Landmark, Map as MapIcon, CandlestickChart, Lock, Store } from 'lucide-react';
 import type { NavTabId, NavTabStatus, ShopTabIndicators } from '../../engine/OnboardingRules';
 import { GameBottomTab } from './gameTypes';
 
@@ -17,7 +17,7 @@ interface GameBottomNavigationProps {
   /** Dükkân sekmesi rozeti verisi (hisse pozisyon sayısı DEĞİL) */
   shopIndicators: ShopTabIndicators;
   hasPlayerCompany: boolean;
-  /** "Nasıl oynanır?" rehberini açar (sekme değil, pencere) */
+  /** Eski çağrılarla uyum için duruyor: Rehber artık üst çubukta (`top-guide-btn`). */
   onOpenGuide?: () => void;
 }
 
@@ -30,7 +30,6 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
       tabStatuses,
       shopIndicators,
       hasPlayerCompany,
-      onOpenGuide,
     }) => {
       const tabs: Array<{
         id: GameBottomTab;
@@ -55,10 +54,10 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
         },
         { id: 'company', label: 'Şirket', Icon: Briefcase, dot: hasPlayerCompany },
         { id: 'bank', label: 'Banka', Icon: Landmark },
-        { id: 'news', label: 'Haberler', Icon: Newspaper },
       ];
+      // Ferah 5'li alt menü: Haberler ve Rehber üst çubuktadır.
       const visibleTabs = tabs.filter((t) => tabStatuses[t.id].mode !== 'hidden');
-      const colCount = visibleTabs.length + (onOpenGuide ? 1 : 0);
+      const colCount = Math.max(1, visibleTabs.length);
 
       // Kilitli sekmeye dokununca kısa açıklama (boş panel açılmaz)
       const [lockedHint, setLockedHint] = useState<string | null>(null);
@@ -106,12 +105,12 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                   aria-current={isActive ? 'page' : undefined}
                   aria-disabled={locked || undefined}
                   aria-label={locked ? `${tab.label} (kilitli)` : tab.label}
-                  className={`relative min-h-[58px] min-w-[44px] py-1 flex flex-col items-center justify-center ${
+                  className={`relative min-h-[60px] min-w-[56px] py-1.5 flex flex-col items-center justify-center ${
                     locked ? 'opacity-50' : ''
                   }`}
                 >
                   <span
-                    className={`w-11 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                    className={`w-14 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
                       isActive ? '-translate-y-0.5' : ''
                     }`}
                     style={
@@ -134,7 +133,7 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                     />
                   )}
                   <span
-                    className={`text-[13px] leading-tight mt-1 truncate max-w-full tracking-tighter ${
+                    className={`text-[13px] leading-tight mt-1 truncate max-w-full ${
                       isActive ? 'text-white font-extrabold' : 'text-white/60 font-bold'
                     }`}
                   >
@@ -152,21 +151,6 @@ export const GameBottomNavigation: React.FC<GameBottomNavigationProps> =
                 </button>
               );
             })}
-            {onOpenGuide && (
-              <button
-                type="button"
-                data-testid="bottom-nav-guide"
-                onClick={onOpenGuide}
-                className="relative min-h-[58px] min-w-[44px] py-1 flex flex-col items-center justify-center"
-              >
-                <span className="w-11 h-9 rounded-xl flex items-center justify-center" style={{ color: 'rgba(255,255,255,.6)' }}>
-                  <BookOpen className="w-5 h-5" strokeWidth={2.1} />
-                </span>
-                <span className="text-[13px] leading-tight mt-1 truncate max-w-full tracking-tighter text-white/60 font-bold">
-                  Rehber
-                </span>
-              </button>
-            )}
           </div>
         </nav>
       );

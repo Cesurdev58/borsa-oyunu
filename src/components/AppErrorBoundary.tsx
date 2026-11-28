@@ -207,15 +207,15 @@ export class AppErrorBoundary extends React.Component<
         className="min-h-screen w-full flex items-center justify-center p-4"
         style={{ background: '#121c44', paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
-        <div className="w-full max-w-sm rounded-[26px] bg-white p-5 shadow-2xl text-slate-800">
+        <div className="w-full max-w-sm rounded-[26px] bg-[var(--g-surface)] p-5 shadow-2xl text-[var(--g-ink)]">
           <h1 className="g-display text-2xl font-extrabold text-[#121c44]">Bir şeyler ters gitti</h1>
-          <p className="mt-2 text-[15px] leading-snug text-slate-600">
+          <p className="mt-2 text-[15px] leading-snug text-[var(--g-muted)]">
             Oyun ekranı çizilirken beklenmedik bir hata oldu. Paran ve dükkânların kayıtta duruyor;
             çoğu zaman sayfayı yenilemek yeter.
           </p>
           <p
             data-testid="app-error-message"
-            className="mt-3 rounded-xl bg-slate-100 px-3 py-2 text-[13px] text-slate-600 break-words"
+            className="mt-3 rounded-xl bg-[var(--g-surface-2)] px-3 py-2 text-[13px] text-[var(--g-muted)] break-words"
           >
             {message || 'Bilinmeyen hata'}
           </p>
@@ -289,7 +289,7 @@ export class AppErrorBoundary extends React.Component<
           )}
 
           {feedback && (
-            <p data-testid="app-error-feedback" className="mt-3 text-[13px] text-slate-600">
+            <p data-testid="app-error-feedback" className="mt-3 text-[13px] text-[var(--g-muted)]">
               {feedback}
             </p>
           )}

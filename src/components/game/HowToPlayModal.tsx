@@ -116,6 +116,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
       Icon: Store,
       points: [
         'Borsada bir hisse alıp, başka bir sektörden de alıp, bir hisseni satıp piyasayı bir gün izleyince Dükkân sekmesinden ilk dükkânını açarsın. Büfe en ucuzu, galeri en pahalısı.',
+        'Her dükkânın 1–5 arası bir yıldızı var. Yıldız dört şeye bakar: rafta her çeşit var mı, fiyat adil mi, raf gün boyu dolu mu, çalışan ve dükkân bakımlı mı. Vitrindeki ★ rozetine dokununca karneyi ve müşteri yorumlarını görürsün; 4,3 ★ üstünde müşteri ve sepet artar, 2,5 ★ altında müşteri kaçar.',
         `İlk dükkânın büfeyse onu önce kendin çalıştırırsın (müşteri kapasitesi %${Math.round(OWNER_STAFF_CAPACITY * 100)}). Yönet → Çalışanlar'dan ilk çalışanını ${FIRST_EMPLOYEE_HIRE_FEE_BUFE.toLocaleString('tr-TR')} ₺ ile işe alınca dükkân tam kapasiteye çıkar. Dükkân açarken önerilen işletme sermayesini (büfe için ${RECOMMENDED_WORKING_CAPITAL_BUFE.toLocaleString('tr-TR')} ₺) elinde bırak; altına inersen uyarı çıkar.`,
         'Her dükkânın kendi kasası vardır. Mal alımı ve maaşlar oradan ödenir. Kasa azalınca cebinden para koy, kâr birikince "Kâr al" de.',
         'Raf boşsa satış olmaz. "Rafları doldur" en ucuz toptancıdan mal ısmarlar. Mal birkaç günde gelir; gelene kadar "Yolda" yazar.',
@@ -258,7 +259,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3" data-testid={`how-to-play-section-${current.id}`}>
           <div className="flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[var(--g-navy-800)]">
+            <span className="w-10 h-10 rounded-2xl bg-[var(--g-surface)] shadow-sm flex items-center justify-center text-[var(--g-navy-800)]">
               <Icon className="w-5 h-5" />
             </span>
             <h3 className="g-display text-lg font-extrabold text-[var(--g-ink)]">{current.title}</h3>

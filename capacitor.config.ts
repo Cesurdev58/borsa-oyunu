@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   plugins: {
     StatusBar: {
       overlaysWebView: false,
-      backgroundColor: '#121c44',
+      backgroundColor: '#1e293b',
       style: 'DARK'
     }
   }

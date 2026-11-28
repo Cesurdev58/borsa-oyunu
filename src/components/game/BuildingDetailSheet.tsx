@@ -239,7 +239,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
             onPointerCancel={handleDragEnd}
-            className="touch-none select-none cursor-grab active:cursor-grabbing bg-white sticky top-0 z-10 border-b border-[var(--g-line)]"
+            className="touch-none select-none cursor-grab active:cursor-grabbing bg-[var(--g-surface)] sticky top-0 z-10 border-b border-[var(--g-line)]"
           >
             <div className="w-10 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 sm:hidden" />
 
@@ -254,7 +254,7 @@ export const BuildingDetailSheet: React.FC<BuildingDetailSheetProps> =
                   <h2 className="g-display text-lg font-extrabold leading-tight text-[var(--g-ink)] truncate">
                     {header.title}
                   </h2>
-                  <p className="text-[13px] text-slate-500 truncate">
+                  <p className="text-[13px] text-[var(--g-muted)] truncate">
                     {header.subtitle}
                   </p>
                 </div>

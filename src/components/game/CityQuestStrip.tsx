@@ -92,7 +92,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                 background: `conic-gradient(var(--g-green) ${(completedCount / Math.max(1, totalCount)) * 360}deg, #e3e7f0 0deg)`,
               }}
             >
-              <span className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center g-display text-[13px] font-extrabold text-[var(--g-navy-800)] leading-none">
+              <span className="absolute inset-[4px] rounded-full bg-[var(--g-surface)] flex items-center justify-center g-display text-[13px] font-extrabold text-[var(--g-ink)] leading-none">
                 {completedCount}/{totalCount}
               </span>
             </button>
@@ -160,7 +160,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="g-rise w-full max-w-md max-h-[82vh] bg-white rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
+              className="g-rise w-full max-w-md max-h-[82vh] bg-[var(--g-surface)] rounded-[24px] shadow-2xl flex flex-col overflow-hidden text-sm"
             >
               <div className="g-hero rounded-none px-4 py-4 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                         q.claimed
                           ? 'bg-[#ecfaf3] border-transparent text-[var(--g-ink)]'
                           : isCurrent
-                          ? 'bg-white border-[var(--g-navy-400)] text-[var(--g-ink)] shadow-sm'
+                          ? 'bg-[var(--g-surface)] border-[var(--g-navy-400)] text-[var(--g-ink)] shadow-sm'
                           : 'bg-[var(--g-surface-2)] border-transparent text-[var(--g-muted)]'
                       }`}
                     >
@@ -223,7 +223,7 @@ export const CityQuestStrip: React.FC<CityQuestStripProps> = (
                                 ? 'text-[var(--g-green)]'
                                 : isCurrent
                                 ? 'text-[var(--g-navy-400)]'
-                                : 'text-slate-400'
+                                : 'text-[var(--g-muted)]'
                             }`}
                           />
                           <span className="line-clamp-2">

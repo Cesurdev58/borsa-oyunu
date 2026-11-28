@@ -40,7 +40,7 @@ export const CityDepotCard: React.FC<CityDepotCardProps> = ({
         </span>
         <div className="min-w-0">
           <div className="g-section-title">Şehir deposu</div>
-          <div className="text-[13px] text-slate-500">
+          <div className="text-[13px] text-[var(--g-muted)]">
             {plan.exists
               ? `${plan.cityNameTR} deposu çalışıyor`
               : `Buradaki dükkânlarına giden mal %${plan.discountWithDepotPct - plan.discountNowPct} daha ucuz taşınır`}
@@ -52,17 +52,17 @@ export const CityDepotCard: React.FC<CityDepotCardProps> = ({
         <div className="mt-3" data-testid="city-depot-status">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Aktif nakliye indirimi</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Aktif nakliye indirimi</div>
               <b className="tabular-nums text-emerald-600" data-testid="city-depot-active-discount">
                 %{plan.discountWithDepotPct}
               </b>
             </div>
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Kapsanan dükkân</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Kapsanan dükkân</div>
               <b className="tabular-nums" data-testid="city-depot-covered-shops">{plan.shopCount}</b>
             </div>
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Son 30 gün tasarruf</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Son 30 gün tasarruf</div>
               <b className="tabular-nums text-emerald-600" data-testid="city-depot-active-saving">
                 {formatCurrency(plan.activeSaving30Days)}
               </b>
@@ -70,7 +70,7 @@ export const CityDepotCard: React.FC<CityDepotCardProps> = ({
           </div>
           {depot.usedUnits > 0 && (
             <div className="mt-3" data-testid="city-depot-fill">
-              <div className="flex justify-between text-[13px] font-semibold text-slate-700">
+              <div className="flex justify-between text-[13px] font-semibold text-[var(--g-ink)]">
                 <span>Depodaki mal</span>
                 <span className={depot.usedPct >= 95 ? 'text-red-600' : ''}>
                   {depot.usedUnits.toLocaleString('tr-TR')} / {depot.maxUnits.toLocaleString('tr-TR')} birim
@@ -92,23 +92,23 @@ export const CityDepotCard: React.FC<CityDepotCardProps> = ({
         <>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Bedel</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Bedel</div>
               <b className="tabular-nums" data-testid="city-depot-cost">{formatCurrency(plan.cost)}</b>
             </div>
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Aylık tasarruf</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Aylık tasarruf</div>
               <b className="tabular-nums text-emerald-600" data-testid="city-depot-saving">
                 {formatCurrency(plan.estimatedSaving30Days)}
               </b>
             </div>
             <div className="g-card-soft p-2">
-              <div className="text-[13px] text-slate-500">Kendini öder</div>
+              <div className="text-[13px] text-[var(--g-muted)]">Kendini öder</div>
               <b className="tabular-nums" data-testid="city-depot-payback">
                 {plan.paybackDays === null ? '—' : `${plan.paybackDays} gün`}
               </b>
             </div>
           </div>
-          <p className="mt-2 text-[13px] text-slate-500" data-testid="city-depot-basis">
+          <p className="mt-2 text-[13px] text-[var(--g-muted)]" data-testid="city-depot-basis">
             Son 30 günde bu şehre {formatCurrency(plan.shippingLast30Days)} nakliye ödedin. Tasarruf buna göre hesaplandı.
           </p>
           {plan.blockReasonTR && (

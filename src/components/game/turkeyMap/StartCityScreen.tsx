@@ -65,9 +65,9 @@ export const StartCityScreen: React.FC<StartCityScreenProps> = ({
           />
         )}
         {city && summary && confirming && (
-          <div className="absolute inset-x-0 bottom-0 z-40 max-h-[85%] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] g-rise" data-testid="start-city-confirm" role="alertdialog" aria-label={`${city.nameTR} başlangıç onayı`}>
+          <div className="absolute inset-x-0 bottom-0 z-40 max-h-[85%] overflow-y-auto rounded-t-3xl bg-[var(--g-surface)] p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] g-rise" data-testid="start-city-confirm" role="alertdialog" aria-label={`${city.nameTR} başlangıç onayı`}>
             <div className="g-display text-2xl font-extrabold" data-testid="start-city-confirm-name">{city.nameTR} şehrinde başla</div>
-            <div className="text-[14px] text-slate-500">Zorluk: <b data-testid="start-city-confirm-difficulty">{DIFFICULTY_TR[summary.difficulty]}</b> · Önerilen ilk dükkân: <b>{summary.recommendedShopNameTR}</b></div>
+            <div className="text-[14px] text-[var(--g-muted)]">Zorluk: <b data-testid="start-city-confirm-difficulty">{DIFFICULTY_TR[summary.difficulty]}</b> · Önerilen ilk dükkân: <b>{summary.recommendedShopNameTR}</b></div>
             {summary.warningTR && (
               <div className="mt-2 rounded-xl bg-red-50 p-3 text-[14px] font-semibold text-red-800" data-testid="start-city-hard-warning">{summary.warningTR}</div>
             )}
@@ -76,9 +76,9 @@ export const StartCityScreen: React.FC<StartCityScreenProps> = ({
               <div className="flex justify-between"><span>Kira depozitosu ({city.nameTR} kirası)</span><span data-testid="start-city-deposit">{formatCurrency(summary.quote.expansion.cityRentDeposit)}</span></div>
               <div className="flex justify-between"><span>Dükkân kasasına konan para</span><b>{formatCurrency(summary.quote.workingCash)}</b></div>
               <div className="flex justify-between"><span>İlk 7 günün sabit gideri</span><b data-testid="start-city-seven-day">{formatCurrency(summary.sevenDayRunningCost)}</b></div>
-              <div className="flex justify-between border-t border-slate-200 pt-1"><span className="font-bold">Açılıştan sonra elinde kalan</span><b data-testid="start-city-cash-after">{formatCurrency(summary.cashAfterOpening)}</b></div>
+              <div className="flex justify-between border-t border-[var(--g-line)] pt-1"><span className="font-bold">Açılıştan sonra elinde kalan</span><b data-testid="start-city-cash-after">{formatCurrency(summary.cashAfterOpening)}</b></div>
             </div>
-            <p className="mt-2 text-[13px] text-slate-500">Kira ve çalışan maaşı şehre göre değişir; tutarlar gerçek açılış bedelidir. Şehri seçince merkezin burası olur; sonra başka şehirlerde de dükkân açabilirsin.</p>
+            <p className="mt-2 text-[13px] text-[var(--g-muted)]">Kira ve çalışan maaşı şehre göre değişir; tutarlar gerçek açılış bedelidir. Şehri seçince merkezin burası olur; sonra başka şehirlerde de dükkân açabilirsin.</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" className="g-btn g-btn-secondary min-h-[52px]" data-testid="start-city-cancel-btn" onClick={() => setConfirming(false)}>Vazgeç</button>
               <button
